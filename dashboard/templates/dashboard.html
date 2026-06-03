@@ -1,0 +1,67 @@
+{% load static %}
+
+<select id="brand">
+  <option value="all">All</option>
+  {% for b in brands %}
+  <option value="{{ b }}">{{ b }}</option>
+  {% endfor %}
+</select>
+
+<input type="date" id="start_date">
+<input type="date" id="end_date">
+<button id="loadData">Load</button>
+
+<canvas id="chart"></canvas>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'adminlte/dist/js/adminlte.min.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let chart;  // global chart instance
+
+function loadData() {
+    console.log("Loading data with", {
+        start_date: $("#start_date").val(),
+        end_date: $("#end_date").val(),
+        brand: $("#brand").val()
+    });
+    $.get("/api/gmv", {
+        start_date: $("#start_date").val(),
+        end_date: $("#end_date").val(),
+        brand: $("#brand").val()
+    }, function (res) {
+        const labels = res.map(r => r.date);
+        const data = res.map(r => r.gmv);
+
+        if (chart) {
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
+            chart.update();
+        } else {
+            chart = new Chart(document.getElementById('chart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'GMV',
+                        data: data
+                    }]
+                }
+            });
+        }
+    });
+}
+
+// button click
+$("#loadData").click(loadData);
+
+// optional: auto reload when input changes
+$("#start_date, #end_date, #brand").change(loadData);
+
+// optional: set default dates
+$(document).ready(function () {
+    const today = new Date().toISOString().split('T')[0];
+    $("#end_date").val(today);
+});
+</script>

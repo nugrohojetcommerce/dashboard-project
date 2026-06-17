@@ -1,0 +1,12 @@
+asgiref==3.11.1
+distlib==0.4.0
+Django==6.0.4
+filelock==3.18.0
+pbr==6.1.1
+psycopg2-binary==2.9.12
+python-dotenv==1.2.2
+sqlparse==0.5.5
+stevedore==5.4.1
+virtualenv==20.32.0
+virtualenv-clone==0.5.7
+virtualenvwrapper==6.1.1

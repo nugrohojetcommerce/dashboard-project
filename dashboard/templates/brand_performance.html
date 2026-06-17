@@ -70,7 +70,16 @@
     </div>
 
     <div class="row g-3 mb-4 align-items-end">
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md">
+            <label for="platform" class="form-label small text-uppercase text-muted-custom fw-semibold tracking-wider m-1" style="font-size: 11px;">Brand</label>
+            <select id="platform" class="form-select form-control-dark">
+                <option value="all">All</option>
+                <option value="Shopee">Shopee</option>
+                <option value="Tiktok">TikTok</option>
+                <option value="Lazada">Lazada</option>
+            </select>
+        </div>
+        <div class="col-6 col-md">
             <label for="brand" class="form-label small text-uppercase text-muted-custom fw-semibold tracking-wider m-1" style="font-size: 11px;">Brand</label>
             <select id="brand" class="form-select form-control-dark">
                 {% for b in brands %}
@@ -80,15 +89,15 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md">
             <label for="start_date" class="form-label small text-uppercase text-muted-custom fw-semibold tracking-wider m-1" style="font-size: 11px;">Start date</label>
             <input type="date" id="start_date" class="form-control form-control-dark" value="2026-06-01">
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md">
             <label for="end_date" class="form-label small text-uppercase text-muted-custom fw-semibold tracking-wider m-1" style="font-size: 11px;">End date</label>
-            <input type="date" id="end_date" class="form-control form-control-dark" value="2026-06-07">
+            <input type="date" id="end_date" class="form-control form-control-dark" value="2026-06-05">
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md">
             <button id="loadData" class="btn text-white w-100 fw-semibold d-flex align-items-center justify-content-center gap-2" style="background-color: #1D9E75;">
                 <i class="fa-solid fa-arrows-rotate"></i> Load
             </button>
@@ -139,7 +148,7 @@
         </div>
         
         <div style="position: relative; height: 300px;">
-            <canvas id="chart"></canvas>
+            <canvas id="chart-nmv-line"></canvas>
         </div>
     </div>
     <script>
@@ -159,7 +168,8 @@
             const params = {
                 start_date: $("#start_date").val(),
                 end_date: $("#end_date").val(),
-                brand: $("#brand").val()
+                brand: $("#brand").val(),
+                platform: $("#platform").val()
             };
 
             $.get("/api/brand_performance", params, function(response) {
@@ -178,7 +188,7 @@
                     chartInstance.data.datasets[0].data = values;
                     chartInstance.update();
                 } else {
-                    const ctx = document.getElementById('chart').getContext('2d');
+                    const ctx = document.getElementById('chart-nmv-line').getContext('2d');
                     chartInstance = new Chart(ctx, {
                         type: 'line',
                         data: {
@@ -238,7 +248,7 @@
         }
 
         $("#loadData").click(loadDashboardData);
-        $("#start_date, #end_date, #brand").change(loadDashboardData);
+        $("#start_date, #end_date, #brand, #platform").change(loadDashboardData);
         $(document).ready(loadDashboardData);
     </script>
 </body>

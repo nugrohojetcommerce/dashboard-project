@@ -1,0 +1,47 @@
+.
+├── __init__.py
+├── admin.py
+├── apps.py
+├── migrations
+│   ├── 0001_initial.py
+│   └── __init__.py
+├── models.py
+├── services
+│   ├── __init__.py
+│   └── gmv_services.py
+├── static
+│   └── adminlte
+│       ├── .browserslistrc
+│       ├── .bundlewatch.config.json
+│       ├── .editorconfig
+│       ├── .eslintrc.json
+│       ├── .gitattributes
+│       ├── .gitignore
+│       ├── .gitpod.yml
+│       ├── .lgtm.yml
+│       ├── .npmignore
+│       ├── .prettierrc
+│       ├── .stylelintignore
+│       ├── .stylelintrc.json
+│       ├── ACCESSIBILITY-COMPLIANCE.md
+│       ├── CHANGELOG.md
+│       ├── CODE_OF_CONDUCT.md
+│       ├── LICENSE
+│       ├── README.md
+│       ├── SECURITY.md
+│       ├── composer.json
+│       ├── dist
+│       ├── eslint.config.js
+│       ├── index.html
+│       ├── package-lock.json
+│       ├── package.json
+│       ├── src
+│       └── tsconfig.json
+├── structure.txt
+├── templates
+│   └── dashboard.html
+├── tests.py
+├── urls.py
+└── views.py
+
+7 directories, 37 files

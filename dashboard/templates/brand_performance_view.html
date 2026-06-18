@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+
+{% block title %}
+Brand Performance
+{% endblock %}
+
+{% block content %}
+
+<div class="row mb-3">
+<div class="col-12">
+
+    <h1>
+        Brand Performance
+    </h1>
+
+</div>
+
+</div>
+
+<form method="get" id="filterForm">
+<div class="card mb-4">
+
+    <div class="card-header">
+
+        <h3 class="card-title">
+            Filters
+        </h3>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="row">
+
+            <!-- Brands -->
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Brands
+                </label>
+
+                <select
+                    id="brandSelect"
+                    class="form-select"
+                    name="brand"
+                    multiple>
+
+                    {% for brand in brands %}
+
+                    <option
+                        value="{{ brand }}"
+                        {% if brand in selected_brands %}
+                        selected
+                        {% endif %}>
+
+                        {{ brand }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <div class="mt-2">
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        onclick="selectAllBrands()">
+
+                        Select All
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        onclick="clearBrands()">
+
+                        Clear
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- Platforms -->
+
+            <div class="col-md-4">
+
+                <label class="form-label">
+                    Platforms
+                </label>
+
+                <select
+                    id="platformSelect"
+                    class="form-select"
+                    name="platform"
+                    multiple>
+
+                    {% for platform in platforms %}
+
+                    <option
+                        value="{{ platform }}"
+                        {% if platform in selected_platforms %}
+                        selected
+                        {% endif %}>
+
+                        {{ platform }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <div class="mt-2">
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        onclick="selectAllPlatforms()">
+
+                        Select All
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        onclick="clearPlatforms()">
+
+                        Clear
+
+                    </button>
+
+                </div>
+
+            </div>
+
+            <!-- Dates -->
+
+            <div class="col-md-2">
+
+                <label class="form-label">
+                    Start Date
+                </label>
+
+                <input
+                    type="date"
+                    class="form-control"
+                    name="start_date"
+                    value="{{ start_date }}">
+
+            </div>
+
+            <div class="col-md-2">
+
+                <label class="form-label">
+                    End Date
+                </label>
+
+                <input
+                    type="date"
+                    class="form-control"
+                    name="end_date"
+                    value="{{ end_date }}">
+
+                <div class="mt-3">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary w-100">
+
+                        Apply Filters
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</form>
+
+<div class="row">
+
+
+<div class="col-lg-6">
+
+    <div class="small-box text-bg-success">
+
+        <div class="inner">
+
+            <h3>
+
+                {{ cards.total_nmv|floatformat:0 }}
+
+            </h3>
+
+            <p>
+
+                NMV
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="col-lg-6">
+
+    <div class="small-box text-bg-info">
+
+        <div class="inner">
+
+            <h3>
+
+                {{ cards.total_gmv|floatformat:0 }}
+
+            </h3>
+
+            <p>
+
+                GMV
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+<div class="card">
+
+
+<div class="card-header">
+
+    <h3 class="card-title">
+        NMV Trend
+    </h3>
+
+</div>
+
+<div class="card-body">
+
+    <div style="height:500px;">
+
+        <canvas id="nmvChart"></canvas>
+
+    </div>
+
+</div>
+
+
+</div>
+
+{{ trend_json|json_script:"trend-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+
+<link
+    href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+    rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+
+$(document).ready(function() {
+
+    $('#brandSelect').select2({
+        width: '100%',
+        placeholder: 'Select brands'
+    });
+
+    $('#platformSelect').select2({
+        width: '100%',
+        placeholder: 'Select platforms'
+    });
+
+});
+
+function selectAllBrands() {
+
+    $('#brandSelect option').prop('selected', true);
+
+    $('#brandSelect').trigger('change');
+}
+
+function clearBrands() {
+
+    $('#brandSelect option').prop('selected', false);
+
+    $('#brandSelect').trigger('change');
+}
+
+function selectAllPlatforms() {
+
+    $('#platformSelect option').prop('selected', true);
+
+    $('#platformSelect').trigger('change');
+}
+
+function clearPlatforms() {
+
+    $('#platformSelect option').prop('selected', false);
+
+    $('#platformSelect').trigger('change');
+}
+
+const trend = JSON.parse(
+    document.getElementById("trend-data").textContent
+);
+
+const labels = trend.map(
+    item => item.date
+);
+
+const values = trend.map(
+    item => item.nmv
+);
+
+new Chart(
+    document.getElementById("nmvChart"),
+    {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "NMV",
+                    data: values,
+                    borderWidth: 2,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: "index"
+            }
+        }
+    }
+);
+
+</script>
+
+{% endblock %}

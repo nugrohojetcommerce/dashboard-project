@@ -3,6 +3,10 @@ from django.contrib.auth.models import User
 
 class Brand(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    users = models.ManyToManyField(User, related_name='brands', blank=True)
+    
+    def __str__(self):
+        return self.name
 
 class UserBrand(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -10,6 +14,9 @@ class UserBrand(models.Model):
 
     class Meta:
         unique_together = ('user', 'brand')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.brand.name}"
 
 class OrderMartDashboardBrandDF(models.Model):
     # Text / Character Fields (Menggunakan CharField atau TextField)
@@ -69,3 +76,4 @@ class OrderMartDashboardBrandDF(models.Model):
     class Meta:
         managed = False  # WAJIB: Biar Django ga bikin file migrasi/ngubah isi database asli
         db_table = 'order_mart_dashboard_brand_df' # Nama tabel asli di PostgreSQL
+    

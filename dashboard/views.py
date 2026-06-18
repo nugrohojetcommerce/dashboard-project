@@ -1,10 +1,29 @@
+from __future__ import annotations
 from django.shortcuts import render
+import json
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+# from rest_framework.request import Request
+from django.http import HttpRequest, HttpResponse
+from dashboard.models import User
+from datetime import date
 
 from dashboard.services.dashboard_performance import get_cards
 from .services.gmv_services import get_gmv
 from .services.dashboard_performance import *
+
+
+from collections import defaultdict
+from datetime import date
+
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import render
+from django.db.models import Sum
+
+# replace with your actual model
+from dashboard.models import OrderMartDashboardBrandDF as OrderMart
 
 @login_required
 def dashboard_view(request):
@@ -31,14 +50,170 @@ def api_gmv(request):
 
 @login_required
 def brand_performance_view(request):
-    brands = list(
-        request.user.userbrand_set.values_list("brand__name", flat=True)
+    brands: list[str] = list(
+        request.user.userbrand_set
+        .select_related("brand")
+        .values_list("brand__name", flat=True)
+        .order_by("brand__name")
+        .distinct()
     )
-    # platforms = list(
-    #     request.user.
-    # )
 
     return render(request, "brand_performance.html", {"brands": brands})
+
+@login_required
+def brand_performance(request):
+
+    user_brands = list(
+        request.user.userbrand_set
+        .values_list("brand__name", flat=True)
+        .order_by("brand__name")
+        .distinct()
+    )
+
+    start_date = request.GET.get(
+        "start_date",
+        date.today().replace(day=1).isoformat()
+    )
+
+    end_date = request.GET.get(
+        "end_date",
+        date.today().isoformat()
+    )
+
+    base_queryset = (
+        OrderMart.objects
+        .filter(
+            date__range=[start_date, end_date],
+            brand__in=user_brands
+        )
+    )
+
+    # ==========================================
+    # AVAILABLE FILTER VALUES
+    # ==========================================
+
+    all_brands = list(
+        base_queryset
+        .values_list("brand", flat=True)
+        .distinct()
+        .order_by("brand")
+    )
+
+    all_platforms = list(
+        base_queryset
+        .values_list("platform", flat=True)
+        .distinct()
+        .order_by("platform")
+    )
+
+    # ==========================================
+    # CURRENT SELECTION
+    # ==========================================
+
+    selected_brands = request.GET.getlist("brand")
+    selected_platforms = request.GET.getlist("platform")
+
+    # First page load = everything selected
+
+    if not selected_brands:
+        selected_brands = all_brands
+
+    if not selected_platforms:
+        selected_platforms = all_platforms
+
+    # ==========================================
+    # CASCADING BRANDS
+    # ==========================================
+
+    brands = list(
+        base_queryset
+        .filter(
+            platform__in=selected_platforms
+        )
+        .values_list("brand", flat=True)
+        .distinct()
+        .order_by("brand")
+    )
+
+    # ==========================================
+    # CASCADING PLATFORMS
+    # ==========================================
+
+    platforms = list(
+        base_queryset
+        .filter(
+            brand__in=selected_brands
+        )
+        .values_list("platform", flat=True)
+        .distinct()
+        .order_by("platform")
+    )
+
+    # ==========================================
+    # FINAL DATASET
+    # ==========================================
+
+    queryset = (
+        base_queryset
+        .filter(
+            brand__in=selected_brands,
+            platform__in=selected_platforms
+        )
+    )
+
+    # ==========================================
+    # KPI
+    # ==========================================
+
+    cards = queryset.aggregate(
+        total_nmv=Sum("nmv"),
+        total_gmv=Sum("gmv"),
+    )
+
+    cards["total_nmv"] = float(
+        cards["total_nmv"] or 0
+    )
+
+    cards["total_gmv"] = float(
+        cards["total_gmv"] or 0
+    )
+
+    # ==========================================
+    # TREND
+    # ==========================================
+
+    trend = [
+        {
+            "date": row["date"].isoformat(),
+            "nmv": float(row["nmv"] or 0),
+        }
+        for row in (
+            queryset
+            .values("date")
+            .annotate(
+                nmv=Sum("nmv")
+            )
+            .order_by("date")
+        )
+    ]
+    context = {
+            "brands": brands,
+            "platforms": platforms,
+            "selected_brands": selected_brands,
+            "selected_platforms": selected_platforms,
+            "start_date": start_date,
+            "end_date": end_date,
+            "cards": cards,
+            "trend_json": trend,
+        }
+
+    return render(
+        request,
+        "brand_performance_view.html",
+        context
+        
+    )
+
 
 @login_required
 def api_brand_performance(request,order_data=None):

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block title %}Brand Performance{% endblock %}
 
 {% block content %}
@@ -431,13 +431,14 @@
 </div>
 </form>
 
+<!-- BARIS 1 -->
 <div class="row g-3 align-items-stretch" style="min-height: 300px;">
 
   <div class="col-lg-2 d-flex flex-column gap-3">
 
     <div class="s-card metric-card card-nmv flex-fill">
       <div class="metric-label"><span class="label-dot"></span>Net Merchandise Value</div>
-      <div class="metric-value">{{ cards.total_nmv|floatformat:0 }}</div>
+      <div class="metric-value">Rp{{ cards.total_nmv|floatformat:0|intcomma }}</div>
       <div class="metric-footer">
         <span class="metric-change up">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
@@ -450,7 +451,7 @@
 
     <div class="s-card metric-card card-gmv flex-fill">
       <div class="metric-label"><span class="label-dot"></span>Gross Merchandise Value</div>
-      <div class="metric-value">{{ cards.total_gmv|floatformat:0 }}</div>
+      <div class="metric-value">Rp{{ cards.total_gmv|floatformat:0|intcomma }}</div>
       <div class="metric-footer">
         <span class="metric-change up">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
@@ -467,7 +468,7 @@
 
     <div class="s-card metric-card card-orders flex-fill">
       <div class="metric-label"><span class="label-dot"></span>Net Order Quantity</div>
-      <div class="metric-value">{{ cards.total_orders|floatformat:0 }}</div>
+      <div class="metric-value">{{ cards.total_orders|floatformat:0|intcomma }}</div>
       <div class="metric-footer">
         <span class="metric-change up">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
@@ -480,7 +481,7 @@
 
     <div class="s-card metric-card card-qty flex-fill">
       <div class="metric-label"><span class="label-dot"></span>Net Sales Quantity</div>
-      <div class="metric-value">{{ cards.total_quantity|floatformat:0 }}</div>
+      <div class="metric-value">{{ cards.total_quantity|floatformat:0|intcomma }}</div>
       <div class="metric-footer">
         <span class="metric-change up">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
@@ -509,7 +510,75 @@
 
 </div>
 
+<!-- BARIS 2 -->
+<div class="row g-3 align-items-stretch pt-3" style="min-height: 300px;">
+
+  <div class="col-lg-8">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">NMV Cumulative</h3>
+        </div>
+        <span class="chart-badge">Daily</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="nmvCumChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- <div class="col-lg-4 d-flex flex-column gap-3">
+
+    <div class="s-card metric-card card-nmv flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Merchandise Value</div>
+      <div class="metric-value">{{ cards.total_nmv|floatformat:0 }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +8.4%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">💰</div>
+    </div>
+
+    <div class="s-card metric-card card-gmv flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Gross Merchandise Value</div>
+      <div class="metric-value">{{ cards.total_gmv|floatformat:0 }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +5.1%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">📦</div>
+    </div>
+
+  </div> -->
+
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Platform Contribution</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="platformDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 {{ trend_json|json_script:"trend-data" }}
+{{ trend_cum_json|json_script:"trend-cum-data" }}
+{{ platform_nmv_json|json_script:"platform-nmv-data" }}
+
 
 {% endblock %}
 
@@ -531,7 +600,7 @@ function clearBrands()        { $('#brandSelect option').prop('selected', false)
 function selectAllPlatforms() { $('#platformSelect option').prop('selected', true);  $('#platformSelect').trigger('change'); }
 function clearPlatforms()     { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
 
-/* ── CHART CONFIG (LIGHT MODE OPTIMIZED) ── */
+/* ── CHART CONFIG TREND NMV ── */
 const trend  = JSON.parse(document.getElementById("trend-data").textContent);
 const labels = trend.map(i => i.date);
 const values = trend.map(i => i.nmv);
@@ -539,7 +608,7 @@ const values = trend.map(i => i.nmv);
 const ctx = document.getElementById("nmvChart").getContext("2d");
 
 // Gradasi bawah garis dibikin soft orange menuju transparan
-const grad = ctx.createLinearGradient(0, 0, 0, 260);
+const grad = ctx.createLinearGradient(0, 0, 0, 320);
 grad.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
 grad.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
 grad.addColorStop(1,   "rgba(255, 122, 0, 0)");
@@ -597,6 +666,113 @@ new Chart(ctx, {
         grid:   { color: "#F3F4F6", drawBorder: false },
         border: { display: false },
         ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
+      }
+    }
+  }
+});
+
+/* ── CHART CONFIG CUMULATIVE NMV ── */
+const trend_cum  = JSON.parse(document.getElementById("trend-cum-data").textContent);
+// const labels_cum = trend.map(i => i.date);
+const values_cum = trend_cum.map(i => i.nmv);
+
+const ctx_cum = document.getElementById("nmvCumChart").getContext("2d");
+
+const grad_cum = ctx_cum.createLinearGradient(0, 0, 0, 500);
+grad_cum.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
+grad_cum.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
+grad_cum.addColorStop(1,   "rgba(255, 122, 0, 0)");
+
+
+new Chart(ctx_cum, {
+  type: "line",
+  data: {
+    labels,
+    datasets: [{
+      label: "NMV Cumulative",
+      data: values_cum,
+      borderColor:               "#FF7A00",
+      borderWidth:               2,
+      backgroundColor:           grad_cum,
+      fill:                      true,
+      tension:                   0.35,
+      pointRadius:               3,
+      pointHoverRadius:          5,
+      pointHoverBackgroundColor: "#FF7A00",
+      pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+      pointHoverBorderWidth:     2,
+    }]
+  },
+  options: {
+    responsive:          true,
+    maintainAspectRatio: false,
+    interaction: { intersect: false, mode: "index" },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
+        borderColor:      "#E4E7EB",
+        borderWidth:      1,
+        titleColor:       "#6B7280",
+        bodyColor:        "#1F2937",
+        titleFont:        { size: 11, family: "Inter, sans-serif" },
+        bodyFont:         { size: 13, weight: '700' },
+        padding:          10,
+        cornerRadius:     6,
+        displayColors:    false,
+        boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
+        callbacks: {
+          title: items => items[0].label,
+          label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+        border: { display: false },
+        ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+      },
+      y: {
+        grid:   { color: "#F3F4F6", drawBorder: false },
+        border: { display: false },
+        ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
+      }
+    }
+  }
+});
+
+// PLATFORM CONTRIBUTION DONUT CHART
+const donut_data  = JSON.parse(document.getElementById("platform-nmv-data").textContent);
+const donutLabels = donut_data.map(item => item.platform);
+const donutValues = donut_data.map(item => item.nmv);
+const ctx_donut = document.getElementById("platformDonutChart").getContext("2d");
+const donutPalette = [
+  "#FF7A00", "#10B981", "#0055FF", "#FFB347", "#6B7280",
+  "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6", "#14B8A6"
+];
+new Chart(ctx_donut, {
+  type: "doughnut", // 1. WAJIB set type jadi doughnut
+  data: {
+    labels: donutLabels, // 2. Label untuk tiap potongan (slice)
+    datasets: [{
+      data: donutValues, // 3. Angka/Value tiap potongan (harus berurutan dengan label)
+      backgroundColor: donutPalette.slice(0, donutLabels.length), // 4. Warna tiap potongan
+      borderWidth: 5,
+      borderColor: "#FFFFFF" // Garis pembatas antar potongan
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    
+    // 5. ATRIBUT KHUSUS DONUT CHART
+    cutout: "40%", // Menentukan besar lubang di tengah. Kalau di-set "0%" dia bakal jadi Pie Chart (buntet)
+    
+    plugins: {
+      legend: {
+        display: true,
+        position: "bottom" // Posisi kotak keterangan label (top, bottom, left, right)
       }
     }
   }

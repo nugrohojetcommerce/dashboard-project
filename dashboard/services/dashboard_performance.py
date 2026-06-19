@@ -1,8 +1,9 @@
 from django.db import connection
 from ..models import OrderMartDashboardBrandDF
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, Window, F
 from dashboard.models import OrderMartDashboardBrandDF as OrderMart
 from datetime import date
+import pandas as pd
 # from dashboard import models
 
 def get_order_mart_dashboard_brand(user_brands):
@@ -152,6 +153,19 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
     )
 
     # ===== NMV Trends =====
+
+    rows = (
+        queryset
+        .values("date")
+        .annotate(
+            nmv=Sum("nmv")
+        )
+        .order_by("date")
+    )
+
+    df = pd.DataFrame(list(rows))
+    df["cum_nmv"] = df["nmv"].cumsum()
+
     trend = [
         {
             "date": row["date"].isoformat(),
@@ -167,6 +181,32 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         )
     ]
 
+    trend_cum = [
+        {
+            "date": row["date"].isoformat(),
+            "nmv": float(row["cum_nmv"])
+        }
+        for _, row in df.iterrows()
+    ]
+
+    platform_rows = (
+        queryset
+        .values("platform")
+        .annotate(
+            nmv=Sum("nmv")
+        )
+        .order_by("-nmv")
+    )
+    df_platform = pd.DataFrame(list(platform_rows))
+
+    platform_nmv = [
+        {
+        "platform": row["platform"],
+        "nmv":row["nmv"]
+        }
+        for _, row in df_platform.iterrows()
+    ]
+
     return {
             "brands": brands,
             "platforms": platforms,
@@ -176,4 +216,6 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
             "end_date": end_date,
             "cards": cards,
             "trend_json": trend,
+            "trend_cum_json" : trend_cum,
+            "platform_nmv_json" : platform_nmv
         }

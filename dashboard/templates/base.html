@@ -12,14 +12,25 @@
         {% endblock %}
     </title>
 
-    <link rel="stylesheet"
-          href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
+    <link rel="stylesheet" href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
+
+    <style>
+      html, body, .app-wrapper, .app-main, .app-content {
+        background:
+          radial-gradient(ellipse 70% 45% at 85% 5%,  rgba(255,100,0,0.13) 0%, transparent 70%),
+          radial-gradient(ellipse 55% 35% at 5%  90%, rgba(200, 60,0,0.13) 0%, transparent 70%),
+          #fffcfb !important;
+      }
+      /* hapus bg putih dari container AdminLTE */
+      .bg-body-tertiary { background: transparent !important; }
+      .app-content      { background: transparent !important; }
+    </style>
 
     {% block extra_css %}
     {% endblock %}
 </head>
 
-<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+<body class="layout-fixed sidebar-expand-lg">
 
 <div class="app-wrapper">
 

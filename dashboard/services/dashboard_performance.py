@@ -81,10 +81,6 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         )
     )
 
-    # ==========================================
-    # AVAILABLE FILTER VALUES
-    # ==========================================
-
     all_brands = list(
         base_queryset
         .values_list("brand", flat=True)
@@ -99,17 +95,10 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         .order_by("platform")
     )
 
-    # ==========================================
-    # CURRENT SELECTION
-    # ==========================================
-
     selected_brands = selected_brands or all_brands
     selected_platforms = selected_platforms or all_platforms
 
-    # ==========================================
-    # CASCADING BRANDS
-    # ==========================================
-
+    # CASCADING BRANDS AND PLATFORMS
     brands = list(
         base_queryset
         .filter(
@@ -119,10 +108,6 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         .distinct()
         .order_by("brand")
     )
-
-    # ==========================================
-    # CASCADING PLATFORMS
-    # ==========================================
 
     platforms = list(
         base_queryset
@@ -134,10 +119,6 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         .order_by("platform")
     )
 
-    # ==========================================
-    # FINAL DATASET
-    # ==========================================
-
     queryset = (
         base_queryset
         .filter(
@@ -146,13 +127,12 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         )
     )
 
-    # ==========================================
-    # KPI
-    # ==========================================
-
+    # ===== Score Cards =====
     cards = queryset.aggregate(
         total_nmv=Sum("nmv"),
         total_gmv=Sum("gmv"),
+        total_orders=Count("order_number",distinct=True, filter = Q(is_nmv=1)),
+        total_quantity=Count("quantity")
     )
 
     cards["total_nmv"] = float(
@@ -163,10 +143,15 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         cards["total_gmv"] or 0
     )
 
-    # ==========================================
-    # TREND
-    # ==========================================
+    cards["total_orders"] = float(
+        cards["total_orders"] or 0
+    )
 
+    cards["total_quantity"] = float(
+        cards["total_quantity"] or 0
+    )
+
+    # ===== NMV Trends =====
     trend = [
         {
             "date": row["date"].isoformat(),
@@ -181,6 +166,7 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
             .order_by("date")
         )
     ]
+
     return {
             "brands": brands,
             "platforms": platforms,

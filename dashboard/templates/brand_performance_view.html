@@ -1,370 +1,587 @@
 {% extends "base.html" %}
 
-{% block title %}
-Brand Performance
-{% endblock %}
+{% block title %}Brand Performance{% endblock %}
 
 {% block content %}
 
-<div class="row mb-3">
-<div class="col-12">
+<style>
+  /* ── tokens: light mode ── */
+  :root {
+    --bg-page:       #F8FAFC;
+    --bg-card:       #FFFFFF;
+    --bg-card-alt:   #F1F5F9;
+    --border:        #E2E8F0;
+    --border-focus:  #F59E0B;
+    --amber:         #D97706;
+    --amber-bright:  #F59E0B;
+    --amber-dim:     rgba(217, 119, 6, 0.10);
+    --amber-glow:    rgba(217, 119, 6, 0.18);
+    --indigo:        #4F46E5;
+    --indigo-dim:    rgba(79, 70, 229, 0.10);
+    --teal:          #0D9488;
+    --teal-dim:      rgba(13, 148, 136, 0.10);
+    --text-primary:  #0F172A;
+    --text-sub:      #334155;
+    --text-muted:    #64748B;
+    --text-faint:    #94A3B8;
+    --success:       #059669;
+    --success-bg:    rgba(5, 150, 105, 0.10);
+    --danger:        #DC2626;
+    --danger-bg:     rgba(220, 38, 38, 0.10);
+    --radius:        12px;
+    --radius-sm:     8px;
+    --shadow-sm:     0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:     0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  }
 
-    <h1>
-        Brand Performance
-    </h1>
+  /* ── page header ── */
+  .bp-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .bp-header h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -.3px;
+    margin: 0;
+  }
+  .bp-header .bp-subtitle {
+    font-size: .75rem;
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
 
+  /* ── card base ── */
+  .s-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ── filter panel ── */
+  .filter-panel {
+    padding: 18px 22px 22px;
+    margin-bottom: 20px;
+  }
+  .filter-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .filter-icon {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    background: var(--amber-dim);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--amber);
+    flex-shrink: 0;
+  }
+  .filter-panel-header span {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .09em;
+  }
+
+  /* form controls */
+  .filter-panel .form-label {
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .filter-panel .form-control,
+  .filter-panel .form-select {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: .87rem;
+    padding: 8px 11px;
+    transition: border-color .18s, box-shadow .18s;
+    box-shadow: none;
+  }
+  .filter-panel .form-control:focus,
+  .filter-panel .form-select:focus {
+    border-color: var(--amber-bright);
+    box-shadow: 0 0 0 3px var(--amber-dim);
+    color: var(--text-primary);
+    outline: none;
+  }
+
+  /* select2 light overrides */
+  .select2-container--default .select2-selection--multiple {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    min-height: 38px !important;
+    padding: 2px 6px !important;
+    box-shadow: none !important;
+  }
+  .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: var(--amber-bright) !important;
+    box-shadow: 0 0 0 3px var(--amber-dim) !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background: var(--amber-dim) !important;
+    border: 1px solid rgba(217,119,6,.25) !important;
+    color: var(--amber) !important;
+    border-radius: 4px !important;
+    font-size: .75rem !important;
+    font-weight: 600 !important;
+    padding: 2px 8px 2px 22px !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: var(--amber) !important;
+    margin-right: 5px !important;
+  }
+  .select2-container--default .select2-search--inline .select2-search__field {
+    color: var(--text-primary) !important;
+    font-size: .85rem !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    padding: 0 !important;
+  }
+  .select2-dropdown {
+    background: #FFFFFF !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: var(--shadow-md) !important;
+  }
+  .select2-container--default .select2-results__option {
+    color: var(--text-sub) !important;
+    font-size: .85rem !important;
+    padding: 8px 12px !important;
+  }
+  .select2-container--default .select2-results__option--highlighted {
+    background: var(--amber-dim) !important;
+    color: var(--amber) !important;
+  }
+  .select2-container--default .select2-results__option--selected {
+    background: var(--amber-dim) !important;
+    color: var(--amber) !important;
+    font-weight: 600 !important;
+  }
+  .select2-search--dropdown .select2-search__field {
+    background: var(--bg-card-alt) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 6px !important;
+    color: var(--text-primary) !important;
+    padding: 7px 10px !important;
+    outline: none !important;
+  }
+
+  /* quick action buttons */
+  .btn-ghost-amber {
+    font-size: .72rem; font-weight: 700;
+    color: var(--amber);
+    background: var(--amber-dim);
+    border: 1px solid rgba(217,119,6,.2);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    letter-spacing: .02em;
+  }
+  .btn-ghost-amber:hover { background: var(--amber-glow); border-color: rgba(217,119,6,.4); }
+
+  .btn-ghost-muted {
+    font-size: .72rem; font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-card-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background .15s;
+    letter-spacing: .02em;
+  }
+  .btn-ghost-muted:hover { background: #E2E8F0; }
+
+  /* apply button */
+  .btn-apply {
+    width: 100%;
+    padding: 9px;
+    border-radius: var(--radius-sm);
+    font-size: .8rem; font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    border: none;
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s, box-shadow .15s;
+    box-shadow: 0 3px 10px rgba(217,119,6,.35);
+  }
+  .btn-apply:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 5px 16px rgba(217,119,6,.4); }
+  .btn-apply:active { transform: translateY(0); }
+
+  /* ── dashboard grid: Bootstrap-based ── */
+  .metric-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── metric cards ── */
+  .metric-card {
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+    flex: 1;
+  }
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* colored top border accent */
+  .metric-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .card-nmv::after      { background: linear-gradient(90deg, #F59E0B, #FCD34D); }
+  .card-gmv::after      { background: linear-gradient(90deg, #4F46E5, #818CF8); }
+  .card-orders::after   { background: linear-gradient(90deg, #0D9488, #2DD4BF); }
+  .card-qty::after      { background: linear-gradient(90deg, #EC4899, #F9A8D4); }
+
+  .metric-label {
+    font-size: .65rem; font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .label-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .card-nmv    .label-dot { background: var(--amber-bright); }
+  .card-gmv    .label-dot { background: var(--indigo); }
+  .card-orders .label-dot { background: var(--teal); }
+  .card-qty    .label-dot { background: #EC4899; }
+
+  .metric-value {
+    font-size: 1.5rem; font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -.5px; line-height: 1;
+    margin-bottom: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+  }
+
+  .metric-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 4px;
+  }
+  .metric-change {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: .7rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .metric-change.up   { background: var(--success-bg); color: var(--success); }
+  .metric-change.down { background: var(--danger-bg);  color: var(--danger);  }
+  .metric-vs { font-size: .65rem; color: var(--text-faint); }
+
+  .metric-icon {
+    position: absolute;
+    bottom: 10px; right: 14px;
+    font-size: 1.8rem; opacity: .07; line-height: 1;
+  }
+
+  /* ── chart card ── */
+  .chart-card {
+    padding: 18px 22px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .chart-title-group { display: flex; align-items: center; gap: 10px; }
+  .chart-accent-bar {
+    width: 3px; height: 18px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #F59E0B, #D97706);
+    flex-shrink: 0;
+  }
+  .chart-title {
+    font-size: .9rem; font-weight: 700;
+    color: var(--text-primary); margin: 0;
+  }
+  .chart-badge {
+    font-size: .66rem; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+    background: var(--amber-dim);
+    color: var(--amber);
+    letter-spacing: .05em; text-transform: uppercase;
+    border: 1px solid rgba(217,119,6,.2);
+  }
+  .chart-body {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+  }
+
+
+</style>
+
+<!-- page header -->
+<div class="bp-header">
+  <h1>Brand Performance</h1>
+  <span class="bp-subtitle">/ Overview</span>
 </div>
 
-</div>
-
+<!-- filter panel -->
 <form method="get" id="filterForm">
-<div class="card mb-4">
+<div class="s-card filter-panel">
 
-    <div class="card-header">
+  <div class="filter-panel-header">
+    <div class="filter-icon">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    </div>
+    <span>Filters</span>
+  </div>
 
-        <h3 class="card-title">
-            Filters
-        </h3>
+  <div class="row g-3 align-items-start">
 
+    <div class="col-md-4">
+      <label class="form-label">Brands</label>
+      <select id="brandSelect" class="form-select" name="brand" multiple>
+        {% for brand in brands %}
+        <option value="{{ brand }}" {% if brand in selected_brands %}selected{% endif %}>{{ brand }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllBrands()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearBrands()">Clear</button>
+      </div>
     </div>
 
-    <div class="card-body">
-
-        <div class="row">
-
-            <!-- Brands -->
-
-            <div class="col-md-4">
-
-                <label class="form-label">
-                    Brands
-                </label>
-
-                <select
-                    id="brandSelect"
-                    class="form-select"
-                    name="brand"
-                    multiple>
-
-                    {% for brand in brands %}
-
-                    <option
-                        value="{{ brand }}"
-                        {% if brand in selected_brands %}
-                        selected
-                        {% endif %}>
-
-                        {{ brand }}
-
-                    </option>
-
-                    {% endfor %}
-
-                </select>
-
-                <div class="mt-2">
-
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-primary"
-                        onclick="selectAllBrands()">
-
-                        Select All
-
-                    </button>
-
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        onclick="clearBrands()">
-
-                        Clear
-
-                    </button>
-
-                </div>
-
-            </div>
-
-            <!-- Platforms -->
-
-            <div class="col-md-4">
-
-                <label class="form-label">
-                    Platforms
-                </label>
-
-                <select
-                    id="platformSelect"
-                    class="form-select"
-                    name="platform"
-                    multiple>
-
-                    {% for platform in platforms %}
-
-                    <option
-                        value="{{ platform }}"
-                        {% if platform in selected_platforms %}
-                        selected
-                        {% endif %}>
-
-                        {{ platform }}
-
-                    </option>
-
-                    {% endfor %}
-
-                </select>
-
-                <div class="mt-2">
-
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-primary"
-                        onclick="selectAllPlatforms()">
-
-                        Select All
-
-                    </button>
-
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        onclick="clearPlatforms()">
-
-                        Clear
-
-                    </button>
-
-                </div>
-
-            </div>
-
-            <!-- Dates -->
-
-            <div class="col-md-2">
-
-                <label class="form-label">
-                    Start Date
-                </label>
-
-                <input
-                    type="date"
-                    class="form-control"
-                    name="start_date"
-                    value="{{ start_date }}">
-
-            </div>
-
-            <div class="col-md-2">
-
-                <label class="form-label">
-                    End Date
-                </label>
-
-                <input
-                    type="date"
-                    class="form-control"
-                    name="end_date"
-                    value="{{ end_date }}">
-
-                <div class="mt-3">
-
-                    <button
-                        type="submit"
-                        class="btn btn-primary w-100">
-
-                        Apply Filters
-
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
+    <div class="col-md-4">
+      <label class="form-label">Platforms</label>
+      <select id="platformSelect" class="form-select" name="platform" multiple>
+        {% for platform in platforms %}
+        <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllPlatforms()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearPlatforms()">Clear</button>
+      </div>
     </div>
 
+    <div class="col-md-2">
+      <label class="form-label">Start Date</label>
+      <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">End Date</label>
+      <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
+      <div class="mt-3">
+        <button type="submit" class="btn-apply">Apply Filters</button>
+      </div>
+    </div>
+
+  </div>
 </div>
-
-
 </form>
 
-<div class="row">
+<!-- dashboard grid: left cards | chart | right cards -->
+<div class="row g-3 align-items-stretch">
 
+  <!-- kiri: NMV + GMV -->
+  <div class="col-lg-3 d-flex flex-column gap-3">
 
-<div class="col-lg-6">
-
-    <div class="small-box text-bg-success">
-
-        <div class="inner">
-
-            <h3>
-
-                {{ cards.total_nmv|floatformat:0 }}
-
-            </h3>
-
-            <p>
-
-                NMV
-
-            </p>
-
-        </div>
-
+    <div class="s-card metric-card card-nmv flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Merchandise Value</div>
+      <div class="metric-value">{{ cards.total_nmv|floatformat:0 }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +8.4%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">💰</div>
     </div>
 
-</div>
-
-<div class="col-lg-6">
-
-    <div class="small-box text-bg-info">
-
-        <div class="inner">
-
-            <h3>
-
-                {{ cards.total_gmv|floatformat:0 }}
-
-            </h3>
-
-            <p>
-
-                GMV
-
-            </p>
-
-        </div>
-
+    <div class="s-card metric-card card-gmv flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Gross Merchandise Value</div>
+      <div class="metric-value">{{ cards.total_gmv|floatformat:0 }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +5.1%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">📦</div>
     </div>
 
-</div>
+  </div>
 
-
-</div>
-
-<div class="card">
-
-
-<div class="card-header">
-
-    <h3 class="card-title">
-        NMV Trend
-    </h3>
-
-</div>
-
-<div class="card-body">
-
-    <div style="height:500px;">
-
+  <!-- tengah: chart -->
+  <div class="col-lg-6">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">NMV Trend</h3>
+        </div>
+        <span class="chart-badge">Daily</span>
+      </div>
+      <div class="chart-body">
         <canvas id="nmvChart"></canvas>
+      </div>
+    </div>
+  </div>
 
+  <!-- kanan: orders + quantity -->
+  <div class="col-lg-3 d-flex flex-column gap-3">
+
+    <div class="s-card metric-card card-orders flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Order Quantity</div>
+      <div class="metric-value">{{ cards.total_orders|floatformat:0 }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +8.4%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">🛒</div>
     </div>
 
+    <div class="s-card metric-card card-qty flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Sales Quantity</div>
+      <div class="metric-value">{{ cards.total_quantity|floatformat:0 }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +8.4%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">📊</div>
+    </div>
+
+  </div>
+
 </div>
 
 
-</div>
 
 {{ trend_json|json_script:"trend-data" }}
 
 {% endblock %}
 
+
 {% block extra_js %}
 
-<link
-    href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-    rel="stylesheet">
-
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-
-$(document).ready(function() {
-
-    $('#brandSelect').select2({
-        width: '100%',
-        placeholder: 'Select brands'
-    });
-
-    $('#platformSelect').select2({
-        width: '100%',
-        placeholder: 'Select platforms'
-    });
-
+$(document).ready(function () {
+  $('#brandSelect').select2({ width: '100%', placeholder: 'Select brands' });
+  $('#platformSelect').select2({ width: '100%', placeholder: 'Select platforms' });
 });
 
-function selectAllBrands() {
+function selectAllBrands()    { $('#brandSelect option').prop('selected', true);  $('#brandSelect').trigger('change'); }
+function clearBrands()        { $('#brandSelect option').prop('selected', false); $('#brandSelect').trigger('change'); }
+function selectAllPlatforms() { $('#platformSelect option').prop('selected', true);  $('#platformSelect').trigger('change'); }
+function clearPlatforms()     { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
 
-    $('#brandSelect option').prop('selected', true);
+/* ── chart ── */
+const trend  = JSON.parse(document.getElementById("trend-data").textContent);
+const labels = trend.map(i => i.date);
+const values = trend.map(i => i.nmv);
 
-    $('#brandSelect').trigger('change');
-}
+const ctx = document.getElementById("nmvChart").getContext("2d");
 
-function clearBrands() {
+const grad = ctx.createLinearGradient(0, 0, 0, 400);
+grad.addColorStop(0,   "rgba(245, 158, 11, 0.18)");
+grad.addColorStop(0.7, "rgba(245, 158, 11, 0.04)");
+grad.addColorStop(1,   "rgba(245, 158, 11, 0)");
 
-    $('#brandSelect option').prop('selected', false);
-
-    $('#brandSelect').trigger('change');
-}
-
-function selectAllPlatforms() {
-
-    $('#platformSelect option').prop('selected', true);
-
-    $('#platformSelect').trigger('change');
-}
-
-function clearPlatforms() {
-
-    $('#platformSelect option').prop('selected', false);
-
-    $('#platformSelect').trigger('change');
-}
-
-const trend = JSON.parse(
-    document.getElementById("trend-data").textContent
-);
-
-const labels = trend.map(
-    item => item.date
-);
-
-const values = trend.map(
-    item => item.nmv
-);
-
-new Chart(
-    document.getElementById("nmvChart"),
-    {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: "NMV",
-                    data: values,
-                    borderWidth: 2,
-                    tension: 0.3
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                intersect: false,
-                mode: "index"
-            }
+new Chart(ctx, {
+  type: "line",
+  data: {
+    labels,
+    datasets: [{
+      label: "NMV",
+      data: values,
+      borderColor:               "#D97706",
+      borderWidth:               2.5,
+      backgroundColor:           grad,
+      fill:                      true,
+      tension:                   0.4,
+      pointRadius:               0,
+      pointHoverRadius:          5,
+      pointHoverBackgroundColor: "#D97706",
+      pointHoverBorderColor:     "#FFFFFF",
+      pointHoverBorderWidth:     2,
+    }]
+  },
+  options: {
+    responsive:          true,
+    maintainAspectRatio: false,
+    interaction: { intersect: false, mode: "index" },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor:  "#0F172A",
+        borderColor:      "rgba(217,119,6,0.4)",
+        borderWidth:      1,
+        titleColor:       "#94A3B8",
+        bodyColor:        "#F1F5F9",
+        titleFont:        { size: 11, family: "'JetBrains Mono', monospace" },
+        bodyFont:         { size: 13, weight: '700' },
+        padding:          10,
+        cornerRadius:     8,
+        displayColors:    false,
+        callbacks: {
+          title: items => items[0].label,
+          label: item  => `NMV  ${Number(item.raw).toLocaleString()}`
         }
+      }
+    },
+    scales: {
+      x: {
+        grid:   { color: "#F1F5F9", drawBorder: false },
+        border: { display: false },
+        ticks:  { color: "#94A3B8", font: { size: 11, family: "'JetBrains Mono', monospace" }, maxTicksLimit: 10 }
+      },
+      y: {
+        grid:   { color: "#F1F5F9", drawBorder: false },
+        border: { display: false },
+        ticks:  { color: "#94A3B8", font: { size: 11 }, callback: v => Number(v).toLocaleString() }
+      }
     }
-);
-
+  }
+});
 </script>
 
 {% endblock %}

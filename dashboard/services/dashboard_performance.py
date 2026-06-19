@@ -1,6 +1,8 @@
 from django.db import connection
 from ..models import OrderMartDashboardBrandDF
 from django.db.models import Sum, Count, Q
+from dashboard.models import OrderMartDashboardBrandDF as OrderMart
+from datetime import date
 # from dashboard import models
 
 def get_order_mart_dashboard_brand(user_brands):
@@ -53,3 +55,139 @@ def get_nmv_line(filtered_data):
         {"date": str(r['date']), "gmv": float(r['gmv_sum'])}
         for r in filtered_data
     ]
+
+# ======= REFACTORED FROM HERE ==============
+
+def get_brand_performance_data(user, start_date=None, end_date=None, selected_brands=None, selected_platforms=None):
+
+    if not start_date:
+        start_date = date.today().replace(day=1).isoformat()
+
+    if not end_date:
+        end_date = date.today().isoformat()
+
+    user_brands = list(
+        user.userbrand_set
+        .values_list("brand__name", flat=True)
+        .order_by("brand__name")
+        .distinct()
+    )
+
+    base_queryset = (
+        OrderMart.objects
+        .filter(
+            date__range=[start_date, end_date],
+            brand__in=user_brands
+        )
+    )
+
+    # ==========================================
+    # AVAILABLE FILTER VALUES
+    # ==========================================
+
+    all_brands = list(
+        base_queryset
+        .values_list("brand", flat=True)
+        .distinct()
+        .order_by("brand")
+    )
+
+    all_platforms = list(
+        base_queryset
+        .values_list("platform", flat=True)
+        .distinct()
+        .order_by("platform")
+    )
+
+    # ==========================================
+    # CURRENT SELECTION
+    # ==========================================
+
+    selected_brands = selected_brands or all_brands
+    selected_platforms = selected_platforms or all_platforms
+
+    # ==========================================
+    # CASCADING BRANDS
+    # ==========================================
+
+    brands = list(
+        base_queryset
+        .filter(
+            platform__in=selected_platforms
+        )
+        .values_list("brand", flat=True)
+        .distinct()
+        .order_by("brand")
+    )
+
+    # ==========================================
+    # CASCADING PLATFORMS
+    # ==========================================
+
+    platforms = list(
+        base_queryset
+        .filter(
+            brand__in=selected_brands
+        )
+        .values_list("platform", flat=True)
+        .distinct()
+        .order_by("platform")
+    )
+
+    # ==========================================
+    # FINAL DATASET
+    # ==========================================
+
+    queryset = (
+        base_queryset
+        .filter(
+            brand__in=selected_brands,
+            platform__in=selected_platforms
+        )
+    )
+
+    # ==========================================
+    # KPI
+    # ==========================================
+
+    cards = queryset.aggregate(
+        total_nmv=Sum("nmv"),
+        total_gmv=Sum("gmv"),
+    )
+
+    cards["total_nmv"] = float(
+        cards["total_nmv"] or 0
+    )
+
+    cards["total_gmv"] = float(
+        cards["total_gmv"] or 0
+    )
+
+    # ==========================================
+    # TREND
+    # ==========================================
+
+    trend = [
+        {
+            "date": row["date"].isoformat(),
+            "nmv": float(row["nmv"] or 0),
+        }
+        for row in (
+            queryset
+            .values("date")
+            .annotate(
+                nmv=Sum("nmv")
+            )
+            .order_by("date")
+        )
+    ]
+    return {
+            "brands": brands,
+            "platforms": platforms,
+            "selected_brands": selected_brands,
+            "selected_platforms": selected_platforms,
+            "start_date": start_date,
+            "end_date": end_date,
+            "cards": cards,
+            "trend_json": trend,
+        }

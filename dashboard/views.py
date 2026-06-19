@@ -63,155 +63,23 @@ def brand_performance_view(request):
 @login_required
 def brand_performance(request):
 
-    user_brands = list(
-        request.user.userbrand_set
-        .values_list("brand__name", flat=True)
-        .order_by("brand__name")
-        .distinct()
-    )
-
-    start_date = request.GET.get(
-        "start_date",
-        date.today().replace(day=1).isoformat()
-    )
-
-    end_date = request.GET.get(
-        "end_date",
-        date.today().isoformat()
-    )
-
-    base_queryset = (
-        OrderMart.objects
-        .filter(
-            date__range=[start_date, end_date],
-            brand__in=user_brands
-        )
-    )
-
-    # ==========================================
-    # AVAILABLE FILTER VALUES
-    # ==========================================
-
-    all_brands = list(
-        base_queryset
-        .values_list("brand", flat=True)
-        .distinct()
-        .order_by("brand")
-    )
-
-    all_platforms = list(
-        base_queryset
-        .values_list("platform", flat=True)
-        .distinct()
-        .order_by("platform")
-    )
-
-    # ==========================================
-    # CURRENT SELECTION
-    # ==========================================
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
 
     selected_brands = request.GET.getlist("brand")
     selected_platforms = request.GET.getlist("platform")
 
-    # First page load = everything selected
-
-    if not selected_brands:
-        selected_brands = all_brands
-
-    if not selected_platforms:
-        selected_platforms = all_platforms
-
-    # ==========================================
-    # CASCADING BRANDS
-    # ==========================================
-
-    brands = list(
-        base_queryset
-        .filter(
-            platform__in=selected_platforms
-        )
-        .values_list("brand", flat=True)
-        .distinct()
-        .order_by("brand")
+    context = get_brand_performance_data(
+        user=request.user,
+        start_date=start_date,
+        end_date=end_date,
+        selected_brands=selected_brands,
+        selected_platforms=selected_platforms
     )
-
-    # ==========================================
-    # CASCADING PLATFORMS
-    # ==========================================
-
-    platforms = list(
-        base_queryset
-        .filter(
-            brand__in=selected_brands
-        )
-        .values_list("platform", flat=True)
-        .distinct()
-        .order_by("platform")
-    )
-
-    # ==========================================
-    # FINAL DATASET
-    # ==========================================
-
-    queryset = (
-        base_queryset
-        .filter(
-            brand__in=selected_brands,
-            platform__in=selected_platforms
-        )
-    )
-
-    # ==========================================
-    # KPI
-    # ==========================================
-
-    cards = queryset.aggregate(
-        total_nmv=Sum("nmv"),
-        total_gmv=Sum("gmv"),
-    )
-
-    cards["total_nmv"] = float(
-        cards["total_nmv"] or 0
-    )
-
-    cards["total_gmv"] = float(
-        cards["total_gmv"] or 0
-    )
-
-    # ==========================================
-    # TREND
-    # ==========================================
-
-    trend = [
-        {
-            "date": row["date"].isoformat(),
-            "nmv": float(row["nmv"] or 0),
-        }
-        for row in (
-            queryset
-            .values("date")
-            .annotate(
-                nmv=Sum("nmv")
-            )
-            .order_by("date")
-        )
-    ]
-    context = {
-            "brands": brands,
-            "platforms": platforms,
-            "selected_brands": selected_brands,
-            "selected_platforms": selected_platforms,
-            "start_date": start_date,
-            "end_date": end_date,
-            "cards": cards,
-            "trend_json": trend,
-        }
-
     return render(
         request,
         "brand_performance_view.html",
         context
-        
     )
 
 

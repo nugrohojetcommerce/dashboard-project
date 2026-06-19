@@ -1,15 +1,16 @@
 <style>
-  /* ── SIDEBAR AMBER GRADIENT (FIXED LAYOUT) ── */
+  /* ── SIDEBAR OFF-WHITE MINIMALIS (MATCHING LIGHT MODE) ── */
   .app-sidebar {
-    /* Gradasi oranye disempurnakan biar pergerakan warnanya halus & solid */
-    background: linear-gradient(160deg, #9A3412 0%, #D97706 60%, #F59E0B 100%) !important;
-    border-right: none !important;
-    box-shadow: 4px 0 24px rgba(180, 83, 9, 0.3) !important;
+    /* Sedikit lebih solid/abu dari bg-page (#F8F9FA) agar distinctive */
+    background: #FFFFFF !important; 
+    border-right: 1px solid #E4E7EB !important; /* Garis pembatas super bersih */
+    /* Kasih shadow agak tegas ke kanan biar kelihatan terpisah pas kebuka */
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.03) !important; 
   }
 
   .sidebar-brand {
     padding: 18px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 1px solid #E4E7EB;
     display: flex;
     align-items: center;
   }
@@ -17,45 +18,45 @@
   .brand-link .brand-text {
     font-size: 1rem;
     font-weight: 700;
-    color: #FFFFFF !important;
+    color: #1F2937 !important; /* Teks gelap utama */
     letter-spacing: -.2px;
   }
 
-  /* Wrapper menu biar punya jarak aman dari tepi sidebar */
+  /* Wrapper menu */
   .sidebar-wrapper {
     padding: 0 12px;
   }
 
-  /* Struktur Nav Link yang Rapi & Gak Tabrakan dengan Bawaan LTE */
+  /* Struktur Nav Link */
   .app-sidebar .nav-link {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 10px 16px;
-    margin: 6px 0; /* Jarak vertikal antar menu */
+    margin: 6px 0; 
     border-radius: 8px;
-    color: rgba(255, 255, 255, 0.8) !important; /* Putih agak transparan saat idle */
+    color: #4B5563 !important; /* Warna abu-abu text murni dashboard lu */
     font-size: .87rem;
     font-weight: 500;
     border: 1px solid transparent;
-    background: rgba(255, 255, 255, 0.08); /* Efek boks kaca transparan tipis */
+    background: transparent; /* Idle state dibikin polosan biar clean */
     transition: all 0.15s ease;
   }
 
-  /* State: Hover (Makin Terang Pas Disentuh Mouse) */
+  /* State: Hover (Mending pakai warna glass light mode lu) */
   .app-sidebar .nav-link:hover {
-    background: rgba(255, 255, 255, 0.22) !important;
-    color: #FFFFFF !important;
-    transform: translateX(2px); /* Efek geser halus pas di-hover */
+    background: #FAFAFA !important;
+    color: #FF7A00 !important; /* Icon/teks berubah oranye pas disentuh */
+    border-color: #E4E7EB;
+    transform: translateX(2px);
   }
 
-  /* State: Active (Halaman Aktif - Putih Solid & Agak Tebal) */
+  /* State: Active (Halaman Aktif - Kotak Oranye Soft khas Dashboard Lu) */
   .app-sidebar .nav-link.active {
-    background: #FFFFFF !important; /* Latar belakang menu yang aktif jadi putih solid */
-    border-color: #FFFFFF !important;
-    color: #D97706 !important; /* Teksnya mengalah jadi warna oranye biar kebaca tajam */
+    background: rgba(255, 122, 0, 0.06) !important; /* Warna oranye dim khas brand lu */
+    border-color: rgba(255, 122, 0, 0.15) !important;
+    color: #FF7A00 !important; /* Teks menyala warna oranye utama */
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
   /* Icon Menu Settings */
@@ -64,7 +65,7 @@
     width: 20px;
     text-align: center;
     flex-shrink: 0;
-    color: inherit !important; /* Warna icon selalu ngikutin warna teks biar rapi */
+    color: inherit !important; /* Otomatis ngikut warna teks link */
   }
 
   .app-sidebar .nav-link p {
@@ -72,14 +73,14 @@
     color: inherit;
   }
 
-  /* Override Total AdminLTE Dark Variables */
+  /* Override Total AdminLTE Light Variables */
   .app-sidebar[data-bs-theme="dark"] {
-    --bs-body-color: #FFFFFF;
-    --bs-body-bg: #D97706;
+    --bs-body-color: #1F2937;
+    --bs-body-bg: #FFFFFF;
   }
 </style>
 
-<aside class="app-sidebar shadow" data-bs-theme="dark">
+<aside class="app-sidebar shadow-sm">
 
     <div class="sidebar-brand">
         <a href="/" class="brand-link text-decoration-none d-flex align-items-center">

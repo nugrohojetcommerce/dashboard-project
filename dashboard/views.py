@@ -78,7 +78,7 @@ def brand_performance(request):
     )
     return render(
         request,
-        "brand_performance_view.html",
+        "brand_performance.html",
         context
     )
 

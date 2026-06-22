@@ -1,255 +1,782 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brand Performance Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* Custom base utility & dark theme tweaks */
-        body {
-            background-color: #0f0f0e;
-            color: #d4d1cb;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-        .text-muted-custom { color: #555555; }
-        .bg-card-custom { background-color: #1a1a18; border: 0.5px solid #252523; }
-        .border-custom { border-color: #252523 !important; }
-        
-        /* Form control overrides for dark look */
-        .form-control-dark {
-            background-color: #1a1a18;
-            border: 0.5px solid #2e2e2b;
-            color: #d4d1cb;
-        }
-        .form-control-dark:focus {
-            background-color: #1a1a18;
-            border-color: #1D9E75;
-            color: #d4d1cb;
-            box-shadow: none;
-        }
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Brand Performance{% endblock %}
 
-        /* Live dot animation */
-        .live-dot {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #1D9E75;
-        }
+{% block content %}
 
-        /* Loading Overlay overlayed on relative card */
-        .loading-overlay {
-            display: none;
-            position: absolute;
-            inset: 0;
-            background: rgba(15, 15, 14, 0.75);
-            z-index: 10;
-        }
-    </style>
-</head>
-<body class="py-4 px-3 px-md-5">
+<style>
+  /* ── TOKENS: ULTRA CLEAN LIGHT MODE ── */
+  :root {
+    --bg-page:        #F8F9FA; /* Abu-abu super terang/off-white biar card putihnya pop-out */
+    --card-bg:        #FFFFFF; /* Card putih bersih solid */
+    --glass-hover:    #FAFAFA;
+    --glass-border:   #E4E7EB; /* Border abu-abu netral soft */
+    --glass-border-h: #FF7A00; /* Tetap menyala oranye pas di-hover */
+    
+    --orange:         #FF7A00;
+    --orange-bright:  #D96500; /* Dipergelap dikit biar kontras di atas warna putih */
+    --orange-dim:     rgba(255, 122, 0, 0.06); 
+    --orange-glow:    rgba(255, 122, 0, 0.12);
+    --orange-deep:    #CC4400;
+    
+    /* Teks dengan kontras tinggi (Gak Nyaru Lagi) */
+    --text-primary:   #1F2937; /* Hitam pekat (Slate 800) untuk angka & judul */
+    --text-sub:       #4B5563; /* Abu-abu tua (Slate 600) untuk opsi/form */
+    --text-muted:     #6B7280; /* Abu-abu sedang (Slate 500) untuk label kpi */
+    --text-faint:     #9CA3AF; /* Abu-abu terang untuk subtitle */
+    
+    --success:        #059669; 
+    --success-bg:     #E6F4EA;
+    --danger:         #DC2626; 
+    --danger-bg:      #FCE8E6;
+    
+    --radius:         12px;
+    --radius-sm:      8px;
+    --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03); /* Soft shadow */
+    --shadow-md:      0 10px 20px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
+  }
 
-    <div class="d-flex justify-content-between align-items-center pb-3 mb-4 border-bottom border-custom">
-        <div>
-            <h1 class="h6 fw-bold text-light m-0 d-flex align-items-center gap-2">
-                <i class="fa-solid fa-chart-pie text-success"></i> Brand performance
-            </h1>
-            <div class="small text-muted-custom d-flex align-items-center gap-2 mt-1">
-                <span class="live-dot"></span> Real-time &middot; Django ORM service layer
-            </div>
-        </div>
-        <div class="small text-muted-custom d-flex align-items-center gap-2">
-            <i class="fa-regular fa-calendar"></i> Jun 2026
-        </div>
+  /* ── page background ── */
+  body, html {
+    background: var(--bg-page) !important;
+    color: var(--text-primary) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* ── page header ── */
+  .bp-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .bp-header h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -.3px;
+    margin: 0;
+  }
+  .bp-header .bp-subtitle {
+    font-size: .75rem;
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  /* ── clean card base ── */
+  .s-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+  }
+
+  /* ── filter panel ── */
+  .filter-panel {
+    padding: 18px 22px 22px;
+    margin-bottom: 20px;
+  }
+  .filter-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .filter-icon {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    background: var(--orange-dim);
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--orange);
+    flex-shrink: 0;
+  }
+  .filter-panel-header span {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .09em;
+  }
+
+  /* form controls */
+  .filter-panel .form-label {
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .filter-panel .form-control,
+  .filter-panel .form-select {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary) !important;
+    font-size: .87rem;
+    padding: 8px 11px;
+    transition: border-color .18s, box-shadow .18s;
+    box-shadow: none !important;
+  }
+  .filter-panel .form-control:focus,
+  .filter-panel .form-select:focus {
+    border-color: var(--orange) !important;
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
+    outline: none;
+  }
+  .filter-panel .form-control::placeholder {
+    color: var(--text-faint);
+  }
+  .filter-panel .form-select option {
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+
+  /* select2 light mode overrides */
+  .select2-container--default .select2-selection--multiple {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-sm) !important;
+    min-height: 38px !important;
+    padding: 2px 6px !important;
+    box-shadow: none !important;
+  }
+  .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: var(--orange) !important;
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background: var(--orange-dim) !important;
+    border: 1px solid rgba(255, 122, 0, 0.15) !important;
+    color: var(--orange-bright) !important;
+    border-radius: 4px !important;
+    font-size: .75rem !important;
+    font-weight: 600 !important;
+    padding: 2px 8px 2px 22px !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: var(--orange) !important;
+    margin-right: 5px !important;
+  }
+  .select2-container--default .select2-search--inline .select2-search__field {
+    color: var(--text-primary) !important;
+    font-size: .85rem !important;
+    background: transparent !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    padding: 0 !important;
+  }
+  .select2-dropdown {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+  }
+  .select2-container--default .select2-results__option {
+    color: var(--text-sub) !important;
+    font-size: .85rem !important;
+    padding: 8px 12px !important;
+  }
+  .select2-container--default .select2-results__option--highlighted {
+    background: var(--orange-dim) !important;
+    color: var(--orange-bright) !important;
+  }
+  .select2-container--default .select2-results__option--selected {
+    background: #F3F4F6 !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+  }
+  .select2-search--dropdown .select2-search__field {
+    background: var(--bg-page) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 6px !important;
+    color: var(--text-primary) !important;
+    padding: 7px 10px !important;
+    outline: none !important;
+  }
+  .select2-results__options::-webkit-scrollbar { width: 4px; }
+  .select2-results__options::-webkit-scrollbar-track { background: transparent; }
+  .select2-results__options::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); border-radius: 4px; }
+
+  /* quick action buttons */
+  .btn-ghost-amber {
+    font-size: .72rem; font-weight: 700;
+    color: var(--orange-bright);
+    background: var(--orange-dim);
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    letter-spacing: .02em;
+  }
+  .btn-ghost-amber:hover {
+    background: var(--orange-glow);
+    border-color: rgba(255, 122, 0, 0.3);
+  }
+
+  .btn-ghost-muted {
+    font-size: .72rem; font-weight: 600;
+    color: var(--text-muted);
+    background: #F3F4F6;
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background .15s;
+    letter-spacing: .02em;
+  }
+  .btn-ghost-muted:hover { background: #E5E7EB; }
+
+  /* apply button */
+  .btn-apply {
+    width: 100%;
+    padding: 9px;
+    border-radius: var(--radius-sm);
+    font-size: .8rem; font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, #FF7A00, #CC4400);
+    border: 1px solid rgba(255, 122, 0, 0.2);
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s, box-shadow .15s;
+    box-shadow: 0 4px 12px rgba(255, 100, 0, 0.2);
+  }
+  .btn-apply:hover {
+    opacity: .92;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 100, 0, 0.3);
+  }
+  .btn-apply:active { transform: translateY(0); }
+
+  /* ── metric cards ── */
+  .metric-card {
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+  }
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--glass-border-h);
+  }
+
+  /* colored top border accent */
+  .metric-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .card-nmv::after    { background: linear-gradient(90deg, #FF7A00, #FFB347); }
+  .card-gmv::after    { background: linear-gradient(90deg, #FF4400, #FF7A00); }
+  .card-orders::after { background: linear-gradient(90deg, #FF9500, #FFCC44); }
+  .card-qty::after    { background: linear-gradient(90deg, #FF5500, #FF8844); }
+
+  .metric-label {
+    font-size: .65rem; font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .label-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .card-nmv    .label-dot { background: #FF7A00; }
+  .card-gmv    .label-dot { background: #FF4400; }
+  .card-orders .label-dot { background: #FF9500; }
+  .card-qty    .label-dot { background: #FF5500; }
+
+  .metric-value {
+    font-size: 1.5rem; font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -.5px; line-height: 1;
+    margin-bottom: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+  }
+
+  .metric-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 4px;
+  }
+  .metric-change {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: .7rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+  }
+  .metric-change.up   { background: var(--success-bg); color: var(--success); }
+  .metric-change.down { background: var(--danger-bg);  color: var(--danger);  }
+  .metric-vs { font-size: .65rem; color: var(--text-muted); }
+
+  .metric-icon {
+    position: absolute;
+    bottom: 10px; right: 14px;
+    font-size: 1.8rem; opacity: .06; line-height: 1;
+  }
+
+  /* ── chart card ── */
+  .chart-card {
+    padding: 18px 22px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--glass-border);
+    flex-shrink: 0;
+  }
+  .chart-title-group { display: flex; align-items: center; gap: 10px; }
+  .chart-accent-bar {
+    width: 3px; height: 18px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #FF7A00, #CC4400);
+    flex-shrink: 0;
+  }
+  .chart-title {
+    font-size: .9rem; font-weight: 700;
+    color: var(--text-primary); margin: 0;
+  }
+  .chart-badge {
+    font-size: .66rem; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+    background: var(--orange-dim);
+    color: var(--orange-bright);
+    letter-spacing: .05em; text-transform: uppercase;
+    border: 1px solid rgba(255, 122, 0, 0.15);
+  }
+  .chart-body {
+    flex: 1;
+    position: relative;
+    min-height: 0;
+  }
+
+  /* ── metric col layout ── */
+  .metric-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+</style>
+
+<div class="bp-header">
+  <h1>Brand Performance</h1>
+  <span class="bp-subtitle">/ Overview</span>
+</div>
+
+<form method="get" id="filterForm">
+<div class="s-card filter-panel">
+
+  <div class="filter-panel-header">
+    <div class="filter-icon">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    </div>
+    <span>Filters</span>
+  </div>
+
+  <div class="row g-3 align-items-start">
+
+    <div class="col-md-4">
+      <label class="form-label">Brands</label>
+      <select id="brandSelect" class="form-select" name="brand" multiple>
+        {% for brand in brands %}
+        <option value="{{ brand }}" {% if brand in selected_brands %}selected{% endif %}>{{ brand }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllBrands()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearBrands()">Clear</button>
+      </div>
     </div>
 
-    <div class="row g-3 mb-4 align-items-end">
-        <div class="col-6 col-md">
-            <label for="platform" class="form-label small text-uppercase text-muted-custom fw-semibold tracking-wider m-1" style="font-size: 11px;">Brand</label>
-            <select id="platform" class="form-select form-control-dark">
-                <option value="all">All</option>
-                <option value="Shopee">Shopee</option>
-                <option value="Tiktok">TikTok</option>
-                <option value="Lazada">Lazada</option>
-            </select>
-        </div>
-        <div class="col-6 col-md">
-            <label for="brand" class="form-label small text-uppercase text-muted-custom fw-semibold tracking-wider m-1" style="font-size: 11px;">Brand</label>
-            <select id="brand" class="form-select form-control-dark">
-                {% for b in brands %}
-                <option value="{{ b }}">{{ b }}</option>
-                {% empty %}
-                <option value="all">All brands</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-6 col-md">
-            <label for="start_date" class="form-label small text-uppercase text-muted-custom fw-semibold tracking-wider m-1" style="font-size: 11px;">Start date</label>
-            <input type="date" id="start_date" class="form-control form-control-dark" value="2026-06-01">
-        </div>
-        <div class="col-6 col-md">
-            <label for="end_date" class="form-label small text-uppercase text-muted-custom fw-semibold tracking-wider m-1" style="font-size: 11px;">End date</label>
-            <input type="date" id="end_date" class="form-control form-control-dark" value="2026-06-05">
-        </div>
-        <div class="col-6 col-md">
-            <button id="loadData" class="btn text-white w-100 fw-semibold d-flex align-items-center justify-content-center gap-2" style="background-color: #1D9E75;">
-                <i class="fa-solid fa-arrows-rotate"></i> Load
-            </button>
-        </div>
+    <div class="col-md-4">
+      <label class="form-label">Platforms</label>
+      <select id="platformSelect" class="form-select" name="platform" multiple>
+        {% for platform in platforms %}
+        <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllPlatforms()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearPlatforms()">Clear</button>
+      </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="card bg-card-custom p-3 rounded-3 h-100 border-0">
-                <div class="small text-uppercase text-muted-custom fw-semibold tracking-wider mb-2" style="font-size: 11px;">Net merchandise value</div>
-                <div class="h4 fw-bold text-light mb-2" id="val_nmv">Rp 0</div>
-                <div style="height: 2px; width: 28px; background: #1D9E75; border-radius: 1px;"></div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="card bg-card-custom p-3 rounded-3 h-100 border-0">
-                <div class="small text-uppercase text-muted-custom fw-semibold tracking-wider mb-2" style="font-size: 11px;">Gross merchandise value</div>
-                <div class="h4 fw-bold text-light mb-2" id="val_gmv">Rp 0</div>
-                <div style="height: 2px; width: 28px; background: #7F77DD; border-radius: 1px;"></div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="card bg-card-custom p-3 rounded-3 h-100 border-0">
-                <div class="small text-uppercase text-muted-custom fw-semibold tracking-wider mb-2" style="font-size: 11px;">Net order qty</div>
-                <div class="h4 fw-bold text-light mb-2" id="val_net_order">0</div>
-                <div style="height: 2px; width: 28px; background: #EF9F27; border-radius: 1px;"></div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="card bg-card-custom p-3 rounded-3 h-100 border-0">
-                <div class="small text-uppercase text-muted-custom fw-semibold tracking-wider mb-2" style="font-size: 11px;">Net product sales qty</div>
-                <div class="h4 fw-bold text-light mb-2" id="val_net_quantity">0</div>
-                <div style="height: 2px; width: 28px; background: #D4537E; border-radius: 1px;"></div>
-            </div>
-        </div>
+    <div class="col-md-2">
+      <label class="form-label">Start Date</label>
+      <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
     </div>
 
-    <div class="card bg-card-custom p-4 rounded-3 position-relative border-0">
-        <div class="loading-overlay rounded-3 align-items-center justify-content-center" id="loadingBox">
-            <div class="spinner-border text-success" role="status" style="width: 1.5rem; height: 1.5rem;"></div>
-        </div>
-        
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div class="small fw-medium text-secondary d-flex align-items-center gap-2" style="font-size: 13px;">
-                <i class="fa-solid fa-chart-line text-success"></i> NMV trend over time
-            </div>
-            <span class="badge rounded-pill px-2 py-1" style="background-color: #085041; color: #9FE1CB; font-size: 11px;">NMV · IDR</span>
-        </div>
-        
-        <div style="position: relative; height: 300px;">
-            <canvas id="chart-nmv-line"></canvas>
-        </div>
+    <div class="col-md-2">
+      <label class="form-label">End Date</label>
+      <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
+      <div class="mt-3">
+        <button type="submit" class="btn-apply">Apply Filters</button>
+      </div>
     </div>
-    <script>
-        let chartInstance;
 
-        function formatIDR(val) {
-            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+  </div>
+</div>
+</form>
+
+<!-- BARIS 1 -->
+<div class="row g-3 align-items-stretch" style="min-height: 300px;">
+
+  <div class="col-lg-2 d-flex flex-column gap-3">
+
+    <div class="s-card metric-card card-nmv flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Merchandise Value</div>
+      <div class="metric-value">Rp{{ cards.total_nmv|floatformat:0|intcomma }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +8.4%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">💰</div>
+    </div>
+
+    <div class="s-card metric-card card-gmv flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Gross Merchandise Value</div>
+      <div class="metric-value">Rp{{ cards.total_gmv|floatformat:0|intcomma }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +5.1%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">📦</div>
+    </div>
+
+  </div>
+
+  <div class="col-lg-2 d-flex flex-column gap-3">
+
+    <div class="s-card metric-card card-orders flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Order Quantity</div>
+      <div class="metric-value">{{ cards.total_orders|floatformat:0|intcomma }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +8.4%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">🛒</div>
+    </div>
+
+    <div class="s-card metric-card card-qty flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Sales Quantity</div>
+      <div class="metric-value">{{ cards.total_quantity|floatformat:0|intcomma }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +8.4%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">📊</div>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">NMV Trend</h3>
+        </div>
+        <span class="chart-badge">Daily</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="nmvChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BARIS 2 -->
+<div class="row g-3 align-items-stretch pt-3" style="min-height: 300px;">
+
+  <div class="col-lg-8">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">NMV Cumulative</h3>
+        </div>
+        <span class="chart-badge">Daily</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="nmvCumChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- <div class="col-lg-4 d-flex flex-column gap-3">
+
+    <div class="s-card metric-card card-nmv flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Merchandise Value</div>
+      <div class="metric-value">{{ cards.total_nmv|floatformat:0 }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +8.4%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">💰</div>
+    </div>
+
+    <div class="s-card metric-card card-gmv flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Gross Merchandise Value</div>
+      <div class="metric-value">{{ cards.total_gmv|floatformat:0 }}</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +5.1%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">📦</div>
+    </div>
+
+  </div> -->
+
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Platform Contribution</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="platformDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{{ trend_json|json_script:"trend-data" }}
+{{ trend_cum_json|json_script:"trend-cum-data" }}
+{{ platform_nmv_json|json_script:"platform-nmv-data" }}
+
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function () {
+  $('#brandSelect').select2({ width: '100%', placeholder: 'Select brands' });
+  $('#platformSelect').select2({ width: '100%', placeholder: 'Select platforms' });
+});
+
+function selectAllBrands()    { $('#brandSelect option').prop('selected', true);  $('#brandSelect').trigger('change'); }
+function clearBrands()        { $('#brandSelect option').prop('selected', false); $('#brandSelect').trigger('change'); }
+function selectAllPlatforms() { $('#platformSelect option').prop('selected', true);  $('#platformSelect').trigger('change'); }
+function clearPlatforms()     { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
+
+/* ── CHART CONFIG TREND NMV ── */
+const trend  = JSON.parse(document.getElementById("trend-data").textContent);
+const labels = trend.map(i => i.date);
+const values = trend.map(i => i.nmv);
+
+const ctx = document.getElementById("nmvChart").getContext("2d");
+
+// Gradasi bawah garis dibikin soft orange menuju transparan
+const grad = ctx.createLinearGradient(0, 0, 0, 320);
+grad.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
+grad.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
+grad.addColorStop(1,   "rgba(255, 122, 0, 0)");
+
+new Chart(ctx, {
+  type: "line",
+  data: {
+    labels,
+    datasets: [{
+      label: "NMV",
+      data: values,
+      borderColor:               "#FF7A00",
+      borderWidth:               2,
+      backgroundColor:           grad,
+      fill:                      true,
+      tension:                   0.35,
+      pointRadius:               0,
+      pointHoverRadius:          5,
+      pointHoverBackgroundColor: "#FF7A00",
+      pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+      pointHoverBorderWidth:     2,
+    }]
+  },
+  options: {
+    responsive:          true,
+    maintainAspectRatio: false,
+    interaction: { intersect: false, mode: "index" },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
+        borderColor:      "#E4E7EB",
+        borderWidth:      1,
+        titleColor:       "#6B7280",
+        bodyColor:        "#1F2937",
+        titleFont:        { size: 11, family: "Inter, sans-serif" },
+        bodyFont:         { size: 13, weight: '700' },
+        padding:          10,
+        cornerRadius:     6,
+        displayColors:    false,
+        boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
+        callbacks: {
+          title: items => items[0].label,
+          label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
         }
-        
-        function formatNum(val) {
-            return new Intl.NumberFormat('id-ID').format(val);
+      }
+    },
+    scales: {
+      x: {
+        grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+        border: { display: false },
+        ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+      },
+      y: {
+        grid:   { color: "#F3F4F6", drawBorder: false },
+        border: { display: false },
+        ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
+      }
+    }
+  }
+});
+
+/* ── CHART CONFIG CUMULATIVE NMV ── */
+const trend_cum  = JSON.parse(document.getElementById("trend-cum-data").textContent);
+// const labels_cum = trend.map(i => i.date);
+const values_cum = trend_cum.map(i => i.nmv);
+
+const ctx_cum = document.getElementById("nmvCumChart").getContext("2d");
+
+const grad_cum = ctx_cum.createLinearGradient(0, 0, 0, 500);
+grad_cum.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
+grad_cum.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
+grad_cum.addColorStop(1,   "rgba(255, 122, 0, 0)");
+
+
+new Chart(ctx_cum, {
+  type: "line",
+  data: {
+    labels,
+    datasets: [{
+      label: "NMV Cumulative",
+      data: values_cum,
+      borderColor:               "#FF7A00",
+      borderWidth:               2,
+      backgroundColor:           grad_cum,
+      fill:                      true,
+      tension:                   0.35,
+      pointRadius:               3,
+      pointHoverRadius:          5,
+      pointHoverBackgroundColor: "#FF7A00",
+      pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+      pointHoverBorderWidth:     2,
+    }]
+  },
+  options: {
+    responsive:          true,
+    maintainAspectRatio: false,
+    interaction: { intersect: false, mode: "index" },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
+        borderColor:      "#E4E7EB",
+        borderWidth:      1,
+        titleColor:       "#6B7280",
+        bodyColor:        "#1F2937",
+        titleFont:        { size: 11, family: "Inter, sans-serif" },
+        bodyFont:         { size: 13, weight: '700' },
+        padding:          10,
+        cornerRadius:     6,
+        displayColors:    false,
+        boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
+        callbacks: {
+          title: items => items[0].label,
+          label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
         }
+      }
+    },
+    scales: {
+      x: {
+        grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+        border: { display: false },
+        ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+      },
+      y: {
+        grid:   { color: "#F3F4F6", drawBorder: false },
+        border: { display: false },
+        ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
+      }
+    }
+  }
+});
 
-        function loadDashboardData() {
-            $("#loadingBox").addClass('d-flex');
+// PLATFORM CONTRIBUTION DONUT CHART
+const donut_data  = JSON.parse(document.getElementById("platform-nmv-data").textContent);
+const donutLabels = donut_data.map(item => item.platform);
+const donutValues = donut_data.map(item => item.nmv);
+const ctx_donut = document.getElementById("platformDonutChart").getContext("2d");
+const donutPalette = [
+  "#FF7A00", "#10B981", "#0055FF", "#FFB347", "#6B7280",
+  "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6", "#14B8A6"
+];
+new Chart(ctx_donut, {
+  type: "doughnut", // 1. WAJIB set type jadi doughnut
+  data: {
+    labels: donutLabels, // 2. Label untuk tiap potongan (slice)
+    datasets: [{
+      data: donutValues, // 3. Angka/Value tiap potongan (harus berurutan dengan label)
+      backgroundColor: donutPalette.slice(0, donutLabels.length), // 4. Warna tiap potongan
+      borderWidth: 5,
+      borderColor: "#FFFFFF" // Garis pembatas antar potongan
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    
+    // 5. ATRIBUT KHUSUS DONUT CHART
+    cutout: "40%", // Menentukan besar lubang di tengah. Kalau di-set "0%" dia bakal jadi Pie Chart (buntet)
+    
+    plugins: {
+      legend: {
+        display: true,
+        position: "bottom" // Posisi kotak keterangan label (top, bottom, left, right)
+      }
+    }
+  }
+});
+</script>
 
-            const params = {
-                start_date: $("#start_date").val(),
-                end_date: $("#end_date").val(),
-                brand: $("#brand").val(),
-                platform: $("#platform").val()
-            };
-
-            $.get("/api/brand_performance", params, function(response) {
-                $("#loadingBox").removeClass('d-flex');
-
-                $("#val_nmv").text(formatIDR(response.cards.total_nmv));
-                $("#val_gmv").text(formatIDR(response.cards.total_gmv));
-                $("#val_net_order").text(formatNum(response.cards.total_net_order));
-                $("#val_net_quantity").text(formatNum(response.cards.total_net_quantity));
-
-                const labels = response.trend.map(item => item.date);
-                const values = response.trend.map(item => item.gmv);
-
-                if (chartInstance) {
-                    chartInstance.data.labels = labels;
-                    chartInstance.data.datasets[0].data = values;
-                    chartInstance.update();
-                } else {
-                    const ctx = document.getElementById('chart-nmv-line').getContext('2d');
-                    chartInstance = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'NMV (IDR)',
-                                data: values,
-                                borderColor: '#1D9E75',
-                                backgroundColor: 'rgba(29,158,117,0.08)',
-                                borderWidth: 2,
-                                fill: true,
-                                tension: 0.3,
-                                pointRadius: 4,
-                                pointBackgroundColor: '#1D9E75',
-                                pointBorderColor: '#1a1a18',
-                                pointBorderWidth: 2,
-                                pointHoverRadius: 6
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    backgroundColor: '#1a1a18',
-                                    borderColor: '#2e2e2b',
-                                    borderWidth: 1,
-                                    titleColor: '#d4d1cb',
-                                    bodyColor: '#9FE1CB',
-                                    padding: 12,
-                                    callbacks: {
-                                        label: ctx => '  ' + formatIDR(ctx.raw)
-                                    }
-                                }
-                            },
-                            scales: {
-                                y: {
-                                    grid: { color: 'rgba(255,255,255,0.04)' },
-                                    ticks: {
-                                        color: '#555',
-                                        font: { size: 11 },
-                                        callback: v => 'Rp ' + Intl.NumberFormat('id-ID', { notation: 'compact' }).format(v)
-                                    },
-                                    border: { display: false }
-                                },
-                                x: {
-                                    grid: { display: false },
-                                    ticks: { color: '#555', font: { size: 11 } },
-                                    border: { display: false }
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-        }
-
-        $("#loadData").click(loadDashboardData);
-        $("#start_date, #end_date, #brand, #platform").change(loadDashboardData);
-        $(document).ready(loadDashboardData);
-    </script>
-</body>
-</html>
+{% endblock %}

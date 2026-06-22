@@ -1,0 +1,216 @@
+{% extends "base.html" %} {% block title %} Brand Performance {% endblock %} {% block content %}
+<div class="row mb-3">
+  <div class="col-12">
+    <h1>Brand Performance</h1>
+  </div>
+</div>
+<div class="card mb-4">
+  <div class="card-header"><h3 class="card-title">Filters</h3></div>
+
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-4">
+        <label class="form-label"> Brands </label>
+
+        <select id="brandSelect" class="form-select" multiple>
+          {% for brand in brands %}
+          <option value="{{ brand }}" selected>{{ brand }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label"> Platforms </label>
+
+        <select id="platformSelect" class="form-select" multiple>
+          {% for platform in platforms %}
+          <option value="{{ platform }}" selected>{{ platform }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label"> Start Date </label>
+
+        <input
+          id="startDate"
+          type="date"
+          class="form-control"
+          value="{{ start_date }}"
+        />
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label"> End Date </label>
+
+        <input
+          id="endDate"
+          type="date"
+          class="form-control"
+          value="{{ end_date }}"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-lg-6">
+    <div class="small-box text-bg-success">
+      <div class="inner">
+        <h3 id="nmvCard">-</h3>
+        <p>NMV</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="small-box text-bg-info">
+      <div class="inner">
+        <h3 id="gmvCard">-</h3>
+        <p>GMV</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">NMV Trend</h3>
+  </div>
+
+  <div class="card-body">
+    <div style="height: 500px">
+      <canvas id="nmvChart"></canvas>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+<link
+  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+  rel="stylesheet"
+/>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+  const API_URL = "{% url 'brand_performance_api_new' %}";
+
+  let nmvChart;
+  let debounceTimer;
+  let controller = null;
+
+  $(function () {
+    $("#brandSelect").select2({
+      width: "100%",
+      closeOnSelect: false,
+    });
+
+    $("#platformSelect").select2({
+      width: "100%",
+      closeOnSelect: false,
+    });
+
+    initializeChart();
+
+    registerEvents();
+
+    loadDashboard();
+  });
+
+  function initializeChart() {
+    nmvChart = new Chart(document.getElementById("nmvChart"), {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "NMV",
+            data: [],
+            borderWidth: 2,
+            tension: 0.3,
+          },
+          {
+            label: "GMV",
+            data: [],
+            borderWidth: 2,
+            tension: 0.3,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: "index",
+          intersect: false,
+        },
+        plugins: {
+          legend: {
+            position: "top",
+          },
+        },
+      },
+    });
+  }
+  function registerEvents() {
+    $("#brandSelect").on("change", debounceLoad);
+
+    $("#platformSelect").on("change", debounceLoad);
+    $("#startDate").on("change", loadDashboard);
+    $("#endDate").on("change", loadDashboard);
+  }
+
+  function debounceLoad() {
+    clearTimeout(debounceTimer);
+
+    debounceTimer = setTimeout(loadDashboard, 300);
+  }
+
+  function loadDashboard() {
+    if (controller) {
+      controller.abort();
+    }
+    controller = new AbortController();
+
+    const params = new URLSearchParams();
+
+    ($("#brandSelect").val() || []).forEach((brand) =>
+      params.append("brand", brand),
+    );
+
+    ($("#platformSelect").val() || []).forEach((platform) =>
+      params.append("platform", platform),
+    );
+
+    params.append("start_date", $("#startDate").val());
+
+    params.append("end_date", $("#endDate").val());
+
+    fetch(`${API_URL}?${params}`, {
+      signal: controller.signal,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        $("#nmvCard").text(Number(data.cards.total_nmv).toLocaleString());
+
+        $("#gmvCard").text(Number(data.cards.total_gmv).toLocaleString());
+
+        nmvChart.data.labels = data.trend.map((row) => row.date);
+
+        nmvChart.data.datasets[0].data = data.trend.map((row) => row.nmv);
+
+        nmvChart.data.datasets[1].data = data.trend.map((row) => row.gmv);
+
+        nmvChart.update();
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          console.error(error);
+        }
+      });
+  }
+</script>
+
+{% endblock %}

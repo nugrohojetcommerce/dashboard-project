@@ -7,22 +7,32 @@ Brand Performance
 {% block content %}
 
 <div class="row mb-3">
-    <div class="col-12">
-        <h1>Brand Performance</h1>
-    </div>
+<div class="col-12">
+
+    <h1>
+        Brand Performance
+    </h1>
+
 </div>
 
+</div>
+
+<form method="get" id="filterForm">
 <div class="card mb-4">
 
     <div class="card-header">
+
         <h3 class="card-title">
             Filters
         </h3>
+
     </div>
 
     <div class="card-body">
 
         <div class="row">
+
+            <!-- Brands -->
 
             <div class="col-md-4">
 
@@ -33,21 +43,50 @@ Brand Performance
                 <select
                     id="brandSelect"
                     class="form-select"
+                    name="brand"
                     multiple>
 
                     {% for brand in brands %}
+
                     <option
                         value="{{ brand }}"
-                        selected>
+                        {% if brand in selected_brands %}
+                        selected
+                        {% endif %}>
 
                         {{ brand }}
 
                     </option>
+
                     {% endfor %}
 
                 </select>
 
+                <div class="mt-2">
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        onclick="selectAllBrands()">
+
+                        Select All
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        onclick="clearBrands()">
+
+                        Clear
+
+                    </button>
+
+                </div>
+
             </div>
+
+            <!-- Platforms -->
 
             <div class="col-md-4">
 
@@ -58,21 +97,50 @@ Brand Performance
                 <select
                     id="platformSelect"
                     class="form-select"
+                    name="platform"
                     multiple>
 
                     {% for platform in platforms %}
+
                     <option
                         value="{{ platform }}"
-                        selected>
+                        {% if platform in selected_platforms %}
+                        selected
+                        {% endif %}>
 
                         {{ platform }}
 
                     </option>
+
                     {% endfor %}
 
                 </select>
 
+                <div class="mt-2">
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        onclick="selectAllPlatforms()">
+
+                        Select All
+
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        onclick="clearPlatforms()">
+
+                        Clear
+
+                    </button>
+
+                </div>
+
             </div>
+
+            <!-- Dates -->
 
             <div class="col-md-2">
 
@@ -81,9 +149,9 @@ Brand Performance
                 </label>
 
                 <input
-                    id="startDate"
                     type="date"
                     class="form-control"
+                    name="start_date"
                     value="{{ start_date }}">
 
             </div>
@@ -95,10 +163,22 @@ Brand Performance
                 </label>
 
                 <input
-                    id="endDate"
                     type="date"
                     class="form-control"
+                    name="end_date"
                     value="{{ end_date }}">
+
+                <div class="mt-3">
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary w-100">
+
+                        Apply Filters
+
+                    </button>
+
+                </div>
 
             </div>
 
@@ -108,63 +188,88 @@ Brand Performance
 
 </div>
 
+
+</form>
+
 <div class="row">
 
-    <div class="col-lg-6">
 
-        <div class="small-box text-bg-success">
+<div class="col-lg-6">
 
-            <div class="inner">
+    <div class="small-box text-bg-success">
 
-                <h3 id="nmvCard">
-                    -
-                </h3>
+        <div class="inner">
 
-                <p>NMV</p>
+            <h3>
 
-            </div>
+                {{ cards.total_nmv|floatformat:0 }}
+
+            </h3>
+
+            <p>
+
+                NMV
+
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="col-lg-6">
+
+    <div class="small-box text-bg-info">
+
+        <div class="inner">
+
+            <h3>
+
+                {{ cards.total_gmv|floatformat:0 }}
+
+            </h3>
+
+            <p>
+
+                GMV
+
+            </p>
 
         </div>
 
     </div>
 
-    <div class="col-lg-6">
+</div>
 
-        <div class="small-box text-bg-info">
-
-            <div class="inner">
-
-                <h3 id="gmvCard">
-                    -
-                </h3>
-
-                <p>GMV</p>
-
-            </div>
-
-        </div>
-
-    </div>
 
 </div>
 
 <div class="card">
 
-    <div class="card-header">
-        <h3 class="card-title">
-            NMV Trend
-        </h3>
-    </div>
 
-    <div class="card-body">
+<div class="card-header">
 
-        <div style="height:500px;">
-            <canvas id="nmvChart"></canvas>
-        </div>
+    <h3 class="card-title">
+        NMV Trend
+    </h3>
+
+</div>
+
+<div class="card-body">
+
+    <div style="height:500px;">
+
+        <canvas id="nmvChart"></canvas>
 
     </div>
 
 </div>
+
+
+</div>
+
+{{ trend_json|json_script:"trend-data" }}
 
 {% endblock %}
 
@@ -180,213 +285,85 @@ Brand Performance
 
 <script>
 
-const API_URL =
-    "{% url 'brand_performance_api' %}";
-
-let nmvChart;
-let debounceTimer;
-let controller = null;
-
-$(function () {
+$(document).ready(function() {
 
     $('#brandSelect').select2({
         width: '100%',
-        closeOnSelect: false
+        placeholder: 'Select brands'
     });
 
     $('#platformSelect').select2({
         width: '100%',
-        closeOnSelect: false
+        placeholder: 'Select platforms'
     });
-
-    initializeChart();
-
-    registerEvents();
-
-    loadDashboard();
 
 });
 
-function initializeChart() {
+function selectAllBrands() {
 
-    nmvChart = new Chart(
-        document.getElementById(
-            'nmvChart'
-        ),
-        {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [
-                    {
-                        label: 'NMV',
-                        data: [],
-                        borderWidth: 2,
-                        tension: 0.3
-                    },
-                    {
-                        label: 'GMV',
-                        data: [],
-                        borderWidth: 2,
-                        tension: 0.3
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false
-                },
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    }
+    $('#brandSelect option').prop('selected', true);
+
+    $('#brandSelect').trigger('change');
+}
+
+function clearBrands() {
+
+    $('#brandSelect option').prop('selected', false);
+
+    $('#brandSelect').trigger('change');
+}
+
+function selectAllPlatforms() {
+
+    $('#platformSelect option').prop('selected', true);
+
+    $('#platformSelect').trigger('change');
+}
+
+function clearPlatforms() {
+
+    $('#platformSelect option').prop('selected', false);
+
+    $('#platformSelect').trigger('change');
+}
+
+const trend = JSON.parse(
+    document.getElementById("trend-data").textContent
+);
+
+const labels = trend.map(
+    item => item.date
+);
+
+const values = trend.map(
+    item => item.nmv
+);
+
+new Chart(
+    document.getElementById("nmvChart"),
+    {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: "NMV",
+                    data: values,
+                    borderWidth: 2,
+                    tension: 0.3
                 }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                intersect: false,
+                mode: "index"
             }
         }
-    );
-
-}
-
-function registerEvents() {
-
-    $('#brandSelect').on(
-        'change',
-        debounceLoad
-    );
-
-    $('#platformSelect').on(
-        'change',
-        debounceLoad
-    );
-
-    $('#startDate').on(
-        'change',
-        loadDashboard
-    );
-
-    $('#endDate').on(
-        'change',
-        loadDashboard
-    );
-
-}
-
-function debounceLoad() {
-
-    clearTimeout(
-        debounceTimer
-    );
-
-    debounceTimer = setTimeout(
-        loadDashboard,
-        300
-    );
-
-}
-
-function loadDashboard() {
-
-    if (controller) {
-        controller.abort();
     }
-
-    controller =
-        new AbortController();
-
-    const params =
-        new URLSearchParams();
-
-    ($('#brandSelect').val() || [])
-        .forEach(
-            brand =>
-                params.append(
-                    'brand',
-                    brand
-                )
-        );
-
-    ($('#platformSelect').val() || [])
-        .forEach(
-            platform =>
-                params.append(
-                    'platform',
-                    platform
-                )
-        );
-
-    params.append(
-        'start_date',
-        $('#startDate').val()
-    );
-
-    params.append(
-        'end_date',
-        $('#endDate').val()
-    );
-
-    fetch(
-        `${API_URL}?${params}`,
-        {
-            signal:
-                controller.signal
-        }
-    )
-    .then(
-        response => response.json()
-    )
-    .then(
-        data => {
-
-            $('#nmvCard').text(
-                Number(
-                    data.cards.total_nmv
-                ).toLocaleString()
-            );
-
-            $('#gmvCard').text(
-                Number(
-                    data.cards.total_gmv
-                ).toLocaleString()
-            );
-
-            nmvChart.data.labels =
-            data.trend.map(
-                row => row.date
-            );
-
-            nmvChart.data.datasets[0].data =
-                data.trend.map(
-                    row => row.nmv
-                );
-
-            nmvChart.data.datasets[1].data =
-                data.trend.map(
-                    row => row.gmv
-                );
-
-            nmvChart.update();
-
-        }
-    )
-    .catch(
-        error => {
-
-            if (
-                error.name !==
-                'AbortError'
-            ) {
-                console.error(
-                    error
-                );
-            }
-
-        }
-    );
-
-}
+);
 
 </script>
 

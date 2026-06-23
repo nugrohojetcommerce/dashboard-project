@@ -170,12 +170,14 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         {
             "date": row["date"].isoformat(),
             "nmv": float(row["nmv"] or 0),
+            "gmv": float(row["gmv"] or 0),
         }
         for row in (
             queryset
             .values("date")
             .annotate(
-                nmv=Sum("nmv")
+                nmv=Sum("nmv"),
+                gmv=Sum("gmv"),
             )
             .order_by("date")
         )

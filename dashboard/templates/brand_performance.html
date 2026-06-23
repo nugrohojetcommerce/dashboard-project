@@ -600,7 +600,8 @@ function clearBrands()        { $('#brandSelect option').prop('selected', false)
 function selectAllPlatforms() { $('#platformSelect option').prop('selected', true);  $('#platformSelect').trigger('change'); }
 function clearPlatforms()     { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
 
-let nmvTrend
+let nmvTrend;
+let debounceTimer;
 function initChart(){
 
   const grad = document.getElementById("nmvChart").getContext("2d").createLinearGradient(0, 0, 0, 320);
@@ -705,7 +706,20 @@ async function loadDashboard(){
   nmvTrend.data.datasets[1].data = trend.map(i => i.gmv);
   nmvTrend.update();
 }
+function debounceLoad() {
+  console.log("debounceload")
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(loadDashboard, 300);
+}
+function registerEvents() {
+  $("#brandSelect").on("change", debounceLoad);
+  $("#platformSelect").on("change", debounceLoad);
+  $("#startDate").on("change", loadDashboard);
+  $("#endDate").on("change", loadDashboard);
+}
+
 initChart()
+registerEvents();
 loadDashboard()
 /* ── CHART CONFIG CUMULATIVE NMV ── */
 const trend_cum  = JSON.parse(document.getElementById("trend-cum-data").textContent);

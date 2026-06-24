@@ -13,6 +13,7 @@ def get_order_mart_dashboard_brand(user_brands):
         .filter(brand__in=user_brands)
         .values()
         )
+    # print("DATA: ",data)
     return data
 
 def filter_data(data, start, end, brands, platforms):
@@ -73,7 +74,8 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         .order_by("brand__name")
         .distinct()
     )
-
+    # print("kontol")
+    # print("ordermart:",OrderMart.objects)
     base_queryset = (
         OrderMart.objects
         .filter(
@@ -162,9 +164,10 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         )
         .order_by("date")
     )
-
-    df = pd.DataFrame(list(rows))
-    df["cum_nmv"] = df["nmv"].cumsum()
+    # print("CARDS: ",cards)
+    # print("base query set: ",base_queryset)
+    # print("query set: ",queryset)
+    # print("rows buat cumsum",rows)
 
     trend = [
         {
@@ -183,6 +186,10 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         )
     ]
 
+    # ===== NMV Cum Trends =====
+
+    df = pd.DataFrame(list(rows))
+    df["cum_nmv"] = df["nmv"].cumsum()
     trend_cum = [
         {
             "date": row["date"].isoformat(),
@@ -191,13 +198,16 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         for _, row in df.iterrows()
     ]
 
+    # print("trend_cum: ",trend_cum)
+
+    # ===== Platform NMV Contribution =====
     platform_rows = (
         queryset
         .values("platform")
         .annotate(
             nmv=Sum("nmv")
         )
-        .order_by("-nmv")
+        .order_by("nmv")
     )
     df_platform = pd.DataFrame(list(platform_rows))
 
@@ -207,6 +217,47 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         "nmv":row["nmv"]
         }
         for _, row in df_platform.iterrows()
+    ]
+
+    # print("platform nmv: ",platform_nmv)
+
+    # ===== Brand NMV Contribution =====
+    brand_rows = (
+        queryset
+        .values("brand")
+        .annotate(
+            nmv=Sum("nmv")
+        )
+        .order_by("nmv")
+    )
+    df_brand = pd.DataFrame(list(brand_rows))
+
+    brand_nmv = [
+        {
+        "brand": row["brand"],
+        "nmv":row["nmv"]
+        }
+        for _, row in df_brand.iterrows()
+    ]
+
+    # ===== Top Product by NMV =====
+    product_rows = (
+        queryset
+        .values("product_name")
+        .annotate(
+            nmv=Sum("nmv")
+        )
+        .order_by("-nmv")
+        [:10]
+    )
+    df_product = pd.DataFrame(list(product_rows))
+
+    product_nmv = [
+        {
+        "product_name": row["product_name"],
+        "nmv":row["nmv"]
+        }
+        for _, row in df_product.iterrows()
     ]
 
     return {
@@ -219,5 +270,7 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
             "cards": cards,
             "trend_json": trend,
             "trend_cum_json" : trend_cum,
-            "platform_nmv_json" : platform_nmv
+            "platform_nmv_json" : platform_nmv,
+            "brand_nmv_json" : brand_nmv,
+            "product_nmv_json" : product_nmv,
         }

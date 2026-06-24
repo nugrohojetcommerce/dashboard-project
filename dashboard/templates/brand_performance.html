@@ -577,6 +577,56 @@
 
 </div>
 
+<!-- BARIS 4 -->
+<div class="row g-3 align-items-stretch pt-3" style="min-height: 300px;">
+
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Delivery Option</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="brandDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Payment Type Distribution</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="brandDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">New vs Existing Buyer</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="brandDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 {{ trend_json|json_script:"trend-data" }}
 {{ trend_cum_json|json_script:"trend-cum-data" }}
 {{ platform_nmv_json|json_script:"platform-nmv-data" }}
@@ -936,7 +986,7 @@ async function loadDashboard(){
   brandDonut.update();
 
   // ===== TOP PRODUCT BAR
-  topProduct.data.labels = bar_top_product.map(i => i.product_name.substring(0, 10));
+  topProduct.data.labels = bar_top_product.map(i => i.product_name);
   topProduct.data.datasets[0].data = bar_top_product.map(i => i.nmv);
   topProduct.update();
 }

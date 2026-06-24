@@ -243,7 +243,7 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
     # ===== Top Product by NMV =====
     product_rows = (
         queryset
-        .values("product_name")
+        .values("sku_reference_no")
         .annotate(
             nmv=Sum("nmv")
         )
@@ -254,7 +254,7 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
 
     product_nmv = [
         {
-        "product_name": row["product_name"],
+        "product_name": row["sku_reference_no"],
         "nmv":row["nmv"]
         }
         for _, row in df_product.iterrows()

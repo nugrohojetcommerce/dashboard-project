@@ -429,9 +429,17 @@
 </form>
 
 <!-- BARIS 1 -->
+<div class="d-flex align-items-center my-3 text-nowrap" style="color: #FF7A00;">
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+  <span class="px-3 fw-semibold" style="letter-spacing: 1px;">
+    Executive Summary & Trends
+  </span>
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+</div>
+
 <div class="row g-3 align-items-stretch" style="min-height: 300px;">
 
-  <div class="col-lg-2 d-flex flex-column gap-3">
+  <div class="col-lg-4 d-flex flex-column gap-3">
 
     <div class="s-card metric-card card-nmv flex-fill">
       <div class="metric-label"><span class="label-dot"></span>Net Merchandise Value</div>
@@ -459,35 +467,6 @@
       <div class="metric-icon">📦</div>
     </div>
 
-  </div>
-
-  <div class="col-lg-2 d-flex flex-column gap-3">
-
-    <div class="s-card metric-card card-orders flex-fill">
-      <div class="metric-label"><span class="label-dot"></span>Net Order Quantity</div>
-      <div class="metric-value" id="orderCard">0</div>
-      <div class="metric-footer">
-        <span class="metric-change up">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          +8.4%
-        </span>
-        <span class="metric-vs">vs. prev. period</span>
-      </div>
-      <div class="metric-icon">🛒</div>
-    </div>
-
-    <div class="s-card metric-card card-qty flex-fill">
-      <div class="metric-label"><span class="label-dot"></span>Net Sales Quantity</div>
-      <div class="metric-value" id="quantityCard">0</div>
-      <div class="metric-footer">
-        <span class="metric-change up">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          +8.4%
-        </span>
-        <span class="metric-vs">vs. prev. period</span>
-      </div>
-      <div class="metric-icon">📊</div>
-    </div>
   </div>
 
   <div class="col-lg-8">
@@ -525,6 +504,47 @@
     </div>
   </div>
 
+  <div class="col-lg-4 d-flex flex-column gap-3">
+    <div class="s-card metric-card card-orders flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Order Quantity</div>
+      <div class="metric-value" id="orderCard">0</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +8.4%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">🛒</div>
+    </div>
+
+    <div class="s-card metric-card card-qty flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Sales Quantity</div>
+      <div class="metric-value" id="quantityCard">0</div>
+      <div class="metric-footer">
+        <span class="metric-change up">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+          +8.4%
+        </span>
+        <span class="metric-vs">vs. prev. period</span>
+      </div>
+      <div class="metric-icon">📊</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BARIS 3 -->
+<div class="d-flex align-items-center my-3 text-nowrap" style="color: #FF7A00;">
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+  <span class="px-3 fw-semibold" style="letter-spacing: 1px;">
+    Operations & Logistics
+  </span>
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+</div>
+
+<div class="row g-3 align-items-stretch pt-3" style="min-height: 300px;">
+
   <div class="col-lg-4">
     <div class="s-card chart-card h-100">
       <div class="chart-header">
@@ -540,12 +560,51 @@
     </div>
   </div>
 
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Payment Type Distribution</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="paymentDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Delivery Option</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="deliveryBarChart"></canvas>
+      </div>
+    </div>
+  </div>  
+
 </div>
 
-<!-- BARIS 3 -->
+<!-- BARIS 4 -->
+
+<div class="d-flex align-items-center my-3 text-nowrap" style="color: #FF7A00;">
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+  <span class="px-3 fw-semibold" style="letter-spacing: 1px;">
+    Brand & Product Intelligence
+  </span>
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+</div>
+
 <div class="row g-3 align-items-stretch pt-3" style="min-height: 300px;">
 
-  <div class="col-lg-8">
+  <div class="col-lg-4">
     <div class="s-card chart-card h-100">
       <div class="chart-header">
         <div class="chart-title-group">
@@ -575,42 +634,46 @@
     </div>
   </div>
 
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <!-- <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Products - Detail</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div> -->
+      <div class="chart-body">
+        <table id="topProductsTable" class="table table-sm w-100">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>NMV</th>
+              <th>Orders</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- BARIS 4 -->
+<!-- BARIS 5 -->
+
+<div class="d-flex align-items-center my-3 text-nowrap" style="color: #FF7A00;">
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+  <span class="px-3 fw-semibold" style="letter-spacing: 1px;">
+    Customer & Transaction Behavior
+  </span>
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+
+</div>
+
 <div class="row g-3 align-items-stretch pt-3" style="min-height: 300px;">
 
-  <div class="col-lg-4">
-    <div class="s-card chart-card h-100">
-      <div class="chart-header">
-        <div class="chart-title-group">
-          <div class="chart-accent-bar"></div>
-          <h3 class="chart-title">Top Delivery Option</h3>
-        </div>
-        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
-      </div>
-      <div class="chart-body">
-        <canvas id="brandDonutChart"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-lg-4">
-    <div class="s-card chart-card h-100">
-      <div class="chart-header">
-        <div class="chart-title-group">
-          <div class="chart-accent-bar"></div>
-          <h3 class="chart-title">Payment Type Distribution</h3>
-        </div>
-        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
-      </div>
-      <div class="chart-body">
-        <canvas id="brandDonutChart"></canvas>
-      </div>
-    </div>
-  </div>
-  
-  <div class="col-lg-4">
+  <div class="col-lg-6">
     <div class="s-card chart-card h-100">
       <div class="chart-header">
         <div class="chart-title-group">
@@ -620,7 +683,22 @@
         <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
       </div>
       <div class="chart-body">
-        <canvas id="brandDonutChart"></canvas>
+        <canvas id="newBuyerDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Price Band Distribution</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="priceBand"></canvas>
       </div>
     </div>
   </div>
@@ -640,6 +718,9 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 $(document).ready(function () {
@@ -815,7 +896,7 @@ function initChart(){
       datasets: [{
         data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
         backgroundColor: donutPalette,
-        borderWidth: 5,
+        borderWidth: 2,
         borderColor: "#FFFFFF"
       }]
     },
@@ -849,7 +930,7 @@ function initChart(){
       datasets: [{
         data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
         backgroundColor: donutPalette_brand,
-        borderWidth: 5,
+        borderWidth: 2,
         borderColor: "#FFFFFF"
       }]
     },
@@ -903,7 +984,7 @@ function initChart(){
         tooltip: {
           backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
           borderColor:      "#E4E7EB",
-          borderWidth:      1,
+          borderWidth:      2,
           titleColor:       "#6B7280",
           bodyColor:        "#1F2937",
           titleFont:        { size: 11, family: "Inter, sans-serif" },
@@ -932,6 +1013,199 @@ function initChart(){
       }
     }
   });
+
+  // ===== PAYMENT TYPE DONUT CHART
+  const ctx_donut_payment = document.getElementById("paymentDonutChart").getContext("2d");
+  const donutPalette_payment = [
+    "#FF7A00", // 1. Pure Orange (Warna Utama Lu)
+    "#8F3300", // 2. Burnt Orange / Cokelat Oranye Tua (Sangat Gelap)
+    "#FFAD60", // 3. Light Pastel Orange (Cerah lembut)
+    "#D45500", // 4. Rust Orange (Oranye Bata Med-Dark)
+    "#FFE3C2", // 5. Cream Peach (Super Cerah/Hampir Putih Oranye)
+    "#FFA040", // 6. Apricot Orange (Sedikit lebih muda dari warna utama)
+    "#B84400", // 7. Amber Brown (Cokelat kemerahan)
+    "#FFC38A", // 8. Soft Cantaloupe (Oranye blewah muda)
+    "#E66B00", // 9. Darker Orange (Satu tingkat di bawah warna utama)
+    "#FFF1E0"  // 10. Warm Off-White (Buat kategori terkecil/Others)
+  ];
+
+  paymentDonut = new Chart(ctx_donut_payment, {
+    type: "doughnut",
+    data: {
+      labels: [],
+      datasets: [{
+        data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
+        backgroundColor: donutPalette_payment,
+        borderWidth: 2,
+        borderColor: "#FFFFFF"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      
+      // 5. ATRIBUT KHUSUS DONUT CHART
+      cutout: "40%", // Menentukan besar lubang di tengah. Kalau di-set "0%" dia bakal jadi Pie Chart (buntet)
+      
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom" // Posisi kotak keterangan label (top, bottom, left, right)
+        }
+      }
+    }
+  });
+
+  // ===== DELIVERY OPTION BAR CHART
+
+  deliveryOption = new Chart(document.getElementById("deliveryBarChart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Orders",
+        data: [],
+        borderColor:               "#FF7A00",
+        borderWidth:               2,
+        backgroundColor:           grad,
+        fill:                      true,
+        tension:                   0.35,
+        pointRadius:               0,
+        pointHoverRadius:          5,
+        pointHoverBackgroundColor: "#FF7A00",
+        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBorderWidth:     2,
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive:          true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
+          borderColor:      "#E4E7EB",
+          borderWidth:      2,
+          titleColor:       "#6B7280",
+          bodyColor:        "#1F2937",
+          titleFont:        { size: 11, family: "Inter, sans-serif" },
+          bodyFont:         { size: 13, weight: '700' },
+          padding:          10,
+          cornerRadius:     6,
+          displayColors:    false,
+          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
+          callbacks: {
+            title: items => items[0].label,
+            label: item  => `${Number(item.raw).toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+        },
+        x: {
+          grid:   { color: "#F3F4F6", drawBorder: false },
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }}
+        }
+      }
+    }
+  });
+
+  // ===== NEW BUYER DONUT CHART
+  const ctx_donut_new_buyer = document.getElementById("newBuyerDonutChart").getContext("2d");
+  const donutPalette_new_buyer = [
+    "#FF7A00", "#10B981", "#0055FF", "#FFB347", "#6B7280",
+    "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6", "#14B8A6"
+  ];
+
+  newBuyerDonut = new Chart(ctx_donut_new_buyer, {
+    type: "doughnut",
+    data: {
+      labels: [],
+      datasets: [{
+        data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
+        backgroundColor: donutPalette_new_buyer,
+        borderWidth: 2,
+        borderColor: "#FFFFFF"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      
+      // 5. ATRIBUT KHUSUS DONUT CHART
+      cutout: "40%", // Menentukan besar lubang di tengah. Kalau di-set "0%" dia bakal jadi Pie Chart (buntet)
+      
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom" // Posisi kotak keterangan label (top, bottom, left, right)
+        }
+      }
+    }
+  });
+
+  topProductTable = $('#topProductsTable').DataTable({
+    data: [],
+    columns: [
+      { data: 'product_name' },
+      { data: 'nmv', render: function(v, type) {
+          if (type === 'sort' || type === 'type') return parseFloat(v);
+          return `<span>Rp ${Number(v).toLocaleString()}</span>`;
+        }
+      },
+      { data: 'orders' },
+    ],
+    order: [[1, 'desc']],
+    autoWidth: false,
+    paging: true,
+    // searching: true,
+    ordering: true,
+    pageLength: 10,
+    language: {
+      search:     '',
+      searchPlaceholder: 'Search...',
+      lengthMenu: 'Show _MENU_',
+      info:       '_START_–_END_ of _TOTAL_',
+    },
+    createdRow: function(row) {
+      $(row).css({
+        'font-size':   '.82rem',
+        'color':       '#E8D5B7',
+        'border-bottom': '1px solid rgba(255,122,0,0.06)',
+      });
+    },
+    initComplete: function() {
+      // search input
+      $('#topProductsTable_filter input').css({
+        'background':  'rgba(255,255,255,0.04)',
+        'border':      '1px solid rgba(255,122,0,0.18)',
+        'border-radius': '6px',
+        'color':       '#000000',
+        'font-size':   '.78rem',
+        'padding':     '4px 8px',
+      });
+      // info & length
+      $('#topProductsTable_info, #topProductsTable_length select').css({
+        'font-size': '.72rem',
+        'color':     '#B08060',
+      });
+      // pagination
+      $('#topProductsTable_paginate').css({
+        'font-size': '.46rem',
+      });
+      $('#topProductsTable_paginate .paginate_button').css({
+        'padding': '2px 3px',
+      });
+    }
+  });
+ 
 }
 
 async function loadDashboard(){
@@ -957,6 +1231,10 @@ async function loadDashboard(){
   const donut_platform = data.platform_nmv_json;
   const donut_brand = data.brand_nmv_json;
   const bar_top_product = data.product_nmv_json;
+  const donut_payment = data.payment_type_orders_json;
+  const bar_delivery = data.delivery_option_orders_json;
+  const donut_new_buyer = data.new_existing_buyer_json;
+  const table_top_product = data.product_table_nmv_json;
   // console.log("Isi data donut:", donut_platform);
 
   // ===== SCORECARDS
@@ -989,6 +1267,26 @@ async function loadDashboard(){
   topProduct.data.labels = bar_top_product.map(i => i.product_name);
   topProduct.data.datasets[0].data = bar_top_product.map(i => i.nmv);
   topProduct.update();
+
+  // ===== PAYMENT DONUT CHART 
+  paymentDonut.data.labels = donut_payment.map(i => i.payment_type);
+  paymentDonut.data.datasets[0].data = donut_payment.map(i => i.orders);
+  paymentDonut.update();
+
+  // ===== DELIVERY OPTION BAR
+  deliveryOption.data.labels = bar_delivery.map(i => i.delivery_option);
+  deliveryOption.data.datasets[0].data = bar_delivery.map(i => i.orders);
+  deliveryOption.update();
+
+  // ===== NEW BUYER DONUT CHART 
+  newBuyerDonut.data.labels = donut_new_buyer.map(i => i.buyer_type);
+  newBuyerDonut.data.datasets[0].data = donut_new_buyer.map(i => i.total_buyers);
+  newBuyerDonut.update();
+
+  // ===== TOP PRODUCT TABLE 
+  topProductTable.clear();
+  topProductTable.rows.add(table_top_product);
+  topProductTable.draw();
 }
 function debounceLoad() {
   console.log("debounceload")

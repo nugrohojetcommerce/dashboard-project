@@ -1,0 +1,27 @@
+{% extends "base.html" %} {% block content %}
+<div class="profile-container">
+  <h2>Update Your Profile</h2>
+
+  {% if messages %} {% for message in messages %}
+  <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+  {% endfor %} {% endif %}
+
+  <form method="post">
+    {% csrf_token %} {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+  </form>
+
+  <br />
+  <a href="{% url 'password_change' %}">Want to change your password?</a>
+  <h3>Your Assigned Brands</h3>
+  {% if assigned_brands %}
+  <ul>
+    {% for brand in assigned_brands %}
+    <li><strong>{{ brand.name }}</strong></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>You don't have any brands assigned to your account yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

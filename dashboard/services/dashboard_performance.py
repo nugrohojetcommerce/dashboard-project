@@ -98,7 +98,8 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
 
     selected_brands = selected_brands or all_brands
     selected_platforms = selected_platforms or all_platforms
-
+    
+    print(selected_brands)
     # CASCADING BRANDS AND PLATFORMS
     brands = list(
         base_queryset
@@ -109,7 +110,7 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         .distinct()
         .order_by("brand")
     )
-
+    
     platforms = list(
         base_queryset
         .filter(
@@ -127,7 +128,6 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
             platform__in=selected_platforms
         )
     )
-
     # ===== Score Cards =====
     cards = queryset.aggregate(
         total_nmv=Sum("nmv"),
@@ -164,7 +164,8 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
     )
 
     df = pd.DataFrame(list(rows))
-    df["cum_nmv"] = df["nmv"].cumsum()
+    # print(df)
+    df["cum_nmv"] = df["nmv"].cumsum() if "nmv" in df.columns else 0
 
     trend = [
         {

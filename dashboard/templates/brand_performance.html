@@ -1241,8 +1241,8 @@ async function loadDashboard(){
   // console.log("Isi data donut:", donut_platform);
 
   // ===== SCORECARDS
-  $("#nmvCard").text(Number(data.cards.total_nmv).toLocaleString());
-  $("#gmvCard").text(Number(data.cards.total_gmv).toLocaleString());
+  $("#nmvCard").text("Rp" + Number(data.cards.total_nmv).toLocaleString());
+  $("#gmvCard").text("Rp" + Number(data.cards.total_gmv).toLocaleString());
   $("#orderCard").text(Number(data.cards.total_orders).toLocaleString());
   $("#quantityCard").text(Number(data.cards.total_quantity).toLocaleString());
 

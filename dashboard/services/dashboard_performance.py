@@ -1,10 +1,18 @@
 from django.db import connection
 from ..models import OrderMartDashboardBrandDF
-from django.db.models import Sum, Count, Q, Window, F
+from django.db.models import Sum, Count, Q, Window, F, Case, When, Value, CharField, Func
+from django.db.models.functions import Lower, Length
 from dashboard.models import OrderMartDashboardBrandDF as OrderMart
 from datetime import date
 import pandas as pd
 # from dashboard import models
+
+class Replace(Func):
+    function = 'REPLACE'
+    template = "%(function)s(%(expressions)s, ' ', '')"
+
+class Trim(Func):
+    function = 'TRIM'
 
 def get_order_mart_dashboard_brand(user_brands):
     data = (
@@ -13,6 +21,7 @@ def get_order_mart_dashboard_brand(user_brands):
         .filter(brand__in=user_brands)
         .values()
         )
+    # print("DATA: ",data)
     return data
 
 def filter_data(data, start, end, brands, platforms):
@@ -73,7 +82,8 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         .order_by("brand__name")
         .distinct()
     )
-
+    # print("kontol")
+    # print("ordermart:",OrderMart.objects)
     base_queryset = (
         OrderMart.objects
         .filter(
@@ -162,25 +172,32 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         )
         .order_by("date")
     )
-
-    df = pd.DataFrame(list(rows))
-    df["cum_nmv"] = df["nmv"].cumsum()
+    # print("CARDS: ",cards)
+    # print("base query set: ",base_queryset)
+    # print("query set: ",queryset)
+    # print("rows buat cumsum",rows)
 
     trend = [
         {
             "date": row["date"].isoformat(),
             "nmv": float(row["nmv"] or 0),
+            "gmv": float(row["gmv"] or 0),
         }
         for row in (
             queryset
             .values("date")
             .annotate(
-                nmv=Sum("nmv")
+                nmv=Sum("nmv"),
+                gmv=Sum("gmv"),
             )
             .order_by("date")
         )
     ]
 
+    # ===== NMV Cum Trends =====
+
+    df = pd.DataFrame(list(rows))
+    df["cum_nmv"] = df["nmv"].cumsum()
     trend_cum = [
         {
             "date": row["date"].isoformat(),
@@ -189,6 +206,9 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         for _, row in df.iterrows()
     ]
 
+    # print("trend_cum: ",trend_cum)
+
+    # ===== Platform NMV Contribution =====
     platform_rows = (
         queryset
         .values("platform")
@@ -207,6 +227,186 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         for _, row in df_platform.iterrows()
     ]
 
+    # print("platform nmv: ",platform_nmv)
+
+    # ===== Brand NMV Contribution =====
+    brand_rows = (
+        queryset
+        .values("brand")
+        .annotate(
+            nmv=Sum("nmv")
+        )
+        .order_by("-nmv")
+    )
+    df_brand = pd.DataFrame(list(brand_rows))
+
+    brand_nmv = [
+        {
+        "brand": row["brand"],
+        "nmv":row["nmv"]
+        }
+        for _, row in df_brand.iterrows()
+    ]
+
+    # ===== Top Product by NMV =====
+    product_rows = (
+        queryset
+        .values("sku_reference_no")
+        .annotate(
+            nmv=Sum("nmv")
+        )
+        .order_by("-nmv")
+        [:10]
+    )
+    df_product = pd.DataFrame(list(product_rows))
+
+    product_nmv = [
+        {
+        "product_name": row["sku_reference_no"],
+        "nmv":row["nmv"]
+        }
+        for _, row in df_product.iterrows()
+    ]
+
+    # ===== Payment Type Contribution =====
+    payment_type_rows = (
+        queryset
+        .values("payment_type")
+        .annotate(
+            orders=Count("order_number", distinct=True)
+        )
+        .order_by("-orders")
+    )
+    df_payment_type = pd.DataFrame(list(payment_type_rows))
+
+    payment_type_orders = [
+        {
+        "payment_type": row["payment_type"],
+        "orders":row["orders"]
+        }
+        for _, row in df_payment_type.iterrows()
+    ]
+
+    # ===== Delivery Option Contribution =====
+
+    # Definisikan anotasi untuk kategori delivery_group
+    delivery_group_case = Case(
+        When(delivery_option_lower__contains="instan", then=Value("Instant")),
+        
+        When(
+            Q(delivery_option_lower__contains="argo") | Q(delivery_option_lower__contains="jtr"), 
+            then=Value("Kargo")
+        ),
+        
+        When(
+            Q(delivery_option_lower__contains="reg") | 
+            Q(delivery_option_lower__contains="standar") | 
+            (Q(delivery_option_lower__contains="expres") & ~Q(delivery_option_lower__contains="grab")), 
+            then=Value("Regular")
+        ),
+        
+        When(
+            Q(delivery_option_lower__contains="econ") | 
+            Q(delivery_option_lower__in=['hemat', 'spx hemat', 'sicepat gokil', 'sicepat halu']), 
+            then=Value("Regular Hemat")
+        ),
+        
+        When(delivery_option_lower__contains="same", then=Value("Same Day")),
+        
+        When(delivery_option_lower__contains="seller", then=Value("Shipped by Seller")),
+        
+        # BENERNYA GINI: Bungkus pakai Q object dengan lookup __exact
+        When(
+            Q(delivery_option_len_trim__exact=F("delivery_option_len_replace")),
+            then=Value("Regular")
+        ),
+        
+        default=Value("Others"),
+        output_field=CharField(),
+    )
+
+    # Jalankan Queryset dengan mendaftarkan panjang karakternya dulu di .annotate()
+    delivery_option_rows = (
+        queryset
+        .annotate(
+            delivery_option_lower=Lower("delivery_option"),
+            # Hitung panjang karakter trim asli & panjang karakter setelah spasi dihapus
+            delivery_option_len_trim=Length(Trim("delivery_option")),
+            delivery_option_len_replace=Length(Replace(Trim("delivery_option")))
+        )
+        .annotate(delivery_group=delivery_group_case)  
+        .values("delivery_group")                      
+        .annotate(orders=Count("order_number", distinct=True))        
+        .order_by("-orders")                           
+    )
+
+    # delivery_option_rows = (
+    #     queryset
+    #     .values("delivery_option")
+    #     .annotate(
+    #         orders=Count("order_number")
+    #     )
+    #     .order_by("orders")
+    # )
+    df_delivery_option = pd.DataFrame(list(delivery_option_rows))
+
+    delivery_option_orders = [
+        {
+        "delivery_option": row["delivery_group"],
+        "orders":row["orders"]
+        }
+        for _, row in df_delivery_option.iterrows()
+    ]
+
+    # ===== New vs Existing Buyer =====
+    new_existing_buyer_rows = (
+        queryset
+        .annotate(
+            buyer_type=Case(
+                When(is_new_buyer=1, then=Value("New Buyer")),
+                When(is_new_buyer=0, then=Value("Existing Buyer")),
+                default=Value("Unknown"),
+                output_field=CharField(),
+            )
+        )
+        .values("buyer_type")
+        .annotate(
+            total_buyers=Count("username", distinct=True)
+        )
+        .order_by("-total_buyers")
+    )
+    df_new_existing_buyer = pd.DataFrame(list(new_existing_buyer_rows))
+
+    new_existing_buyer = [
+        {
+        "buyer_type": row["buyer_type"],
+        "total_buyers":row["total_buyers"]
+        }
+        for _, row in df_new_existing_buyer.iterrows()
+    ]
+
+    # ===== Top Product Table =====
+    product_table_rows = (
+        queryset
+        .values("sku_reference_no")
+        .annotate(
+            nmv=Sum("nmv"),
+            orders=Count("order_number", distinct=True),
+        )
+        .order_by("-nmv")
+        # [:10]
+    )
+    df_product_table = pd.DataFrame(list(product_table_rows))
+
+    product_table_nmv = [
+        {
+        "product_name": row["sku_reference_no"],
+        "nmv":row["nmv"],
+        "orders":row["orders"]
+        }
+        for _, row in df_product_table.iterrows()
+    ]    
+
     return {
             "brands": brands,
             "platforms": platforms,
@@ -217,5 +417,11 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
             "cards": cards,
             "trend_json": trend,
             "trend_cum_json" : trend_cum,
-            "platform_nmv_json" : platform_nmv
+            "platform_nmv_json" : platform_nmv,
+            "brand_nmv_json" : brand_nmv,
+            "product_nmv_json" : product_nmv,
+            "payment_type_orders_json" : payment_type_orders,
+            "delivery_option_orders_json" : delivery_option_orders,
+            "new_existing_buyer_json" : new_existing_buyer,
+            "product_table_nmv_json" : product_table_nmv,
         }

@@ -416,15 +416,12 @@
 
     <div class="col-md-2">
       <label class="form-label">Start Date</label>
-      <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
+      <input type="date" id="startDate" class="form-control" name="start_date" value="{{ start_date }}">
     </div>
 
     <div class="col-md-2">
       <label class="form-label">End Date</label>
-      <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
-      <div class="mt-3">
-        <button type="submit" class="btn-apply">Apply Filters</button>
-      </div>
+      <input type="date" id="endDate" class="form-control" name="end_date" value="{{ end_date }}">
     </div>
 
   </div>
@@ -432,13 +429,21 @@
 </form>
 
 <!-- BARIS 1 -->
+<div class="d-flex align-items-center my-3 text-nowrap" style="color: #FF7A00;">
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+  <span class="px-3 fw-semibold" style="letter-spacing: 1px;">
+    Executive Summary & Trends
+  </span>
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+</div>
+
 <div class="row g-3 align-items-stretch" style="min-height: 300px;">
 
-  <div class="col-lg-2 d-flex flex-column gap-3">
+  <div class="col-lg-4 d-flex flex-column gap-3">
 
     <div class="s-card metric-card card-nmv flex-fill">
       <div class="metric-label"><span class="label-dot"></span>Net Merchandise Value</div>
-      <div class="metric-value">Rp{{ cards.total_nmv|floatformat:0|intcomma }}</div>
+      <div class="metric-value" id="nmvCard">0</div>
       <div class="metric-footer">
         <span class="metric-change up">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
@@ -451,7 +456,7 @@
 
     <div class="s-card metric-card card-gmv flex-fill">
       <div class="metric-label"><span class="label-dot"></span>Gross Merchandise Value</div>
-      <div class="metric-value">Rp{{ cards.total_gmv|floatformat:0|intcomma }}</div>
+      <div class="metric-value" id="gmvCard">0</div>
       <div class="metric-footer">
         <span class="metric-change up">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
@@ -462,35 +467,6 @@
       <div class="metric-icon">📦</div>
     </div>
 
-  </div>
-
-  <div class="col-lg-2 d-flex flex-column gap-3">
-
-    <div class="s-card metric-card card-orders flex-fill">
-      <div class="metric-label"><span class="label-dot"></span>Net Order Quantity</div>
-      <div class="metric-value">{{ cards.total_orders|floatformat:0|intcomma }}</div>
-      <div class="metric-footer">
-        <span class="metric-change up">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          +8.4%
-        </span>
-        <span class="metric-vs">vs. prev. period</span>
-      </div>
-      <div class="metric-icon">🛒</div>
-    </div>
-
-    <div class="s-card metric-card card-qty flex-fill">
-      <div class="metric-label"><span class="label-dot"></span>Net Sales Quantity</div>
-      <div class="metric-value">{{ cards.total_quantity|floatformat:0|intcomma }}</div>
-      <div class="metric-footer">
-        <span class="metric-change up">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          +8.4%
-        </span>
-        <span class="metric-vs">vs. prev. period</span>
-      </div>
-      <div class="metric-icon">📊</div>
-    </div>
   </div>
 
   <div class="col-lg-8">
@@ -528,11 +504,10 @@
     </div>
   </div>
 
-  <!-- <div class="col-lg-4 d-flex flex-column gap-3">
-
-    <div class="s-card metric-card card-nmv flex-fill">
-      <div class="metric-label"><span class="label-dot"></span>Net Merchandise Value</div>
-      <div class="metric-value">{{ cards.total_nmv|floatformat:0 }}</div>
+  <div class="col-lg-4 d-flex flex-column gap-3">
+    <div class="s-card metric-card card-orders flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Order Quantity</div>
+      <div class="metric-value" id="orderCard">0</div>
       <div class="metric-footer">
         <span class="metric-change up">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
@@ -540,23 +515,35 @@
         </span>
         <span class="metric-vs">vs. prev. period</span>
       </div>
-      <div class="metric-icon">💰</div>
+      <div class="metric-icon">🛒</div>
     </div>
 
-    <div class="s-card metric-card card-gmv flex-fill">
-      <div class="metric-label"><span class="label-dot"></span>Gross Merchandise Value</div>
-      <div class="metric-value">{{ cards.total_gmv|floatformat:0 }}</div>
+    <div class="s-card metric-card card-qty flex-fill">
+      <div class="metric-label"><span class="label-dot"></span>Net Sales Quantity</div>
+      <div class="metric-value" id="quantityCard">0</div>
       <div class="metric-footer">
         <span class="metric-change up">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          +5.1%
+          +8.4%
         </span>
         <span class="metric-vs">vs. prev. period</span>
       </div>
-      <div class="metric-icon">📦</div>
+      <div class="metric-icon">📊</div>
     </div>
+  </div>
 
-  </div> -->
+</div>
+
+<!-- BARIS 3 -->
+<div class="d-flex align-items-center my-3 text-nowrap" style="color: #FF7A00;">
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+  <span class="px-3 fw-semibold" style="letter-spacing: 1px;">
+    Operations & Logistics
+  </span>
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+</div>
+
+<div class="row g-3 align-items-stretch pt-3" style="min-height: 300px;">
 
   <div class="col-lg-4">
     <div class="s-card chart-card h-100">
@@ -569,6 +556,149 @@
       </div>
       <div class="chart-body">
         <canvas id="platformDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Payment Type Distribution</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="paymentDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Delivery Option</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="deliveryBarChart"></canvas>
+      </div>
+    </div>
+  </div>  
+
+</div>
+
+<!-- BARIS 4 -->
+
+<div class="d-flex align-items-center my-3 text-nowrap" style="color: #FF7A00;">
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+  <span class="px-3 fw-semibold" style="letter-spacing: 1px;">
+    Brand & Product Intelligence
+  </span>
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+</div>
+
+<div class="row g-3 align-items-stretch pt-3" style="min-height: 300px;">
+
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Product</h3>
+        </div>
+        <span class="chart-badge">Daily</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="topProductChart"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Brand Contribution</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="brandDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+      <!-- <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Products - Detail</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div> -->
+      <div class="chart-body">
+        <table id="topProductsTable" class="table table-sm w-100">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>NMV</th>
+              <th>Orders</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BARIS 5 -->
+
+<div class="d-flex align-items-center my-3 text-nowrap" style="color: #FF7A00;">
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+  <span class="px-3 fw-semibold" style="letter-spacing: 1px;">
+    Customer & Transaction Behavior
+  </span>
+  <div class="flex-grow-1 border-top" style="border-color: rgba(255, 122, 0, 0.3) !important;"></div>
+
+</div>
+
+<div class="row g-3 align-items-stretch pt-3" style="min-height: 300px;">
+
+  <div class="col-lg-6">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">New vs Existing Buyer</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="newBuyerDonutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="s-card chart-card h-100">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Price Band Distribution</h3>
+        </div>
+        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="priceBand"></canvas>
       </div>
     </div>
   </div>
@@ -588,6 +718,9 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
 $(document).ready(function () {
@@ -600,183 +733,579 @@ function clearBrands()        { $('#brandSelect option').prop('selected', false)
 function selectAllPlatforms() { $('#platformSelect option').prop('selected', true);  $('#platformSelect').trigger('change'); }
 function clearPlatforms()     { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
 
-/* ── CHART CONFIG TREND NMV ── */
-const trend  = JSON.parse(document.getElementById("trend-data").textContent);
-const labels = trend.map(i => i.date);
-const values = trend.map(i => i.nmv);
+let nmvTrend;
+let nmvCum;
+let platformDonut;
+let debounceTimer;
+function initChart(){
+  // ===== NMV LINE CHART
+  const grad = document.getElementById("nmvChart").getContext("2d").createLinearGradient(0, 0, 0, 320);
+  grad.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
+  grad.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
+  grad.addColorStop(1,   "rgba(255, 122, 0, 0)");
 
-const ctx = document.getElementById("nmvChart").getContext("2d");
-
-// Gradasi bawah garis dibikin soft orange menuju transparan
-const grad = ctx.createLinearGradient(0, 0, 0, 320);
-grad.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
-grad.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
-grad.addColorStop(1,   "rgba(255, 122, 0, 0)");
-
-new Chart(ctx, {
-  type: "line",
-  data: {
-    labels,
-    datasets: [{
-      label: "NMV",
-      data: values,
-      borderColor:               "#FF7A00",
-      borderWidth:               2,
-      backgroundColor:           grad,
-      fill:                      true,
-      tension:                   0.35,
-      pointRadius:               0,
-      pointHoverRadius:          5,
-      pointHoverBackgroundColor: "#FF7A00",
-      pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
-      pointHoverBorderWidth:     2,
-    }]
-  },
-  options: {
-    responsive:          true,
-    maintainAspectRatio: false,
-    interaction: { intersect: false, mode: "index" },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
-        borderColor:      "#E4E7EB",
-        borderWidth:      1,
-        titleColor:       "#6B7280",
-        bodyColor:        "#1F2937",
-        titleFont:        { size: 11, family: "Inter, sans-serif" },
-        bodyFont:         { size: 13, weight: '700' },
-        padding:          10,
-        cornerRadius:     6,
-        displayColors:    false,
-        boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
-        callbacks: {
-          title: items => items[0].label,
-          label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
+  nmvTrend = new Chart(document.getElementById("nmvChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "NMV",
+        data: [],
+        borderColor:               "#FF7A00",
+        borderWidth:               2,
+        backgroundColor:           grad,
+        fill:                      true,
+        tension:                   0.35,
+        pointRadius:               0,
+        pointHoverRadius:          5,
+        pointHoverBackgroundColor: "#FF7A00",
+        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBorderWidth:     2,
+      },{
+        label: "GMV",
+        data: [],
+        borderColor:               "#94A3B8",
+        borderWidth:               2,
+        backgroundColor:           grad,
+        fill:                      true,
+        tension:                   0.35,
+        pointRadius:               0,
+        pointHoverRadius:          5,
+        pointHoverBackgroundColor: "#FF7A00",
+        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBorderWidth:     2,
+      }]
+    },
+    options: {
+      responsive:          true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
+          borderColor:      "#E4E7EB",
+          borderWidth:      1,
+          titleColor:       "#6B7280",
+          bodyColor:        "#1F2937",
+          titleFont:        { size: 11, family: "Inter, sans-serif" },
+          bodyFont:         { size: 13, weight: '700' },
+          padding:          10,
+          cornerRadius:     6,
+          displayColors:    false,
+          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
+          callbacks: {
+            title: items => items[0].label,
+            label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+        },
+        y: {
+          grid:   { color: "#F3F4F6", drawBorder: false },
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
         }
       }
-    },
-    scales: {
-      x: {
-        grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
-        border: { display: false },
-        ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
-      },
-      y: {
-        grid:   { color: "#F3F4F6", drawBorder: false },
-        border: { display: false },
-        ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
-      }
     }
-  }
-});
+  });
 
-/* ── CHART CONFIG CUMULATIVE NMV ── */
-const trend_cum  = JSON.parse(document.getElementById("trend-cum-data").textContent);
-// const labels_cum = trend.map(i => i.date);
-const values_cum = trend_cum.map(i => i.nmv);
+  // ===== CUMULATIVE NMV LINE CHART
 
-const ctx_cum = document.getElementById("nmvCumChart").getContext("2d");
+  const ctx_cum = document.getElementById("nmvCumChart").getContext("2d");
 
-const grad_cum = ctx_cum.createLinearGradient(0, 0, 0, 500);
-grad_cum.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
-grad_cum.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
-grad_cum.addColorStop(1,   "rgba(255, 122, 0, 0)");
+  const grad_cum = ctx_cum.createLinearGradient(0, 0, 0, 500);
+  grad_cum.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
+  grad_cum.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
+  grad_cum.addColorStop(1,   "rgba(255, 122, 0, 0)");
 
-
-new Chart(ctx_cum, {
-  type: "line",
-  data: {
-    labels,
-    datasets: [{
-      label: "NMV Cumulative",
-      data: values_cum,
-      borderColor:               "#FF7A00",
-      borderWidth:               2,
-      backgroundColor:           grad_cum,
-      fill:                      true,
-      tension:                   0.35,
-      pointRadius:               3,
-      pointHoverRadius:          5,
-      pointHoverBackgroundColor: "#FF7A00",
-      pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
-      pointHoverBorderWidth:     2,
-    }]
-  },
-  options: {
-    responsive:          true,
-    maintainAspectRatio: false,
-    interaction: { intersect: false, mode: "index" },
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
-        borderColor:      "#E4E7EB",
-        borderWidth:      1,
-        titleColor:       "#6B7280",
-        bodyColor:        "#1F2937",
-        titleFont:        { size: 11, family: "Inter, sans-serif" },
-        bodyFont:         { size: 13, weight: '700' },
-        padding:          10,
-        cornerRadius:     6,
-        displayColors:    false,
-        boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
-        callbacks: {
-          title: items => items[0].label,
-          label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
+  nmvCum = new Chart(ctx_cum, {
+    type: "line",
+    data: {
+      labels:[],
+      datasets: [{
+        label: "NMV Cumulative",
+        data:[],
+        borderColor:               "#FF7A00",
+        borderWidth:               2,
+        backgroundColor:           grad_cum,
+        fill:                      true,
+        tension:                   0.35,
+        pointRadius:               3,
+        pointHoverRadius:          5,
+        pointHoverBackgroundColor: "#FF7A00",
+        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBorderWidth:     2,
+      }]
+    },
+    options: {
+      responsive:          true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
+          borderColor:      "#E4E7EB",
+          borderWidth:      1,
+          titleColor:       "#6B7280",
+          bodyColor:        "#1F2937",
+          titleFont:        { size: 11, family: "Inter, sans-serif" },
+          bodyFont:         { size: 13, weight: '700' },
+          padding:          10,
+          cornerRadius:     6,
+          displayColors:    false,
+          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
+          callbacks: {
+            title: items => items[0].label,
+            label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+        },
+        y: {
+          grid:   { color: "#F3F4F6", drawBorder: false },
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
         }
       }
-    },
-    scales: {
-      x: {
-        grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
-        border: { display: false },
-        ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
-      },
-      y: {
-        grid:   { color: "#F3F4F6", drawBorder: false },
-        border: { display: false },
-        ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
-      }
     }
-  }
-});
+  });
 
-// PLATFORM CONTRIBUTION DONUT CHART
-const donut_data  = JSON.parse(document.getElementById("platform-nmv-data").textContent);
-const donutLabels = donut_data.map(item => item.platform);
-const donutValues = donut_data.map(item => item.nmv);
-const ctx_donut = document.getElementById("platformDonutChart").getContext("2d");
-const donutPalette = [
-  "#FF7A00", "#10B981", "#0055FF", "#FFB347", "#6B7280",
-  "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6", "#14B8A6"
-];
-new Chart(ctx_donut, {
-  type: "doughnut", // 1. WAJIB set type jadi doughnut
-  data: {
-    labels: donutLabels, // 2. Label untuk tiap potongan (slice)
-    datasets: [{
-      data: donutValues, // 3. Angka/Value tiap potongan (harus berurutan dengan label)
-      backgroundColor: donutPalette.slice(0, donutLabels.length), // 4. Warna tiap potongan
-      borderWidth: 5,
-      borderColor: "#FFFFFF" // Garis pembatas antar potongan
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    
-    // 5. ATRIBUT KHUSUS DONUT CHART
-    cutout: "40%", // Menentukan besar lubang di tengah. Kalau di-set "0%" dia bakal jadi Pie Chart (buntet)
-    
-    plugins: {
-      legend: {
-        display: true,
-        position: "bottom" // Posisi kotak keterangan label (top, bottom, left, right)
+  // ===== PLATFORM CONTRIBUTION DONUT CHART
+  const ctx_donut = document.getElementById("platformDonutChart").getContext("2d");
+  const donutPalette = [
+    "#FF7A00", "#10B981", "#0055FF", "#FFB347", "#6B7280",
+    "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6", "#14B8A6"
+  ];
+
+  platformDonut = new Chart(ctx_donut, {
+    type: "doughnut",
+    data: {
+      labels: [],
+      datasets: [{
+        data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
+        backgroundColor: donutPalette,
+        borderWidth: 2,
+        borderColor: "#FFFFFF"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      
+      // 5. ATRIBUT KHUSUS DONUT CHART
+      cutout: "40%", // Menentukan besar lubang di tengah. Kalau di-set "0%" dia bakal jadi Pie Chart (buntet)
+      
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom" // Posisi kotak keterangan label (top, bottom, left, right)
+        }
       }
     }
-  }
-});
+  });
+
+  // ===== BRAND CONTRIBUTION DONUT CHART
+  const ctx_donut_brand = document.getElementById("brandDonutChart").getContext("2d");
+  const donutPalette_brand = [
+    "#FF7A00", "#10B981", "#0055FF", "#FFB347", "#6B7280",
+    "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6", "#14B8A6"
+  ];
+
+  brandDonut = new Chart(ctx_donut_brand, {
+    type: "doughnut",
+    data: {
+      labels: [],
+      datasets: [{
+        data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
+        backgroundColor: donutPalette_brand,
+        borderWidth: 2,
+        borderColor: "#FFFFFF"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      
+      // 5. ATRIBUT KHUSUS DONUT CHART
+      cutout: "40%", // Menentukan besar lubang di tengah. Kalau di-set "0%" dia bakal jadi Pie Chart (buntet)
+      
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom" // Posisi kotak keterangan label (top, bottom, left, right)
+        }
+      }
+    }
+  });
+
+  // ===== TOP PRODUCT BAR CHART
+  const grad_bar = document.getElementById("topProductChart").getContext("2d").createLinearGradient(0, 0, 0, 320);
+  grad_bar.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
+  grad_bar.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
+  grad_bar.addColorStop(1,   "rgba(255, 122, 0, 0)");
+
+  topProduct = new Chart(document.getElementById("topProductChart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "NMV",
+        data: [],
+        borderColor:               "#FF7A00",
+        borderWidth:               2,
+        backgroundColor:           grad,
+        fill:                      true,
+        tension:                   0.35,
+        pointRadius:               0,
+        pointHoverRadius:          5,
+        pointHoverBackgroundColor: "#FF7A00",
+        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBorderWidth:     2,
+      }]
+    },
+    options: {
+      responsive:          true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
+          borderColor:      "#E4E7EB",
+          borderWidth:      2,
+          titleColor:       "#6B7280",
+          bodyColor:        "#1F2937",
+          titleFont:        { size: 11, family: "Inter, sans-serif" },
+          bodyFont:         { size: 13, weight: '700' },
+          padding:          10,
+          cornerRadius:     6,
+          displayColors:    false,
+          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
+          callbacks: {
+            title: items => items[0].label,
+            label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+        },
+        y: {
+          grid:   { color: "#F3F4F6", drawBorder: false },
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
+        }
+      }
+    }
+  });
+
+  // ===== PAYMENT TYPE DONUT CHART
+  const ctx_donut_payment = document.getElementById("paymentDonutChart").getContext("2d");
+  const donutPalette_payment = [
+    "#FF7A00", // 1. Pure Orange (Warna Utama Lu)
+    "#8F3300", // 2. Burnt Orange / Cokelat Oranye Tua (Sangat Gelap)
+    "#FFAD60", // 3. Light Pastel Orange (Cerah lembut)
+    "#D45500", // 4. Rust Orange (Oranye Bata Med-Dark)
+    "#FFE3C2", // 5. Cream Peach (Super Cerah/Hampir Putih Oranye)
+    "#FFA040", // 6. Apricot Orange (Sedikit lebih muda dari warna utama)
+    "#B84400", // 7. Amber Brown (Cokelat kemerahan)
+    "#FFC38A", // 8. Soft Cantaloupe (Oranye blewah muda)
+    "#E66B00", // 9. Darker Orange (Satu tingkat di bawah warna utama)
+    "#FFF1E0"  // 10. Warm Off-White (Buat kategori terkecil/Others)
+  ];
+
+  paymentDonut = new Chart(ctx_donut_payment, {
+    type: "doughnut",
+    data: {
+      labels: [],
+      datasets: [{
+        data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
+        backgroundColor: donutPalette_payment,
+        borderWidth: 2,
+        borderColor: "#FFFFFF"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      
+      // 5. ATRIBUT KHUSUS DONUT CHART
+      cutout: "40%", // Menentukan besar lubang di tengah. Kalau di-set "0%" dia bakal jadi Pie Chart (buntet)
+      
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom" // Posisi kotak keterangan label (top, bottom, left, right)
+        }
+      }
+    }
+  });
+
+  // ===== DELIVERY OPTION BAR CHART
+
+  deliveryOption = new Chart(document.getElementById("deliveryBarChart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Orders",
+        data: [],
+        borderColor:               "#FF7A00",
+        borderWidth:               2,
+        backgroundColor:           grad,
+        fill:                      true,
+        tension:                   0.35,
+        pointRadius:               0,
+        pointHoverRadius:          5,
+        pointHoverBackgroundColor: "#FF7A00",
+        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBorderWidth:     2,
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive:          true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
+          borderColor:      "#E4E7EB",
+          borderWidth:      2,
+          titleColor:       "#6B7280",
+          bodyColor:        "#1F2937",
+          titleFont:        { size: 11, family: "Inter, sans-serif" },
+          bodyFont:         { size: 13, weight: '700' },
+          padding:          10,
+          cornerRadius:     6,
+          displayColors:    false,
+          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
+          callbacks: {
+            title: items => items[0].label,
+            label: item  => `${Number(item.raw).toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+        },
+        x: {
+          grid:   { color: "#F3F4F6", drawBorder: false },
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }}
+        }
+      }
+    }
+  });
+
+  // ===== NEW BUYER DONUT CHART
+  const ctx_donut_new_buyer = document.getElementById("newBuyerDonutChart").getContext("2d");
+  const donutPalette_new_buyer = [
+    "#FF7A00", "#10B981", "#0055FF", "#FFB347", "#6B7280",
+    "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6", "#14B8A6"
+  ];
+
+  newBuyerDonut = new Chart(ctx_donut_new_buyer, {
+    type: "doughnut",
+    data: {
+      labels: [],
+      datasets: [{
+        data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
+        backgroundColor: donutPalette_new_buyer,
+        borderWidth: 2,
+        borderColor: "#FFFFFF"
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      
+      // 5. ATRIBUT KHUSUS DONUT CHART
+      cutout: "40%", // Menentukan besar lubang di tengah. Kalau di-set "0%" dia bakal jadi Pie Chart (buntet)
+      
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom" // Posisi kotak keterangan label (top, bottom, left, right)
+        }
+      }
+    }
+  });
+
+  topProductTable = $('#topProductsTable').DataTable({
+    data: [],
+    columns: [
+      { data: 'product_name' },
+      { data: 'nmv', render: function(v, type) {
+          if (type === 'sort' || type === 'type') return parseFloat(v);
+          return `<span>Rp ${Number(v).toLocaleString()}</span>`;
+        }
+      },
+      { data: 'orders' },
+    ],
+    order: [[1, 'desc']],
+    autoWidth: false,
+    paging: true,
+    // searching: true,
+    ordering: true,
+    pageLength: 10,
+    language: {
+      search:     '',
+      searchPlaceholder: 'Search...',
+      lengthMenu: 'Show _MENU_',
+      info:       '_START_–_END_ of _TOTAL_',
+    },
+    createdRow: function(row) {
+      $(row).css({
+        'font-size':   '.82rem',
+        'color':       '#E8D5B7',
+        'border-bottom': '1px solid rgba(255,122,0,0.06)',
+      });
+    },
+    initComplete: function() {
+      // search input
+      $('#topProductsTable_filter input').css({
+        'background':  'rgba(255,255,255,0.04)',
+        'border':      '1px solid rgba(255,122,0,0.18)',
+        'border-radius': '6px',
+        'color':       '#000000',
+        'font-size':   '.78rem',
+        'padding':     '4px 8px',
+      });
+      // info & length
+      $('#topProductsTable_info, #topProductsTable_length select').css({
+        'font-size': '.72rem',
+        'color':     '#B08060',
+      });
+      // pagination
+      $('#topProductsTable_paginate').css({
+        'font-size': '.46rem',
+      });
+      $('#topProductsTable_paginate .paginate_button').css({
+          'font-size': '.46rem',
+          'padding': '2px 2px',  /* Memperkecil ruang di dalam tombol */
+          'margin': '0 1px',     /* Memperdekat jarak antar tombol */
+          'line-height': '1'     /* Menghilangkan tinggi baris berlebih */
+      });
+    }
+  });
+ 
+}
+
+async function loadDashboard(){
+  const params = new URLSearchParams();
+
+  ($("#brandSelect").val() || []).forEach((brand) =>
+    params.append("brand", brand),
+    );
+
+  ($("#platformSelect").val() || []).forEach((platform) =>
+    params.append("platform", platform),
+  );
+
+  params.append("start_date", $("#startDate").val());
+
+  params.append("end_date", $("#endDate").val());
+
+  const response = await fetch(`{% url 'brand_performance_api' %}?${params}`);
+  const data = await response.json();
+
+  const trend = data.trend_json;
+  const trend_cum = data.trend_cum_json;
+  const donut_platform = data.platform_nmv_json;
+  const donut_brand = data.brand_nmv_json;
+  const bar_top_product = data.product_nmv_json;
+  const donut_payment = data.payment_type_orders_json;
+  const bar_delivery = data.delivery_option_orders_json;
+  const donut_new_buyer = data.new_existing_buyer_json;
+  const table_top_product = data.product_table_nmv_json;
+  // console.log("Isi data donut:", donut_platform);
+
+  // ===== SCORECARDS
+  $("#nmvCard").text("Rp" + Number(data.cards.total_nmv).toLocaleString());
+  $("#gmvCard").text("Rp" + Number(data.cards.total_gmv).toLocaleString());
+  $("#orderCard").text(Number(data.cards.total_orders).toLocaleString());
+  $("#quantityCard").text(Number(data.cards.total_quantity).toLocaleString());
+
+  // ===== NMV TREND
+  nmvTrend.data.labels = trend.map(i => i.date);
+  nmvTrend.data.datasets[0].data = trend.map(i => i.nmv);
+  nmvTrend.data.datasets[1].data = trend.map(i => i.gmv);
+  nmvTrend.update();
+
+  nmvCum.data.labels = trend_cum.map(i => i.date);
+  nmvCum.data.datasets[0].data = trend_cum.map(i => i.nmv);
+  nmvCum.update();
+
+  // ===== PLATFORM DONUT CHART 
+  platformDonut.data.labels = donut_platform.map(i => i.platform);
+  platformDonut.data.datasets[0].data = donut_platform.map(i => i.nmv);
+  platformDonut.update();
+
+  // ===== BRAND DONUT CHART 
+  brandDonut.data.labels = donut_brand.map(i => i.brand);
+  brandDonut.data.datasets[0].data = donut_brand.map(i => i.nmv);
+  brandDonut.update();
+
+  // ===== TOP PRODUCT BAR
+  topProduct.data.labels = bar_top_product.map(i => i.product_name);
+  topProduct.data.datasets[0].data = bar_top_product.map(i => i.nmv);
+  topProduct.update();
+
+  // ===== PAYMENT DONUT CHART 
+  paymentDonut.data.labels = donut_payment.map(i => i.payment_type);
+  paymentDonut.data.datasets[0].data = donut_payment.map(i => i.orders);
+  paymentDonut.update();
+
+  // ===== DELIVERY OPTION BAR
+  deliveryOption.data.labels = bar_delivery.map(i => i.delivery_option);
+  deliveryOption.data.datasets[0].data = bar_delivery.map(i => i.orders);
+  deliveryOption.update();
+
+  // ===== NEW BUYER DONUT CHART 
+  newBuyerDonut.data.labels = donut_new_buyer.map(i => i.buyer_type);
+  newBuyerDonut.data.datasets[0].data = donut_new_buyer.map(i => i.total_buyers);
+  newBuyerDonut.update();
+
+  // ===== TOP PRODUCT TABLE 
+  topProductTable.clear();
+  topProductTable.rows.add(table_top_product);
+  topProductTable.draw();
+}
+function debounceLoad() {
+  console.log("debounceload")
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(loadDashboard, 300);
+}
+function registerEvents() {
+  $("#brandSelect").on("change", debounceLoad);
+  $("#platformSelect").on("change", debounceLoad);
+  $("#startDate").on("change", loadDashboard);
+  $("#endDate").on("change", loadDashboard);
+}
+registerEvents();
+initChart()
+loadDashboard()
+
 </script>
 
 {% endblock %}

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 class Brand(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    users = models.ManyToManyField(User, related_name='brands', blank=True)
+    users = models.ManyToManyField(User, through='UserBrand', related_name='brands', blank=True)
     
     def __str__(self):
         return self.name

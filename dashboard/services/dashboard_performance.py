@@ -1,10 +1,17 @@
-from django.db import connection
 from ..models import OrderMartDashboardBrandDF
-from django.db.models import Sum, Count, Q, Window, F, Case, When, Value, CharField, Func
+from django.db.models import Sum, Count, Q, QuerySet, F, Case, When, Value, CharField, Func
 from django.db.models.functions import Lower, Length
-from dashboard.models import OrderMartDashboardBrandDF as OrderMart
+from dashboard.models import (
+    OrderMartDashboardBrandDF as OrderMart,
+    User, UserBrand
+)
 from datetime import date
 import pandas as pd
+import operator
+from functools import reduce
+from functools import lru_cache
+
+
 # from dashboard import models
 
 class Replace(Func):
@@ -13,6 +20,51 @@ class Replace(Func):
 
 class Trim(Func):
     function = 'TRIM'
+
+def brand_filter(queryset: QuerySet, brand_list: list[str]) -> QuerySet:
+    """Filters a queryset using case-insensitive partial matching (OR logic)"""
+    if not brand_list:
+        return queryset.none()
+    conditions = [Q(brand__istartswith=brand) for brand in brand_list]
+    return queryset.filter(reduce(operator.or_, conditions))
+
+def get_base_queryset(
+    user: User,
+) -> QuerySet[OrderMart]:
+    # return OrderMart.objects.filter(brand__in=get_user_brands(user))
+    user_brands = get_user_brands(user)
+    return brand_filter(OrderMart.objects.all(), user_brands)
+
+@lru_cache(maxsize=256)
+def get_user_brands_cached(user_id: int):
+    return tuple(
+        UserBrand.objects.filter(user_id=user_id)
+        .values_list("brand__name", flat=True)
+    )
+
+def get_user_brands(user: User) -> list[str]:
+    return list(get_user_brands_cached(user.id))
+
+@lru_cache(maxsize=1)
+def get_all_brand_variants():
+    return list(
+        OrderMart.objects
+        .values_list("brand", flat=True)
+        .distinct()
+    )
+
+def get_brand_variants(user):
+    user_brands = get_user_brands(user)
+
+    return sorted([
+        brand
+        for brand in get_all_brand_variants()
+        if any(
+            brand.lower().startswith(user_brand.lower())
+            for user_brand in user_brands
+        )
+    ])
+
 
 def get_order_mart_dashboard_brand(user_brands):
     data = (
@@ -70,74 +122,104 @@ def get_nmv_line(filtered_data):
 
 def get_brand_performance_data(user, start_date=None, end_date=None, selected_brands=None, selected_platforms=None):
 
-    if not start_date:
-        start_date = date.today().replace(day=1).isoformat()
+    # if not start_date:
+    #     start_date = date.today().replace(day=1).isoformat()
+    start_date = start_date or date.today().replace(day=1).isoformat()
+    # if not end_date:
+    #     end_date = date.today().isoformat()
+    end_date = end_date or date.today().isoformat()
 
-    if not end_date:
-        end_date = date.today().isoformat()
-
-    user_brands = list(
-        user.userbrand_set
-        .values_list("brand__name", flat=True)
-        .order_by("brand__name")
-        .distinct()
-    )
+    # user_brands = list(
+    #     user.userbrand_set
+    #     .values_list("brand__name", flat=True)
+    #     .order_by("brand__name")
+    #     .distinct()
+    # )
     # print("kontol")
     # print("ordermart:",OrderMart.objects)
     base_queryset = (
         OrderMart.objects
         .filter(
             date__range=[start_date, end_date],
-            brand__in=user_brands
+            # brand__in=user_brands
         )
     )
 
-    all_brands = list(
-        base_queryset
-        .values_list("brand", flat=True)
-        .distinct()
-        .order_by("brand")
-    )
+    # all_brands = list(
+    #     base_queryset
+    #     .values_list("brand", flat=True)
+    #     .distinct()
+    #     .order_by("brand")
+    # )
 
-    all_platforms = list(
-        base_queryset
-        .values_list("platform", flat=True)
-        .distinct()
-        .order_by("platform")
-    )
+    # all_platforms = list(
+    #     base_queryset
+    #     .values_list("platform", flat=True)
+    #     .distinct()
+    #     .order_by("platform")
+    # )
 
-    selected_brands = selected_brands or all_brands
-    selected_platforms = selected_platforms or all_platforms
-
+    # selected_brands = selected_brands or all_brands
+    # selected_platforms = selected_platforms or all_platforms
+    
+    print(selected_brands)
     # CASCADING BRANDS AND PLATFORMS
-    brands = list(
-        base_queryset
-        .filter(
-            platform__in=selected_platforms
-        )
-        .values_list("brand", flat=True)
-        .distinct()
-        .order_by("brand")
+    # brands = list(
+    #     base_queryset
+    #     .filter(
+    #         platform__in=selected_platforms
+    #     )
+    #     .values_list("brand", flat=True)
+    #     .distinct()
+    #     .order_by("brand")
+    # )
+    
+    # platforms = list(
+    #     base_queryset
+    #     .filter(
+    #         brand__in=selected_brands
+    #     )
+    #     .values_list("platform", flat=True)
+    #     .distinct()
+    #     .order_by("platform")
+    # )
+
+    if selected_brands:
+        base_queryset = base_queryset.filter(brand__in=selected_brands)
+        # print("Execution Time brand filter:")
+        # print(queryset.query)
+        # print(f"execute in :{time.time()-t1} s")
+        # queryset = brand_filter(queryset,selected_brands)
+    else:
+        base_queryset = brand_filter(
+        base_queryset,
+        get_user_brands(user)
     )
 
-    platforms = list(
-        base_queryset
-        .filter(
-            brand__in=selected_brands
-        )
-        .values_list("platform", flat=True)
-        .distinct()
-        .order_by("platform")
-    )
-
-    queryset = (
-        base_queryset
-        .filter(
-            brand__in=selected_brands,
-            platform__in=selected_platforms
+    
+    if selected_platforms:
+        base_queryset = base_queryset.filter(platform__in=selected_platforms)
+        # print("Execution Time platform filter:")
+        # # print(queryset.query)
+        # print(f"execute in :{time.time()-t1} s")
+    print(
+        base_queryset.explain(
+            analyze=True,
+            verbose=True,
+            buffers=True,
         )
     )
+    
 
+
+    queryset = base_queryset
+    # queryset = (
+    #     base_queryset
+    #     .filter(
+    #         brand__in=selected_brands,
+    #         platform__in=selected_platforms
+    #     )
+    # )
     # ===== Score Cards =====
     cards = queryset.aggregate(
         total_nmv=Sum("nmv"),
@@ -408,8 +490,8 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
     ]    
 
     return {
-            "brands": brands,
-            "platforms": platforms,
+            "brands": selected_brands,
+            "platforms": selected_platforms,
             "selected_brands": selected_brands,
             "selected_platforms": selected_platforms,
             "start_date": start_date,

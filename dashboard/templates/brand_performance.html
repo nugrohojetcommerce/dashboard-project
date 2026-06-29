@@ -1200,8 +1200,16 @@ function initChart(){
       $('#topProductsTable_paginate').css({
         'font-size': '.46rem',
       });
+      $('#topProductsTable_paginate .pagination').css({
+          'display': 'flex',
+          'flex-wrap': 'wrap',
+      });
+      $('#topProductsTable_paginate .page-item').css({
+          'flex': '1',
+          'text-align' : 'center'
+      });
       $('#topProductsTable_paginate .paginate_button').css({
-          'font-size': '.46rem',
+          'font-size': '.12rem',
           'padding': '2px 2px',  /* Memperkecil ruang di dalam tombol */
           'margin': '0 1px',     /* Memperdekat jarak antar tombol */
           'line-height': '1'     /* Menghilangkan tinggi baris berlebih */

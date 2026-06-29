@@ -57,7 +57,8 @@
 
         <ul class="navbar-nav ms-auto">
             <li class="nav-item">
-                <span class="nav-link navbar-username">{{ request.user.username }}</span>
+              <a href="{% url 'update_profile' %}" class="nav-link navbar-username">{{ request.user.username }}</a>
+                <!-- <span class="nav-link navbar-username">{{ request.user.username }}</span> -->
             </li>
         </ul>
 

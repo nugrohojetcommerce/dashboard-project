@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'dashboard',
+    # "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -67,6 +68,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # "debug_toolbar.middleware.DebugToolbarMiddleware",
+]
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+    "localhost",
 ]
 
 ROOT_URLCONF = 'dashboard_project.urls'
@@ -92,7 +99,7 @@ INTERNAL_IPS = [
     "localhost",
 ]
 WSGI_APPLICATION = 'dashboard_project.wsgi.application'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'brand_performance'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

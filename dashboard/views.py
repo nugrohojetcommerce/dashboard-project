@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
-from django.core.cache import cache
-
 from django.contrib.auth.decorators import login_required
-from django.db.models import QuerySet, Sum, Q
+from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils.dateparse import parse_date
-
 from dashboard.models import (
     OrderMartDashboardBrandDF as OrderMart,
-    User, UserBrand
+    # User, UserBrand
 )
 import time
 from dashboard.services.dashboard_performance import get_cards
@@ -24,11 +21,11 @@ from .services.dashboard_performance import (
     get_brand_performance_data,
     get_nmv_line,
     get_order_mart_dashboard_brand,
+    brand_filter,
+    get_base_queryset,
+    get_user_brands,
+    get_brand_variants,
 )
-from .services.gmv_services import get_gmv
-from functools import reduce
-import operator
-
 
 # def get_user_brands(user: User) -> list[str]:
 #     return list(
@@ -38,19 +35,19 @@ import operator
 #         ).distinct()
 #     )
 
-def brand_filter(queryset: QuerySet, brand_list: list[str]) -> QuerySet:
-    """Filters a queryset using case-insensitive partial matching (OR logic)"""
-    if not brand_list:
-        return queryset.none()
-    conditions = [Q(brand__istartswith=brand) for brand in brand_list]
-    return queryset.filter(reduce(operator.or_, conditions))
+# def brand_filter(queryset: QuerySet, brand_list: list[str]) -> QuerySet:
+#     """Filters a queryset using case-insensitive partial matching (OR logic)"""
+#     if not brand_list:
+#         return queryset.none()
+#     conditions = [Q(brand__istartswith=brand) for brand in brand_list]
+#     return queryset.filter(reduce(operator.or_, conditions))
 
-def get_base_queryset(
-    user: User,
-) -> QuerySet[OrderMart]:
-    # return OrderMart.objects.filter(brand__in=get_user_brands(user))
-    user_brands = get_user_brands(user)
-    return brand_filter(OrderMart.objects.all(), user_brands)
+# def get_base_queryset(
+#     user: User,
+# ) -> QuerySet[OrderMart]:
+#     # return OrderMart.objects.filter(brand__in=get_user_brands(user))
+#     user_brands = get_user_brands(user)
+#     return brand_filter(OrderMart.objects.all(), user_brands)
 
 
 @login_required
@@ -82,8 +79,7 @@ def brand_performance_new(
             OrderMart.objects.values_list(
                 "platform",
                 flat=True,
-            )
-            .distinct()
+            ).distinct()
         ),
         "start_date": today.replace(day=1).isoformat(),
         "end_date": today.isoformat(),
@@ -95,80 +91,6 @@ def brand_performance_new(
         context,
     )
 
-
-from functools import lru_cache
-
-@lru_cache(maxsize=256)
-def get_user_brands_cached(user_id: int):
-    return tuple(
-        UserBrand.objects.filter(user_id=user_id)
-        .values_list("brand__name", flat=True)
-    )
-
-def get_user_brands(user: User) -> list[str]:
-    return list(get_user_brands_cached(user.id))
-
-@lru_cache(maxsize=1)
-def get_all_brand_variants():
-    return list(
-        OrderMart.objects
-        .values_list("brand", flat=True)
-        .distinct()
-    )
-
-# def get_brand_variants(user: User):
-#     user_brands = get_user_brands(user)
-
-#     conditions = [
-#         Q(brand__istartswith=brand)
-#         for brand in user_brands
-#     ]
-
-#     return list(
-#         OrderMart.objects.filter(
-#             reduce(operator.or_, conditions)
-#         )
-#         .values_list("brand", flat=True)
-#         .distinct()
-#     )
-
-# def get_brand_variants(user):
-#     cache_key = f"brand_variants_{user.id}"
-
-#     brands = cache.get(cache_key)
-
-#     if brands is None:
-#         user_brands = get_user_brands(user)
-
-#         conditions = [
-#             Q(brand__istartswith=brand)
-#             for brand in user_brands
-#         ]
-
-#         brands = list(
-#             OrderMart.objects.filter(
-#                 reduce(operator.or_, conditions)
-#             )
-#             .values_list("brand", flat=True)
-#             .distinct()
-#             .order_by("brand")
-#         )
-
-#         cache.set(cache_key, brands, 3600)
-
-#     return brands
-
-def get_brand_variants(user):
-    user_brands = get_user_brands(user)
-
-    return sorted([
-        brand
-        for brand in get_all_brand_variants()
-        if any(
-            brand.lower().startswith(user_brand.lower())
-            for user_brand in user_brands
-        )
-    ])
 
 @login_required
 def brand_performance_api_new(
@@ -218,12 +140,8 @@ def brand_performance_api_new(
         print(f"execute in :{time.time()-t1} s")
         # queryset = brand_filter(queryset,selected_brands)
     else:
-        queryset = brand_filter(
-        queryset,
-        get_user_brands(request.user)
-    )
+        queryset = brand_filter(queryset, get_user_brands(request.user))
 
-    
     if selected_platforms:
         queryset = queryset.filter(platform__in=selected_platforms)
         print("Execution Time platform filter:")
@@ -270,36 +188,41 @@ def brand_performance_api_new(
     )
 
 
-@login_required
-def dashboard_view(request):
-    brands = list(request.user.userbrand_set.values_list("brand__name", flat=True))
+def brand_performance(
+    request: HttpRequest,
+) -> HttpResponse:
+    # queryset = get_base_queryset(request.user)
+    today = date.today() - timedelta(days=1)
+    context: dict[str, Any] = {
+        # "brands": list(
+        #     queryset.values_list(
+        #         "brand",
+        #         flat=True,
+        #     )
+        #     .distinct()
+        #     .order_by("brand")
+        # ),
+        "brands": get_brand_variants(request.user),
+        "platforms": list(
+            OrderMart.objects.values_list(
+                "platform",
+                flat=True,
+            ).distinct()
+        ),
+        "start_date": request.GET.get("start_date") or today.replace(day=1).isoformat(),
+        "end_date": request.GET.get("end_date") or today.isoformat(),
+    }
 
-    return render(request, "dashboard.html", {"brands": brands})
-
-
-@login_required
-def api_gmv(request):
-    brands = list(request.user.userbrand_set.values_list("brand__name", flat=True))
-
-    data = get_gmv(request.GET.get("start_date"), request.GET.get("end_date"), brands)
-
-    return JsonResponse(data, safe=False)
-
-
-@login_required
-def brand_performance_view(request):
-    brands: list[str] = list(
-        request.user.userbrand_set.select_related("brand")
-        .values_list("brand__name", flat=True)
-        .order_by("brand__name")
-        .distinct()
+    return render(
+        request,
+        "brand_performance.html",
+        context,
     )
 
-    return render(request, "brand_performance.html", {"brands": brands})
 
-
-@login_required
-def brand_performance(request):
+def brand_performance_api(
+    request: HttpRequest,
+) -> JsonResponse:
 
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
@@ -307,14 +230,14 @@ def brand_performance(request):
     selected_brands = request.GET.getlist("brand")
     selected_platforms = request.GET.getlist("platform")
 
-    context = get_brand_performance_data(
+    data = get_brand_performance_data(
         user=request.user,
         start_date=start_date,
         end_date=end_date,
         selected_brands=selected_brands,
         selected_platforms=selected_platforms,
     )
-    return render(request, "brand_performance.html", context)
+    return JsonResponse(data)
 
 
 @login_required

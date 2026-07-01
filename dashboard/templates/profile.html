@@ -1,33 +1,124 @@
-{% extends "base.html" %} {% block content %}
-<div class="profile-container">
-  <div class="row">
-    <div class="col-4">
-      <h2>Update Your Profile</h2>
+{% extends "base.html" %} 
+{% block content %}
+<div class="container-fluid pt-3">
+  <div class="row match-height">
+    
+    <div class="col-md-4 d-flex align-items-stretch">
+      <div class="card card-outline card-primary shadow-sm w-100 mb-4 d-flex flex-column">
+        <div class="card-header d-flex align-items-center" style="height: 60px;">
+          <h3 class="card-title text-bold text-dark mb-0" style="font-size: 1.15rem;">
+            <i class="fas fa-user-edit mr-2 text-primary"></i>Update Your Profile
+          </h3>
+        </div>
+        
+        <div class="card-body d-flex flex-column justify-content-between">
+          <div>
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show p-2 mb-3" role="alert">
+                  <small>{{ message }}</small>
+                  <button type="button" class="close p-2" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+              {% endfor %}
+            {% endif %}
 
-      {% if messages %} {% for message in messages %}
-      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-      {% endfor %} {% endif %}
+            <form method="post" novalidate id="profileForm">
+              {% csrf_token %}
+              
+              {% for field in form %}
+                <div class="form-group mb-3">
+                  <label for="{{ field.id_for_label }}" class="text-secondary font-weight-bold d-block mb-1" style="font-size: 13px;">
+                    {{ field.label }}
+                  </label>
+                  <input type="{{ field.field.widget.input_type|default:'text' }}"
+                         name="{{ field.html_name }}"
+                         id="{{ field.id_for_label }}"
+                         value="{{ field.value|default_if_none:'' }}"
+                         class="form-control {% if field.errors %}is-invalid{% endif %}"
+                         placeholder="Enter {{ field.label|lower }}">
+                  
+                  {% if field.errors %}
+                    <div class="invalid-feedback d-block" style="font-size: 11px;">
+                      {{ field.errors|striptags }}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </form>
+          </div>
 
-      <form method="post">
-        {% csrf_token %} {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-      </form>
-
-      <br />
-      <a href="{% url 'password_change' %}">Want to change your password?</a>
+          <div class="pt-3 border-top d-flex align-items-center justify-content-between">
+            <button type="submit" form="profileForm" class="btn btn-primary px-4 font-weight-bold">
+              <i class="fas fa-save mr-1"></i> Save Changes
+            </button>
+            <a href="{% url 'password_change' %}" class="small text-muted text-underline-hover">
+              <i class="fas fa-key mr-1"></i> Change password?
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="col 8">
-      <h3>Your Assigned Brands</h3>
-      {% if assigned_brands %}
-      <ul>
-        {% for brand in assigned_brands %}
-        <li><strong>{{ brand.name }}</strong></li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <p>You don't have any brands assigned to your account yet.</p>
-      {% endif %}
+
+    <div class="col-md-8 d-flex align-items-stretch">
+      <div class="card card-outline card-primary shadow-sm w-100 mb-4 d-flex flex-column">
+        <div class="card-header d-flex align-items-center justify-content-between" style="height: 60px;">
+          <h3 class="card-title text-bold text-dark mb-0" style="font-size: 1.15rem;">
+            <i class="fas fa-cubes mr-2 text-primary"></i>Your Assigned Brands
+          </h3>
+          {% if assigned_brands %}
+            <span class="badge badge-secondary py-1 px-2 font-weight-bold">{{ assigned_brands|length }} Brands Allocated</span>
+          {% endif %}
+        </div>
+        
+        <div class="card-body d-flex flex-column">
+          {% if assigned_brands %}
+            <div class="pr-1 custom-scrollbar flex-grow-1" style="max-height: 380px; overflow-y: auto; overflow-x: hidden;">
+              <div class="row mx-0">
+                {% for brand in assigned_brands %}
+                  <div class="col-sm-6 col-md-4 px-1 mb-2"> 
+                    <div class="info-box bg-light border h-100 mb-0 shadow-none hover-shadow" style="transition: transform 0.15s ease, box-shadow 0.15s ease;"> 
+                      <span class="info-box-icon bg-info elevation-0" style="width: 50px; font-size: 1.2rem;"><i class="fas fa-chart-line"></i></span>
+                      <div class="info-box-content p-2 justify-content-center">
+                        <span class="info-box-text text-bold text-dark mb-0" style="font-size: 14px; line-height: 1.2;">{{ brand.name }}</span>
+                        <span class="text-muted" style="font-size: 10.5px;">Active Performance</span>
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% else %}
+            <div class="callout callout-info my-auto">
+              <h5>No Assigned Access</h5>
+              <p class="mb-0">You don't have any brands assigned to your account yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
+
   </div>
 </div>
+
+<style>
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+  }
+  .hover-shadow:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.06) !important;
+    transform: translateY(-1px);
+  }
+</style>
 {% endblock %}

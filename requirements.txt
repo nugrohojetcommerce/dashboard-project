@@ -1,10 +1,17 @@
 asgiref==3.11.1
 distlib==0.4.0
 Django==6.0.4
+django-debug-toolbar==7.0.0
+django-silk==5.5.0
 filelock==3.18.0
+gprof2dot==2025.4.14
+numpy==2.5.0
+pandas==3.0.3
 pbr==6.1.1
 psycopg2-binary==2.9.12
+python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
+six==1.17.0
 sqlparse==0.5.5
 stevedore==5.4.1
 virtualenv==20.32.0

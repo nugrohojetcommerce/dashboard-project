@@ -1,4 +1,5 @@
 from django.db import models, connection
+from django.db.models.functions import Cast
 from django.contrib.auth.models import User
 
 class Brand(models.Model):
@@ -77,3 +78,77 @@ class OrderMartDashboardBrandDF(models.Model):
         managed = False  # WAJIB: Biar Django ga bikin file migrasi/ngubah isi database asli
         db_table = 'order_mart_dashboard_brand_df' # Nama tabel asli di PostgreSQL
     
+
+class OrderMartUnionDWSDF(models.Model):
+    key_id = models.SmallIntegerField(primary_key=True)
+    # Text Fields
+    brand = models.TextField(null=True, blank=True)
+    platform = models.TextField(null=True, blank=True)
+    category = models.TextField(null=True, blank=True)
+    brand_group = models.TextField(null=True, blank=True)
+    # dateMonth = models.TextField(db_column='dateMonth', null=True, blank=True) # Pakai db_column karena camelCase
+    user_access = models.TextField(null=True, blank=True)
+
+    # Date & Timestamp Fields
+    # Dijadikan primary_key agar Django tidak error karena tabel tidak punya kolom 'id'
+    # date_column = models.DateTimeField(primary_key=True) 
+    date_time = models.DateTimeField(null=True, blank=True)
+    # date = models.GeneratedField(
+    #         expression=Cast('date_time', output_field=models.DateField()),
+    #         output_field=models.DateField(),
+    #         db_persist=True,
+    #     )
+    # date = models.DateField(null=True, blank=True)
+
+    # BigInt Fields (int8)
+    gmv = models.BigIntegerField(null=True, blank=True)
+    gross_order_qty = models.BigIntegerField(null=True, blank=True)
+    gross_sales_qty = models.BigIntegerField(null=True, blank=True)
+    nmv = models.BigIntegerField(null=True, blank=True)
+    net_order_qty = models.BigIntegerField(null=True, blank=True)
+    net_sales_qty = models.BigIntegerField(null=True, blank=True)
+
+    class Meta:
+        managed = False  # WAJIB: Biar Django ga bikin file migrasi/ngubah isi database asli
+        db_table = 'postgre_order_mart_union_dws_df' # Nama tabel asli di PostgreSQL
+
+class TargetData(models.Model):
+
+    Order_Date = models.IntegerField(null=True, blank=True)
+    Category = models.TextField(null=True,blank=True)
+    Brand_Group = models.TextField(null=True,blank=True)
+    Target = models.BigIntegerField(null=True,blank=True)
+    Year = models.IntegerField(null=True,blank=True)
+
+    class Meta:
+        managed = False  # WAJIB: Biar Django ga bikin file migrasi/ngubah isi database asli
+        db_table = 'postgre_others_target' # Nama tabel asli di PostgreSQL
+
+
+class AdsMart(models.Model):
+
+    key_id = models.IntegerField(primary_key=True)
+    platform = models.TextField(null=True,blank=True)
+    date = models.DateTimeField(null=True,blank=True)
+    brand = models.TextField(null=True,blank=True)
+    category = models.TextField(null=True,blank=True)
+    brand_group = models.TextField(null=True,blank=True)
+    group_name = models.TextField(null=True,blank=True)
+    status = models.TextField(null=True,blank=True)
+    ads_id = models.TextField(null=True,blank=True)
+    ads_type = models.TextField(null=True,blank=True)
+    impression = models.IntegerField(null=True,blank=True)
+    clicks = models.IntegerField(null=True,blank=True)
+    conversions = models.IntegerField(null=True,blank=True)
+    item_sold = models.IntegerField(null=True,blank=True)
+    gmv = models.IntegerField(null=True,blank=True)
+    direct_gmv = models.IntegerField(null=True,blank=True)
+    expense = models.IntegerField(null=True,blank=True)
+    product_name = models.TextField(null=True,blank=True)
+    roas = models.DecimalField(max_digits=8,decimal_places=2,null=True,blank=True)
+    ctr = models.DecimalField(max_digits=8,decimal_places=2,null=True,blank=True)
+    index_level_0 = models.BigIntegerField(db_column='__index_level_0__',null=True,blank=True)
+
+    class Meta:
+        managed = False  # WAJIB: Biar Django ga bikin file migrasi/ngubah isi database asli
+        db_table = 'postgre_ads_mart_dwd_df' # Nama tabel asli di PostgreSQL

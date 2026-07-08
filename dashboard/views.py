@@ -27,6 +27,13 @@ from .services.dashboard_performance import (
     get_brand_variants,
 )
 
+# ===== NEW: Consolidate Sales imports =====
+from .services.consolidated_sales import (
+    get_consolidate_sales_data,
+    get_consolidate_brand_variants,
+    get_consolidate_platforms,
+)
+
 # def get_user_brands(user: User) -> list[str]:
 #     return list(
 #         user.userbrand_set.values_list(
@@ -110,12 +117,7 @@ def brand_performance_api_new(
 
     selected_brands = request.GET.getlist("brand")
     selected_platforms = request.GET.getlist("platform")
-    # queryset = get_base_queryset(request.user).filter(
-    #     date__range=[
-    #         start_date,
-    #         end_date,
-    #     ]
-    # )
+
     t1 = time.time()
     queryset = OrderMart.objects.filter(
         date__range=[
@@ -124,28 +126,18 @@ def brand_performance_api_new(
         ]
     )
     print("Execution Time all object:")
-    # print(queryset.query)
-    # print(f"execute in :{time.time()-t1} s")
-    # queryset = brand_filter(
-    #     queryset,
-    #     get_user_brands(request.user)
-    # )
     print("Execution Time start brand:")
-    # print(queryset.query)
     print(f"execute in :{time.time()-t1} s")
     if selected_brands:
         queryset = queryset.filter(brand__in=selected_brands)
         print("Execution Time brand filter:")
-        # print(queryset.query)
         print(f"execute in :{time.time()-t1} s")
-        # queryset = brand_filter(queryset,selected_brands)
     else:
         queryset = brand_filter(queryset, get_user_brands(request.user))
 
     if selected_platforms:
         queryset = queryset.filter(platform__in=selected_platforms)
         print("Execution Time platform filter:")
-        # print(queryset.query)
         print(f"execute in :{time.time()-t1} s")
     print(
         queryset.explain(
@@ -159,7 +151,6 @@ def brand_performance_api_new(
         total_gmv=Sum("gmv"),
     )
     print("Execution Time card :")
-    # print(queryset.query)
     print(f"execute in :{time.time()-t1} s")
 
     trend = [
@@ -194,14 +185,6 @@ def brand_performance(
     # queryset = get_base_queryset(request.user)
     today = date.today() - timedelta(days=1)
     context: dict[str, Any] = {
-        # "brands": list(
-        #     queryset.values_list(
-        #         "brand",
-        #         flat=True,
-        #     )
-        #     .distinct()
-        #     .order_by("brand")
-        # ),
         "brands": get_brand_variants(request.user),
         "platforms": list(
             OrderMart.objects.values_list(
@@ -240,53 +223,46 @@ def brand_performance_api(
     return JsonResponse(data)
 
 
-@login_required
-def api_brand_performance(request, order_data=None):
-    # 1. Ambil semua list brand yang di-assign ke user ini
-    user_brands = list(request.user.userbrand_set.values_list("brand__name", flat=True))
+# ======================================================================
+# ===== NEW: Consolidate Sales — same flow/pattern as brand_performance
+# ======================================================================
 
-    # 2. Tangkap parameter filter dari AJAX request GET
-    start_date = request.GET.get("start_date")
-    end_date = request.GET.get("end_date")
-    selected_brand = request.GET.get("brand", "all")
-    selected_platform = request.GET.get("platform", "all")
-
-    # start_date = "2026-01-01"
-    # end_date = "2026-01-31"
-    # selected_brand = "Loreal"
-
-    # 3. Logika penentuan brand yang akan di-query
-    # Jika user memilih brand spesifik dan brand tersebut ada di dalam hak aksesnya
-    if selected_brand != "all":
-        if selected_brand in user_brands:
-            brands_to_query = [selected_brand]
-        else:
-            # Antisipasi jika user nembak brand yang bukan hak miliknya lewat API
-            return JsonResponse({"error": "Unauthorized brand access"}, status=403)
-    else:
-        # Jika milih 'all', query semua brand milik user tersebut
-        brands_to_query = user_brands
-
-    # 4. Panggil kedua fungsi service layer lu
-    # filtered_data = request.get("filtered_data")
-    # if star
-    # filtered_data = filtered_data or get_data(start_date,end_date,brands_to_query,selected_platform)
-    # order_data = request.GET.get("order_data")
-    order_data = order_data or get_order_mart_dashboard_brand(user_brands)
-    filtered_data = filter_data(
-        order_data, start_date, end_date, brands_to_query, selected_platform
-    )
-    cards_data = get_cards(filtered_data)
-    trend_data = get_nmv_line(filtered_data)
-
-    # 5. Gabungkan hasilnya ke dalam satu response object sesuai ekspektasi AJAX HTML
-    context_response = {
-        "cards": cards_data,
-        "trend": trend_data,
-        "order_data": order_data,
+def consolidate_sales(
+    request: HttpRequest,
+) -> HttpResponse:
+    today = date.today() - timedelta(days=1)
+    context: dict[str, Any] = {
+        "brands": get_consolidate_brand_variants(request.user),
+        "platforms": get_consolidate_platforms(),
+        "start_date": request.GET.get("start_date") or today.replace(day=1).isoformat(),
+        "end_date": request.GET.get("end_date") or today.isoformat(),
     }
 
-    return JsonResponse(context_response)
+    return render(
+        request,
+        "consolidated_sales.html",
+        context,
+    )
+
+
+def consolidate_sales_api(
+    request: HttpRequest,
+) -> JsonResponse:
+
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    selected_brands = request.GET.getlist("brand")
+    selected_platforms = request.GET.getlist("platform")
+
+    data = get_consolidate_sales_data(
+        user=request.user,
+        start_date=start_date,
+        end_date=end_date,
+        selected_brands=selected_brands,
+        selected_platforms=selected_platforms,
+    )
+    return JsonResponse(data)
 
 
 @login_required

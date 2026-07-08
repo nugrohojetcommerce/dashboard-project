@@ -1216,6 +1216,67 @@ function initChart(){
       });
     }
   });
+
+  // ===== PRICE BAND BAR CHART
+
+  priceBandChart = new Chart(document.getElementById("priceBand").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Orders",
+        data: [],
+        borderColor:               "#FF7A00",
+        borderWidth:               2,
+        backgroundColor:           grad,
+        fill:                      true,
+        tension:                   0.35,
+        pointRadius:               0,
+        pointHoverRadius:          5,
+        pointHoverBackgroundColor: "#FF7A00",
+        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBorderWidth:     2,
+      }]
+    },
+    options: {
+      // indexAxis: "y",
+      responsive:          true,
+      maintainAspectRatio: false,
+      interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
+          borderColor:      "#E4E7EB",
+          borderWidth:      2,
+          titleColor:       "#6B7280",
+          bodyColor:        "#1F2937",
+          titleFont:        { size: 11, family: "Inter, sans-serif" },
+          bodyFont:         { size: 13, weight: '700' },
+          padding:          10,
+          cornerRadius:     6,
+          displayColors:    false,
+          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
+          callbacks: {
+            title: items => items[0].label,
+            label: item  => `${Number(item.raw).toLocaleString()}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+        },
+        y: {
+          grid:   { color: "#F3F4F6", drawBorder: false },
+          border: { display: false },
+          ticks:  { color: "#4B5563", font: { size: 11 }}
+        }
+      }
+    }
+  });
  
 }
 
@@ -1246,6 +1307,7 @@ async function loadDashboard(){
   const bar_delivery = data.delivery_option_orders_json;
   const donut_new_buyer = data.new_existing_buyer_json;
   const table_top_product = data.product_table_nmv_json;
+  const bar_price_band = data.price_band_orders_json;
   // console.log("Isi data donut:", donut_platform);
 
   // ===== SCORECARDS
@@ -1298,6 +1360,11 @@ async function loadDashboard(){
   topProductTable.clear();
   topProductTable.rows.add(table_top_product);
   topProductTable.draw();
+
+  // ===== PRICE BAND BAR
+  priceBandChart.data.labels = bar_price_band.map(i => i.price_band);
+  priceBandChart.data.datasets[0].data = bar_price_band.map(i => i.orders);
+  priceBandChart.update();
 }
 function debounceLoad() {
   console.log("debounceload")

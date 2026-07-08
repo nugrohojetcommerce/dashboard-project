@@ -1,5 +1,5 @@
 from ..models import OrderMartDashboardBrandDF
-from django.db.models import Sum, Count, Q, QuerySet, F, Case, When, Value, CharField, Func
+from django.db.models import Sum, Count, Q, QuerySet, F, Case, When, Value, CharField, IntegerField, Func
 from django.db.models.functions import Lower, Length
 from dashboard.models import (
     OrderMartDashboardBrandDF as OrderMart,
@@ -135,7 +135,6 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
     #     .order_by("brand__name")
     #     .distinct()
     # )
-    # print("kontol")
     # print("ordermart:",OrderMart.objects)
     base_queryset = (
         OrderMart.objects
@@ -144,6 +143,8 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
             # brand__in=user_brands
         )
     )
+
+    print("BASE QUERY SET",base_queryset)
 
     # all_brands = list(
     #     base_queryset
@@ -489,6 +490,52 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
         for _, row in df_product_table.iterrows()
     ]    
 
+    # ===== Price Band Distribution =====
+
+    # Definisikan anotasi untuk kategori delivery_group
+    price_band_group_case = Case(
+        When(selling_price__lte=50000, then=Value('<50k')),
+        When(selling_price__lte=100000, then=Value('50k-100k')),
+        When(selling_price__lte=200000, then=Value('100k-200k')),
+        When(selling_price__lte=500000, then=Value('200k-500k')),
+        When(selling_price__lte=1000000, then=Value('500k-1mio')),
+        When(selling_price__lte=2000000, then=Value('1mio-2mio')),
+        When(selling_price__lte=5000000, then=Value('2mio-5mio')),
+        default=Value('>5mio'),
+        output_field=CharField(),
+    )
+
+    price_band_sort_case = Case(
+        When(price_band='<50k', then=Value(1)),
+        When(price_band='50k-100k', then=Value(2)),
+        When(price_band='100k-200k', then=Value(3)),
+        When(price_band='200k-500k', then=Value(4)),
+        When(price_band='500k-1mio', then=Value(5)),
+        When(price_band='1mio-2mio', then=Value(6)),
+        When(price_band='2mio-5mio', then=Value(7)),
+        default=Value(8),
+        output_field=IntegerField(),
+    )
+
+    price_band_rows = (
+        queryset
+        .annotate(price_band=price_band_group_case) # 1. Bikin dulu logika pengelompokan harganya
+        .values('price_band')                       # 2. GROUP BY berdasarkan price_band
+        .annotate(orders=Count("order_number", distinct=True)) # 3. Hitung total order per kelompok
+        .annotate(sort_order=price_band_sort_case) # Pasang angka urutannya di sini
+        .order_by("sort_order")                    # Urutkan berdasarkan angka 1 sampai 8 (A-Z kecil ke besar)
+    )
+
+    df_price_band = pd.DataFrame(list(price_band_rows))
+
+    price_band_orders = [
+        {
+        "price_band": row["price_band"],
+        "orders":row["orders"]
+        }
+        for _, row in df_price_band.iterrows()
+    ]
+
     return {
             "brands": selected_brands,
             "platforms": selected_platforms,
@@ -506,4 +553,5 @@ def get_brand_performance_data(user, start_date=None, end_date=None, selected_br
             "delivery_option_orders_json" : delivery_option_orders,
             "new_existing_buyer_json" : new_existing_buyer,
             "product_table_nmv_json" : product_table_nmv,
+            "price_band_orders_json" : price_band_orders,
         }

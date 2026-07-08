@@ -9,7 +9,9 @@ from .views import (
     brand_performance_api,
     # api_gmv,
     brand_performance_new,
-    api_brand_performance,
+    # api_brand_performance,
+    consolidate_sales,
+    consolidate_sales_api,
     update_profile,
 )
 from django.views.decorators.cache import never_cache
@@ -21,10 +23,13 @@ urlpatterns = [
     path('brand_performance_api_new', brand_performance_api_new, name="brand_performance_api_new"),
     # path('',brand_performance_view),
     # path('api/gmv', api_gmv),
-    path('api/brand_performance',api_brand_performance),
+    # path('api/brand_performance',api_brand_performance),
     path('brand_performance/',brand_performance, name="brand_performance"),
     path('profile/', update_profile, name='update_profile'),
     path('profile/password/', never_cache(auth_views.PasswordChangeView.as_view(template_name='password_change.html', success_url='/profile/')), name='password_change'),
     # path('brand_performance/',brand_performance, name="brand_performance"),
-    path('brand_performance_api/',brand_performance_api, name="brand_performance_api")
+    path('brand_performance_api/',brand_performance_api, name="brand_performance_api"),
+
+    path('consolidate_sales/', consolidate_sales, name="consolidate_sales"),
+    path('consolidate_sales_api/',consolidate_sales_api,name="consolidate_sales_api")
 ]

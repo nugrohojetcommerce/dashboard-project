@@ -1,0 +1,2079 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Brand Insight Dashboard{% endblock %}
+
+{% block content %}
+
+<style>
+  /* ── TOKENS: ULTRA CLEAN LIGHT MODE (same as Ads / Brand Performance) ── */
+  :root {
+    --bg-page:        #F8F9FA;
+    --card-bg:        #FFFFFF;
+    --glass-hover:    #FAFAFA;
+    --glass-border:   #E4E7EB;
+    --glass-border-h: #FF7A00;
+
+    --orange:         #FF7A00;
+    --orange-bright:  #D96500;
+    --orange-dim:     rgba(255, 122, 0, 0.06);
+    --orange-glow:    rgba(255, 122, 0, 0.12);
+    --orange-deep:    #CC4400;
+
+    --text-primary:   #1F2937;
+    --text-sub:       #4B5563;
+    --text-muted:     #6B7280;
+    --text-faint:     #9CA3AF;
+
+    --success:        #059669;
+    --success-bg:     #E6F4EA;
+    --danger:         #DC2626;
+    --danger-bg:      #FCE8E6;
+    --warn:           #B45F06;
+    --warn-bg:        #FFF4E0;
+
+    --radius:         12px;
+    --radius-sm:      8px;
+    --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+    --shadow-md:      0 10px 20px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
+  }
+
+  body, html {
+    background: var(--bg-page) !important;
+    color: var(--text-primary) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .bp-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .bp-header h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -.3px;
+    margin: 0;
+  }
+  .bp-header .bp-subtitle {
+    font-size: .75rem;
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  .s-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+  }
+
+  /* ── filter panel ── */
+  .filter-panel {
+    padding: 18px 22px 22px;
+    margin-bottom: 20px;
+  }
+  .filter-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .filter-icon {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    background: var(--orange-dim);
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--orange);
+    flex-shrink: 0;
+  }
+  .filter-panel-header span {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .09em;
+  }
+
+  .filter-panel .form-label {
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .filter-panel .form-control,
+  .filter-panel .form-select {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary) !important;
+    font-size: .87rem;
+    padding: 8px 11px;
+    transition: border-color .18s, box-shadow .18s;
+    box-shadow: none !important;
+  }
+  .filter-panel .form-control:focus,
+  .filter-panel .form-select:focus {
+    border-color: var(--orange) !important;
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
+    outline: none;
+  }
+  .filter-panel .form-select option {
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+
+  /* select2 light mode overrides */
+  .select2-container--default .select2-selection--multiple {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-sm) !important;
+    min-height: 38px !important;
+    padding: 2px 6px !important;
+    box-shadow: none !important;
+  }
+  .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: var(--orange) !important;
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background: var(--orange-dim) !important;
+    border: 1px solid rgba(255, 122, 0, 0.15) !important;
+    color: var(--orange-bright) !important;
+    border-radius: 4px !important;
+    font-size: .75rem !important;
+    font-weight: 600 !important;
+    padding: 2px 8px 2px 22px !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: var(--orange) !important;
+    margin-right: 5px !important;
+  }
+  .select2-container--default .select2-search--inline .select2-search__field {
+    color: var(--text-primary) !important;
+    font-size: .85rem !important;
+    background: transparent !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    padding: 0 !important;
+  }
+  .select2-dropdown {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+  }
+  .select2-container--default .select2-results__option {
+    color: var(--text-sub) !important;
+    font-size: .85rem !important;
+    padding: 8px 12px !important;
+  }
+  .select2-container--default .select2-results__option--highlighted {
+    background: var(--orange-dim) !important;
+    color: var(--orange-bright) !important;
+  }
+  .select2-container--default .select2-results__option--selected {
+    background: #F3F4F6 !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+  }
+  .select2-search--dropdown .select2-search__field {
+    background: var(--bg-page) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 6px !important;
+    color: var(--text-primary) !important;
+    padding: 7px 10px !important;
+    outline: none !important;
+  }
+
+  /* quick action buttons */
+  .btn-ghost-amber {
+    font-size: .72rem; font-weight: 700;
+    color: var(--orange-bright);
+    background: var(--orange-dim);
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    letter-spacing: .02em;
+  }
+  .btn-ghost-amber:hover {
+    background: var(--orange-glow);
+    border-color: rgba(255, 122, 0, 0.3);
+  }
+  .btn-ghost-muted {
+    font-size: .72rem; font-weight: 600;
+    color: var(--text-muted);
+    background: #F3F4F6;
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background .15s;
+    letter-spacing: .02em;
+  }
+  .btn-ghost-muted:hover { background: #E5E7EB; }
+
+  /* ── section divider ── */
+  .segment-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 30px 0 14px;
+  }
+  .segment-divider .seg-badge {
+    font-size: .68rem; font-weight: 800;
+    color: var(--orange-bright);
+    background: var(--orange-dim);
+    border: 1px solid rgba(255, 122, 0, 0.18);
+    border-radius: 20px;
+    padding: 4px 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    white-space: nowrap;
+  }
+  .segment-divider .seg-title {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .segment-divider .seg-line {
+    flex: 1;
+    height: 1px;
+    background: var(--glass-border);
+  }
+
+  /* ── metric cards (top score row) ── */
+  .metric-card {
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+  }
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--glass-border-h);
+  }
+  .metric-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .card-nmv::after     { background: linear-gradient(90deg, #FF7A00, #FFB347); }
+  .card-gmv::after     { background: linear-gradient(90deg, #FF5500, #FF8844); }
+  .card-orders::after  { background: linear-gradient(90deg, #0891B2, #22D3EE); }
+  .card-uv::after      { background: linear-gradient(90deg, #7C3AED, #A78BFA); }
+  .card-pv::after      { background: linear-gradient(90deg, #4338CA, #818CF8); }
+  .card-cr::after      { background: linear-gradient(90deg, #059669, #34D399); }
+  .card-aov::after     { background: linear-gradient(90deg, #0F766E, #2DD4BF); }
+  .card-items::after   { background: linear-gradient(90deg, #B45309, #FBBF24); }
+  .card-cancel::after  { background: linear-gradient(90deg, #DC2626, #F87171); }
+  .card-leak::after    { background: linear-gradient(90deg, #DB2777, #F472B6); }
+
+  .metric-label {
+    font-size: .63rem; font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .label-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .card-nmv     .label-dot { background: #FF7A00; }
+  .card-gmv     .label-dot { background: #FF5500; }
+  .card-orders  .label-dot { background: #0891B2; }
+  .card-uv      .label-dot { background: #7C3AED; }
+  .card-pv      .label-dot { background: #4338CA; }
+  .card-cr      .label-dot { background: #059669; }
+  .card-aov     .label-dot { background: #0F766E; }
+  .card-items   .label-dot { background: #B45309; }
+  .card-cancel  .label-dot { background: #DC2626; }
+  .card-leak    .label-dot { background: #DB2777; }
+
+  .metric-value {
+    font-size: 1.28rem; font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -.4px; line-height: 1;
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+  }
+
+  .metric-icon {
+    position: absolute;
+    bottom: 10px; right: 14px;
+    font-size: 1.6rem; opacity: .06; line-height: 1;
+  }
+
+  /* ── delta badge (period-over-period) ── */
+  .delta-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: .68rem; font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+  .delta-up   { background: var(--success-bg); color: var(--success); }
+  .delta-down { background: var(--danger-bg); color: var(--danger); }
+  .delta-flat { background: #F3F4F6; color: var(--text-faint); }
+
+  /* ── conversion rate achievement badge ── */
+  .metric-sub-row { margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .ach-badge {
+    display: inline-block;
+    font-size: .66rem; font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    letter-spacing: .02em;
+  }
+  .ach-badge.ach-good { background: var(--success-bg); color: var(--success); }
+  .ach-badge.ach-warn { background: var(--warn-bg); color: var(--warn); }
+  .ach-badge.ach-bad  { background: var(--danger-bg); color: var(--danger); }
+
+  /* ── spotlight cards (top1 brand group) ── */
+  .card-spotlight-cr::after  { background: linear-gradient(90deg, #059669, #34D399); }
+  .card-spotlight-nmv::after { background: linear-gradient(90deg, #D97706, #FBBF24); }
+  .card-spotlight-cr  .label-dot { background: #059669; }
+  .card-spotlight-nmv .label-dot { background: #D97706; }
+  .spotlight-name {
+    font-size: 1.15rem; font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -.3px; line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .spotlight-value {
+    font-size: .82rem; font-weight: 600;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── chart card ── */
+  .chart-card {
+    padding: 18px 22px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--glass-border);
+    flex-shrink: 0;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .chart-title-group { display: flex; align-items: center; gap: 10px; }
+  .chart-accent-bar {
+    width: 3px; height: 18px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #FF7A00, #CC4400);
+    flex-shrink: 0;
+  }
+  .chart-title {
+    font-size: .9rem; font-weight: 700;
+    color: var(--text-primary); margin: 0;
+  }
+  .chart-subtitle {
+    font-size: .7rem;
+    color: var(--text-faint);
+    margin-top: 2px;
+    display: block;
+  }
+  .chart-badge {
+    font-size: .66rem; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+    background: var(--orange-dim);
+    color: var(--orange-bright);
+    letter-spacing: .05em; text-transform: uppercase;
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    white-space: nowrap;
+  }
+  .chart-body {
+    flex: 1;
+    position: relative;
+    min-height: 260px;
+  }
+  .chart-body.tall { min-height: 320px; }
+  .chart-body.xtall { min-height: 360px; }
+
+  .insight-note {
+    font-size: .74rem;
+    color: var(--text-muted);
+    background: #F9FAFB;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+  .insight-note b { color: var(--text-primary); }
+</style>
+
+<div class="bp-header">
+  <h1>Brand Insight Dashboard</h1>
+  <span class="bp-subtitle">/ Traffic, Conversion &amp; Revenue</span>
+</div>
+
+<form method="get" id="filterForm">
+<div class="s-card filter-panel">
+
+  <div class="filter-panel-header">
+    <div class="filter-icon">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    </div>
+    <span>Filters</span>
+  </div>
+
+  <div class="row g-3 align-items-start">
+
+    <div class="col-md-3">
+      <label class="form-label">Brands</label>
+      <select id="brandSelect" class="form-select" name="brand" multiple>
+        {% for brand in brands %}
+        <option value="{{ brand }}" {% if brand in selected_brands %}selected{% endif %}>{{ brand }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllBrands()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearBrands()">Clear</button>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Platforms</label>
+      <select id="platformSelect" class="form-select" name="platform" multiple>
+        {% for platform in platforms %}
+        <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllPlatforms()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearPlatforms()">Clear</button>
+      </div>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Category</label>
+      <select id="categorySelect" class="form-select" name="category" multiple>
+        {% for category in categories %}
+        <option value="{{ category }}" {% if category in selected_categories %}selected{% endif %}>{{ category }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllCategories()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearCategories()">Clear</button>
+      </div>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Start Date</label>
+      <input type="date" id="startDate" class="form-control" name="start_date" value="{{ start_date }}">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">End Date</label>
+      <input type="date" id="endDate" class="form-control" name="end_date" value="{{ end_date }}">
+    </div>
+
+  </div>
+</div>
+</form>
+
+<!-- ===== SCORE CARDS (deep KPI row w/ period-over-period deltas) ===== -->
+<div class="row g-3 mb-3">
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-nmv">
+      <div class="metric-label"><span class="label-dot"></span>Total NMV</div>
+      <div class="metric-value" id="nmvCard">Rp0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="nmvDelta">–</span></div>
+      <div class="metric-icon">💰</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-gmv">
+      <div class="metric-label"><span class="label-dot"></span>Total GMV</div>
+      <div class="metric-value" id="gmvCard">Rp0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="gmvDelta">–</span></div>
+      <div class="metric-icon">🧾</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-orders">
+      <div class="metric-label"><span class="label-dot"></span>Net Orders</div>
+      <div class="metric-value" id="ordersCard">0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="ordersDelta">–</span></div>
+      <div class="metric-icon">📦</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-uv">
+      <div class="metric-label"><span class="label-dot"></span>Visitors (UV)</div>
+      <div class="metric-value" id="uvCard">0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="uvDelta">–</span></div>
+      <div class="metric-icon">🧑‍🤝‍🧑</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-pv">
+      <div class="metric-label"><span class="label-dot"></span>Page Views (PV)</div>
+      <div class="metric-value" id="pvCard">0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="pvDelta">–</span></div>
+      <div class="metric-icon">👁️</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-cr">
+      <div class="metric-label"><span class="label-dot"></span>Conversion Rate</div>
+      <div class="metric-value" id="crCard">0%</div>
+      <div class="metric-sub-row">
+        <span class="ach-badge ach-warn" id="crBadge">-</span>
+        <span class="delta-badge delta-flat" id="crDelta">–</span>
+      </div>
+      <div class="metric-icon">🎯</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-aov">
+      <div class="metric-label"><span class="label-dot"></span>Sales per Order (AOV)</div>
+      <div class="metric-value" id="aovCard">Rp0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="aovDelta">–</span></div>
+      <div class="metric-icon">🛒</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-items">
+      <div class="metric-label"><span class="label-dot"></span>Items per Order</div>
+      <div class="metric-value" id="itemsCard">0.0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="itemsDelta">–</span></div>
+      <div class="metric-icon">📊</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-cancel">
+      <div class="metric-label"><span class="label-dot"></span>Cancellation / Return Rate</div>
+      <div class="metric-value" id="cancelCard">0%</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="cancelDelta">–</span></div>
+      <div class="metric-icon">↩️</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-leak">
+      <div class="metric-label"><span class="label-dot"></span>GMV Leakage Rate</div>
+      <div class="metric-value" id="leakCard">0%</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="leakDelta">–</span></div>
+      <div class="metric-icon">🕳️</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-spotlight-nmv">
+      <div class="metric-label"><span class="label-dot"></span>Best Brand Group &middot; NMV</div>
+      <div class="spotlight-name" id="topNmvBrandGroupName">-</div>
+      <div class="spotlight-value" id="topNmvBrandGroupValue">Rp0</div>
+      <div class="metric-icon">📈</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-spotlight-cr">
+      <div class="metric-label"><span class="label-dot"></span>Best Brand Group &middot; CR</div>
+      <div class="spotlight-name" id="topCrBrandGroupName">-</div>
+      <div class="spotlight-value" id="topCrBrandGroupValue">0.0%</div>
+      <div class="metric-icon">🏆</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: TRAFFIC & FUNNEL ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Traffic &amp; Funnel</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-7">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Daily Traffic Trend</h3>
+            <span class="chart-subtitle">Page views vs unique visitors, day by day</span>
+          </div>
+        </div>
+        <span class="chart-badge">Trend</span>
+      </div>
+      <div class="chart-body tall"><canvas id="trafficTrendChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Visitor → Order Funnel</h3>
+            <span class="chart-subtitle">Visitors → Gross Orders → Net Orders</span>
+          </div>
+        </div>
+        <span class="chart-badge">Funnel</span>
+      </div>
+      <div class="chart-body tall"><canvas id="funnelChart"></canvas></div>
+      <div class="insight-note" id="funnelInsightNote">
+        Order rate and fulfillment rate will appear here once data loads.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: CONVERSION & REVENUE TRENDS ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Conversion &amp; Revenue Trends</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Daily Conversion Rate Trend</h3>
+        </div>
+        <span class="chart-badge">Trend</span>
+      </div>
+      <div class="chart-body tall"><canvas id="crTrendChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Daily NMV vs GMV Trend</h3>
+            <span class="chart-subtitle">Gap between the two = value lost to cancellations/returns</span>
+          </div>
+        </div>
+        <span class="chart-badge">Leakage</span>
+      </div>
+      <div class="chart-body tall"><canvas id="nmvGmvTrendChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Daily Order Trend</h3>
+            <span class="chart-subtitle">Gross orders vs net orders (fulfilled)</span>
+          </div>
+        </div>
+        <span class="chart-badge">Comparison</span>
+      </div>
+      <div class="chart-body tall"><canvas id="orderTrendChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Daily Cancellation &amp; Leakage Rate</h3>
+            <span class="chart-subtitle">% of orders cancelled/returned vs % of GMV lost</span>
+          </div>
+        </div>
+        <span class="chart-badge">Quality</span>
+      </div>
+      <div class="chart-body tall"><canvas id="leakageTrendChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: BRAND GROUP DEEP DIVE ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Brand Group Deep Dive</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Brand Group by NMV</h3>
+        </div>
+        <span class="chart-badge">Top 10</span>
+      </div>
+      <div class="chart-body"><canvas id="topBrandGroupNmv"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Brand Group by Conversion Rate</h3>
+        </div>
+        <span class="chart-badge">Top 10</span>
+      </div>
+      <div class="chart-body"><canvas id="topBrandGroupCr"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-7">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Efficiency Quadrant &middot; Visitors vs Conversion Rate</h3>
+            <span class="chart-subtitle">Bubble size = NMV contribution. Dashed lines = median.</span>
+          </div>
+        </div>
+        <span class="chart-badge">Bubble</span>
+      </div>
+      <div class="chart-body xtall"><canvas id="efficiencyQuadrantChart"></canvas></div>
+      <div class="insight-note">
+        Top-right = <b>high traffic, high CR</b> (your best converters). Bottom-right = <b>high traffic, low CR</b>
+        (traffic quality or landing page issue — investigate). Top-left = <b>low traffic, high CR</b> (scale the traffic).
+        Bottom-left = <b>low traffic, low CR</b> (low priority).
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">NMV Pareto (80/20)</h3>
+            <span class="chart-subtitle">Cumulative NMV contribution</span>
+          </div>
+        </div>
+        <span class="chart-badge">Pareto</span>
+      </div>
+      <div class="chart-body xtall"><canvas id="paretoChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Brand Group Performance</h3>
+        </div>
+        <span class="chart-badge">Table</span>
+      </div>
+      <div class="chart-body" style="min-height: 0;">
+        <table id="brandGroupTable" class="table table-hover" style="width:100%">
+          <thead>
+            <tr>
+              <th>Brand Group</th>
+              <th>Page Views</th>
+              <th>Visitors</th>
+              <th>Gross Orders</th>
+              <th>Net Orders</th>
+              <th>CR</th>
+              <th>GMV</th>
+              <th>NMV</th>
+              <th>AOV</th>
+              <th>Items/Order</th>
+              <th>Cancel %</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: PLATFORM DEEP DIVE ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Platform Deep Dive</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">PV by Platform</h3>
+        </div>
+        <span class="chart-badge">Donut</span>
+      </div>
+      <div class="chart-body"><canvas id="pvByPlatformDonut"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">UV by Platform</h3>
+        </div>
+        <span class="chart-badge">Donut</span>
+      </div>
+      <div class="chart-body"><canvas id="uvByPlatformDonut"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Platform Performance</h3>
+        </div>
+        <span class="chart-badge">Table</span>
+      </div>
+      <div class="chart-body" style="min-height: 0;">
+        <table id="platformTable" class="table table-hover" style="width:100%">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Page Views</th>
+              <th>Visitors</th>
+              <th>Gross Orders</th>
+              <th>Net Orders</th>
+              <th>CR</th>
+              <th>GMV</th>
+              <th>NMV</th>
+              <th>AOV</th>
+              <th>Items/Order</th>
+              <th>Cancel %</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: BRAND TRAFFIC MIX ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Brand Traffic Mix</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">PV by Brand</h3>
+        </div>
+        <span class="chart-badge">Top 8 + Others</span>
+      </div>
+      <div class="chart-body"><canvas id="pvByBrandDonut"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">UV by Brand</h3>
+        </div>
+        <span class="chart-badge">Top 8 + Others</span>
+      </div>
+      <div class="chart-body"><canvas id="uvByBrandDonut"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: PRODUCT DEEP DIVE ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Product Deep Dive</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-uv">
+      <div class="metric-label"><span class="label-dot"></span>Product Visitors</div>
+      <div class="metric-value" id="prodVisitorsCard">0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="prodVisitorsDelta">–</span></div>
+      <div class="metric-icon">🧑‍🤝‍🧑</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-pv">
+      <div class="metric-label"><span class="label-dot"></span>Product Page Views</div>
+      <div class="metric-value" id="prodPvCard">0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="prodPvDelta">–</span></div>
+      <div class="metric-icon">👁️</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-cr">
+      <div class="metric-label"><span class="label-dot"></span>Add-to-Cart Rate</div>
+      <div class="metric-value" id="prodAtcRateCard">0%</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="prodAtcRateDelta">–</span></div>
+      <div class="metric-icon">🛍️</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-cancel">
+      <div class="metric-label"><span class="label-dot"></span>Bounce Rate</div>
+      <div class="metric-value" id="prodBounceRateCard">0%</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="prodBounceRateDelta">–</span></div>
+      <div class="metric-icon">↩️</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Daily Product Traffic Trend</h3>
+            <span class="chart-subtitle">Product page views vs product visitors</span>
+          </div>
+        </div>
+        <span class="chart-badge">Trend</span>
+      </div>
+      <div class="chart-body tall"><canvas id="productTrafficTrendChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Daily Add-to-Cart Rate</h3>
+            <span class="chart-subtitle">Share of product visitors who add to cart, day by day</span>
+          </div>
+        </div>
+        <span class="chart-badge">Trend</span>
+      </div>
+      <div class="chart-body tall"><canvas id="productAtcRateTrendChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Products by Visitors</h3>
+        </div>
+        <span class="chart-badge">Top 15</span>
+      </div>
+      <div class="chart-body tall"><canvas id="topProductsVisitorsChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Top Products by Add-to-Cart Rate</h3>
+            <span class="chart-subtitle" id="topAtcSubtitle">Highest ATC rate among products with enough traffic to be reliable</span>
+          </div>
+        </div>
+        <span class="chart-badge">Top 15</span>
+      </div>
+      <div class="chart-body tall"><canvas id="topProductsAtcRateChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-7">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Product Efficiency Quadrant &middot; Visitors vs ATC Rate</h3>
+            <span class="chart-subtitle">Top-traffic products only. Bubble size = add-to-cart units. Dashed lines = median.</span>
+          </div>
+        </div>
+        <span class="chart-badge">Bubble</span>
+      </div>
+      <div class="chart-body xtall"><canvas id="productQuadrantChart"></canvas></div>
+      <div class="insight-note">
+        Top-right = <b>high traffic, high ATC rate</b> (star products — protect stock &amp; visibility). Bottom-right = <b>high traffic,
+        low ATC rate</b> (page/pricing/content likely needs work). Top-left = <b>low traffic, high ATC rate</b> (great conversion,
+        needs more exposure). Bottom-left = low priority.
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Traffic Pareto (80/20)</h3>
+            <span class="chart-subtitle">Which products concentrate visitor volume</span>
+          </div>
+        </div>
+        <span class="chart-badge">Pareto</span>
+      </div>
+      <div class="chart-body xtall"><canvas id="productParetoChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Top Products by Bounce Rate</h3>
+            <span class="chart-subtitle" id="topBounceSubtitle">Highest bounce among products with enough traffic to be reliable — worth a landing-page review</span>
+          </div>
+        </div>
+        <span class="chart-badge">Risk List</span>
+      </div>
+      <div class="chart-body tall"><canvas id="topProductsBounceRateChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Product Performance</h3>
+            <span class="chart-subtitle" id="productTableSubtitle">Grouped by product × platform. product_name picked per product_id via MAX() where duplicates exist.</span>
+          </div>
+        </div>
+        <span class="chart-badge">Table</span>
+      </div>
+      <div class="chart-body" style="min-height: 0;">
+        <table id="productTable" class="table table-hover" style="width:100%">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Platform</th>
+              <th>Brand</th>
+              <th>Category</th>
+              <th>Parent SKU</th>
+              <th>Page Views</th>
+              <th>Visitors</th>
+              <th>Bounce %</th>
+              <th>Add-to-Cart</th>
+              <th>ATC Rate</th>
+              <th>PV/Visitor</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: SEASONALITY ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Seasonality</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Day-of-Week Performance</h3>
+            <span class="chart-subtitle">NMV vs conversion rate by weekday, aggregated across the selected range</span>
+          </div>
+        </div>
+        <span class="chart-badge">Seasonality</span>
+      </div>
+      <div class="chart-body tall"><canvas id="dayOfWeekChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function () {
+  $('#brandSelect').select2({ width: '100%', placeholder: 'Select brands' });
+  $('#platformSelect').select2({ width: '100%', placeholder: 'Select platforms' });
+  $('#categorySelect').select2({ width: '100%', placeholder: 'Select categories' });
+});
+
+function selectAllBrands()     { $('#brandSelect option').prop('selected', true);  $('#brandSelect').trigger('change'); }
+function clearBrands()         { $('#brandSelect option').prop('selected', false); $('#brandSelect').trigger('change'); }
+function selectAllPlatforms()  { $('#platformSelect option').prop('selected', true);  $('#platformSelect').trigger('change'); }
+function clearPlatforms()      { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
+function selectAllCategories() { $('#categorySelect option').prop('selected', true);  $('#categorySelect').trigger('change'); }
+function clearCategories()     { $('#categorySelect option').prop('selected', false); $('#categorySelect').trigger('change'); }
+
+let trafficTrendChart, funnelChart, crTrendChart, nmvGmvTrendChart, orderTrendChart, leakageTrendChart,
+    topBrandGroupNmvChart, topBrandGroupCrChart, efficiencyQuadrantChart, paretoChart,
+    pvByPlatformDonutChart, uvByPlatformDonutChart,
+    pvByBrandDonutChart, uvByBrandDonutChart, dayOfWeekChart,
+    productTrafficTrendChart, productAtcRateTrendChart, topProductsVisitorsChart, topProductsAtcRateChart,
+    productQuadrantChart, productParetoChart, topProductsBounceRateChart;
+let brandGroupTable, platformTable, productTable;
+let debounceTimer;
+
+// Conversion-rate thresholds used to color-code bars/badges. Kept in sync
+// with the cr_good_threshold / cr_warn_threshold values returned by the API.
+let CR_GOOD = 3.0;
+let CR_WARN = 1.0;
+
+function crColor(v) {
+  return v >= CR_GOOD ? "#059669" : v >= CR_WARN ? "#FF9500" : "#DC2626";
+}
+
+function fmtRp(v) { return "Rp" + Number(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 }); }
+function fmtNum(v) { return Number(v || 0).toLocaleString(); }
+function fmtPct(v) { return Number(v || 0).toFixed(2) + "%"; }
+function fmtDec(v) { return Number(v || 0).toFixed(2); }
+
+// goodDirection: 'up' -> higher is better (green on positive), 'down' -> lower is better
+// (green on negative change), 'neutral' -> informational only, always gray.
+function renderDelta(elId, pctChange, goodDirection) {
+  const $el = $("#" + elId);
+  if (pctChange === null || pctChange === undefined || !isFinite(pctChange)) {
+    $el.text("–").removeClass("delta-up delta-down").addClass("delta-flat");
+    return;
+  }
+  const rounded = Math.abs(pctChange) < 0.05 ? 0 : pctChange;
+  const arrow = rounded > 0 ? "▲" : rounded < 0 ? "▼" : "•";
+  $el.text(`${arrow} ${Math.abs(rounded).toFixed(1)}% vs prev`);
+  $el.removeClass("delta-up delta-down delta-flat");
+
+  if (goodDirection === "neutral" || rounded === 0) {
+    $el.addClass("delta-flat");
+    return;
+  }
+  const isGood = goodDirection === "up" ? rounded > 0 : rounded < 0;
+  $el.addClass(isGood ? "delta-up" : "delta-down");
+}
+
+// Small plugin to draw dashed median crosshair lines on the efficiency quadrant.
+const quadrantLinesPlugin = {
+  id: "quadrantLinesInsight",
+  afterDraw(chart) {
+    if (chart.canvas.id !== "efficiencyQuadrantChart" && chart.canvas.id !== "productQuadrantChart") return;
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const xVal = chart.$medianX;
+    const yVal = chart.$medianY;
+    if (xVal === undefined || yVal === undefined) return;
+    const xPix = scales.x.getPixelForValue(xVal);
+    const yPix = scales.y.getPixelForValue(yVal);
+    ctx.save();
+    ctx.strokeStyle = "#D1D5DB";
+    ctx.setLineDash([5, 4]);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(xPix, chartArea.top);
+    ctx.lineTo(xPix, chartArea.bottom);
+    ctx.moveTo(chartArea.left, yPix);
+    ctx.lineTo(chartArea.right, yPix);
+    ctx.stroke();
+    ctx.restore();
+  }
+};
+Chart.register(quadrantLinesPlugin);
+
+function buildDonut(canvasId, tooltipFmt) {
+  return new Chart(document.getElementById(canvasId).getContext("2d"), {
+    type: "doughnut",
+    data: { labels: [], datasets: [{ data: [], backgroundColor: ["#FF7A00", "#FFB347", "#CC4400", "#FF9500", "#FFCC44", "#FF5500", "#D96500", "#7C3AED", "#0891B2"], borderColor: "#FFFFFF", borderWidth: 2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: "65%",
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 10 }, boxWidth: 9, padding: 10 } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `${item.label}: ${tooltipFmt(item.raw)}` }
+        }
+      }
+    }
+  });
+}
+
+function initChart() {
+
+  // ===== DAILY TRAFFIC TREND (PV & UV line)
+  trafficTrendChart = new Chart(document.getElementById("trafficTrendChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "Page Views", data: [], borderColor: "#4338CA", backgroundColor: "#4338CA", tension: 0.3, pointRadius: 3, borderWidth: 2 },
+        { label: "Visitors", data: [], borderColor: "#7C3AED", backgroundColor: "#7C3AED", tension: 0.3, pointRadius: 3, borderWidth: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `${item.dataset.label}: ${fmtNum(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
+        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } }
+      }
+    }
+  });
+
+  // ===== FUNNEL (horizontal bar, decreasing)
+  funnelChart = new Chart(document.getElementById("funnelChart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: ["Visitors", "Gross Orders", "Net Orders"],
+      datasets: [{ data: [], backgroundColor: ["#A78BFA", "#7C3AED", "#4C1D95"], borderRadius: 4, maxBarThickness: 46 }]
+    },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
+          callbacks: { label: item => fmtNum(item.raw) }
+        }
+      },
+      scales: {
+        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 12, weight: 600 } } }
+      }
+    }
+  });
+
+  // ===== DAILY CONVERSION RATE TREND
+  crTrendChart = new Chart(document.getElementById("crTrendChart").getContext("2d"), {
+    type: "line",
+    data: { labels: [], datasets: [{ label: "Conversion Rate", data: [], borderColor: "#059669", backgroundColor: "rgba(5, 150, 105, 0.08)", tension: 0.3, pointRadius: 3, borderWidth: 2, fill: true }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `CR: ${fmtPct(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
+        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+      }
+    }
+  });
+
+  // ===== DAILY NMV VS GMV TREND (line)
+  nmvGmvTrendChart = new Chart(document.getElementById("nmvGmvTrendChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "GMV", data: [], borderColor: "#FF5500", backgroundColor: "#FF5500", tension: 0.3, pointRadius: 3, borderWidth: 2, borderDash: [4, 3] },
+        { label: "NMV", data: [], borderColor: "#FF7A00", backgroundColor: "#FF7A00", tension: 0.3, pointRadius: 3, borderWidth: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `${item.dataset.label}: ${fmtRp(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
+        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => fmtRp(v) } }
+      }
+    }
+  });
+
+  // ===== DAILY ORDER TREND (gross vs net bar)
+  orderTrendChart = new Chart(document.getElementById("orderTrendChart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "Gross Orders", data: [], backgroundColor: "#A5B4FC", borderRadius: 4, maxBarThickness: 22 },
+        { label: "Net Orders", data: [], backgroundColor: "#4338CA", borderRadius: 4, maxBarThickness: 22 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10 } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `${item.dataset.label}: ${fmtNum(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
+        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } }
+      }
+    }
+  });
+
+  // ===== DAILY CANCELLATION & LEAKAGE RATE TREND
+  leakageTrendChart = new Chart(document.getElementById("leakageTrendChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "Cancellation Rate", data: [], borderColor: "#DC2626", backgroundColor: "#DC2626", tension: 0.3, pointRadius: 3, borderWidth: 2 },
+        { label: "GMV Leakage Rate", data: [], borderColor: "#DB2777", backgroundColor: "#DB2777", tension: 0.3, pointRadius: 3, borderWidth: 2, borderDash: [4, 3] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `${item.dataset.label}: ${fmtPct(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
+        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+      }
+    }
+  });
+
+  // ===== TOP BRAND GROUP BY NMV (bar)
+  topBrandGroupNmvChart = new Chart(document.getElementById("topBrandGroupNmv").getContext("2d"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "NMV", data: [], backgroundColor: "#FF7A00", borderRadius: 4, maxBarThickness: 34 }] },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
+          callbacks: { label: item => fmtRp(item.raw) }
+        }
+      },
+      scales: {
+        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } }
+      }
+    }
+  });
+
+  // ===== TOP BRAND GROUP BY CONVERSION RATE (bar, color-coded)
+  topBrandGroupCrChart = new Chart(document.getElementById("topBrandGroupCr").getContext("2d"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Conversion Rate", data: [], backgroundColor: ctx => crColor(ctx.raw || 0), borderRadius: 4, maxBarThickness: 34 }] },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
+          callbacks: { label: item => fmtPct(item.raw) }
+        }
+      },
+      scales: {
+        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } },
+        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } }
+      }
+    }
+  });
+
+  // ===== EFFICIENCY QUADRANT (bubble: visitors x, cr y, nmv size)
+  efficiencyQuadrantChart = new Chart(document.getElementById("efficiencyQuadrantChart").getContext("2d"), {
+    type: "bubble",
+    data: { datasets: [{ label: "Brand Group", data: [], backgroundColor: "rgba(124, 58, 237, 0.5)", borderColor: "#4C1D95", borderWidth: 1 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: {
+            title: items => items[0].raw.label || "",
+            label: item => [`Visitors: ${fmtNum(item.raw.x)}`, `CR: ${fmtPct(item.raw.y)}`, `NMV: ${fmtRp(item.raw.nmv)}`]
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: "Visitors", color: "#6B7280", font: { size: 11 } }, grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtNum(v) } },
+        y: { title: { display: true, text: "Conversion Rate", color: "#6B7280", font: { size: 11 } }, grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+      }
+    }
+  });
+
+  // ===== PARETO CHART (bar nmv + line cumulative %)
+  paretoChart = new Chart(document.getElementById("paretoChart").getContext("2d"), {
+    data: {
+      labels: [],
+      datasets: [
+        { type: "bar", label: "NMV", data: [], backgroundColor: "#FFB347", borderRadius: 4, yAxisID: "y", order: 2 },
+        { type: "line", label: "Cumulative %", data: [], borderColor: "#CC4400", backgroundColor: "#CC4400", tension: 0.25, pointRadius: 3, borderWidth: 2, yAxisID: "y1", order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => item.dataset.label === "NMV" ? `NMV: ${fmtRp(item.raw)}` : `Cumulative: ${Number(item.raw).toFixed(1)}%` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 9 }, maxRotation: 60, minRotation: 30 } },
+        y: { position: "left", grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtRp(v) } },
+        y1: { position: "right", min: 0, max: 100, grid: { display: false }, ticks: { color: "#CC4400", font: { size: 10 }, callback: v => v + "%" } }
+      }
+    }
+  });
+
+  // ===== DONUTS
+  pvByPlatformDonutChart = buildDonut("pvByPlatformDonut", fmtNum);
+  uvByPlatformDonutChart = buildDonut("uvByPlatformDonut", fmtNum);
+  // nmvByCategoryDonutChart = buildDonut("nmvByCategoryDonut", fmtRp);
+  pvByBrandDonutChart = buildDonut("pvByBrandDonut", fmtNum);
+  uvByBrandDonutChart = buildDonut("uvByBrandDonut", fmtNum);
+
+  // ===== PLATFORM RADAR (normalized CR/AOV/Items/Engagement)
+  // platformRadarChart = new Chart(document.getElementById("platformRadarChart").getContext("2d"), {
+  //   type: "radar",
+  //   data: { labels: ["Conversion Rate", "AOV", "Items / Order", "Engagement (PV/UV)"], datasets: [] },
+  //   options: {
+  //     responsive: true, maintainAspectRatio: false,
+  //     plugins: {
+  //       legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+  //       tooltip: {
+  //         backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+  //         titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6
+  //       }
+  //     },
+  //     scales: {
+  //       r: {
+  //         min: 0, max: 1,
+  //         grid: { color: "#F3F4F6" }, angleLines: { color: "#E4E7EB" },
+  //         pointLabels: { color: "#4B5563", font: { size: 11 } },
+  //         ticks: { display: false }
+  //       }
+  //     }
+  //   }
+  // });
+
+  // ===== DAY OF WEEK (bar nmv + line cr)
+  dayOfWeekChart = new Chart(document.getElementById("dayOfWeekChart").getContext("2d"), {
+    data: {
+      labels: [],
+      datasets: [
+        { type: "bar", label: "NMV", data: [], backgroundColor: "#FF7A00", borderRadius: 4, yAxisID: "y", maxBarThickness: 40 },
+        { type: "line", label: "Conversion Rate", data: [], borderColor: "#059669", backgroundColor: "#059669", tension: 0.3, pointRadius: 4, borderWidth: 2, yAxisID: "y1" }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => item.dataset.label === "NMV" ? `NMV: ${fmtRp(item.raw)}` : `CR: ${fmtPct(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } },
+        y: { position: "left", grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtRp(v) } },
+        y1: { position: "right", grid: { display: false }, ticks: { color: "#059669", font: { size: 11 }, callback: v => v + "%" } }
+      }
+    }
+  });
+
+  // ===== PRODUCT DEEP DIVE =====
+
+  // ----- Daily Product Traffic Trend (PV & Visitors line)
+  productTrafficTrendChart = new Chart(document.getElementById("productTrafficTrendChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "Page Views", data: [], borderColor: "#4338CA", backgroundColor: "#4338CA", tension: 0.3, pointRadius: 3, borderWidth: 2 },
+        { label: "Visitors", data: [], borderColor: "#7C3AED", backgroundColor: "#7C3AED", tension: 0.3, pointRadius: 3, borderWidth: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `${item.dataset.label}: ${fmtNum(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
+        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } }
+      }
+    }
+  });
+
+  // ----- Daily Add-to-Cart Rate
+  productAtcRateTrendChart = new Chart(document.getElementById("productAtcRateTrendChart").getContext("2d"), {
+    type: "line",
+    data: { labels: [], datasets: [{ label: "ATC Rate", data: [], borderColor: "#059669", backgroundColor: "rgba(5, 150, 105, 0.08)", tension: 0.3, pointRadius: 3, borderWidth: 2, fill: true }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `ATC Rate: ${fmtPct(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
+        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+      }
+    }
+  });
+
+  // ----- Top Products by Visitors (horizontal bar)
+  topProductsVisitorsChart = new Chart(document.getElementById("topProductsVisitorsChart").getContext("2d"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Visitors", data: [], backgroundColor: "#7C3AED", borderRadius: 4, maxBarThickness: 22 }] },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
+          callbacks: { label: item => fmtNum(item.raw) }
+        }
+      },
+      scales: {
+        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } }
+      }
+    }
+  });
+
+  // ----- Top Products by ATC Rate (horizontal bar, color-coded)
+  topProductsAtcRateChart = new Chart(document.getElementById("topProductsAtcRateChart").getContext("2d"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "ATC Rate", data: [], backgroundColor: "#FF7A00", borderRadius: 4, maxBarThickness: 22 }] },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
+          callbacks: { label: item => fmtPct(item.raw) }
+        }
+      },
+      scales: {
+        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } },
+        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } }
+      }
+    }
+  });
+
+  // ----- Product Efficiency Quadrant (bubble: visitors x, atc rate y, atc units size)
+  productQuadrantChart = new Chart(document.getElementById("productQuadrantChart").getContext("2d"), {
+    type: "bubble",
+    data: { datasets: [{ label: "Product", data: [], backgroundColor: "rgba(255, 122, 0, 0.5)", borderColor: "#CC4400", borderWidth: 1 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: {
+            title: items => items[0].raw.label || "",
+            label: item => [`Visitors: ${fmtNum(item.raw.x)}`, `ATC Rate: ${fmtPct(item.raw.y)}`, `Add-to-Cart: ${fmtNum(item.raw.atc)}`]
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: "Visitors", color: "#6B7280", font: { size: 11 } }, grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtNum(v) } },
+        y: { title: { display: true, text: "ATC Rate", color: "#6B7280", font: { size: 11 } }, grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+      }
+    }
+  });
+
+  // ----- Traffic Pareto (visitors bar + cumulative % line)
+  productParetoChart = new Chart(document.getElementById("productParetoChart").getContext("2d"), {
+    data: {
+      labels: [],
+      datasets: [
+        { type: "bar", label: "Visitors", data: [], backgroundColor: "#A78BFA", borderRadius: 4, yAxisID: "y", order: 2 },
+        { type: "line", label: "Cumulative %", data: [], borderColor: "#4C1D95", backgroundColor: "#4C1D95", tension: 0.25, pointRadius: 3, borderWidth: 2, yAxisID: "y1", order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => item.dataset.label === "Visitors" ? `Visitors: ${fmtNum(item.raw)}` : `Cumulative: ${Number(item.raw).toFixed(1)}%` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 9 }, maxRotation: 60, minRotation: 30 } },
+        y: { position: "left", grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtNum(v) } },
+        y1: { position: "right", min: 0, max: 100, grid: { display: false }, ticks: { color: "#4C1D95", font: { size: 10 }, callback: v => v + "%" } }
+      }
+    }
+  });
+
+  // ----- Top Products by Bounce Rate (horizontal bar, risk list)
+  topProductsBounceRateChart = new Chart(document.getElementById("topProductsBounceRateChart").getContext("2d"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Bounce Rate", data: [], backgroundColor: "#DC2626", borderRadius: 4, maxBarThickness: 22 }] },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
+          callbacks: { label: item => fmtPct(item.raw) }
+        }
+      },
+      scales: {
+        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } },
+        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } }
+      }
+    }
+  });
+
+  // ===== SEGMENT TABLES
+  function buildFullTable(selector, groupKey, sortColIndex) {
+    return $(selector).DataTable({
+      data: [],
+      scrollX: true,
+      columns: [
+        { data: groupKey },
+        { data: "page_views", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
+        { data: "visitors", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
+        { data: "gross_order_qty", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
+        { data: "net_order_qty", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
+        { data: "conversion_rate", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtPct(v) },
+        { data: "gmv", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtRp(v) },
+        { data: "nmv", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtRp(v) },
+        { data: "aov", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtRp(v) },
+        { data: "items_per_order", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtDec(v) },
+        { data: "cancellation_rate", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtPct(v) },
+      ],
+      order: [[sortColIndex, "desc"]],
+      autoWidth: false,
+      paging: true,
+      ordering: true,
+      pageLength: 10,
+      language: { search: "", searchPlaceholder: "Search...", lengthMenu: "Show _MENU_", info: "_START_–_END_ of _TOTAL_" },
+    });
+  }
+
+  brandGroupTable = buildFullTable("#brandGroupTable", "brand_group", 7);
+  platformTable = buildFullTable("#platformTable", "platform", 7);
+
+  categoryTable = $("#categoryTable").DataTable({
+    data: [],
+    scrollX: true,
+    columns: [
+      { data: "category" },
+      { data: "page_views", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
+      { data: "visitors", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
+      { data: "net_order_qty", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
+      { data: "conversion_rate", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtPct(v) },
+      { data: "gmv", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtRp(v) },
+      { data: "nmv", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtRp(v) },
+      { data: "aov", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtRp(v) },
+      { data: "cancellation_rate", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtPct(v) },
+    ],
+    order: [[6, "desc"]],
+    autoWidth: false,
+    paging: true,
+    ordering: true,
+    pageLength: 10,
+    language: { search: "", searchPlaceholder: "Search...", lengthMenu: "Show _MENU_", info: "_START_–_END_ of _TOTAL_" },
+  });
+
+  productTable = $("#productTable").DataTable({
+    data: [],
+    scrollX: true,
+    columns: [
+      { data: "product_name" },
+      { data: "platform" },
+      { data: "brand" },
+      { data: "category" },
+      { data: "parent_sku" },
+      { data: "page_views", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
+      { data: "visitors", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
+      { data: "bounce_rate", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtPct(v) },
+      { data: "add_to_cart_units", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
+      { data: "atc_rate", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtPct(v) },
+      { data: "pv_per_visitor", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtDec(v) },
+    ],
+    order: [[5, "desc"]],
+    autoWidth: false,
+    paging: true,
+    ordering: true,
+    pageLength: 10,
+    language: { search: "", searchPlaceholder: "Search...", lengthMenu: "Show _MENU_", info: "_START_–_END_ of _TOTAL_" },
+  });
+}
+
+async function loadInsightDashboard() {
+  const params = new URLSearchParams();
+
+  ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
+  ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
+  ($("#categorySelect").val() || []).forEach((category) => params.append("category", category));
+  params.append("start_date", $("#startDate").val());
+  params.append("end_date", $("#endDate").val());
+
+  const response = await fetch(`{% url 'insight_dashboard_api' %}?${params}`);
+  const data = await response.json();
+
+  CR_GOOD = data.cr_good_threshold ?? CR_GOOD;
+  CR_WARN = data.cr_warn_threshold ?? CR_WARN;
+
+  const cards = data.cards;
+  const deltas = cards.deltas || {};
+
+  // ===== SCORECARDS
+  $("#nmvCard").text(fmtRp(cards.total_nmv));
+  $("#gmvCard").text(fmtRp(cards.total_gmv));
+  $("#ordersCard").text(fmtNum(cards.total_net_orders));
+  $("#uvCard").text(fmtNum(cards.total_uv));
+  $("#pvCard").text(fmtNum(cards.total_pv));
+  $("#crCard").text(fmtPct(cards.conversion_rate));
+  $("#aovCard").text(fmtRp(cards.aov));
+  $("#itemsCard").text(fmtDec(cards.items_per_order));
+  $("#cancelCard").text(fmtPct(cards.cancellation_rate));
+  $("#leakCard").text(fmtPct(cards.gmv_leakage_rate));
+
+  renderDelta("nmvDelta", deltas.total_nmv, "up");
+  renderDelta("gmvDelta", deltas.total_gmv, "neutral");
+  renderDelta("ordersDelta", deltas.total_net_orders, "up");
+  renderDelta("uvDelta", deltas.total_uv, "up");
+  renderDelta("pvDelta", deltas.total_pv, "up");
+  renderDelta("crDelta", deltas.conversion_rate, "up");
+  renderDelta("aovDelta", deltas.aov, "up");
+  renderDelta("itemsDelta", deltas.items_per_order, "up");
+  renderDelta("cancelDelta", deltas.cancellation_rate, "down");
+  renderDelta("leakDelta", deltas.gmv_leakage_rate, "down");
+
+  // ===== CONVERSION RATE BADGE
+  const crVal = Number(cards.conversion_rate || 0);
+  const $crBadge = $("#crBadge");
+  $crBadge.text(crVal >= CR_GOOD ? "Healthy" : crVal >= CR_WARN ? "Borderline" : "Underperforming");
+  $crBadge.removeClass("ach-good ach-warn ach-bad");
+  $crBadge.addClass(crVal >= CR_GOOD ? "ach-good" : crVal >= CR_WARN ? "ach-warn" : "ach-bad");
+
+  // ===== SPOTLIGHT
+  const topNmvBg = cards.top_brand_group_by_nmv || {};
+  $("#topNmvBrandGroupName").text(topNmvBg.brand_group || "-");
+  $("#topNmvBrandGroupValue").text(fmtRp(topNmvBg.nmv || 0));
+
+  const topCrBg = cards.top_brand_group_by_cr || {};
+  $("#topCrBrandGroupName").text(topCrBg.brand_group || "-");
+  $("#topCrBrandGroupValue").text(fmtPct(topCrBg.conversion_rate || 0));
+
+  // ===== DAILY TRAFFIC TREND
+  const daily = data.daily_trend_json || [];
+  trafficTrendChart.data.labels = daily.map(i => i.date);
+  trafficTrendChart.data.datasets[0].data = daily.map(i => i.page_views);
+  trafficTrendChart.data.datasets[1].data = daily.map(i => i.visitors);
+  trafficTrendChart.update();
+
+  // ===== FUNNEL
+  const funnel = data.funnel_json || {};
+  funnelChart.data.datasets[0].data = [funnel.visitors || 0, funnel.gross_orders || 0, funnel.net_orders || 0];
+  funnelChart.update();
+  $("#funnelInsightNote").html(
+    `Order rate (visitors → orders): <b>${fmtPct(funnel.order_rate)}</b>. ` +
+    `Fulfillment rate (gross → net orders): <b>${fmtPct(funnel.fulfillment_rate)}</b> ` +
+    `— the rest is cancelled or returned.`
+  );
+
+  // ===== CR TREND
+  crTrendChart.data.labels = daily.map(i => i.date);
+  crTrendChart.data.datasets[0].data = daily.map(i => i.conversion_rate);
+  crTrendChart.update();
+
+  // ===== NMV VS GMV TREND
+  nmvGmvTrendChart.data.labels = daily.map(i => i.date);
+  nmvGmvTrendChart.data.datasets[0].data = daily.map(i => i.gmv);
+  nmvGmvTrendChart.data.datasets[1].data = daily.map(i => i.nmv);
+  nmvGmvTrendChart.update();
+
+  // ===== ORDER TREND
+  orderTrendChart.data.labels = daily.map(i => i.date);
+  orderTrendChart.data.datasets[0].data = daily.map(i => i.gross_order_qty);
+  orderTrendChart.data.datasets[1].data = daily.map(i => i.net_order_qty);
+  orderTrendChart.update();
+
+  // ===== LEAKAGE TREND
+  leakageTrendChart.data.labels = daily.map(i => i.date);
+  leakageTrendChart.data.datasets[0].data = daily.map(i => i.cancellation_rate);
+  leakageTrendChart.data.datasets[1].data = daily.map(i => i.gmv_leakage_rate);
+  leakageTrendChart.update();
+
+  // ===== TOP BRAND GROUP CHARTS
+  const topNmv = data.top_brand_group_nmv_json || [];
+  topBrandGroupNmvChart.data.labels = topNmv.map(i => i.brand_group);
+  topBrandGroupNmvChart.data.datasets[0].data = topNmv.map(i => i.nmv);
+  topBrandGroupNmvChart.update();
+
+  const topCr = data.top_brand_group_cr_json || [];
+  topBrandGroupCrChart.data.labels = topCr.map(i => i.brand_group);
+  topBrandGroupCrChart.data.datasets[0].data = topCr.map(i => i.conversion_rate);
+  topBrandGroupCrChart.update();
+
+  // ===== EFFICIENCY QUADRANT
+  const quadrant = data.efficiency_quadrant_json || [];
+  const nmvMax = Math.max(1, ...quadrant.map(i => i.nmv));
+  efficiencyQuadrantChart.data.datasets[0].data = quadrant.map(i => ({
+    x: i.visitors, y: i.conversion_rate, nmv: i.nmv, label: i.brand_group,
+    r: 6 + (i.nmv / nmvMax) * 22,
+  }));
+  efficiencyQuadrantChart.$medianX = (data.quadrant_medians || {}).median_visitors;
+  efficiencyQuadrantChart.$medianY = (data.quadrant_medians || {}).median_conversion_rate;
+  efficiencyQuadrantChart.update();
+
+  // ===== PARETO
+  const pareto = data.pareto_json || [];
+  paretoChart.data.labels = pareto.map(i => i.brand_group);
+  paretoChart.data.datasets[0].data = pareto.map(i => i.nmv);
+  paretoChart.data.datasets[1].data = pareto.map(i => i.cumulative_pct);
+  paretoChart.update();
+
+  // ===== DONUTS: PLATFORM
+  const pvPlatform = data.pv_by_platform_json || [];
+  pvByPlatformDonutChart.data.labels = pvPlatform.map(i => i.platform);
+  pvByPlatformDonutChart.data.datasets[0].data = pvPlatform.map(i => i.page_views);
+  pvByPlatformDonutChart.update();
+
+  const uvPlatform = data.uv_by_platform_json || [];
+  uvByPlatformDonutChart.data.labels = uvPlatform.map(i => i.platform);
+  uvByPlatformDonutChart.data.datasets[0].data = uvPlatform.map(i => i.visitors);
+  uvByPlatformDonutChart.update();
+
+  // ===== PLATFORM RADAR
+  // const radar = data.platform_radar_json || [];
+  // const radarColors = ["#FF7A00", "#7C3AED", "#0891B2", "#059669", "#DB2777", "#4338CA"];
+  // platformRadarChart.data.datasets = radar.map((p, idx) => ({
+  //   label: p.platform,
+  //   data: [p.cr_norm, p.aov_norm, p.items_norm, p.engagement_norm],
+  //   borderColor: radarColors[idx % radarColors.length],
+  //   backgroundColor: radarColors[idx % radarColors.length] + "22",
+  //   pointBackgroundColor: radarColors[idx % radarColors.length],
+  //   borderWidth: 2,
+  // }));
+  // platformRadarChart.update();
+
+  // ===== DONUT: CATEGORY
+  // const nmvCategory = data.nmv_by_category_json || [];
+  // nmvByCategoryDonutChart.data.labels = nmvCategory.map(i => i.category);
+  // nmvByCategoryDonutChart.data.datasets[0].data = nmvCategory.map(i => i.nmv);
+  // nmvByCategoryDonutChart.update();
+
+  // ===== DONUTS: BRAND
+  const pvBrand = data.pv_by_brand_json || [];
+  pvByBrandDonutChart.data.labels = pvBrand.map(i => i.brand);
+  pvByBrandDonutChart.data.datasets[0].data = pvBrand.map(i => i.page_views);
+  pvByBrandDonutChart.update();
+
+  const uvBrand = data.uv_by_brand_json || [];
+  uvByBrandDonutChart.data.labels = uvBrand.map(i => i.brand);
+  uvByBrandDonutChart.data.datasets[0].data = uvBrand.map(i => i.visitors);
+  uvByBrandDonutChart.update();
+
+  // ===== DAY OF WEEK
+  const dow = data.day_of_week_json || [];
+  dayOfWeekChart.data.labels = dow.map(i => i.day);
+  dayOfWeekChart.data.datasets[0].data = dow.map(i => i.nmv);
+  dayOfWeekChart.data.datasets[1].data = dow.map(i => i.conversion_rate);
+  dayOfWeekChart.update();
+
+  // ===== TABLES
+  brandGroupTable.clear().rows.add(data.brand_group_table_json || []).draw();
+  platformTable.clear().rows.add(data.platform_performance_json || []).draw();
+  categoryTable.clear().rows.add(data.category_performance_json || []).draw();
+
+  // =========================================================================
+  // ===== PRODUCT DEEP DIVE
+  // =========================================================================
+  const minVisitorsForRate = data.min_visitors_for_rate ?? MIN_VISITORS_FOR_RATE;
+  const prodCards = data.product_cards || {};
+  const prodDeltas = prodCards.deltas || {};
+
+  // ===== PRODUCT SCORECARDS
+  $("#prodVisitorsCard").text(fmtNum(prodCards.total_product_visitors));
+  $("#prodPvCard").text(fmtNum(prodCards.total_product_page_views));
+  $("#prodAtcRateCard").text(fmtPct(prodCards.atc_rate));
+  $("#prodBounceRateCard").text(fmtPct(prodCards.bounce_rate));
+
+  renderDelta("prodVisitorsDelta", prodDeltas.total_product_visitors, "up");
+  renderDelta("prodPvDelta", prodDeltas.total_product_page_views, "up");
+  renderDelta("prodAtcRateDelta", prodDeltas.atc_rate, "up");
+  renderDelta("prodBounceRateDelta", prodDeltas.bounce_rate, "down");
+
+  // ===== DAILY PRODUCT TRAFFIC TREND
+  const prodDaily = data.product_daily_trend_json || [];
+  productTrafficTrendChart.data.labels = prodDaily.map(i => i.date);
+  productTrafficTrendChart.data.datasets[0].data = prodDaily.map(i => i.page_views);
+  productTrafficTrendChart.data.datasets[1].data = prodDaily.map(i => i.visitors);
+  productTrafficTrendChart.update();
+
+  // ===== DAILY ADD-TO-CART RATE
+  productAtcRateTrendChart.data.labels = prodDaily.map(i => i.date);
+  productAtcRateTrendChart.data.datasets[0].data = prodDaily.map(i => i.atc_rate);
+  productAtcRateTrendChart.update();
+
+  // ===== TOP PRODUCTS BY VISITORS
+  const topProductsVisitors = data.top_products_visitors_json || [];
+  topProductsVisitorsChart.data.labels = topProductsVisitors.map(i => i.product_name);
+  topProductsVisitorsChart.data.datasets[0].data = topProductsVisitors.map(i => i.visitors);
+  topProductsVisitorsChart.update();
+
+  // ===== TOP PRODUCTS BY ATC RATE
+  const topProductsAtcRate = data.top_products_atc_rate_json || [];
+  topProductsAtcRateChart.data.labels = topProductsAtcRate.map(i => i.product_name);
+  topProductsAtcRateChart.data.datasets[0].data = topProductsAtcRate.map(i => i.atc_rate);
+  topProductsAtcRateChart.update();
+  $("#topAtcSubtitle").text(`Highest ATC rate among products with at least ${fmtNum(minVisitorsForRate)} visitors to be reliable`);
+
+  // ===== PRODUCT EFFICIENCY QUADRANT
+  const prodQuadrant = data.product_quadrant_json || [];
+  const atcUnitsMax = Math.max(1, ...prodQuadrant.map(i => i.add_to_cart_units));
+  productQuadrantChart.data.datasets[0].data = prodQuadrant.map(i => ({
+    x: i.visitors, y: i.atc_rate, atc: i.add_to_cart_units, label: i.product_name,
+    r: 6 + (i.add_to_cart_units / atcUnitsMax) * 22,
+  }));
+  productQuadrantChart.$medianX = (data.product_quadrant_medians || {}).median_visitors;
+  productQuadrantChart.$medianY = (data.product_quadrant_medians || {}).median_atc_rate;
+  productQuadrantChart.update();
+
+  // ===== TRAFFIC PARETO
+  const prodPareto = data.product_pareto_json || [];
+  productParetoChart.data.labels = prodPareto.map(i => i.product_name);
+  productParetoChart.data.datasets[0].data = prodPareto.map(i => i.visitors);
+  productParetoChart.data.datasets[1].data = prodPareto.map(i => i.cumulative_pct);
+  productParetoChart.update();
+
+  // ===== TOP PRODUCTS BY BOUNCE RATE
+  const topProductsBounceRate = data.top_products_bounce_rate_json || [];
+  topProductsBounceRateChart.data.labels = topProductsBounceRate.map(i => i.product_name);
+  topProductsBounceRateChart.data.datasets[0].data = topProductsBounceRate.map(i => i.bounce_rate);
+  topProductsBounceRateChart.update();
+  $("#topBounceSubtitle").text(`Highest bounce among products with at least ${fmtNum(minVisitorsForRate)} visitors to be reliable — worth a landing-page review`);
+
+  // ===== PRODUCT PERFORMANCE TABLE
+  productTable.clear().rows.add(data.product_table_json || []).draw();
+}
+
+function debounceLoad() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(loadInsightDashboard, 300);
+}
+
+function registerEvents() {
+  $("#brandSelect").on("change", debounceLoad);
+  $("#platformSelect").on("change", debounceLoad);
+  $("#categorySelect").on("change", debounceLoad);
+  $("#startDate").on("change", loadInsightDashboard);
+  $("#endDate").on("change", loadInsightDashboard);
+}
+
+registerEvents();
+initChart();
+loadInsightDashboard();
+</script>
+
+{% endblock %}

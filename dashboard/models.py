@@ -152,3 +152,53 @@ class AdsMart(models.Model):
     class Meta:
         managed = False  # WAJIB: Biar Django ga bikin file migrasi/ngubah isi database asli
         db_table = 'postgre_ads_mart_dwd_df' # Nama tabel asli di PostgreSQL
+
+
+class OrderMartDashboardInsight(models.Model):
+
+    key_id = models.IntegerField(primary_key=True)
+
+    platform = models.TextField(null=True,blank=True)
+    brand = models.TextField(null=True,blank=True)
+    category = models.TextField(null=True,blank=True)
+    brand_group = models.TextField(null=True,blank=True)
+
+    date_time = models.DateField(null=True,blank=True)
+
+    gmv = models.IntegerField(null=True,blank=True)
+    gross_order_qty = models.IntegerField(null=True,blank=True)
+    gross_sales_qty = models.IntegerField(null=True,blank=True)
+    nmv = models.IntegerField(null=True,blank=True)
+    net_order_qty = models.IntegerField(null=True,blank=True)
+    net_sales_qty = models.IntegerField(null=True,blank=True)
+    page_views = models.IntegerField(null=True,blank=True)
+    visitors = models.IntegerField(null=True,blank=True)
+
+    class Meta:
+        managed = False  # WAJIB: Biar Django ga bikin file migrasi/ngubah isi database asli
+        db_table = 'postgre_order_mart_dashboard_insights_df' # Nama tabel asli di PostgreSQL
+
+
+class ProductInsight(models.Model):
+
+    key_id = models.IntegerField(primary_key=True)
+    
+    platform = models.TextField(null=True,blank=True)
+    date = models.DateField(null=True,blank=True)
+    brand = models.TextField(null=True,blank=True)
+    category = models.TextField(null=True,blank=True)
+    brand_group = models.TextField(null=True,blank=True)
+    product_id = models.TextField(null=True,blank=True)
+    product_name = models.TextField(null=True,blank=True)
+    parent_sku = models.TextField(null=True,blank=True)
+
+    product_visitors = models.IntegerField(null=True,blank=True)
+    product_page_views = models.IntegerField(null=True,blank=True)
+    product_bounce_visitors = models.IntegerField(null=True,blank=True)
+    product_bounce_rate = models.IntegerField(null=True,blank=True)
+    add_to_cart_units = models.IntegerField(null=True,blank=True)
+
+    class Meta:
+        managed = False  # WAJIB: Biar Django ga bikin file migrasi/ngubah isi database asli
+        db_table = 'postgre_product_insight_mart_dwd_df' # Nama tabel asli di PostgreSQL
+

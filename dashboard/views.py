@@ -41,6 +41,13 @@ from .services.ads_dashboard import (
     get_ads_types,
 )
 
+from .services.dashboard_insight import (
+    get_insight_dashboard_data,
+    get_insight_brand_variants,
+    get_insight_platforms,
+    get_insight_categories,
+)
+
 # def get_user_brands(user: User) -> list[str]:
 #     return list(
 #         user.userbrand_set.values_list(
@@ -309,6 +316,46 @@ def ads_dashboard_api(
         selected_brands=selected_brands,
         selected_platforms=selected_platforms,
         selected_ads_types=selected_ads_types,
+    )
+    return JsonResponse(data)
+
+def insight_dashboard(
+    request: HttpRequest,
+) -> HttpResponse:
+    today = date.today() - timedelta(days=1)
+    context: dict[str, Any] = {
+        "brands": get_insight_brand_variants(request.user),
+        "platforms": get_insight_platforms(),
+        "categories": get_insight_categories(),
+        "start_date": request.GET.get("start_date") or today.replace(day=1).isoformat(),
+        "end_date": request.GET.get("end_date") or today.isoformat(),
+    }
+
+    return render(
+        request,
+        "dashboard_insight.html",
+        context,
+    )
+
+
+def insight_dashboard_api(
+    request: HttpRequest,
+) -> JsonResponse:
+
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+
+    selected_brands = request.GET.getlist("brand")
+    selected_platforms = request.GET.getlist("platform")
+    selected_categories = request.GET.getlist("category")
+
+    data = get_insight_dashboard_data(
+        user=request.user,
+        start_date=start_date,
+        end_date=end_date,
+        selected_brands=selected_brands,
+        selected_platforms=selected_platforms,
+        selected_categories=selected_categories,
     )
     return JsonResponse(data)
 

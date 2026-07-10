@@ -13,6 +13,8 @@ from .views import (
     consolidate_sales,
     consolidate_sales_api,
     update_profile,
+    ads_dashboard_api,
+    ads_dashboard
 )
 from django.views.decorators.cache import never_cache
 
@@ -31,5 +33,9 @@ urlpatterns = [
     path('brand_performance_api/',brand_performance_api, name="brand_performance_api"),
 
     path('consolidate_sales/', consolidate_sales, name="consolidate_sales"),
-    path('consolidate_sales_api/',consolidate_sales_api,name="consolidate_sales_api")
+    path('consolidate_sales_api/',consolidate_sales_api,name="consolidate_sales_api"),
+
+    path('ads_dashboard/',ads_dashboard,name="ads_dashboard"),
+    path('ads_dashboard_api/',ads_dashboard_api,name="ads_dashboard_api")
+
 ]

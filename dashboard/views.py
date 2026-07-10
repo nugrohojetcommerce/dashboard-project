@@ -34,6 +34,13 @@ from .services.consolidated_sales import (
     get_consolidate_platforms,
 )
 
+from .services.ads_dashboard import (
+    get_ads_dashboard_data,
+    get_ads_brand_variants,
+    get_ads_platforms,
+    get_ads_types,
+)
+
 # def get_user_brands(user: User) -> list[str]:
 #     return list(
 #         user.userbrand_set.values_list(
@@ -261,6 +268,47 @@ def consolidate_sales_api(
         end_date=end_date,
         selected_brands=selected_brands,
         selected_platforms=selected_platforms,
+    )
+    return JsonResponse(data)
+
+
+def ads_dashboard(
+    request: HttpRequest,
+) -> HttpResponse:
+    today = date.today() - timedelta(days=1)
+    context: dict[str, Any] = {
+        "brands": get_ads_brand_variants(request.user),
+        "platforms": get_ads_platforms(),
+        "ads_types": get_ads_types(),
+        "start_date": request.GET.get("start_date") or today.replace(day=1).isoformat(),
+        "end_date": request.GET.get("end_date") or today.isoformat(),
+    }
+ 
+    return render(
+        request,
+        "ads_dashboard.html",
+        context,
+    )
+ 
+ 
+def ads_dashboard_api(
+    request: HttpRequest,
+) -> JsonResponse:
+ 
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+ 
+    selected_brands = request.GET.getlist("brand")
+    selected_platforms = request.GET.getlist("platform")
+    selected_ads_types = request.GET.getlist("ads_type")
+ 
+    data = get_ads_dashboard_data(
+        user=request.user,
+        start_date=start_date,
+        end_date=end_date,
+        selected_brands=selected_brands,
+        selected_platforms=selected_platforms,
+        selected_ads_types=selected_ads_types,
     )
     return JsonResponse(data)
 

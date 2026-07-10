@@ -1,0 +1,1509 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Ads Dashboard{% endblock %}
+
+{% block content %}
+
+<style>
+  /* ── TOKENS: ULTRA CLEAN LIGHT MODE (same as Brand Performance / Consolidate Sales) ── */
+  :root {
+    --bg-page:        #F8F9FA;
+    --card-bg:        #FFFFFF;
+    --glass-hover:    #FAFAFA;
+    --glass-border:   #E4E7EB;
+    --glass-border-h: #FF7A00;
+
+    --orange:         #FF7A00;
+    --orange-bright:  #D96500;
+    --orange-dim:     rgba(255, 122, 0, 0.06);
+    --orange-glow:    rgba(255, 122, 0, 0.12);
+    --orange-deep:    #CC4400;
+
+    --text-primary:   #1F2937;
+    --text-sub:       #4B5563;
+    --text-muted:     #6B7280;
+    --text-faint:     #9CA3AF;
+
+    --success:        #059669;
+    --success-bg:     #E6F4EA;
+    --danger:         #DC2626;
+    --danger-bg:      #FCE8E6;
+    --warn:           #B45F06;
+    --warn-bg:        #FFF4E0;
+
+    --radius:         12px;
+    --radius-sm:      8px;
+    --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+    --shadow-md:      0 10px 20px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
+  }
+
+  body, html {
+    background: var(--bg-page) !important;
+    color: var(--text-primary) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .bp-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .bp-header h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -.3px;
+    margin: 0;
+  }
+  .bp-header .bp-subtitle {
+    font-size: .75rem;
+    color: var(--text-faint);
+    font-family: 'JetBrains Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+  }
+
+  .s-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: transform .2s, box-shadow .2s, border-color .2s;
+  }
+
+  /* ── filter panel ── */
+  .filter-panel {
+    padding: 18px 22px 22px;
+    margin-bottom: 20px;
+  }
+  .filter-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .filter-icon {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    background: var(--orange-dim);
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--orange);
+    flex-shrink: 0;
+  }
+  .filter-panel-header span {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .09em;
+  }
+
+  .filter-panel .form-label {
+    font-size: .7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .filter-panel .form-control,
+  .filter-panel .form-select {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary) !important;
+    font-size: .87rem;
+    padding: 8px 11px;
+    transition: border-color .18s, box-shadow .18s;
+    box-shadow: none !important;
+  }
+  .filter-panel .form-control:focus,
+  .filter-panel .form-select:focus {
+    border-color: var(--orange) !important;
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
+    outline: none;
+  }
+  .filter-panel .form-select option {
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+
+  /* select2 light mode overrides */
+  .select2-container--default .select2-selection--multiple {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-sm) !important;
+    min-height: 38px !important;
+    padding: 2px 6px !important;
+    box-shadow: none !important;
+  }
+  .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: var(--orange) !important;
+    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background: var(--orange-dim) !important;
+    border: 1px solid rgba(255, 122, 0, 0.15) !important;
+    color: var(--orange-bright) !important;
+    border-radius: 4px !important;
+    font-size: .75rem !important;
+    font-weight: 600 !important;
+    padding: 2px 8px 2px 22px !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: var(--orange) !important;
+    margin-right: 5px !important;
+  }
+  .select2-container--default .select2-search--inline .select2-search__field {
+    color: var(--text-primary) !important;
+    font-size: .85rem !important;
+    background: transparent !important;
+  }
+  .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    padding: 0 !important;
+  }
+  .select2-dropdown {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+  }
+  .select2-container--default .select2-results__option {
+    color: var(--text-sub) !important;
+    font-size: .85rem !important;
+    padding: 8px 12px !important;
+  }
+  .select2-container--default .select2-results__option--highlighted {
+    background: var(--orange-dim) !important;
+    color: var(--orange-bright) !important;
+  }
+  .select2-container--default .select2-results__option--selected {
+    background: #F3F4F6 !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+  }
+  .select2-search--dropdown .select2-search__field {
+    background: var(--bg-page) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 6px !important;
+    color: var(--text-primary) !important;
+    padding: 7px 10px !important;
+    outline: none !important;
+  }
+
+  /* quick action buttons */
+  .btn-ghost-amber {
+    font-size: .72rem; font-weight: 700;
+    color: var(--orange-bright);
+    background: var(--orange-dim);
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+    letter-spacing: .02em;
+  }
+  .btn-ghost-amber:hover {
+    background: var(--orange-glow);
+    border-color: rgba(255, 122, 0, 0.3);
+  }
+  .btn-ghost-muted {
+    font-size: .72rem; font-weight: 600;
+    color: var(--text-muted);
+    background: #F3F4F6;
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: background .15s;
+    letter-spacing: .02em;
+  }
+  .btn-ghost-muted:hover { background: #E5E7EB; }
+
+  /* ── section divider ── */
+  .segment-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 30px 0 14px;
+  }
+  .segment-divider .seg-badge {
+    font-size: .68rem; font-weight: 800;
+    color: var(--orange-bright);
+    background: var(--orange-dim);
+    border: 1px solid rgba(255, 122, 0, 0.18);
+    border-radius: 20px;
+    padding: 4px 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    white-space: nowrap;
+  }
+  .segment-divider .seg-title {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .segment-divider .seg-line {
+    flex: 1;
+    height: 1px;
+    background: var(--glass-border);
+  }
+
+  /* ── metric cards (top score row) ── */
+  .metric-card {
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+  }
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--glass-border-h);
+  }
+  .metric-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .card-expense::after { background: linear-gradient(90deg, #FF5500, #FF8844); }
+  .card-gmv::after      { background: linear-gradient(90deg, #FF7A00, #FFB347); }
+  .card-roas::after     { background: linear-gradient(90deg, #7C3AED, #A78BFA); }
+  .card-ctr::after      { background: linear-gradient(90deg, #0891B2, #22D3EE); }
+  .card-cpc::after      { background: linear-gradient(90deg, #DB2777, #F472B6); }
+  .card-cpa::after      { background: linear-gradient(90deg, #B45309, #FBBF24); }
+  .card-cvr::after      { background: linear-gradient(90deg, #059669, #34D399); }
+  .card-cpm::after      { background: linear-gradient(90deg, #4338CA, #818CF8); }
+  .card-aov::after      { background: linear-gradient(90deg, #0F766E, #2DD4BF); }
+
+  .metric-label {
+    font-size: .63rem; font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .label-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .card-expense .label-dot { background: #FF5500; }
+  .card-gmv     .label-dot { background: #FF7A00; }
+  .card-roas    .label-dot { background: #7C3AED; }
+  .card-ctr     .label-dot { background: #0891B2; }
+  .card-cpc     .label-dot { background: #DB2777; }
+  .card-cpa     .label-dot { background: #B45309; }
+  .card-cvr     .label-dot { background: #059669; }
+  .card-cpm     .label-dot { background: #4338CA; }
+  .card-aov     .label-dot { background: #0F766E; }
+
+  .metric-value {
+    font-size: 1.28rem; font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -.4px; line-height: 1;
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+  }
+
+  .metric-icon {
+    position: absolute;
+    bottom: 10px; right: 14px;
+    font-size: 1.6rem; opacity: .06; line-height: 1;
+  }
+
+  /* ── delta badge (period-over-period) ── */
+  .delta-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: .68rem; font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+  }
+  .delta-up   { background: var(--success-bg); color: var(--success); }
+  .delta-down { background: var(--danger-bg); color: var(--danger); }
+  .delta-flat { background: #F3F4F6; color: var(--text-faint); }
+
+  /* ── ROAS achievement badge ── */
+  .metric-sub-row { margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .ach-badge {
+    display: inline-block;
+    font-size: .66rem; font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    letter-spacing: .02em;
+  }
+  .ach-badge.ach-good { background: var(--success-bg); color: var(--success); }
+  .ach-badge.ach-warn { background: var(--warn-bg); color: var(--warn); }
+  .ach-badge.ach-bad  { background: var(--danger-bg); color: var(--danger); }
+
+  /* ── spotlight cards (top1 brand group) ── */
+  .card-spotlight-roas::after { background: linear-gradient(90deg, #7C3AED, #A78BFA); }
+  .card-spotlight-gmv::after  { background: linear-gradient(90deg, #D97706, #FBBF24); }
+  .card-spotlight-roas .label-dot { background: #7C3AED; }
+  .card-spotlight-gmv  .label-dot { background: #D97706; }
+  .spotlight-name {
+    font-size: 1.15rem; font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -.3px; line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .spotlight-value {
+    font-size: .82rem; font-weight: 600;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── chart card ── */
+  .chart-card {
+    padding: 18px 22px 22px;
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--glass-border);
+    flex-shrink: 0;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .chart-title-group { display: flex; align-items: center; gap: 10px; }
+  .chart-accent-bar {
+    width: 3px; height: 18px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #FF7A00, #CC4400);
+    flex-shrink: 0;
+  }
+  .chart-title {
+    font-size: .9rem; font-weight: 700;
+    color: var(--text-primary); margin: 0;
+  }
+  .chart-subtitle {
+    font-size: .7rem;
+    color: var(--text-faint);
+    margin-top: 2px;
+    display: block;
+  }
+  .chart-badge {
+    font-size: .66rem; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+    background: var(--orange-dim);
+    color: var(--orange-bright);
+    letter-spacing: .05em; text-transform: uppercase;
+    border: 1px solid rgba(255, 122, 0, 0.15);
+    white-space: nowrap;
+  }
+  .chart-body {
+    flex: 1;
+    position: relative;
+    min-height: 260px;
+  }
+  .chart-body.tall { min-height: 320px; }
+  .chart-body.xtall { min-height: 360px; }
+
+  .insight-note {
+    font-size: .74rem;
+    color: var(--text-muted);
+    background: #F9FAFB;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+  .insight-note b { color: var(--text-primary); }
+</style>
+
+<div class="bp-header">
+  <h1>Ads Dashboard</h1>
+  <span class="bp-subtitle">/ Overview</span>
+</div>
+
+<form method="get" id="filterForm">
+<div class="s-card filter-panel">
+
+  <div class="filter-panel-header">
+    <div class="filter-icon">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    </div>
+    <span>Filters</span>
+  </div>
+
+  <div class="row g-3 align-items-start">
+
+    <div class="col-md-3">
+      <label class="form-label">Brands</label>
+      <select id="brandSelect" class="form-select" name="brand" multiple>
+        {% for brand in brands %}
+        <option value="{{ brand }}" {% if brand in selected_brands %}selected{% endif %}>{{ brand }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllBrands()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearBrands()">Clear</button>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Platforms</label>
+      <select id="platformSelect" class="form-select" name="platform" multiple>
+        {% for platform in platforms %}
+        <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllPlatforms()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearPlatforms()">Clear</button>
+      </div>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Ads Type</label>
+      <select id="adsTypeSelect" class="form-select" name="ads_type" multiple>
+        {% for ads_type in ads_types %}
+        <option value="{{ ads_type }}" {% if ads_type in selected_ads_types %}selected{% endif %}>{{ ads_type }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllAdsTypes()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearAdsTypes()">Clear</button>
+      </div>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Start Date</label>
+      <input type="date" id="startDate" class="form-control" name="start_date" value="{{ start_date }}">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">End Date</label>
+      <input type="date" id="endDate" class="form-control" name="end_date" value="{{ end_date }}">
+    </div>
+
+  </div>
+</div>
+</form>
+
+<!-- ===== SCORE CARDS (deep KPI row w/ period-over-period deltas) ===== -->
+<div class="row g-3 mb-3">
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-expense">
+      <div class="metric-label"><span class="label-dot"></span>Total Expense</div>
+      <div class="metric-value" id="expenseCard">Rp0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="expenseDelta">–</span></div>
+      <div class="metric-icon">💸</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-gmv">
+      <div class="metric-label"><span class="label-dot"></span>Total GMV</div>
+      <div class="metric-value" id="gmvCard">Rp0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="gmvDelta">–</span></div>
+      <div class="metric-icon">💰</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-roas">
+      <div class="metric-label"><span class="label-dot"></span>Overall ROAS</div>
+      <div class="metric-value" id="roasCard">0.0x</div>
+      <div class="metric-sub-row">
+        <span class="ach-badge ach-warn" id="roasBadge">-</span>
+        <span class="delta-badge delta-flat" id="roasDelta">–</span>
+      </div>
+      <div class="metric-icon">🎯</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-ctr">
+      <div class="metric-label"><span class="label-dot"></span>Overall CTR</div>
+      <div class="metric-value" id="ctrCard">0%</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="ctrDelta">–</span></div>
+      <div class="metric-icon">🖱️</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-cvr">
+      <div class="metric-label"><span class="label-dot"></span>Overall CVR</div>
+      <div class="metric-value" id="cvrCard">0%</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="cvrDelta">–</span></div>
+      <div class="metric-icon">✅</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-cpc">
+      <div class="metric-label"><span class="label-dot"></span>Cost per Click</div>
+      <div class="metric-value" id="cpcCard">Rp0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="cpcDelta">–</span></div>
+      <div class="metric-icon">👆</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-cpa">
+      <div class="metric-label"><span class="label-dot"></span>Cost per Acquisition</div>
+      <div class="metric-value" id="cpaCard">Rp0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="cpaDelta">–</span></div>
+      <div class="metric-icon">🎟️</div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6 d-flex">
+    <div class="s-card metric-card card-cpm">
+      <div class="metric-label"><span class="label-dot"></span>CPM (per 1K Impr.)</div>
+      <div class="metric-value" id="cpmCard">Rp0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="cpmDelta">–</span></div>
+      <div class="metric-icon">📡</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SPOTLIGHT: BEST PERFORMING BRAND GROUP + AOV ===== -->
+<div class="row g-3 mb-3">
+  <div class="col-md-4 d-flex">
+    <div class="s-card metric-card card-spotlight-roas">
+      <div class="metric-label"><span class="label-dot"></span>Best Performing Brand Group &middot; ROAS</div>
+      <div class="spotlight-name" id="topRoasBrandGroupName">-</div>
+      <div class="spotlight-value" id="topRoasBrandGroupValue">0.0x</div>
+      <div class="metric-icon">🏆</div>
+    </div>
+  </div>
+  <div class="col-md-4 d-flex">
+    <div class="s-card metric-card card-spotlight-gmv">
+      <div class="metric-label"><span class="label-dot"></span>Best Performing Brand Group &middot; GMV</div>
+      <div class="spotlight-name" id="topGmvBrandGroupName">-</div>
+      <div class="spotlight-value" id="topGmvBrandGroupValue">Rp0</div>
+      <div class="metric-icon">📈</div>
+    </div>
+  </div>
+  <div class="col-md-4 d-flex">
+    <div class="s-card metric-card card-aov">
+      <div class="metric-label"><span class="label-dot"></span>Average Order Value (AOV)</div>
+      <div class="metric-value" id="aovCard">Rp0</div>
+      <div class="metric-sub-row"><span class="delta-badge delta-flat" id="aovDelta">–</span></div>
+      <div class="metric-icon">🛒</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: TRENDS ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Performance Trends Over Time</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Daily Expense vs GMV Trend</h3>
+            <span class="chart-subtitle">Spend vs revenue generated, day by day</span>
+          </div>
+        </div>
+        <span class="chart-badge">Trend</span>
+      </div>
+      <div class="chart-body tall"><canvas id="dailyTrendChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Daily ROAS vs CPA</h3>
+            <span class="chart-subtitle">Revenue efficiency vs acquisition cost</span>
+          </div>
+        </div>
+        <span class="chart-badge">Dual-Axis</span>
+      </div>
+      <div class="chart-body tall"><canvas id="roasCpaTrendChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Daily CTR vs CVR</h3>
+            <span class="chart-subtitle">Funnel conversion rates over time</span>
+          </div>
+        </div>
+        <span class="chart-badge">Funnel Rates</span>
+      </div>
+      <div class="chart-body tall"><canvas id="ctrCvrTrendChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: BRAND GROUP DEEP DIVE ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Brand Group Deep Dive</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Brand Group by Expense</h3>
+        </div>
+        <span class="chart-badge">Top 10</span>
+      </div>
+      <div class="chart-body"><canvas id="topBrandGroupExpense"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Top Brand Group by ROAS</h3>
+        </div>
+        <span class="chart-badge">Top 10</span>
+      </div>
+      <div class="chart-body"><canvas id="topBrandGroupRoas"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-7">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Efficiency Quadrant &middot; Expense vs ROAS</h3>
+            <span class="chart-subtitle">Bubble size = GMV contribution. Dashed lines = median.</span>
+          </div>
+        </div>
+        <span class="chart-badge">Bubble</span>
+      </div>
+      <div class="chart-body xtall"><canvas id="efficiencyQuadrantChart"></canvas></div>
+      <div class="insight-note">
+        Top-left = <b>low spend, high ROAS</b> (scale these). Top-right = <b>high spend, high ROAS</b> (your winners).
+        Bottom-right = <b>high spend, low ROAS</b> (review immediately). Bottom-left = <b>low spend, low ROAS</b> (low priority).
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Expense Pareto (80/20)</h3>
+            <span class="chart-subtitle">Cumulative expense contribution</span>
+          </div>
+        </div>
+        <span class="chart-badge">Pareto</span>
+      </div>
+      <div class="chart-body xtall"><canvas id="paretoChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Brand Group Performance</h3>
+        </div>
+        <span class="chart-badge">Table</span>
+      </div>
+      <div class="chart-body" style="min-height: 0;">
+        <table id="brandGroupTable" class="table table-hover" style="width:100%">
+          <thead>
+            <tr>
+              <th>Brand Group</th>
+              <th>Impression</th>
+              <th>Clicks</th>
+              <th>CTR</th>
+              <th>Conversions</th>
+              <th>CVR</th>
+              <th>Expense</th>
+              <th>GMV</th>
+              <th>ROAS</th>
+              <th>CPC</th>
+              <th>CPA</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: PLATFORM DEEP DIVE ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Platform Deep Dive</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-5">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Expense by Platform</h3>
+        </div>
+        <span class="chart-badge">Donut</span>
+      </div>
+      <div class="chart-body"><canvas id="platformExpenseDonut"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-7">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Platform Comparison Radar</h3>
+            <span class="chart-subtitle">Normalized CTR, CVR, ROAS &amp; cost-efficiency (0–1 scale)</span>
+          </div>
+        </div>
+        <span class="chart-badge">Radar</span>
+      </div>
+      <div class="chart-body tall"><canvas id="platformRadarChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Platform Performance</h3>
+        </div>
+        <span class="chart-badge">Table</span>
+      </div>
+      <div class="chart-body" style="min-height: 0;">
+        <table id="platformTable" class="table table-hover" style="width:100%">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th>Impression</th>
+              <th>Clicks</th>
+              <th>CTR</th>
+              <th>Conversions</th>
+              <th>CVR</th>
+              <th>Expense</th>
+              <th>GMV</th>
+              <th>ROAS</th>
+              <th>CPC</th>
+              <th>CPA</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: ADS TYPE DEEP DIVE ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Ads Type Deep Dive</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Expense vs GMV by Ads Type</h3>
+        </div>
+        <span class="chart-badge">Comparison</span>
+      </div>
+      <div class="chart-body tall"><canvas id="adsTypeDoubleBar"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Ads Type Performance</h3>
+        </div>
+        <span class="chart-badge">Table</span>
+      </div>
+      <div class="chart-body" style="min-height: 0;">
+        <table id="adsTypeTable" class="table table-hover" style="width:100%">
+          <thead>
+            <tr>
+              <th>Ads Type</th>
+              <th>Impression</th>
+              <th>Clicks</th>
+              <th>CTR</th>
+              <th>Conversions</th>
+              <th>CVR</th>
+              <th>Expense</th>
+              <th>GMV</th>
+              <th>ROAS</th>
+              <th>CPC</th>
+              <th>CPA</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEGMENT: FUNNEL & SEASONALITY ===== -->
+<div class="segment-divider">
+  <span class="seg-badge">Segment</span>
+  <span class="seg-title">Funnel &amp; Seasonality</span>
+  <span class="seg-line"></span>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Marketing Funnel</h3>
+            <span class="chart-subtitle">Impression → Click → Conversion</span>
+          </div>
+        </div>
+        <span class="chart-badge">Funnel</span>
+      </div>
+      <div class="chart-body tall"><canvas id="funnelChart"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <div>
+            <h3 class="chart-title">Day-of-Week Performance</h3>
+            <span class="chart-subtitle">Expense vs ROAS by weekday, aggregated across the selected range</span>
+          </div>
+        </div>
+        <span class="chart-badge">Seasonality</span>
+      </div>
+      <div class="chart-body tall"><canvas id="dayOfWeekChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function () {
+  $('#brandSelect').select2({ width: '100%', placeholder: 'Select brands' });
+  $('#platformSelect').select2({ width: '100%', placeholder: 'Select platforms' });
+  $('#adsTypeSelect').select2({ width: '100%', placeholder: 'Select ads type' });
+});
+
+function selectAllBrands()    { $('#brandSelect option').prop('selected', true);  $('#brandSelect').trigger('change'); }
+function clearBrands()        { $('#brandSelect option').prop('selected', false); $('#brandSelect').trigger('change'); }
+function selectAllPlatforms() { $('#platformSelect option').prop('selected', true);  $('#platformSelect').trigger('change'); }
+function clearPlatforms()     { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
+function selectAllAdsTypes()  { $('#adsTypeSelect option').prop('selected', true);  $('#adsTypeSelect').trigger('change'); }
+function clearAdsTypes()      { $('#adsTypeSelect option').prop('selected', false); $('#adsTypeSelect').trigger('change'); }
+
+let topBrandGroupExpenseChart, topBrandGroupRoasChart, platformExpenseDonutChart, adsTypeDoubleBar,
+    dailyTrendChart, roasCpaTrendChart, ctrCvrTrendChart, efficiencyQuadrantChart, paretoChart,
+    platformRadarChart, funnelChart, dayOfWeekChart;
+let brandGroupTable, platformTable, adsTypeTable;
+let debounceTimer;
+
+// ROAS thresholds used to color-code bars/badges. Kept in sync with the
+// roas_good_threshold / roas_warn_threshold values returned by the API.
+let ROAS_GOOD = 5;
+let ROAS_WARN = 3;
+
+function roasColor(v) {
+  return v >= ROAS_GOOD ? "#059669" : v >= ROAS_WARN ? "#FF9500" : "#DC2626";
+}
+
+function fmtRp(v) { return "Rp" + Number(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 }); }
+function fmtPct(v) { return Number(v || 0).toFixed(2) + "%"; }
+function fmtX(v) { return Number(v || 0).toFixed(2) + "x"; }
+
+// goodDirection: 'up' -> higher is better (green on positive), 'down' -> lower is better
+// (green on negative change), 'neutral' -> informational only, always gray.
+function renderDelta(elId, pctChange, goodDirection) {
+  const $el = $("#" + elId);
+  if (pctChange === null || pctChange === undefined || !isFinite(pctChange)) {
+    $el.text("–").removeClass("delta-up delta-down").addClass("delta-flat");
+    return;
+  }
+  const rounded = Math.abs(pctChange) < 0.05 ? 0 : pctChange;
+  const arrow = rounded > 0 ? "▲" : rounded < 0 ? "▼" : "•";
+  $el.text(`${arrow} ${Math.abs(rounded).toFixed(1)}% vs prev`);
+  $el.removeClass("delta-up delta-down delta-flat");
+
+  if (goodDirection === "neutral" || rounded === 0) {
+    $el.addClass("delta-flat");
+    return;
+  }
+  const isGood = goodDirection === "up" ? rounded > 0 : rounded < 0;
+  $el.addClass(isGood ? "delta-up" : "delta-down");
+}
+
+// Small plugin to draw dashed median crosshair lines on the efficiency quadrant.
+const quadrantLinesPlugin = {
+  id: "quadrantLines",
+  afterDraw(chart) {
+    if (chart.canvas.id !== "efficiencyQuadrantChart") return;
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const xVal = chart.$medianExpense;
+    const yVal = chart.$medianRoas;
+    if (xVal === undefined || yVal === undefined) return;
+    const xPix = scales.x.getPixelForValue(xVal);
+    const yPix = scales.y.getPixelForValue(yVal);
+    ctx.save();
+    ctx.strokeStyle = "#D1D5DB";
+    ctx.setLineDash([5, 4]);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(xPix, chartArea.top);
+    ctx.lineTo(xPix, chartArea.bottom);
+    ctx.moveTo(chartArea.left, yPix);
+    ctx.lineTo(chartArea.right, yPix);
+    ctx.stroke();
+    ctx.restore();
+  }
+};
+Chart.register(quadrantLinesPlugin);
+
+function initChart() {
+
+  // ===== TOP BRAND GROUP BY EXPENSE (bar)
+  topBrandGroupExpenseChart = new Chart(document.getElementById("topBrandGroupExpense").getContext("2d"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "Expense", data: [], backgroundColor: "#FF5500", borderRadius: 4, maxBarThickness: 34 }] },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
+          callbacks: { label: item => fmtRp(item.raw) }
+        }
+      },
+      scales: {
+        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } }
+      }
+    }
+  });
+
+  // ===== TOP BRAND GROUP BY ROAS (bar, color-coded)
+  topBrandGroupRoasChart = new Chart(document.getElementById("topBrandGroupRoas").getContext("2d"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ label: "ROAS", data: [], backgroundColor: ctx => roasColor(ctx.raw || 0), borderRadius: 4, maxBarThickness: 34 }] },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
+          callbacks: { label: item => fmtX(item.raw) }
+        }
+      },
+      scales: {
+        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: value => value + "x" } },
+        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } }
+      }
+    }
+  });
+
+  // ===== EXPENSE BY PLATFORM (donut)
+  platformExpenseDonutChart = new Chart(document.getElementById("platformExpenseDonut").getContext("2d"), {
+    type: "doughnut",
+    data: { labels: [], datasets: [{ data: [], backgroundColor: ["#FF7A00", "#FFB347", "#CC4400", "#FF9500", "#FFCC44", "#FF5500", "#D96500"], borderColor: "#FFFFFF", borderWidth: 2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: "65%",
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, padding: 12 } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `${item.label}: ${fmtRp(item.raw)}` }
+        }
+      }
+    }
+  });
+
+  // ===== EXPENSE VS GMV BY ADS TYPE (double bar)
+  adsTypeDoubleBar = new Chart(document.getElementById("adsTypeDoubleBar").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "Expense", data: [], backgroundColor: "#FF5500", borderRadius: 4, maxBarThickness: 28 },
+        { label: "GMV", data: [], backgroundColor: "#FF7A00", borderRadius: 4, maxBarThickness: 28 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "top", align: "end", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10 } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `${item.dataset.label}: ${fmtRp(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 }, maxRotation: 45, minRotation: 0 } },
+        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } }
+      }
+    }
+  });
+
+  // ===== DAILY EXPENSE VS GMV TREND (line)
+  dailyTrendChart = new Chart(document.getElementById("dailyTrendChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "Expense", data: [], borderColor: "#FF5500", backgroundColor: "#FF5500", tension: 0.3, pointRadius: 3, borderWidth: 2 },
+        { label: "GMV", data: [], borderColor: "#FF7A00", backgroundColor: "#FF7A00", tension: 0.3, pointRadius: 3, borderWidth: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `${item.dataset.label}: ${fmtRp(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
+        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } }
+      }
+    }
+  });
+
+  // ===== DAILY ROAS VS CPA (dual axis line)
+  roasCpaTrendChart = new Chart(document.getElementById("roasCpaTrendChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "ROAS", data: [], borderColor: "#7C3AED", backgroundColor: "#7C3AED", tension: 0.3, pointRadius: 3, borderWidth: 2, yAxisID: "y" },
+        { label: "CPA", data: [], borderColor: "#B45309", backgroundColor: "#B45309", tension: 0.3, pointRadius: 3, borderWidth: 2, borderDash: [4, 3], yAxisID: "y1" }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => item.dataset.label === "ROAS" ? `ROAS: ${fmtX(item.raw)}` : `CPA: ${fmtRp(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
+        y: { position: "left", grid: { color: "#F3F4F6" }, ticks: { color: "#7C3AED", font: { size: 11 }, callback: v => v + "x" } },
+        y1: { position: "right", grid: { display: false }, ticks: { color: "#B45309", font: { size: 11 }, callback: v => fmtRp(v) } }
+      }
+    }
+  });
+
+  // ===== DAILY CTR VS CVR (line, same % axis)
+  ctrCvrTrendChart = new Chart(document.getElementById("ctrCvrTrendChart").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "CTR", data: [], borderColor: "#0891B2", backgroundColor: "#0891B2", tension: 0.3, pointRadius: 3, borderWidth: 2 },
+        { label: "CVR", data: [], borderColor: "#059669", backgroundColor: "#059669", tension: 0.3, pointRadius: 3, borderWidth: 2 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => `${item.dataset.label}: ${fmtPct(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
+        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+      }
+    }
+  });
+
+  // ===== EFFICIENCY QUADRANT (bubble: expense x, roas y, gmv size)
+  efficiencyQuadrantChart = new Chart(document.getElementById("efficiencyQuadrantChart").getContext("2d"), {
+    type: "bubble",
+    data: { datasets: [{ label: "Brand Group", data: [], backgroundColor: "rgba(255, 122, 0, 0.55)", borderColor: "#CC4400", borderWidth: 1 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: {
+            title: items => items[0].raw.label || "",
+            label: item => [`Expense: ${fmtRp(item.raw.x)}`, `ROAS: ${fmtX(item.raw.y)}`, `GMV: ${fmtRp(item.raw.gmv)}`]
+          }
+        }
+      },
+      scales: {
+        x: { title: { display: true, text: "Expense", color: "#6B7280", font: { size: 11 } }, grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtRp(v) } },
+        y: { title: { display: true, text: "ROAS", color: "#6B7280", font: { size: 11 } }, grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "x" } }
+      }
+    }
+  });
+
+  // ===== PARETO CHART (bar expense + line cumulative %)
+  paretoChart = new Chart(document.getElementById("paretoChart").getContext("2d"), {
+    data: {
+      labels: [],
+      datasets: [
+        { type: "bar", label: "Expense", data: [], backgroundColor: "#FFB347", borderRadius: 4, yAxisID: "y", order: 2 },
+        { type: "line", label: "Cumulative %", data: [], borderColor: "#CC4400", backgroundColor: "#CC4400", tension: 0.25, pointRadius: 3, borderWidth: 2, yAxisID: "y1", order: 1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => item.dataset.label === "Expense" ? `Expense: ${fmtRp(item.raw)}` : `Cumulative: ${Number(item.raw).toFixed(1)}%` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 9 }, maxRotation: 60, minRotation: 30 } },
+        y: { position: "left", grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtRp(v) } },
+        y1: { position: "right", min: 0, max: 100, grid: { display: false }, ticks: { color: "#CC4400", font: { size: 10 }, callback: v => v + "%" } }
+      }
+    }
+  });
+
+  // ===== PLATFORM RADAR (normalized CTR/CVR/ROAS/Efficiency)
+  platformRadarChart = new Chart(document.getElementById("platformRadarChart").getContext("2d"), {
+    type: "radar",
+    data: { labels: ["CTR", "CVR", "ROAS", "Cost Efficiency"], datasets: [] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6
+        }
+      },
+      scales: {
+        r: {
+          min: 0, max: 1,
+          grid: { color: "#F3F4F6" }, angleLines: { color: "#E4E7EB" },
+          pointLabels: { color: "#4B5563", font: { size: 11 } },
+          ticks: { display: false }
+        }
+      }
+    }
+  });
+
+  // ===== FUNNEL (horizontal bar, decreasing)
+  funnelChart = new Chart(document.getElementById("funnelChart").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: ["Impression", "Clicks", "Conversions"],
+      datasets: [{ data: [], backgroundColor: ["#FFCC44", "#FF9500", "#CC4400"], borderRadius: 4, maxBarThickness: 46 }]
+    },
+    options: {
+      indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
+          callbacks: { label: item => Number(item.raw).toLocaleString() }
+        }
+      },
+      scales: {
+        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 12, weight: 600 } } }
+      }
+    }
+  });
+
+  // ===== DAY OF WEEK (bar expense + line roas)
+  dayOfWeekChart = new Chart(document.getElementById("dayOfWeekChart").getContext("2d"), {
+    data: {
+      labels: [],
+      datasets: [
+        { type: "bar", label: "Expense", data: [], backgroundColor: "#FF7A00", borderRadius: 4, yAxisID: "y", maxBarThickness: 40 },
+        { type: "line", label: "ROAS", data: [], borderColor: "#7C3AED", backgroundColor: "#7C3AED", tension: 0.3, pointRadius: 4, borderWidth: 2, yAxisID: "y1" }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
+      plugins: {
+        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        tooltip: {
+          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
+          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
+          callbacks: { label: item => item.dataset.label === "Expense" ? `Expense: ${fmtRp(item.raw)}` : `ROAS: ${fmtX(item.raw)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } },
+        y: { position: "left", grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtRp(v) } },
+        y1: { position: "right", grid: { display: false }, ticks: { color: "#7C3AED", font: { size: 11 }, callback: v => v + "x" } }
+      }
+    }
+  });
+
+  // ===== SEGMENT TABLES
+  function buildSegmentTable(selector, groupKey, sortColIndex) {
+    return $(selector).DataTable({
+      data: [],
+      scrollX: true,
+      columns: [
+        { data: groupKey },
+        { data: "impression", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : Number(v || 0).toLocaleString() },
+        { data: "clicks", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : Number(v || 0).toLocaleString() },
+        { data: "ctr", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtPct(v) },
+        { data: "conversions", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : Number(v || 0).toLocaleString() },
+        { data: "cvr", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtPct(v) },
+        { data: "expense", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtRp(v) },
+        { data: "gmv", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtRp(v) },
+        { data: "roas", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtX(v) },
+        { data: "cpc", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtRp(v) },
+        { data: "cpa", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtRp(v) },
+      ],
+      order: [[sortColIndex, "desc"]],
+      autoWidth: false,
+      paging: true,
+      ordering: true,
+      pageLength: 10,
+      language: { search: "", searchPlaceholder: "Search...", lengthMenu: "Show _MENU_", info: "_START_–_END_ of _TOTAL_" },
+    });
+  }
+
+  brandGroupTable = buildSegmentTable("#brandGroupTable", "brand_group", 6);
+  platformTable = buildSegmentTable("#platformTable", "platform", 6);
+  adsTypeTable = buildSegmentTable("#adsTypeTable", "ads_type", 6);
+}
+
+async function loadAdsDashboard() {
+  const params = new URLSearchParams();
+
+  ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
+  ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
+  ($("#adsTypeSelect").val() || []).forEach((adsType) => params.append("ads_type", adsType));
+  params.append("start_date", $("#startDate").val());
+  params.append("end_date", $("#endDate").val());
+
+  const response = await fetch(`{% url 'ads_dashboard_api' %}?${params}`);
+  const data = await response.json();
+
+  ROAS_GOOD = data.roas_good_threshold ?? ROAS_GOOD;
+  ROAS_WARN = data.roas_warn_threshold ?? ROAS_WARN;
+
+  const cards = data.cards;
+  const deltas = cards.deltas || {};
+
+  // ===== SCORECARDS
+  $("#expenseCard").text(fmtRp(cards.total_expense));
+  $("#gmvCard").text(fmtRp(cards.total_gmv));
+  $("#roasCard").text(fmtX(cards.overall_roas));
+  $("#ctrCard").text(fmtPct(cards.overall_ctr));
+  $("#cvrCard").text(fmtPct(cards.overall_cvr));
+  $("#cpcCard").text(fmtRp(cards.overall_cpc));
+  $("#cpaCard").text(fmtRp(cards.overall_cpa));
+  $("#cpmCard").text(fmtRp(cards.overall_cpm));
+  $("#aovCard").text(fmtRp(cards.aov));
+
+  renderDelta("expenseDelta", deltas.total_expense, "neutral");
+  renderDelta("gmvDelta", deltas.total_gmv, "up");
+  renderDelta("roasDelta", deltas.overall_roas, "up");
+  renderDelta("ctrDelta", deltas.overall_ctr, "up");
+  renderDelta("cvrDelta", deltas.overall_cvr, "up");
+  renderDelta("cpcDelta", deltas.overall_cpc, "down");
+  renderDelta("cpaDelta", deltas.overall_cpa, "down");
+  renderDelta("cpmDelta", deltas.overall_cpm, "down");
+  renderDelta("aovDelta", deltas.aov, "up");
+
+  // ===== ROAS BADGE
+  const roasVal = Number(cards.overall_roas || 0);
+  const $roasBadge = $("#roasBadge");
+  $roasBadge.text(roasVal >= ROAS_GOOD ? "Healthy" : roasVal >= ROAS_WARN ? "Borderline" : "Underperforming");
+  $roasBadge.removeClass("ach-good ach-warn ach-bad");
+  $roasBadge.addClass(roasVal >= ROAS_GOOD ? "ach-good" : roasVal >= ROAS_WARN ? "ach-warn" : "ach-bad");
+
+  // ===== SPOTLIGHT: BEST PERFORMING BRAND GROUP
+  const topRoasBg = cards.top_brand_group_by_roas || {};
+  $("#topRoasBrandGroupName").text(topRoasBg.brand_group || "-");
+  $("#topRoasBrandGroupValue").text(fmtX(topRoasBg.roas || 0));
+
+  const topGmvBg = cards.top_brand_group_by_gmv || {};
+  $("#topGmvBrandGroupName").text(topGmvBg.brand_group || "-");
+  $("#topGmvBrandGroupValue").text(fmtRp(topGmvBg.gmv || 0));
+
+  // ===== TOP BRAND GROUP BY EXPENSE / ROAS
+  const bar_top_expense = data.top_brand_group_expense_json;
+  topBrandGroupExpenseChart.data.labels = bar_top_expense.map(i => i.brand_group);
+  topBrandGroupExpenseChart.data.datasets[0].data = bar_top_expense.map(i => i.expense);
+  topBrandGroupExpenseChart.update();
+
+  const bar_top_roas = data.top_brand_group_roas_json;
+  topBrandGroupRoasChart.data.labels = bar_top_roas.map(i => i.brand_group);
+  topBrandGroupRoasChart.data.datasets[0].data = bar_top_roas.map(i => i.roas);
+  topBrandGroupRoasChart.update();
+
+  // ===== EFFICIENCY QUADRANT
+  const quadrant = data.efficiency_quadrant_json || [];
+  const gmvMax = Math.max(1, ...quadrant.map(i => i.gmv));
+  efficiencyQuadrantChart.data.datasets[0].data = quadrant.map(i => ({
+    x: i.expense, y: i.roas, gmv: i.gmv, label: i.brand_group,
+    r: 6 + (i.gmv / gmvMax) * 22,
+  }));
+  efficiencyQuadrantChart.$medianExpense = (data.quadrant_medians || {}).median_expense;
+  efficiencyQuadrantChart.$medianRoas = (data.quadrant_medians || {}).median_roas;
+  efficiencyQuadrantChart.update();
+
+  // ===== PARETO
+  const pareto = data.pareto_json || [];
+  paretoChart.data.labels = pareto.map(i => i.brand_group);
+  paretoChart.data.datasets[0].data = pareto.map(i => i.expense);
+  paretoChart.data.datasets[1].data = pareto.map(i => i.cumulative_pct);
+  paretoChart.update();
+
+  // ===== EXPENSE BY PLATFORM (donut)
+  const donut_platform = data.platform_expense_json || [];
+  platformExpenseDonutChart.data.labels = donut_platform.map(i => i.platform);
+  platformExpenseDonutChart.data.datasets[0].data = donut_platform.map(i => i.expense);
+  platformExpenseDonutChart.update();
+
+  // ===== PLATFORM RADAR
+  const radar = data.platform_radar_json || [];
+  const radarColors = ["#FF7A00", "#7C3AED", "#0891B2", "#059669", "#DB2777", "#4338CA"];
+  platformRadarChart.data.datasets = radar.map((p, idx) => ({
+    label: p.platform,
+    data: [p.ctr_norm, p.cvr_norm, p.roas_norm, p.efficiency_norm],
+    borderColor: radarColors[idx % radarColors.length],
+    backgroundColor: radarColors[idx % radarColors.length] + "22",
+    pointBackgroundColor: radarColors[idx % radarColors.length],
+    borderWidth: 2,
+  }));
+  platformRadarChart.update();
+
+  // ===== EXPENSE VS GMV BY ADS TYPE
+  const double_bar = data.ads_type_double_bar_json || [];
+  adsTypeDoubleBar.data.labels = double_bar.map(i => i.ads_type);
+  adsTypeDoubleBar.data.datasets[0].data = double_bar.map(i => i.expense);
+  adsTypeDoubleBar.data.datasets[1].data = double_bar.map(i => i.gmv);
+  adsTypeDoubleBar.update();
+
+  // ===== DAILY TRENDS
+  const daily_trend = data.daily_trend_json || [];
+  dailyTrendChart.data.labels = daily_trend.map(i => i.date);
+  dailyTrendChart.data.datasets[0].data = daily_trend.map(i => i.expense);
+  dailyTrendChart.data.datasets[1].data = daily_trend.map(i => i.gmv);
+  dailyTrendChart.update();
+
+  roasCpaTrendChart.data.labels = daily_trend.map(i => i.date);
+  roasCpaTrendChart.data.datasets[0].data = daily_trend.map(i => i.roas);
+  roasCpaTrendChart.data.datasets[1].data = daily_trend.map(i => i.cpa);
+  roasCpaTrendChart.update();
+
+  ctrCvrTrendChart.data.labels = daily_trend.map(i => i.date);
+  ctrCvrTrendChart.data.datasets[0].data = daily_trend.map(i => i.ctr);
+  ctrCvrTrendChart.data.datasets[1].data = daily_trend.map(i => i.cvr);
+  ctrCvrTrendChart.update();
+
+  // ===== FUNNEL
+  const funnel = data.funnel_json || {};
+  funnelChart.data.datasets[0].data = [funnel.impression || 0, funnel.clicks || 0, funnel.conversions || 0];
+  funnelChart.update();
+
+  // ===== DAY OF WEEK
+  const dow = data.day_of_week_json || [];
+  dayOfWeekChart.data.labels = dow.map(i => i.day);
+  dayOfWeekChart.data.datasets[0].data = dow.map(i => i.expense);
+  dayOfWeekChart.data.datasets[1].data = dow.map(i => i.roas);
+  dayOfWeekChart.update();
+
+  // ===== TABLES
+  brandGroupTable.clear().rows.add(data.brand_group_table_json || []).draw();
+  platformTable.clear().rows.add(data.platform_performance_json || []).draw();
+  adsTypeTable.clear().rows.add(data.ads_type_performance_json || []).draw();
+}
+
+function debounceLoad() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(loadAdsDashboard, 300);
+}
+
+function registerEvents() {
+  $("#brandSelect").on("change", debounceLoad);
+  $("#platformSelect").on("change", debounceLoad);
+  $("#adsTypeSelect").on("change", debounceLoad);
+  $("#startDate").on("change", loadAdsDashboard);
+  $("#endDate").on("change", loadAdsDashboard);
+}
+
+registerEvents();
+initChart();
+loadAdsDashboard();
+</script>
+
+{% endblock %}

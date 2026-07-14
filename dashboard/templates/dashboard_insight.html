@@ -5,227 +5,8 @@
 {% block content %}
 
 <style>
-  /* ── TOKENS: ULTRA CLEAN LIGHT MODE (same as Ads / Brand Performance) ── */
-  :root {
-    --bg-page:        #F8F9FA;
-    --card-bg:        #FFFFFF;
-    --glass-hover:    #FAFAFA;
-    --glass-border:   #E4E7EB;
-    --glass-border-h: #FF7A00;
+  /* Page-specific styling only — shared tokens/components now live in base.html */
 
-    --orange:         #FF7A00;
-    --orange-bright:  #D96500;
-    --orange-dim:     rgba(255, 122, 0, 0.06);
-    --orange-glow:    rgba(255, 122, 0, 0.12);
-    --orange-deep:    #CC4400;
-
-    --text-primary:   #1F2937;
-    --text-sub:       #4B5563;
-    --text-muted:     #6B7280;
-    --text-faint:     #9CA3AF;
-
-    --success:        #059669;
-    --success-bg:     #E6F4EA;
-    --danger:         #DC2626;
-    --danger-bg:      #FCE8E6;
-    --warn:           #B45F06;
-    --warn-bg:        #FFF4E0;
-
-    --radius:         12px;
-    --radius-sm:      8px;
-    --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-    --shadow-md:      0 10px 20px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
-  }
-
-  body, html {
-    background: var(--bg-page) !important;
-    color: var(--text-primary) !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
-
-  .bp-header {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 24px;
-  }
-  .bp-header h1 {
-    font-size: 1.45rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -.3px;
-    margin: 0;
-  }
-  .bp-header .bp-subtitle {
-    font-size: .75rem;
-    color: var(--text-faint);
-    font-family: 'JetBrains Mono', monospace;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-  }
-
-  .s-card {
-    background: var(--card-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    transition: transform .2s, box-shadow .2s, border-color .2s;
-  }
-
-  /* ── filter panel ── */
-  .filter-panel {
-    padding: 18px 22px 22px;
-    margin-bottom: 20px;
-  }
-  .filter-panel-header {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--glass-border);
-  }
-  .filter-icon {
-    width: 26px; height: 26px;
-    border-radius: 6px;
-    background: var(--orange-dim);
-    border: 1px solid rgba(255, 122, 0, 0.15);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--orange);
-    flex-shrink: 0;
-  }
-  .filter-panel-header span {
-    font-size: .72rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .09em;
-  }
-
-  .filter-panel .form-label {
-    font-size: .7rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    margin-bottom: 6px;
-    display: block;
-  }
-  .filter-panel .form-control,
-  .filter-panel .form-select {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-sm);
-    color: var(--text-primary) !important;
-    font-size: .87rem;
-    padding: 8px 11px;
-    transition: border-color .18s, box-shadow .18s;
-    box-shadow: none !important;
-  }
-  .filter-panel .form-control:focus,
-  .filter-panel .form-select:focus {
-    border-color: var(--orange) !important;
-    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
-    outline: none;
-  }
-  .filter-panel .form-select option {
-    background: var(--card-bg);
-    color: var(--text-primary);
-  }
-
-  /* select2 light mode overrides */
-  .select2-container--default .select2-selection--multiple {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-sm) !important;
-    min-height: 38px !important;
-    padding: 2px 6px !important;
-    box-shadow: none !important;
-  }
-  .select2-container--default.select2-container--focus .select2-selection--multiple {
-    border-color: var(--orange) !important;
-    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
-  }
-  .select2-container--default .select2-selection--multiple .select2-selection__choice {
-    background: var(--orange-dim) !important;
-    border: 1px solid rgba(255, 122, 0, 0.15) !important;
-    color: var(--orange-bright) !important;
-    border-radius: 4px !important;
-    font-size: .75rem !important;
-    font-weight: 600 !important;
-    padding: 2px 8px 2px 22px !important;
-  }
-  .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-    color: var(--orange) !important;
-    margin-right: 5px !important;
-  }
-  .select2-container--default .select2-search--inline .select2-search__field {
-    color: var(--text-primary) !important;
-    font-size: .85rem !important;
-    background: transparent !important;
-  }
-  .select2-container--default .select2-selection--multiple .select2-selection__rendered {
-    padding: 0 !important;
-  }
-  .select2-dropdown {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-sm) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
-  }
-  .select2-container--default .select2-results__option {
-    color: var(--text-sub) !important;
-    font-size: .85rem !important;
-    padding: 8px 12px !important;
-  }
-  .select2-container--default .select2-results__option--highlighted {
-    background: var(--orange-dim) !important;
-    color: var(--orange-bright) !important;
-  }
-  .select2-container--default .select2-results__option--selected {
-    background: #F3F4F6 !important;
-    color: var(--text-primary) !important;
-    font-weight: 600 !important;
-  }
-  .select2-search--dropdown .select2-search__field {
-    background: var(--bg-page) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: 6px !important;
-    color: var(--text-primary) !important;
-    padding: 7px 10px !important;
-    outline: none !important;
-  }
-
-  /* quick action buttons */
-  .btn-ghost-amber {
-    font-size: .72rem; font-weight: 700;
-    color: var(--orange-bright);
-    background: var(--orange-dim);
-    border: 1px solid rgba(255, 122, 0, 0.15);
-    border-radius: 6px;
-    padding: 4px 10px;
-    cursor: pointer;
-    transition: background .15s, border-color .15s;
-    letter-spacing: .02em;
-  }
-  .btn-ghost-amber:hover {
-    background: var(--orange-glow);
-    border-color: rgba(255, 122, 0, 0.3);
-  }
-  .btn-ghost-muted {
-    font-size: .72rem; font-weight: 600;
-    color: var(--text-muted);
-    background: #F3F4F6;
-    border: 1px solid var(--glass-border);
-    border-radius: 6px;
-    padding: 4px 10px;
-    cursor: pointer;
-    transition: background .15s;
-    letter-spacing: .02em;
-  }
-  .btn-ghost-muted:hover { background: #E5E7EB; }
-
-  /* ── section divider ── */
   .segment-divider {
     display: flex;
     align-items: center;
@@ -236,7 +17,7 @@
     font-size: .68rem; font-weight: 800;
     color: var(--orange-bright);
     background: var(--orange-dim);
-    border: 1px solid rgba(255, 122, 0, 0.18);
+    border: 1px solid var(--glass-border);
     border-radius: 20px;
     padding: 4px 12px;
     text-transform: uppercase;
@@ -254,70 +35,27 @@
     background: var(--glass-border);
   }
 
-  /* ── metric cards (top score row) ── */
-  .metric-card {
-    padding: 16px 18px;
-    position: relative;
-    overflow: hidden;
-    flex: 1;
-  }
-  .metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--glass-border-h);
-  }
-  .metric-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    border-radius: var(--radius) var(--radius) 0 0;
-  }
-  .card-nmv::after     { background: linear-gradient(90deg, #FF7A00, #FFB347); }
+  .card-nmv::after     { background: linear-gradient(90deg, var(--orange), var(--orange-light)); }
   .card-gmv::after     { background: linear-gradient(90deg, #FF5500, #FF8844); }
   .card-orders::after  { background: linear-gradient(90deg, #0891B2, #22D3EE); }
   .card-uv::after      { background: linear-gradient(90deg, #7C3AED, #A78BFA); }
   .card-pv::after      { background: linear-gradient(90deg, #4338CA, #818CF8); }
-  .card-cr::after      { background: linear-gradient(90deg, #059669, #34D399); }
+  .card-cr::after      { background: linear-gradient(90deg, var(--success), #34D399); }
   .card-aov::after     { background: linear-gradient(90deg, #0F766E, #2DD4BF); }
   .card-items::after   { background: linear-gradient(90deg, #B45309, #FBBF24); }
-  .card-cancel::after  { background: linear-gradient(90deg, #DC2626, #F87171); }
+  .card-cancel::after  { background: linear-gradient(90deg, var(--danger), #F87171); }
   .card-leak::after    { background: linear-gradient(90deg, #DB2777, #F472B6); }
 
-  .metric-label {
-    font-size: .63rem; font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .09em;
-    margin-bottom: 8px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .label-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-  .card-nmv     .label-dot { background: #FF7A00; }
+  .card-nmv     .label-dot { background: var(--orange); }
   .card-gmv     .label-dot { background: #FF5500; }
   .card-orders  .label-dot { background: #0891B2; }
   .card-uv      .label-dot { background: #7C3AED; }
   .card-pv      .label-dot { background: #4338CA; }
-  .card-cr      .label-dot { background: #059669; }
+  .card-cr      .label-dot { background: var(--success); }
   .card-aov     .label-dot { background: #0F766E; }
   .card-items   .label-dot { background: #B45309; }
-  .card-cancel  .label-dot { background: #DC2626; }
+  .card-cancel  .label-dot { background: var(--danger); }
   .card-leak    .label-dot { background: #DB2777; }
-
-  .metric-value {
-    font-size: 1.28rem; font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -.4px; line-height: 1;
-    margin-bottom: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    word-break: break-all;
-  }
-
-  .metric-icon {
-    position: absolute;
-    bottom: 10px; right: 14px;
-    font-size: 1.6rem; opacity: .06; line-height: 1;
-  }
 
   /* ── delta badge (period-over-period) ── */
   .delta-badge {
@@ -328,91 +66,25 @@
   }
   .delta-up   { background: var(--success-bg); color: var(--success); }
   .delta-down { background: var(--danger-bg); color: var(--danger); }
-  .delta-flat { background: #F3F4F6; color: var(--text-faint); }
+  .delta-flat { background: var(--surface-muted); color: var(--text-faint); }
 
-  /* ── conversion rate achievement badge ── */
-  .metric-sub-row { margin-top: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .ach-badge {
-    display: inline-block;
-    font-size: .66rem; font-weight: 700;
-    padding: 2px 9px;
-    border-radius: 20px;
-    letter-spacing: .02em;
-  }
-  .ach-badge.ach-good { background: var(--success-bg); color: var(--success); }
-  .ach-badge.ach-warn { background: var(--warn-bg); color: var(--warn); }
-  .ach-badge.ach-bad  { background: var(--danger-bg); color: var(--danger); }
-
-  /* ── spotlight cards (top1 brand group) ── */
-  .card-spotlight-cr::after  { background: linear-gradient(90deg, #059669, #34D399); }
+  .card-spotlight-cr::after  { background: linear-gradient(90deg, var(--success), #34D399); }
   .card-spotlight-nmv::after { background: linear-gradient(90deg, #D97706, #FBBF24); }
-  .card-spotlight-cr  .label-dot { background: #059669; }
+  .card-spotlight-cr  .label-dot { background: var(--success); }
   .card-spotlight-nmv .label-dot { background: #D97706; }
-  .spotlight-name {
-    font-size: 1.15rem; font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -.3px; line-height: 1.2;
-    margin-bottom: 4px;
-  }
-  .spotlight-value {
-    font-size: .82rem; font-weight: 600;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-  }
 
-  /* ── chart card ── */
-  .chart-card {
-    padding: 18px 22px 22px;
-    display: flex;
-    flex-direction: column;
-  }
-  .chart-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--glass-border);
-    flex-shrink: 0;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .chart-title-group { display: flex; align-items: center; gap: 10px; }
-  .chart-accent-bar {
-    width: 3px; height: 18px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, #FF7A00, #CC4400);
-    flex-shrink: 0;
-  }
-  .chart-title {
-    font-size: .9rem; font-weight: 700;
-    color: var(--text-primary); margin: 0;
-  }
   .chart-subtitle {
     font-size: .7rem;
     color: var(--text-faint);
     margin-top: 2px;
     display: block;
   }
-  .chart-badge {
-    font-size: .66rem; font-weight: 700;
-    padding: 3px 8px; border-radius: 20px;
-    background: var(--orange-dim);
-    color: var(--orange-bright);
-    letter-spacing: .05em; text-transform: uppercase;
-    border: 1px solid rgba(255, 122, 0, 0.15);
-    white-space: nowrap;
-  }
-  .chart-body {
-    flex: 1;
-    position: relative;
-    min-height: 260px;
-  }
-  .chart-body.tall { min-height: 320px; }
   .chart-body.xtall { min-height: 360px; }
 
   .insight-note {
     font-size: .74rem;
     color: var(--text-muted);
-    background: #F9FAFB;
+    background: var(--surface-muted);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-sm);
     padding: 8px 12px;
@@ -1228,7 +900,7 @@ const quadrantLinesPlugin = {
     const xPix = scales.x.getPixelForValue(xVal);
     const yPix = scales.y.getPixelForValue(yVal);
     ctx.save();
-    ctx.strokeStyle = "#D1D5DB";
+    ctx.strokeStyle = BITheme.cssVar('--glass-border') || "#D1D5DB";
     ctx.setLineDash([5, 4]);
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -1242,17 +914,19 @@ const quadrantLinesPlugin = {
 };
 Chart.register(quadrantLinesPlugin);
 
+function donutPalette() {
+  return BITheme.getColors().palette.concat(["#7C3AED", "#0891B2", "#4338CA", "#DB2777"]);
+}
+
 function buildDonut(canvasId, tooltipFmt) {
   return new Chart(document.getElementById(canvasId).getContext("2d"), {
     type: "doughnut",
-    data: { labels: [], datasets: [{ data: [], backgroundColor: ["#FF7A00", "#FFB347", "#CC4400", "#FF9500", "#FFCC44", "#FF5500", "#D96500", "#7C3AED", "#0891B2"], borderColor: "#FFFFFF", borderWidth: 2 }] },
+    data: { labels: [], datasets: [{ data: [], backgroundColor: donutPalette(), borderColor: BITheme.getColors().donutBorder, borderWidth: 2 }] },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: "65%",
       plugins: {
-        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 10 }, boxWidth: 9, padding: 10 } },
+        legend: { position: "bottom", labels: { font: { size: 10 }, boxWidth: 9, padding: 10 } },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => `${item.label}: ${tooltipFmt(item.raw)}` }
         }
       }
@@ -1275,16 +949,14 @@ function initChart() {
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => `${item.dataset.label}: ${fmtNum(item.raw)}` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
-        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } }
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: true }, ticks: { font: { size: 11 } } }
       }
     }
   });
@@ -1301,14 +973,12 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
           callbacks: { label: item => fmtNum(item.raw) }
         }
       },
       scales: {
-        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } },
-        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 12, weight: 600 } } }
+        x: { grid: { display: true }, ticks: { font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 12, weight: 600 } } }
       }
     }
   });
@@ -1322,14 +992,12 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => `CR: ${fmtPct(item.raw)}` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
-        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: true }, ticks: { font: { size: 11 }, callback: v => v + "%" } }
       }
     }
   });
@@ -1341,22 +1009,20 @@ function initChart() {
       labels: [],
       datasets: [
         { label: "GMV", data: [], borderColor: "#FF5500", backgroundColor: "#FF5500", tension: 0.3, pointRadius: 3, borderWidth: 2, borderDash: [4, 3] },
-        { label: "NMV", data: [], borderColor: "#FF7A00", backgroundColor: "#FF7A00", tension: 0.3, pointRadius: 3, borderWidth: 2 }
+        { label: "NMV", data: [], borderColor: BITheme.getColors().accent, backgroundColor: BITheme.getColors().accent, tension: 0.3, pointRadius: 3, borderWidth: 2 }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => `${item.dataset.label}: ${fmtRp(item.raw)}` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
-        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => fmtRp(v) } }
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: true }, ticks: { font: { size: 11 }, callback: v => fmtRp(v) } }
       }
     }
   });
@@ -1374,16 +1040,14 @@ function initChart() {
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10 } },
+        legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 10 } },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => `${item.dataset.label}: ${fmtNum(item.raw)}` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
-        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } }
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: true }, ticks: { font: { size: 11 } } }
       }
     }
   });
@@ -1401,16 +1065,14 @@ function initChart() {
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => `${item.dataset.label}: ${fmtPct(item.raw)}` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
-        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: true }, ticks: { font: { size: 11 }, callback: v => v + "%" } }
       }
     }
   });
@@ -1418,20 +1080,18 @@ function initChart() {
   // ===== TOP BRAND GROUP BY NMV (bar)
   topBrandGroupNmvChart = new Chart(document.getElementById("topBrandGroupNmv").getContext("2d"), {
     type: "bar",
-    data: { labels: [], datasets: [{ label: "NMV", data: [], backgroundColor: "#FF7A00", borderRadius: 4, maxBarThickness: 34 }] },
+    data: { labels: [], datasets: [{ label: "NMV", data: [], backgroundColor: BITheme.getColors().accent, borderRadius: 4, maxBarThickness: 34 }] },
     options: {
       indexAxis: "y", responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
           callbacks: { label: item => fmtRp(item.raw) }
         }
       },
       scales: {
-        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } },
-        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } }
+        x: { grid: { display: true }, ticks: { font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
       }
     }
   });
@@ -1445,14 +1105,12 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
           callbacks: { label: item => fmtPct(item.raw) }
         }
       },
       scales: {
-        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } },
-        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } }
+        x: { grid: { display: true }, ticks: { font: { size: 11 }, callback: v => v + "%" } },
+        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
       }
     }
   });
@@ -1466,8 +1124,6 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: {
             title: items => items[0].raw.label || "",
             label: item => [`Visitors: ${fmtNum(item.raw.x)}`, `CR: ${fmtPct(item.raw.y)}`, `NMV: ${fmtRp(item.raw.nmv)}`]
@@ -1475,8 +1131,8 @@ function initChart() {
         }
       },
       scales: {
-        x: { title: { display: true, text: "Visitors", color: "#6B7280", font: { size: 11 } }, grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtNum(v) } },
-        y: { title: { display: true, text: "Conversion Rate", color: "#6B7280", font: { size: 11 } }, grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+        x: { title: { display: true, text: "Visitors", font: { size: 11 } }, grid: { display: true }, ticks: { font: { size: 10 }, callback: v => fmtNum(v) } },
+        y: { title: { display: true, text: "Conversion Rate", font: { size: 11 } }, grid: { display: true }, ticks: { font: { size: 11 }, callback: v => v + "%" } }
       }
     }
   });
@@ -1493,16 +1149,14 @@ function initChart() {
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => item.dataset.label === "NMV" ? `NMV: ${fmtRp(item.raw)}` : `Cumulative: ${Number(item.raw).toFixed(1)}%` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 9 }, maxRotation: 60, minRotation: 30 } },
-        y: { position: "left", grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtRp(v) } },
+        x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 60, minRotation: 30 } },
+        y: { position: "left", grid: { display: true }, ticks: { font: { size: 10 }, callback: v => fmtRp(v) } },
         y1: { position: "right", min: 0, max: 100, grid: { display: false }, ticks: { color: "#CC4400", font: { size: 10 }, callback: v => v + "%" } }
       }
     }
@@ -1522,17 +1176,15 @@ function initChart() {
   //   options: {
   //     responsive: true, maintainAspectRatio: false,
   //     plugins: {
-  //       legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+  //       legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
   //       tooltip: {
-  //         backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-  //         titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6
-  //       }
+  //  //  //       }
   //     },
   //     scales: {
   //       r: {
   //         min: 0, max: 1,
-  //         grid: { color: "#F3F4F6" }, angleLines: { color: "#E4E7EB" },
-  //         pointLabels: { color: "#4B5563", font: { size: 11 } },
+  //         grid: { display: true }, angleLines: { color: "#E4E7EB" },
+  //         pointLabels: { font: { size: 11 } },
   //         ticks: { display: false }
   //       }
   //     }
@@ -1544,23 +1196,21 @@ function initChart() {
     data: {
       labels: [],
       datasets: [
-        { type: "bar", label: "NMV", data: [], backgroundColor: "#FF7A00", borderRadius: 4, yAxisID: "y", maxBarThickness: 40 },
+        { type: "bar", label: "NMV", data: [], backgroundColor: BITheme.getColors().accent, borderRadius: 4, yAxisID: "y", maxBarThickness: 40 },
         { type: "line", label: "Conversion Rate", data: [], borderColor: "#059669", backgroundColor: "#059669", tension: 0.3, pointRadius: 4, borderWidth: 2, yAxisID: "y1" }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => item.dataset.label === "NMV" ? `NMV: ${fmtRp(item.raw)}` : `CR: ${fmtPct(item.raw)}` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } },
-        y: { position: "left", grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtRp(v) } },
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { position: "left", grid: { display: true }, ticks: { font: { size: 10 }, callback: v => fmtRp(v) } },
         y1: { position: "right", grid: { display: false }, ticks: { color: "#059669", font: { size: 11 }, callback: v => v + "%" } }
       }
     }
@@ -1581,16 +1231,14 @@ function initChart() {
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => `${item.dataset.label}: ${fmtNum(item.raw)}` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
-        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } }
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: true }, ticks: { font: { size: 11 } } }
       }
     }
   });
@@ -1604,14 +1252,12 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => `ATC Rate: ${fmtPct(item.raw)}` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
-        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: true }, ticks: { font: { size: 11 }, callback: v => v + "%" } }
       }
     }
   });
@@ -1625,14 +1271,12 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
           callbacks: { label: item => fmtNum(item.raw) }
         }
       },
       scales: {
-        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } },
-        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } }
+        x: { grid: { display: true }, ticks: { font: { size: 11 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
       }
     }
   });
@@ -1640,20 +1284,18 @@ function initChart() {
   // ----- Top Products by ATC Rate (horizontal bar, color-coded)
   topProductsAtcRateChart = new Chart(document.getElementById("topProductsAtcRateChart").getContext("2d"), {
     type: "bar",
-    data: { labels: [], datasets: [{ label: "ATC Rate", data: [], backgroundColor: "#FF7A00", borderRadius: 4, maxBarThickness: 22 }] },
+    data: { labels: [], datasets: [{ label: "ATC Rate", data: [], backgroundColor: BITheme.getColors().accent, borderRadius: 4, maxBarThickness: 22 }] },
     options: {
       indexAxis: "y", responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
           callbacks: { label: item => fmtPct(item.raw) }
         }
       },
       scales: {
-        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } },
-        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } }
+        x: { grid: { display: true }, ticks: { font: { size: 11 }, callback: v => v + "%" } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
       }
     }
   });
@@ -1667,8 +1309,6 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: {
             title: items => items[0].raw.label || "",
             label: item => [`Visitors: ${fmtNum(item.raw.x)}`, `ATC Rate: ${fmtPct(item.raw.y)}`, `Add-to-Cart: ${fmtNum(item.raw.atc)}`]
@@ -1676,8 +1316,8 @@ function initChart() {
         }
       },
       scales: {
-        x: { title: { display: true, text: "Visitors", color: "#6B7280", font: { size: 11 } }, grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtNum(v) } },
-        y: { title: { display: true, text: "ATC Rate", color: "#6B7280", font: { size: 11 } }, grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } }
+        x: { title: { display: true, text: "Visitors", font: { size: 11 } }, grid: { display: true }, ticks: { font: { size: 10 }, callback: v => fmtNum(v) } },
+        y: { title: { display: true, text: "ATC Rate", font: { size: 11 } }, grid: { display: true }, ticks: { font: { size: 11 }, callback: v => v + "%" } }
       }
     }
   });
@@ -1694,16 +1334,14 @@ function initChart() {
     options: {
       responsive: true, maintainAspectRatio: false, interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: { position: "bottom", labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
+        legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 10, usePointStyle: true } },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6,
           callbacks: { label: item => item.dataset.label === "Visitors" ? `Visitors: ${fmtNum(item.raw)}` : `Cumulative: ${Number(item.raw).toFixed(1)}%` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 9 }, maxRotation: 60, minRotation: 30 } },
-        y: { position: "left", grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 10 }, callback: v => fmtNum(v) } },
+        x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 60, minRotation: 30 } },
+        y: { position: "left", grid: { display: true }, ticks: { font: { size: 10 }, callback: v => fmtNum(v) } },
         y1: { position: "right", min: 0, max: 100, grid: { display: false }, ticks: { color: "#4C1D95", font: { size: 10 }, callback: v => v + "%" } }
       }
     }
@@ -1718,14 +1356,12 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF", borderColor: "#E4E7EB", borderWidth: 1,
-          titleColor: "#6B7280", bodyColor: "#1F2937", padding: 10, cornerRadius: 6, displayColors: false,
           callbacks: { label: item => fmtPct(item.raw) }
         }
       },
       scales: {
-        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 }, callback: v => v + "%" } },
-        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } }
+        x: { grid: { display: true }, ticks: { font: { size: 11 }, callback: v => v + "%" } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } }
       }
     }
   });
@@ -1806,6 +1442,37 @@ function initChart() {
     language: { search: "", searchPlaceholder: "Search...", lengthMenu: "Show _MENU_", info: "_START_–_END_ of _TOTAL_" },
   });
 }
+
+// Re-applies dataset-level colors that were only set once at chart-creation
+// time (donut palettes/borders, accent-tied bars/lines). Chart.defaults
+// handles grid/tick/tooltip/legend globally already (see base.html).
+function applyPageChartColors() {
+  if (!trafficTrendChart) return;
+  const c = BITheme.getColors();
+
+  [pvByPlatformDonutChart, uvByPlatformDonutChart, pvByBrandDonutChart, uvByBrandDonutChart].forEach((chart) => {
+    if (!chart) return;
+    chart.data.datasets[0].backgroundColor = donutPalette();
+    chart.data.datasets[0].borderColor = c.donutBorder;
+  });
+
+  if (nmvGmvTrendChart) {
+    nmvGmvTrendChart.data.datasets[0].borderColor = c.accent;
+    nmvGmvTrendChart.data.datasets[0].backgroundColor = c.accent;
+  }
+  if (topBrandGroupNmvChart) topBrandGroupNmvChart.data.datasets[0].backgroundColor = c.accent;
+  if (dayOfWeekChart) dayOfWeekChart.data.datasets[0].backgroundColor = c.accent;
+  if (topProductsAtcRateChart) topProductsAtcRateChart.data.datasets[0].backgroundColor = c.accent;
+
+  [
+    trafficTrendChart, funnelChart, crTrendChart, nmvGmvTrendChart, orderTrendChart, leakageTrendChart,
+    topBrandGroupNmvChart, topBrandGroupCrChart, efficiencyQuadrantChart, paretoChart,
+    pvByPlatformDonutChart, uvByPlatformDonutChart, pvByBrandDonutChart, uvByBrandDonutChart,
+    dayOfWeekChart, productTrafficTrendChart, productAtcRateTrendChart, topProductsVisitorsChart,
+    topProductsAtcRateChart, productQuadrantChart, productParetoChart, topProductsBounceRateChart,
+  ].forEach((chart) => { if (chart) { try { chart.update(); } catch (e) {} } });
+}
+document.addEventListener('bithemechange', applyPageChartColors);
 
 async function loadInsightDashboard() {
   const params = new URLSearchParams();
@@ -1946,7 +1613,7 @@ async function loadInsightDashboard() {
 
   // ===== PLATFORM RADAR
   // const radar = data.platform_radar_json || [];
-  // const radarColors = ["#FF7A00", "#7C3AED", "#0891B2", "#059669", "#DB2777", "#4338CA"];
+  // const radarColors = [BITheme.getColors().accent, "#7C3AED", "#0891B2", "#059669", "#DB2777", "#4338CA"];
   // platformRadarChart.data.datasets = radar.map((p, idx) => ({
   //   label: p.platform,
   //   data: [p.cr_norm, p.aov_norm, p.items_norm, p.engagement_norm],
@@ -2073,6 +1740,7 @@ function registerEvents() {
 
 registerEvents();
 initChart();
+applyPageChartColors();
 loadInsightDashboard();
 </script>
 

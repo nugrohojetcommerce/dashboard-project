@@ -15,17 +15,437 @@
 
     <link rel="stylesheet" href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <!--
+      ==========================================================================
+      UNIFIED DESIGN SYSTEM — single source of truth for every dashboard page.
+      Every page (brand_performance, consolidated_sales, dashboard_insight,
+      ads_dashboard) should NOT redefine :root or these shared component
+      classes — they inherit everything from here. Pages only add CSS for
+      things that are truly unique to that page.
+
+      Theme switching works by toggling `data-theme="light" | "dark"` on
+      <html>. All colors are CSS variables, so flipping the attribute
+      re-themes the entire app instantly — no per-page changes needed.
+      ==========================================================================
+    -->
     <style>
-      html, body, .app-wrapper, .app-main, .app-content {
-        background:
+      :root, [data-theme="light"] {
+        --bg-page:        #F8F9FA;
+        --card-bg:        #FFFFFF;
+        --glass-hover:    #FAFAFA;
+        --glass-border:   #E4E7EB;
+        --glass-border-h: #FF7A00;
+
+        /* "accent" tokens — kept named --orange* for backward compatibility
+           with existing page CSS; the VALUE is what changes per theme. */
+        --orange:         #FF7A00;
+        --orange-bright:  #D96500;
+        --orange-dim:     rgba(255, 122, 0, 0.06);
+        --orange-glow:    rgba(255, 122, 0, 0.12);
+        --orange-deep:    #CC4400;
+        --orange-light:   #FFB347;
+
+        --accent-2:       #FF9500;
+        --accent-2-light: #FFCC44;
+        --accent-3:       #FF5500;
+        --accent-3-light: #FF8844;
+
+        --text-primary:   #1F2937;
+        --text-sub:       #4B5563;
+        --text-muted:     #6B7280;
+        --text-faint:     #9CA3AF;
+
+        --success:        #059669;
+        --success-bg:     #E6F4EA;
+        --danger:         #DC2626;
+        --danger-bg:      #FCE8E6;
+        --warn:           #B45F06;
+        --warn-bg:        #FFF4E0;
+
+        --surface-muted:       #F3F4F6;
+        --surface-muted-hover: #E5E7EB;
+
+        --radius:         12px;
+        --radius-sm:      8px;
+        --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+        --shadow-md:      0 10px 20px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
+
+        --page-bg-gradient:
           radial-gradient(ellipse 70% 45% at 85% 5%,  rgba(255,100,0,0.13) 0%, transparent 70%),
           radial-gradient(ellipse 55% 35% at 5%  90%, rgba(200, 60,0,0.13) 0%, transparent 70%),
-          #fffcfb !important;
+          #fffcfb;
+      }
+
+      /* ── DARK MODE — TickerWatch-style: dark glassmorphism + green accent ── */
+      [data-theme="dark"] {
+        --bg-page:        #0A0E14;
+        --card-bg:        #121826;
+        --glass-hover:    #182032;
+        --glass-border:   rgba(34, 197, 94, 0.14);
+        --glass-border-h: #22C55E;
+
+        --orange:         #22C55E;
+        --orange-bright:  #4ADE80;
+        --orange-dim:     rgba(34, 197, 94, 0.10);
+        --orange-glow:    rgba(34, 197, 94, 0.20);
+        --orange-deep:    #15803D;
+        --orange-light:   #86EFAC;
+
+        --accent-2:       #0EA5E9;
+        --accent-2-light: #38BDF8;
+        --accent-3:       #A3E635;
+        --accent-3-light: #BEF264;
+
+        --text-primary:   #E7ECF6;
+        --text-sub:       #A8B3C7;
+        --text-muted:     #6B7A99;
+        --text-faint:     #4A5568;
+
+        --success:        #2DD4BF;
+        --success-bg:     rgba(45, 212, 191, 0.12);
+        --danger:         #F87171;
+        --danger-bg:      rgba(248, 113, 113, 0.12);
+        --warn:           #FBBF24;
+        --warn-bg:        rgba(251, 191, 36, 0.12);
+
+        --surface-muted:       #182032;
+        --surface-muted-hover: #202B44;
+
+        --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
+        --shadow-md:      0 10px 24px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+
+        --page-bg-gradient:
+          radial-gradient(ellipse 65% 40% at 88% 0%,  rgba(34,197,94,0.10) 0%, transparent 70%),
+          radial-gradient(ellipse 55% 35% at 4%  95%, rgba(16,185,129,0.08) 0%, transparent 70%),
+          #0A0E14;
+      }
+
+      html, body, .app-wrapper, .app-main, .app-content {
+        background: var(--page-bg-gradient) !important;
+        transition: background .25s ease;
+      }
+      body, html {
+        color: var(--text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
       /* hapus bg putih dari container AdminLTE */
       .bg-body-tertiary { background: transparent !important; }
       .app-content      { background: transparent !important; }
+
+      /* ── SHARED CARD / LAYOUT PRIMITIVES (used by every dashboard page) ── */
+      .bp-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+      .bp-header-title { display: flex; align-items: baseline; gap: 10px; }
+      .bp-header h1 {
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        letter-spacing: -.3px;
+        margin: 0;
+      }
+      .bp-header .bp-subtitle {
+        font-size: .75rem;
+        color: var(--text-faint);
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+      }
+
+      .s-card {
+        background: var(--card-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        transition: transform .2s, box-shadow .2s, border-color .2s, background .2s;
+      }
+
+      .section-title {
+        display: flex; align-items: center; gap: 10px;
+        margin: 28px 0 14px;
+        font-size: .78rem; font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .1em;
+      }
+      .section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--glass-border);
+      }
+
+      /* ── filter panel ── */
+      .filter-panel { padding: 18px 22px 22px; margin-bottom: 20px; }
+      .filter-panel-header {
+        display: flex; align-items: center; gap: 9px;
+        margin-bottom: 18px; padding-bottom: 14px;
+        border-bottom: 1px solid var(--glass-border);
+      }
+      .filter-icon {
+        width: 26px; height: 26px; border-radius: 6px;
+        background: var(--orange-dim);
+        border: 1px solid var(--glass-border);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--orange);
+        flex-shrink: 0;
+      }
+      .filter-panel-header span {
+        font-size: .72rem; font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: .09em;
+      }
+      .filter-panel .form-label {
+        font-size: .7rem; font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: .07em;
+        margin-bottom: 6px; display: block;
+      }
+      .filter-panel .form-control,
+      .filter-panel .form-select {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: var(--radius-sm);
+        color: var(--text-primary) !important;
+        font-size: .87rem; padding: 8px 11px;
+        transition: border-color .18s, box-shadow .18s;
+        box-shadow: none !important;
+      }
+      .filter-panel .form-control:focus,
+      .filter-panel .form-select:focus {
+        border-color: var(--orange) !important;
+        box-shadow: 0 0 0 3px var(--orange-glow) !important;
+        outline: none;
+      }
+      .filter-panel .form-select option {
+        background: var(--card-bg);
+        color: var(--text-primary);
+      }
+
+      /* select2 theme-aware overrides */
+      .select2-container--default .select2-selection--multiple {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: var(--radius-sm) !important;
+        min-height: 38px !important; padding: 2px 6px !important;
+        box-shadow: none !important;
+      }
+      .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: var(--orange) !important;
+        box-shadow: 0 0 0 3px var(--orange-glow) !important;
+      }
+      .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background: var(--orange-dim) !important;
+        border: 1px solid var(--glass-border) !important;
+        color: var(--orange-bright) !important;
+        border-radius: 4px !important;
+        font-size: .75rem !important; font-weight: 600 !important;
+        padding: 2px 8px 2px 22px !important;
+      }
+      .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: var(--orange) !important; margin-right: 5px !important;
+      }
+      .select2-container--default .select2-search--inline .select2-search__field {
+        color: var(--text-primary) !important; font-size: .85rem !important;
+        background: transparent !important;
+      }
+      .select2-container--default .select2-selection--multiple .select2-selection__rendered { padding: 0 !important; }
+      .select2-dropdown {
+        background: var(--card-bg) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: var(--radius-sm) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+      }
+      .select2-container--default .select2-results__option {
+        color: var(--text-sub) !important; font-size: .85rem !important; padding: 8px 12px !important;
+      }
+      .select2-container--default .select2-results__option--highlighted {
+        background: var(--orange-dim) !important; color: var(--orange-bright) !important;
+      }
+      .select2-container--default .select2-results__option--selected {
+        background: var(--surface-muted) !important; color: var(--text-primary) !important; font-weight: 600 !important;
+      }
+      .select2-search--dropdown .select2-search__field {
+        background: var(--bg-page) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 6px !important;
+        color: var(--text-primary) !important;
+        padding: 7px 10px !important; outline: none !important;
+      }
+
+      /* ── buttons ── */
+      .btn-ghost-amber {
+        font-size: .72rem; font-weight: 700;
+        color: var(--orange-bright);
+        background: var(--orange-dim);
+        border: 1px solid var(--glass-border);
+        border-radius: 6px; padding: 4px 10px;
+        cursor: pointer; transition: background .15s, border-color .15s;
+        letter-spacing: .02em;
+      }
+      .btn-ghost-amber:hover { background: var(--orange-glow); border-color: var(--glass-border-h); }
+      .btn-ghost-muted {
+        font-size: .72rem; font-weight: 600;
+        color: var(--text-muted);
+        background: var(--surface-muted);
+        border: 1px solid var(--glass-border);
+        border-radius: 6px; padding: 4px 10px;
+        cursor: pointer; transition: background .15s;
+        letter-spacing: .02em;
+      }
+      .btn-ghost-muted:hover { background: var(--surface-muted-hover); }
+
+      .theme-switch { cursor: pointer; display: inline-flex; align-items: center; }
+      .theme-switch input {
+      position: absolute;
+      opacity: 0;
+      width: 0; height: 0;
+      }
+      .theme-switch-track {
+      display: inline-flex;
+      align-items: center;
+      width: 46px; height: 24px;
+      border-radius: 20px;
+      background: var(--surface-muted);
+      border: 1px solid var(--glass-border);
+      padding: 2px;
+      transition: background .2s, border-color .2s;
+      }
+      .theme-switch input:checked + .theme-switch-track {
+      background: var(--orange-dim);
+      border-color: var(--glass-border-h);
+      }
+      .theme-switch-thumb {
+      display: flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--card-bg);
+      box-shadow: var(--shadow-sm);
+      font-size: .68rem; line-height: 1;
+      transform: translateX(0);
+      transition: transform .2s ease, background .2s;
+      }
+      .theme-switch input:checked ~ .theme-switch-track .theme-switch-thumb {
+      transform: translateX(22px);
+      }
+
+      /* ── metric / KPI cards ── */
+      .metric-card { padding: 18px 20px; position: relative; overflow: hidden; flex: 1; }
+      .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--glass-border-h);
+      }
+      .metric-card::after {
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        border-radius: var(--radius) var(--radius) 0 0;
+        background: linear-gradient(90deg, var(--orange), var(--orange-light));
+      }
+      .metric-label {
+        font-size: .65rem; font-weight: 700; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: .1em;
+        margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+      }
+      .label-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; background: var(--orange); }
+      .metric-value {
+        font-size: 1.5rem; font-weight: 800; color: var(--text-primary);
+        letter-spacing: -.5px; line-height: 1; margin-bottom: 4px;
+        font-family: 'JetBrains Mono', monospace; word-break: break-all;
+      }
+      .metric-icon { position: absolute; bottom: 10px; right: 14px; font-size: 1.8rem; opacity: .08; line-height: 1; }
+      .metric-sub-row { margin-top: 6px; }
+
+      .ach-badge {
+        display: inline-block; font-size: .68rem; font-weight: 700;
+        padding: 3px 10px; border-radius: 20px; letter-spacing: .02em;
+      }
+      .ach-badge.ach-good { background: var(--success-bg); color: var(--success); }
+      .ach-badge.ach-warn { background: var(--warn-bg); color: var(--warn); }
+      .ach-badge.ach-bad  { background: var(--danger-bg); color: var(--danger); }
+
+      .spotlight-name {
+        font-size: 1.15rem; font-weight: 800; color: var(--text-primary);
+        letter-spacing: -.3px; line-height: 1.2; margin-bottom: 4px;
+      }
+      .spotlight-value {
+        font-size: .82rem; font-weight: 600; color: var(--text-muted);
+        font-family: 'JetBrains Mono', monospace;
+      }
+
+      /* ── chart card ── */
+      .chart-card { padding: 18px 22px 22px; display: flex; flex-direction: column; }
+      .chart-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 18px; padding-bottom: 14px;
+        border-bottom: 1px solid var(--glass-border); flex-shrink: 0; flex-wrap: wrap; gap: 8px;
+      }
+      .chart-title-group { display: flex; align-items: center; gap: 10px; }
+      .chart-accent-bar {
+        width: 3px; height: 18px; border-radius: 2px;
+        background: linear-gradient(180deg, var(--orange), var(--orange-deep));
+        flex-shrink: 0;
+      }
+      .chart-title { font-size: .9rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+      .chart-badge {
+        font-size: .66rem; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+        background: var(--orange-dim); color: var(--orange-bright);
+        letter-spacing: .05em; text-transform: uppercase;
+        border: 1px solid var(--glass-border);
+      }
+      .chart-body { flex: 1; position: relative; min-height: 260px; }
+      .chart-body.tall { min-height: 320px; }
+
+      /* ── responsive table wrapper (mobile horizontal scroll) ── */
+      .table-responsive { -webkit-overflow-scrolling: touch; }
+      .table-responsive table th, .table-responsive table td { white-space: nowrap; }
+      .table-responsive::-webkit-scrollbar { height: 6px; }
+      .table-responsive::-webkit-scrollbar-track { background: transparent; }
+      .table-responsive::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 4px; }
+
+      /* DataTables theme-aware text */
+      table.dataTable,
+      table.dataTable tbody,
+      table.dataTable tbody tr,
+      table.dataTable thead th,
+      table.dataTable tbody td {
+      background-color: transparent !important;
+      --bs-table-bg: transparent;
+      --bs-table-color: var(--text-primary);
+      --bs-table-hover-color: var(--text-primary);
+      --bs-table-striped-bg: var(--glass-hover);
+      --bs-table-hover-bg: var(--glass-hover);
+      }
+      table.dataTable { color: var(--text-primary); }
+      table.dataTable thead th { color: var(--text-muted) !important; border-color: var(--glass-border) !important; }
+      table.dataTable tbody td { border-color: var(--glass-border) !important; }
+      /* table.dataTable tbody tr:hover { background: var(--glass-hover) !important; } */
+      table.dataTable tbody tr:hover,
+      table.dataTable tbody tr:hover td {
+      background-color: var(--glass-hover) !important;
+      color: var(--text-primary) !important;
+      }
+      .dataTables_wrapper .dataTables_filter input,
+      .dataTables_wrapper .dataTables_length select {
+        background: var(--card-bg); color: var(--text-primary);
+        border: 1px solid var(--glass-border); border-radius: 6px;
+      }
+      .dataTables_wrapper .dataTables_info,
+      .dataTables_wrapper .dataTables_paginate { color: var(--text-muted) !important; }
+      .dataTables_wrapper .dataTables_paginate .page-link {
+        background: var(--card-bg); color: var(--text-sub); border-color: var(--glass-border);
+      }
+      .dataTables_wrapper .dataTables_paginate .page-item.active .page-link {
+        background: var(--orange); border-color: var(--orange); color: #fff;
+      }
     </style>
 
     {% block extra_css %}
@@ -61,8 +481,107 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap"></script>
 
-
 <script src="{% static 'adminlte/dist/js/adminlte.min.js' %}"></script>
+
+<!--
+  ==========================================================================
+  UNIFIED THEME ENGINE (window.BITheme)
+  - Persists theme choice in localStorage, applies data-theme on <html>.
+  - Sets Chart.js *global defaults* for grid/tick/legend/tooltip colors, so
+    EVERY chart on EVERY page re-themes automatically without per-chart
+    code — as long as individual charts don't hardcode those colors.
+  - Dataset fill/line colors (bars, donut slices, etc.) still live in each
+    page's own script; pages can call `BITheme.getColors()` to grab the
+    current palette and re-apply it to their own chart instances on
+    'bithemechange' if they want dataset colors to shift too.
+  ==========================================================================
+-->
+<script>
+(function () {
+  const THEME_KEY = 'jetcommerce-bi-theme';
+
+  function getStoredTheme() {
+    return localStorage.getItem(THEME_KEY) || 'light';
+  }
+
+  function getThemeChartColors(theme) {
+    const dark = theme === 'dark';
+    return {
+      text:          dark ? '#A8B3C7' : '#4B5563',
+      textMuted:     dark ? '#6B7A99' : '#6B7280',
+      grid:          dark ? 'rgba(255,255,255,0.06)' : '#F3F4F6',
+      tooltipBg:     dark ? '#0F1729' : '#FFFFFF',
+      tooltipBorder: dark ? '#22314D' : '#E4E7EB',
+      tooltipTitle:  dark ? '#8B9BB4' : '#6B7280',
+      tooltipBody:   dark ? '#E7ECF6' : '#1F2937',
+      accent:        dark ? '#22C55E' : '#FF7A00',
+      accentBright:  dark ? '#4ADE80' : '#D96500',
+      accent2:       dark ? '#0EA5E9' : '#FF9500',
+      accent3:       dark ? '#A3E635' : '#FF5500',
+      good:          '#10B981',
+      warn:          dark ? '#F59E0B' : '#FF9500',
+      bad:           '#EF4444',
+      donutBorder:   dark ? '#121826' : '#FFFFFF',
+      palette:       dark
+        ? ['#22C55E', '#4ADE80', '#16A34A', '#86EFAC', '#15803D', '#0EA5E9', '#A3E635']
+        : ['#FF7A00', '#FFB347', '#CC4400', '#FF9500', '#FFCC44', '#FF5500', '#D96500'],
+    };
+  }
+
+  function applyChartDefaults(theme) {
+    if (typeof Chart === 'undefined') return;
+    const c = getThemeChartColors(theme);
+    Chart.defaults.color = c.text;
+    Chart.defaults.borderColor = c.grid;
+    Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    Chart.defaults.plugins.tooltip.backgroundColor = c.tooltipBg;
+    Chart.defaults.plugins.tooltip.borderColor = c.tooltipBorder;
+    Chart.defaults.plugins.tooltip.borderWidth = 1;
+    Chart.defaults.plugins.tooltip.titleColor = c.tooltipTitle;
+    Chart.defaults.plugins.tooltip.bodyColor = c.tooltipBody;
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.cornerRadius = 6;
+    Chart.defaults.plugins.legend.labels.color = c.text;
+    Chart.defaults.scale.grid.color = c.grid;
+    Chart.defaults.scale.ticks.color = c.textMuted;
+  }
+
+  function refreshAllCharts() {
+    if (typeof Chart === 'undefined' || !Chart.instances) return;
+    Object.values(Chart.instances).forEach((chart) => {
+      try { chart.update(); } catch (e) { /* chart mid-destroy, ignore */ }
+    });
+  }
+
+  window.BITheme = {
+    getColors: () => getThemeChartColors(window.BITheme.current),
+    cssVar: (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim(),
+    current: getStoredTheme(),
+    apply: function (theme, opts) {
+      opts = opts || {};
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem(THEME_KEY, theme);
+      window.BITheme.current = theme;
+      applyChartDefaults(theme);
+      document.dispatchEvent(new CustomEvent('bithemechange', { detail: { theme, colors: getThemeChartColors(theme) } }));
+      if (!opts.skipChartRefresh) refreshAllCharts();
+      const icon = document.getElementById('themeToggleIcon');
+      const label = document.getElementById('themeToggleLabel');
+      if (icon) icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+      if (label) label.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
+    },
+    toggle: function () {
+      window.BITheme.apply(window.BITheme.current === 'dark' ? 'light' : 'dark');
+    },
+  };
+
+  // Apply saved theme immediately (attribute + Chart.defaults) before any
+  // page script runs `new Chart(...)`, so charts are born with correct
+  // colors and never flash the wrong theme.
+  document.documentElement.setAttribute('data-theme', getStoredTheme());
+  applyChartDefaults(getStoredTheme());
+})();
+</script>
 
 {% block extra_js %}
 {% endblock %}

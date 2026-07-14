@@ -5,343 +5,20 @@
 {% block content %}
 
 <style>
-  /* ── TOKENS: ULTRA CLEAN LIGHT MODE (same as Brand Performance) ── */
-  :root {
-    --bg-page:        #F8F9FA;
-    --card-bg:        #FFFFFF;
-    --glass-hover:    #FAFAFA;
-    --glass-border:   #E4E7EB;
-    --glass-border-h: #FF7A00;
+  /* Page-specific styling only — shared tokens/components (cards, filter
+     panel, select2, buttons, metric-card base, etc.) now live in base.html */
 
-    --orange:         #FF7A00;
-    --orange-bright:  #D96500;
-    --orange-dim:     rgba(255, 122, 0, 0.06);
-    --orange-glow:    rgba(255, 122, 0, 0.12);
-    --orange-deep:    #CC4400;
+  .card-nmv::after      { background: linear-gradient(90deg, var(--orange), var(--orange-light)); }
+  .card-orders::after   { background: linear-gradient(90deg, var(--accent-2), var(--accent-2-light)); }
+  .card-qty::after      { background: linear-gradient(90deg, var(--accent-3), var(--accent-3-light)); }
+  .card-nmv    .label-dot { background: var(--orange); }
+  .card-orders .label-dot { background: var(--accent-2); }
+  .card-qty    .label-dot { background: var(--accent-3); }
 
-    --text-primary:   #1F2937;
-    --text-sub:       #4B5563;
-    --text-muted:     #6B7280;
-    --text-faint:     #9CA3AF;
-
-    --success:        #059669;
-    --success-bg:     #E6F4EA;
-    --danger:         #DC2626;
-    --danger-bg:      #FCE8E6;
-
-    --radius:         12px;
-    --radius-sm:      8px;
-    --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-    --shadow-md:      0 10px 20px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
-  }
-
-  body, html {
-    background: var(--bg-page) !important;
-    color: var(--text-primary) !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
-
-  .bp-header {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 24px;
-  }
-  .bp-header h1 {
-    font-size: 1.45rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -.3px;
-    margin: 0;
-  }
-  .bp-header .bp-subtitle {
-    font-size: .75rem;
-    color: var(--text-faint);
-    font-family: 'JetBrains Mono', monospace;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-  }
-
-  .s-card {
-    background: var(--card-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    transition: transform .2s, box-shadow .2s, border-color .2s;
-  }
-
-  /* ── filter panel ── */
-  .filter-panel {
-    padding: 18px 22px 22px;
-    margin-bottom: 20px;
-  }
-  .filter-panel-header {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--glass-border);
-  }
-  .filter-icon {
-    width: 26px; height: 26px;
-    border-radius: 6px;
-    background: var(--orange-dim);
-    border: 1px solid rgba(255, 122, 0, 0.15);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--orange);
-    flex-shrink: 0;
-  }
-  .filter-panel-header span {
-    font-size: .72rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .09em;
-  }
-
-  .filter-panel .form-label {
-    font-size: .7rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    margin-bottom: 6px;
-    display: block;
-  }
-  .filter-panel .form-control,
-  .filter-panel .form-select {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-sm);
-    color: var(--text-primary) !important;
-    font-size: .87rem;
-    padding: 8px 11px;
-    transition: border-color .18s, box-shadow .18s;
-    box-shadow: none !important;
-  }
-  .filter-panel .form-control:focus,
-  .filter-panel .form-select:focus {
-    border-color: var(--orange) !important;
-    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
-    outline: none;
-  }
-  .filter-panel .form-select option {
-    background: var(--card-bg);
-    color: var(--text-primary);
-  }
-
-  /* select2 light mode overrides */
-  .select2-container--default .select2-selection--multiple {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-sm) !important;
-    min-height: 38px !important;
-    padding: 2px 6px !important;
-    box-shadow: none !important;
-  }
-  .select2-container--default.select2-container--focus .select2-selection--multiple {
-    border-color: var(--orange) !important;
-    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
-  }
-  .select2-container--default .select2-selection--multiple .select2-selection__choice {
-    background: var(--orange-dim) !important;
-    border: 1px solid rgba(255, 122, 0, 0.15) !important;
-    color: var(--orange-bright) !important;
-    border-radius: 4px !important;
-    font-size: .75rem !important;
-    font-weight: 600 !important;
-    padding: 2px 8px 2px 22px !important;
-  }
-  .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-    color: var(--orange) !important;
-    margin-right: 5px !important;
-  }
-  .select2-container--default .select2-search--inline .select2-search__field {
-    color: var(--text-primary) !important;
-    font-size: .85rem !important;
-    background: transparent !important;
-  }
-  .select2-container--default .select2-selection--multiple .select2-selection__rendered {
-    padding: 0 !important;
-  }
-  .select2-dropdown {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-sm) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
-  }
-  .select2-container--default .select2-results__option {
-    color: var(--text-sub) !important;
-    font-size: .85rem !important;
-    padding: 8px 12px !important;
-  }
-  .select2-container--default .select2-results__option--highlighted {
-    background: var(--orange-dim) !important;
-    color: var(--orange-bright) !important;
-  }
-  .select2-container--default .select2-results__option--selected {
-    background: #F3F4F6 !important;
-    color: var(--text-primary) !important;
-    font-weight: 600 !important;
-  }
-  .select2-search--dropdown .select2-search__field {
-    background: var(--bg-page) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: 6px !important;
-    color: var(--text-primary) !important;
-    padding: 7px 10px !important;
-    outline: none !important;
-  }
-
-  /* quick action buttons */
-  .btn-ghost-amber {
-    font-size: .72rem; font-weight: 700;
-    color: var(--orange-bright);
-    background: var(--orange-dim);
-    border: 1px solid rgba(255, 122, 0, 0.15);
-    border-radius: 6px;
-    padding: 4px 10px;
-    cursor: pointer;
-    transition: background .15s, border-color .15s;
-    letter-spacing: .02em;
-  }
-  .btn-ghost-amber:hover {
-    background: var(--orange-glow);
-    border-color: rgba(255, 122, 0, 0.3);
-  }
-  .btn-ghost-muted {
-    font-size: .72rem; font-weight: 600;
-    color: var(--text-muted);
-    background: #F3F4F6;
-    border: 1px solid var(--glass-border);
-    border-radius: 6px;
-    padding: 4px 10px;
-    cursor: pointer;
-    transition: background .15s;
-    letter-spacing: .02em;
-  }
-  .btn-ghost-muted:hover { background: #E5E7EB; }
-
-  /* ── metric cards ── */
-  .metric-card {
-    padding: 18px 20px;
-    position: relative;
-    overflow: hidden;
-    flex: 1;
-  }
-  .metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--glass-border-h);
-  }
-  .metric-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    border-radius: var(--radius) var(--radius) 0 0;
-  }
-  .card-nmv::after      { background: linear-gradient(90deg, #FF7A00, #FFB347); }
-  .card-orders::after   { background: linear-gradient(90deg, #FF9500, #FFCC44); }
-  .card-qty::after      { background: linear-gradient(90deg, #FF5500, #FF8844); }
-
-  .metric-label {
-    font-size: .65rem; font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    margin-bottom: 8px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .label-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-  .card-nmv    .label-dot { background: #FF7A00; }
-  .card-orders .label-dot { background: #FF9500; }
-  .card-qty    .label-dot { background: #FF5500; }
-
-  .metric-value {
-    font-size: 1.5rem; font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -.5px; line-height: 1;
-    margin-bottom: 4px;
-    font-family: 'JetBrains Mono', monospace;
-    word-break: break-all;
-  }
-
-  .metric-icon {
-    position: absolute;
-    bottom: 10px; right: 14px;
-    font-size: 1.8rem; opacity: .06; line-height: 1;
-  }
-
-  /* ── target achievement badge (on NMV card) ── */
-  .metric-sub-row { margin-top: 6px; }
-  .ach-badge {
-    display: inline-block;
-    font-size: .68rem; font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-    letter-spacing: .02em;
-  }
-  .ach-badge.ach-good { background: var(--success-bg); color: var(--success); }
-  .ach-badge.ach-warn { background: #FFF4E0; color: #B45F06; }
-  .ach-badge.ach-bad  { background: var(--danger-bg); color: var(--danger); }
-
-  /* ── spotlight cards (top1 brand group) ── */
   .card-spotlight-nmv::after { background: linear-gradient(90deg, #D97706, #FBBF24); }
-  .card-spotlight-ach::after { background: linear-gradient(90deg, #059669, #34D399); }
+  .card-spotlight-ach::after { background: linear-gradient(90deg, var(--success), #34D399); }
   .card-spotlight-nmv .label-dot { background: #D97706; }
-  .card-spotlight-ach .label-dot { background: #059669; }
-  .spotlight-name {
-    font-size: 1.15rem; font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -.3px; line-height: 1.2;
-    margin-bottom: 4px;
-  }
-  .spotlight-value {
-    font-size: .82rem; font-weight: 600;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  /* ── chart card ── */
-  .chart-card {
-    padding: 18px 22px 22px;
-    display: flex;
-    flex-direction: column;
-  }
-  .chart-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--glass-border);
-    flex-shrink: 0;
-  }
-  .chart-title-group { display: flex; align-items: center; gap: 10px; }
-  .chart-accent-bar {
-    width: 3px; height: 18px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, #FF7A00, #CC4400);
-    flex-shrink: 0;
-  }
-  .chart-title {
-    font-size: .9rem; font-weight: 700;
-    color: var(--text-primary); margin: 0;
-  }
-  .chart-badge {
-    font-size: .66rem; font-weight: 700;
-    padding: 3px 8px; border-radius: 20px;
-    background: var(--orange-dim);
-    color: var(--orange-bright);
-    letter-spacing: .05em; text-transform: uppercase;
-    border: 1px solid rgba(255, 122, 0, 0.15);
-  }
-  .chart-body {
-    flex: 1;
-    position: relative;
-    min-height: 260px;
-  }
-  .chart-body.tall { min-height: 320px; }
+  .card-spotlight-ach .label-dot { background: var(--success); }
 </style>
 
 <div class="bp-header">
@@ -573,13 +250,19 @@ function clearBrands()        { $('#brandSelect option').prop('selected', false)
 function selectAllPlatforms() { $('#platformSelect option').prop('selected', true);  $('#platformSelect').trigger('change'); }
 function clearPlatforms()     { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
 
-// let topBrandGroupNmvChart, topBrandGroupAchChart, platformDonutChart, orderQtyDoubleBar, brandGroupTable;
 let topBrandGroupNmvChart, topBrandGroupAchChart, platformDonutChart, orderQtyDoubleBar, monthlyAchTrendChart, brandGroupTable;
 let debounceTimer;
 
+function getQualitativePalette() {
+  const dark = BITheme.current === 'dark';
+  return [
+    "#FF7A00", "#059669", "#2563EB", "#DC2626", "#7C3AED",
+    "#D97706", "#0891B2", "#DB2777", "#65A30D", dark ? "#94A3B8" : "#4B5563",
+  ];
+}
+
 function initChart() {
 
-  // ===== TOP BRAND GROUP BY NMV (bar)
   topBrandGroupNmvChart = new Chart(document.getElementById("topBrandGroupNmv").getContext("2d"), {
     type: "bar",
     data: {
@@ -587,7 +270,7 @@ function initChart() {
       datasets: [{
         label: "NMV",
         data: [],
-        backgroundColor: "#FF7A00",
+        backgroundColor: BITheme.getColors().accent,
         borderRadius: 4,
         maxBarThickness: 34,
       }]
@@ -599,27 +282,17 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF",
-          borderColor: "#E4E7EB",
-          borderWidth: 1,
-          titleColor: "#6B7280",
-          bodyColor: "#1F2937",
-          padding: 10,
-          cornerRadius: 6,
           displayColors: false,
-          callbacks: {
-            label: item => "Rp " + Number(item.raw).toLocaleString()
-          }
+          callbacks: { label: item => "Rp " + Number(item.raw).toLocaleString() }
         }
       },
       scales: {
-        x: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } },
-        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } }
+        x: { grid: { display: true } },
+        y: { grid: { display: false } }
       }
     }
   });
 
-  // ===== TOP BRAND GROUP BY % TARGET ACHIEVED (bar)
   topBrandGroupAchChart = new Chart(document.getElementById("topBrandGroupAch").getContext("2d"), {
     type: "bar",
     data: {
@@ -629,7 +302,8 @@ function initChart() {
         data: [],
         backgroundColor: ctx => {
           const v = ctx.raw || 0;
-          return v >= 100 ? "#059669" : v >= 80 ? "#FF9500" : "#DC2626";
+          const c = BITheme.getColors();
+          return v >= 100 ? c.good : v >= 80 ? c.warn : c.bad;
         },
         borderRadius: 4,
         maxBarThickness: 34,
@@ -642,38 +316,25 @@ function initChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "#FFFFFF",
-          borderColor: "#E4E7EB",
-          borderWidth: 1,
-          titleColor: "#6B7280",
-          bodyColor: "#1F2937",
-          padding: 10,
-          cornerRadius: 6,
           displayColors: false,
-          callbacks: {
-            label: item => Number(item.raw).toFixed(1) + "%"
-          }
+          callbacks: { label: item => Number(item.raw).toFixed(1) + "%" }
         }
       },
       scales: {
-        x: {
-          grid: { color: "#F3F4F6" },
-          ticks: { color: "#4B5563", font: { size: 11 }, callback: value => value + "%" }
-        },
-        y: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 11 } } }
+        x: { grid: { display: true }, ticks: { callback: value => value + "%" } },
+        y: { grid: { display: false } }
       }
     }
   });
 
-  // ===== PLATFORM NMV DONUT
   platformDonutChart = new Chart(document.getElementById("platformDonutChart").getContext("2d"), {
     type: "doughnut",
     data: {
       labels: [],
       datasets: [{
         data: [],
-        backgroundColor: ["#FF7A00", "#FFB347", "#CC4400", "#FF9500", "#FFCC44", "#FF5500", "#D96500"],
-        borderColor: "#FFFFFF",
+        backgroundColor: BITheme.getColors().palette,
+        borderColor: BITheme.getColors().donutBorder,
         borderWidth: 2,
       }]
     },
@@ -682,27 +343,14 @@ function initChart() {
       maintainAspectRatio: false,
       cutout: "65%",
       plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10, padding: 12 }
-        },
+        legend: { position: "bottom", labels: { boxWidth: 10, padding: 12 } },
         tooltip: {
-          backgroundColor: "#FFFFFF",
-          borderColor: "#E4E7EB",
-          borderWidth: 1,
-          titleColor: "#6B7280",
-          bodyColor: "#1F2937",
-          padding: 10,
-          cornerRadius: 6,
-          callbacks: {
-            label: item => `${item.label}: Rp ${Number(item.raw).toLocaleString()}`
-          }
+          callbacks: { label: item => `${item.label}: Rp ${Number(item.raw).toLocaleString()}` }
         }
       }
     }
   });
 
-  // ===== NET ORDER vs NET QUANTITY DOUBLE BAR (by brand group)
   orderQtyDoubleBar = new Chart(document.getElementById("orderQtyDoubleBar").getContext("2d"), {
     type: "bar",
     data: {
@@ -711,14 +359,14 @@ function initChart() {
         {
           label: "Net Order",
           data: [],
-          backgroundColor: "#FF7A00",
+          backgroundColor: BITheme.getColors().accent,
           borderRadius: 4,
           maxBarThickness: 28,
         },
         {
           label: "Net Quantity",
           data: [],
-          backgroundColor: "#FFCC44",
+          backgroundColor: BITheme.getColors().accent2,
           borderRadius: 4,
           maxBarThickness: 28,
         }
@@ -729,32 +377,18 @@ function initChart() {
       maintainAspectRatio: false,
       interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: {
-          position: "top",
-          align: "end",
-          labels: { color: "#4B5563", font: { size: 11 }, boxWidth: 10 }
-        },
+        legend: { position: "top", align: "end", labels: { boxWidth: 10 } },
         tooltip: {
-          backgroundColor: "#FFFFFF",
-          borderColor: "#E4E7EB",
-          borderWidth: 1,
-          titleColor: "#6B7280",
-          bodyColor: "#1F2937",
-          padding: 10,
-          cornerRadius: 6,
-          callbacks: {
-            label: item => `${item.dataset.label}: ${Number(item.raw).toLocaleString()}`
-          }
+          callbacks: { label: item => `${item.dataset.label}: ${Number(item.raw).toLocaleString()}` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 }, maxRotation: 45, minRotation: 0 } },
-        y: { grid: { color: "#F3F4F6" }, ticks: { color: "#4B5563", font: { size: 11 } } }
+        x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 0 } },
+        y: { grid: { display: true } }
       }
     }
   });
 
-  // ===== BRAND GROUP TABLE
   brandGroupTable = $("#brandGroupTable").DataTable({
     data: [],
     scrollX: true,
@@ -777,13 +411,7 @@ function initChart() {
       },
       { data: "target_ach", render: function (v, type) {
           if (type === "sort" || type === "type") return parseFloat(v) || 0;
-          return Number(v*100 || 0).toLocaleString(
-            undefined,
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            }
-          ) + '%';
+          return Number(v*100 || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
         }
       },
     ],
@@ -800,7 +428,6 @@ function initChart() {
     },
   });
 
-  // ===== MONTHLY % TARGET ACHIEVEMENT TREND (line, per brand group)
   monthlyAchTrendChart = new Chart(document.getElementById("monthlyAchTrendChart").getContext("2d"), {
     type: "line",
     data: { labels: [], datasets: [] },
@@ -809,45 +436,47 @@ function initChart() {
       maintainAspectRatio: false,
       interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: "#4B5563", font: { size: 10 }, boxWidth: 10, usePointStyle: true }
-        },
+        legend: { position: "bottom", labels: { boxWidth: 10, usePointStyle: true } },
         tooltip: {
-          backgroundColor: "#FFFFFF",
-          borderColor: "#E4E7EB",
-          borderWidth: 1,
-          titleColor: "#6B7280",
-          bodyColor: "#1F2937",
-          padding: 10,
-          cornerRadius: 6,
           itemSort: (a, b) => b.raw - a.raw,
-          callbacks: {
-            label: item => `${item.dataset.label}: ${Number(item.raw).toFixed(1)}%`
-          }
+          callbacks: { label: item => `${item.dataset.label}: ${Number(item.raw).toFixed(1)}%` }
         }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: "#4B5563", font: { size: 10 } } },
-        y: {
-          grid: { color: "#F3F4F6" },
-          ticks: { color: "#4B5563", font: { size: 11 }, callback: value => value + "%" }
-        }
+        x: { grid: { display: false } },
+        y: { grid: { display: true }, ticks: { callback: value => value + "%" } }
       }
     }
   });
 
 }
 
+function applyPageChartColors() {
+  if (!topBrandGroupNmvChart) return;
+  const c = BITheme.getColors();
+
+  topBrandGroupNmvChart.data.datasets[0].backgroundColor = c.accent;
+  platformDonutChart.data.datasets[0].backgroundColor = c.palette;
+  platformDonutChart.data.datasets[0].borderColor = c.donutBorder;
+  orderQtyDoubleBar.data.datasets[0].backgroundColor = c.accent;
+  orderQtyDoubleBar.data.datasets[1].backgroundColor = c.accent2;
+
+  const qualPalette = getQualitativePalette();
+  monthlyAchTrendChart.data.datasets.forEach((ds, idx) => {
+    ds.borderColor = qualPalette[idx % qualPalette.length];
+    ds.backgroundColor = qualPalette[idx % qualPalette.length];
+  });
+
+  [topBrandGroupNmvChart, topBrandGroupAchChart, platformDonutChart, orderQtyDoubleBar, monthlyAchTrendChart]
+    .forEach(chart => chart.update());
+}
+document.addEventListener('bithemechange', applyPageChartColors);
+
 async function loadConsolidateSales() {
   const params = new URLSearchParams();
 
-  ($("#brandSelect").val() || []).forEach((brand) =>
-    params.append("brand", brand),
-  );
-  ($("#platformSelect").val() || []).forEach((platform) =>
-    params.append("platform", platform),
-  );
+  ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
+  ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
   params.append("start_date", $("#startDate").val());
   params.append("end_date", $("#endDate").val());
 
@@ -861,19 +490,16 @@ async function loadConsolidateSales() {
   const double_bar = data.brand_group_double_bar_json;
   const monthly_ach = data.monthly_brand_group_ach_json;
 
-  // ===== SCORECARDS
   $("#nmvCard").text("Rp" + Number(data.cards.total_nmv).toLocaleString());
   $("#orderCard").text(Number(data.cards.total_orders).toLocaleString());
   $("#quantityCard").text(Number(data.cards.total_quantity).toLocaleString());
 
-  // ===== NMV vs TARGET BADGE
   const achPct = Number(data.cards.total_target_ach || 0) * 100;
   const $nmvBadge = $("#nmvAchBadge");
   $nmvBadge.text(achPct.toFixed(1) + "% of Target");
   $nmvBadge.removeClass("ach-good ach-warn ach-bad");
   $nmvBadge.addClass(achPct >= 100 ? "ach-good" : achPct >= 80 ? "ach-warn" : "ach-bad");
 
-  // ===== SPOTLIGHT: BEST PERFORMING BRAND GROUP
   const topNmvBg = data.cards.top_brand_group_by_nmv || {};
   $("#topNmvBrandGroupName").text(topNmvBg.brand_group || "-");
   $("#topNmvBrandGroupValue").text("Rp" + Number(topNmvBg.nmv || 0).toLocaleString());
@@ -882,39 +508,30 @@ async function loadConsolidateSales() {
   $("#topAchBrandGroupName").text(topAchBg.brand_group || "-");
   $("#topAchBrandGroupValue").text((Number(topAchBg.target_ach || 0) * 100).toFixed(1) + "%");
 
-  // ===== TOP BRAND GROUP BY NMV
   topBrandGroupNmvChart.data.labels = bar_top_nmv.map(i => i.brand_group);
   topBrandGroupNmvChart.data.datasets[0].data = bar_top_nmv.map(i => i.nmv);
   topBrandGroupNmvChart.update();
 
-  // ===== TOP BRAND GROUP BY % TARGET ACHIEVED
   topBrandGroupAchChart.data.labels = bar_top_ach.map(i => i.brand_group);
   topBrandGroupAchChart.data.datasets[0].data = bar_top_ach.map(i => Number(i.target_ach) * 100);
   topBrandGroupAchChart.update();
 
-  // ===== PLATFORM DONUT
   platformDonutChart.data.labels = donut_platform.map(i => i.platform);
   platformDonutChart.data.datasets[0].data = donut_platform.map(i => i.nmv);
   platformDonutChart.update();
 
-  // ===== NET ORDER vs NET QTY DOUBLE BAR
   orderQtyDoubleBar.data.labels = double_bar.map(i => i.brand_group);
   orderQtyDoubleBar.data.datasets[0].data = double_bar.map(i => i.orders);
   orderQtyDoubleBar.data.datasets[1].data = double_bar.map(i => i.quantity);
   orderQtyDoubleBar.update();
 
-  // ===== BRAND GROUP TABLE
   brandGroupTable.clear();
   brandGroupTable.rows.add(table_brand_group);
   brandGroupTable.draw();
 
-  // ===== MONTHLY % TARGET ACHIEVEMENT TREND
   const periods = [...new Set(monthly_ach.map(i => i.period))].sort();
   const brandGroups = [...new Set(monthly_ach.map(i => i.brand_group))];
-  const lineColors = [
-    "#FF7A00", "#059669", "#2563EB", "#DC2626", "#7C3AED",
-    "#D97706", "#0891B2", "#DB2777", "#65A30D", "#4B5563",
-  ];
+  const lineColors = getQualitativePalette();
 
   const achDatasets = brandGroups.map((bg, idx) => {
     const byPeriod = Object.fromEntries(
@@ -934,8 +551,7 @@ async function loadConsolidateSales() {
 
   monthlyAchTrendChart.data.labels = periods;
   monthlyAchTrendChart.data.datasets = achDatasets;
-  monthlyAchTrendChart.update();  
-
+  monthlyAchTrendChart.update();
 }
 
 function debounceLoad() {
@@ -952,6 +568,7 @@ function registerEvents() {
 
 registerEvents();
 initChart();
+applyPageChartColors();
 loadConsolidateSales();
 </script>
 

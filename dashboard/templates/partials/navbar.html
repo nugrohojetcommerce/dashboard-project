@@ -5,38 +5,39 @@
   z-index: 1030;
 }
 
-.app-header nav {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border-bottom: 1px solid rgba(255, 122, 0, 0.15) !important;
+.app-header.navbar {
+  background: var(--card-bg) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  transition: background .2s, border-color .2s;
 }
 
 .app-header .nav-link {
-  color: #B08060 !important;
+  color: var(--text-muted) !important;
   transition: color .18s;
 }
 .app-header .nav-link:hover {
-  color: #FF7A00 !important;
+  color: var(--orange) !important;
 }
 
 .navbar-username {
   font-size: .78rem;
   font-weight: 600;
-  color: #705040 !important;
+  color: var(--text-sub) !important;
   font-family: 'JetBrains Mono', monospace;
   letter-spacing: .04em;
 }
 
 .sidebar-toggle {
   font-size: 1.1rem;
-  color: #B08060 !important;
+  color: var(--text-muted) !important;
   line-height: 1;
 }
-.sidebar-toggle:hover { color: #FF7A00 !important; }
+.sidebar-toggle:hover { color: var(--orange) !important; }
 </style>
 
-<nav class="app-header navbar navbar-expand bg-body">
+<nav class="app-header navbar navbar-expand">
     <div class="container-fluid">
 
         <ul class="navbar-nav">
@@ -55,12 +56,33 @@
             </span>
         </ul>
 
-        <ul class="navbar-nav ms-auto">
+        <ul class="navbar-nav ms-auto align-items-center" style="gap: 6px;">
+            <li class="nav-item">
+                <label class="theme-switch">
+                    <input type="checkbox" id="themeSwitchInput" onchange="BITheme.toggle()">
+                    <span class="theme-switch-track">
+                        <span class="theme-switch-thumb">
+                            <span id="themeToggleIcon">🌙</span>
+                        </span>
+                    </span>
+                </label>
+            </li>
             <li class="nav-item">
               <a href="{% url 'update_profile' %}" class="nav-link navbar-username">{{ request.user.username }}</a>
-                <!-- <span class="nav-link navbar-username">{{ request.user.username }}</span> -->
             </li>
         </ul>
 
     </div>
 </nav>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (window.BITheme) {
+      const icon = document.getElementById('themeToggleIcon');
+      const input = document.getElementById('themeSwitchInput');
+      const dark = BITheme.current === 'dark';
+      if (icon) icon.textContent = dark ? '☀️' : '🌙';
+      if (input) input.checked = dark;
+    }
+  });
+</script>

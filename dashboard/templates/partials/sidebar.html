@@ -1,16 +1,15 @@
 <style>
-  /* ── SIDEBAR OFF-WHITE MINIMALIS (MATCHING LIGHT MODE) ── */
+  /* ── SIDEBAR — theme-aware, matches app design tokens ── */
   .app-sidebar {
-    /* Sedikit lebih solid/abu dari bg-page (#F8F9FA) agar distinctive */
-    background: #FFFFFF !important; 
-    border-right: 1px solid #E4E7EB !important; /* Garis pembatas super bersih */
-    /* Kasih shadow agak tegas ke kanan biar kelihatan terpisah pas kebuka */
-    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.03) !important; 
+    background: var(--card-bg) !important;
+    border-right: 1px solid var(--glass-border) !important;
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.03) !important;
+    transition: background .2s, border-color .2s;
   }
 
   .sidebar-brand {
     padding: 18px 24px;
-    border-bottom: 1px solid #E4E7EB;
+    border-bottom: 1px solid var(--glass-border);
     display: flex;
     align-items: center;
   }
@@ -18,66 +17,59 @@
   .brand-link .brand-text {
     font-size: 1rem;
     font-weight: 700;
-    color: #1F2937 !important; /* Teks gelap utama */
+    color: var(--text-primary) !important;
     letter-spacing: -.2px;
   }
 
-  /* Wrapper menu */
   .sidebar-wrapper {
     padding: 0 12px;
   }
 
-  /* Struktur Nav Link */
   .app-sidebar .nav-link {
     display: flex;
     align-items: center;
     gap: 12px;
     padding: 10px 16px;
-    margin: 6px 0; 
+    margin: 6px 0;
     border-radius: 8px;
-    color: #4B5563 !important; /* Warna abu-abu text murni dashboard lu */
+    color: var(--text-sub) !important;
     font-size: .87rem;
     font-weight: 500;
     border: 1px solid transparent;
-    background: transparent; /* Idle state dibikin polosan biar clean */
+    background: transparent;
     transition: all 0.15s ease;
   }
 
-  /* State: Hover (Mending pakai warna glass light mode lu) */
   .app-sidebar .nav-link:hover {
-    background: #FAFAFA !important;
-    color: #FF7A00 !important; /* Icon/teks berubah oranye pas disentuh */
-    border-color: #E4E7EB;
+    background: var(--glass-hover) !important;
+    color: var(--orange) !important;
+    border-color: var(--glass-border);
     transform: translateX(2px);
   }
 
-  /* State: Active (Halaman Aktif - Kotak Oranye Soft khas Dashboard Lu) */
   .app-sidebar .nav-link.active {
-    background: rgba(255, 122, 0, 0.06) !important; /* Warna oranye dim khas brand lu */
-    border-color: rgba(255, 122, 0, 0.15) !important;
-    color: #FF7A00 !important; /* Teks menyala warna oranye utama */
+    background: var(--orange-dim) !important;
+    border-color: var(--glass-border-h) !important;
+    color: var(--orange) !important;
     font-weight: 600;
   }
 
-  /* Icon Menu Settings */
   .app-sidebar .nav-icon {
     font-size: 1.1rem;
     width: 20px;
     text-align: center;
     flex-shrink: 0;
-    color: inherit !important; /* Otomatis ngikut warna teks link */
+    color: inherit !important;
   }
 
   .app-sidebar .nav-link p {
     margin: 0;
     color: inherit;
-
   }
 
-  /* Override Total AdminLTE Light Variables */
   .app-sidebar[data-bs-theme="dark"] {
-    --bs-body-color: #1F2937;
-    --bs-body-bg: #FFFFFF;
+    --bs-body-color: var(--text-primary);
+    --bs-body-bg: var(--card-bg);
   }
 </style>
 

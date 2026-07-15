@@ -5,235 +5,16 @@
 {% block content %}
 
 <style>
-  /* ── TOKENS: ULTRA CLEAN LIGHT MODE ── */
-  :root {
-    --bg-page:        #F8F9FA; /* Abu-abu super terang/off-white biar card putihnya pop-out */
-    --card-bg:        #FFFFFF; /* Card putih bersih solid */
-    --glass-hover:    #FAFAFA;
-    --glass-border:   #E4E7EB; /* Border abu-abu netral soft */
-    --glass-border-h: #FF7A00; /* Tetap menyala oranye pas di-hover */
-    
-    --orange:         #FF7A00;
-    --orange-bright:  #D96500; /* Dipergelap dikit biar kontras di atas warna putih */
-    --orange-dim:     rgba(255, 122, 0, 0.06); 
-    --orange-glow:    rgba(255, 122, 0, 0.12);
-    --orange-deep:    #CC4400;
-    
-    /* Teks dengan kontras tinggi (Gak Nyaru Lagi) */
-    --text-primary:   #1F2937; /* Hitam pekat (Slate 800) untuk angka & judul */
-    --text-sub:       #4B5563; /* Abu-abu tua (Slate 600) untuk opsi/form */
-    --text-muted:     #6B7280; /* Abu-abu sedang (Slate 500) untuk label kpi */
-    --text-faint:     #9CA3AF; /* Abu-abu terang untuk subtitle */
-    
-    --success:        #059669; 
-    --success-bg:     #E6F4EA;
-    --danger:         #DC2626; 
-    --danger-bg:      #FCE8E6;
-    
-    --radius:         12px;
-    --radius-sm:      8px;
-    --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03); /* Soft shadow */
-    --shadow-md:      0 10px 20px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
-  }
+  /* Page-specific styling only — shared tokens/components now live in base.html */
 
-  /* ── page background ── */
-  body, html {
-    background: var(--bg-page) !important;
-    color: var(--text-primary) !important;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  }
-
-  /* ── page header ── */
-  .bp-header {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 24px;
-  }
-  .bp-header h1 {
-    font-size: 1.45rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -.3px;
-    margin: 0;
-  }
-  .bp-header .bp-subtitle {
-    font-size: .75rem;
-    color: var(--text-faint);
-    font-family: 'JetBrains Mono', monospace;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-  }
-
-  /* ── clean card base ── */
-  .s-card {
-    background: var(--card-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    transition: transform .2s, box-shadow .2s, border-color .2s;
-  }
-
-  /* ── filter panel ── */
-  .filter-panel {
-    padding: 18px 22px 22px;
-    margin-bottom: 20px;
-  }
-  .filter-panel-header {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--glass-border);
-  }
-  .filter-icon {
-    width: 26px; height: 26px;
-    border-radius: 6px;
-    background: var(--orange-dim);
-    border: 1px solid rgba(255, 122, 0, 0.15);
-    display: flex; align-items: center; justify-content: center;
-    color: var(--orange);
-    flex-shrink: 0;
-  }
-  .filter-panel-header span {
-    font-size: .72rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .09em;
-  }
-
-  /* form controls */
-  .filter-panel .form-label {
-    font-size: .7rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    margin-bottom: 6px;
-    display: block;
-  }
-  .filter-panel .form-control,
-  .filter-panel .form-select {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-sm);
-    color: var(--text-primary) !important;
-    font-size: .87rem;
-    padding: 8px 11px;
-    transition: border-color .18s, box-shadow .18s;
-    box-shadow: none !important;
-  }
-  .filter-panel .form-control:focus,
-  .filter-panel .form-select:focus {
-    border-color: var(--orange) !important;
-    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
-    outline: none;
-  }
-  .filter-panel .form-control::placeholder {
-    color: var(--text-faint);
-  }
-  .filter-panel .form-select option {
-    background: var(--card-bg);
-    color: var(--text-primary);
-  }
-
-  /* select2 light mode overrides */
-  .select2-container--default .select2-selection--multiple {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-sm) !important;
-    min-height: 38px !important;
-    padding: 2px 6px !important;
-    box-shadow: none !important;
-  }
-  .select2-container--default.select2-container--focus .select2-selection--multiple {
-    border-color: var(--orange) !important;
-    box-shadow: 0 0 0 3px rgba(255, 122, 0, 0.1) !important;
-  }
-  .select2-container--default .select2-selection--multiple .select2-selection__choice {
-    background: var(--orange-dim) !important;
-    border: 1px solid rgba(255, 122, 0, 0.15) !important;
-    color: var(--orange-bright) !important;
-    border-radius: 4px !important;
-    font-size: .75rem !important;
-    font-weight: 600 !important;
-    padding: 2px 8px 2px 22px !important;
-  }
-  .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-    color: var(--orange) !important;
-    margin-right: 5px !important;
-  }
-  .select2-container--default .select2-search--inline .select2-search__field {
-    color: var(--text-primary) !important;
-    font-size: .85rem !important;
-    background: transparent !important;
-  }
-  .select2-container--default .select2-selection--multiple .select2-selection__rendered {
-    padding: 0 !important;
-  }
-  .select2-dropdown {
-    background: var(--card-bg) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: var(--radius-sm) !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
-  }
-  .select2-container--default .select2-results__option {
-    color: var(--text-sub) !important;
-    font-size: .85rem !important;
-    padding: 8px 12px !important;
-  }
-  .select2-container--default .select2-results__option--highlighted {
-    background: var(--orange-dim) !important;
-    color: var(--orange-bright) !important;
-  }
-  .select2-container--default .select2-results__option--selected {
-    background: #F3F4F6 !important;
-    color: var(--text-primary) !important;
-    font-weight: 600 !important;
-  }
-  .select2-search--dropdown .select2-search__field {
-    background: var(--bg-page) !important;
-    border: 1px solid var(--glass-border) !important;
-    border-radius: 6px !important;
-    color: var(--text-primary) !important;
-    padding: 7px 10px !important;
-    outline: none !important;
-  }
-  .select2-results__options::-webkit-scrollbar { width: 4px; }
-  .select2-results__options::-webkit-scrollbar-track { background: transparent; }
-  .select2-results__options::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); border-radius: 4px; }
-
-  /* quick action buttons */
-  .btn-ghost-amber {
-    font-size: .72rem; font-weight: 700;
-    color: var(--orange-bright);
-    background: var(--orange-dim);
-    border: 1px solid rgba(255, 122, 0, 0.15);
-    border-radius: 6px;
-    padding: 4px 10px;
-    cursor: pointer;
-    transition: background .15s, border-color .15s;
-    letter-spacing: .02em;
-  }
-  .btn-ghost-amber:hover {
-    background: var(--orange-glow);
-    border-color: rgba(255, 122, 0, 0.3);
-  }
-
-  .btn-ghost-muted {
-    font-size: .72rem; font-weight: 600;
-    color: var(--text-muted);
-    background: #F3F4F6;
-    border: 1px solid var(--glass-border);
-    border-radius: 6px;
-    padding: 4px 10px;
-    cursor: pointer;
-    transition: background .15s;
-    letter-spacing: .02em;
-  }
-  .btn-ghost-muted:hover { background: #E5E7EB; }
+  .card-nmv::after    { background: linear-gradient(90deg, var(--orange), var(--orange-light)); }
+  .card-gmv::after    { background: linear-gradient(90deg, #FF4400, var(--orange)); }
+  .card-orders::after { background: linear-gradient(90deg, var(--accent-2), var(--accent-2-light)); }
+  .card-qty::after    { background: linear-gradient(90deg, var(--accent-3), var(--accent-3-light)); }
+  .card-nmv    .label-dot { background: var(--orange); }
+  .card-gmv    .label-dot { background: #FF4400; }
+  .card-orders .label-dot { background: var(--accent-2); }
+  .card-qty    .label-dot { background: var(--accent-3); }
 
   /* apply button */
   .btn-apply {
@@ -243,68 +24,19 @@
     font-size: .8rem; font-weight: 700;
     letter-spacing: .06em;
     text-transform: uppercase;
-    background: linear-gradient(135deg, #FF7A00, #CC4400);
-    border: 1px solid rgba(255, 122, 0, 0.2);
+    background: linear-gradient(135deg, var(--orange), var(--orange-deep));
+    border: 1px solid var(--glass-border-h);
     color: #FFFFFF;
     cursor: pointer;
     transition: opacity .15s, transform .1s, box-shadow .15s;
-    box-shadow: 0 4px 12px rgba(255, 100, 0, 0.2);
+    box-shadow: 0 4px 12px var(--orange-glow);
   }
   .btn-apply:hover {
     opacity: .92;
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(255, 100, 0, 0.3);
+    box-shadow: 0 6px 16px var(--orange-glow);
   }
   .btn-apply:active { transform: translateY(0); }
-
-  /* ── metric cards ── */
-  .metric-card {
-    padding: 18px 20px;
-    position: relative;
-    overflow: hidden;
-    flex: 1;
-  }
-  .metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--glass-border-h);
-  }
-
-  /* colored top border accent */
-  .metric-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    border-radius: var(--radius) var(--radius) 0 0;
-  }
-  .card-nmv::after    { background: linear-gradient(90deg, #FF7A00, #FFB347); }
-  .card-gmv::after    { background: linear-gradient(90deg, #FF4400, #FF7A00); }
-  .card-orders::after { background: linear-gradient(90deg, #FF9500, #FFCC44); }
-  .card-qty::after    { background: linear-gradient(90deg, #FF5500, #FF8844); }
-
-  .metric-label {
-    font-size: .65rem; font-weight: 700;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    margin-bottom: 8px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .label-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-  .card-nmv    .label-dot { background: #FF7A00; }
-  .card-gmv    .label-dot { background: #FF4400; }
-  .card-orders .label-dot { background: #FF9500; }
-  .card-qty    .label-dot { background: #FF5500; }
-
-  .metric-value {
-    font-size: 1.5rem; font-weight: 800;
-    color: var(--text-primary);
-    letter-spacing: -.5px; line-height: 1;
-    margin-bottom: 10px;
-    font-family: 'JetBrains Mono', monospace;
-    word-break: break-all;
-  }
 
   .metric-footer {
     display: flex; align-items: center; justify-content: space-between;
@@ -319,51 +51,6 @@
   .metric-change.down { background: var(--danger-bg);  color: var(--danger);  }
   .metric-vs { font-size: .65rem; color: var(--text-muted); }
 
-  .metric-icon {
-    position: absolute;
-    bottom: 10px; right: 14px;
-    font-size: 1.8rem; opacity: .06; line-height: 1;
-  }
-
-  /* ── chart card ── */
-  .chart-card {
-    padding: 18px 22px 22px;
-    display: flex;
-    flex-direction: column;
-  }
-  .chart-header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 18px;
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--glass-border);
-    flex-shrink: 0;
-  }
-  .chart-title-group { display: flex; align-items: center; gap: 10px; }
-  .chart-accent-bar {
-    width: 3px; height: 18px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, #FF7A00, #CC4400);
-    flex-shrink: 0;
-  }
-  .chart-title {
-    font-size: .9rem; font-weight: 700;
-    color: var(--text-primary); margin: 0;
-  }
-  .chart-badge {
-    font-size: .66rem; font-weight: 700;
-    padding: 3px 8px; border-radius: 20px;
-    background: var(--orange-dim);
-    color: var(--orange-bright);
-    letter-spacing: .05em; text-transform: uppercase;
-    border: 1px solid rgba(255, 122, 0, 0.15);
-  }
-  .chart-body {
-    flex: 1;
-    position: relative;
-    min-height: 0;
-  }
-
-  /* ── metric col layout ── */
   .metric-col {
     display: flex;
     flex-direction: column;
@@ -737,12 +424,22 @@ let nmvTrend;
 let nmvCum;
 let platformDonut;
 let debounceTimer;
+function hexToRgba(hex, alpha) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+function accentRgba(alpha) { return hexToRgba(BITheme.getColors().accent, alpha); }
+
 function initChart(){
   // ===== NMV LINE CHART
   const grad = document.getElementById("nmvChart").getContext("2d").createLinearGradient(0, 0, 0, 320);
-  grad.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
-  grad.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
-  grad.addColorStop(1,   "rgba(255, 122, 0, 0)");
+  grad.addColorStop(0,   accentRgba(0.2));
+  grad.addColorStop(0.6, accentRgba(0.02));
+  grad.addColorStop(1,   accentRgba(0));
 
   nmvTrend = new Chart(document.getElementById("nmvChart").getContext("2d"), {
     type: "line",
@@ -751,15 +448,15 @@ function initChart(){
       datasets: [{
         label: "NMV",
         data: [],
-        borderColor:               "#FF7A00",
+        borderColor:               BITheme.getColors().accent,
         borderWidth:               2,
         backgroundColor:           grad,
         fill:                      true,
         tension:                   0.35,
         pointRadius:               0,
         pointHoverRadius:          5,
-        pointHoverBackgroundColor: "#FF7A00",
-        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBackgroundColor: BITheme.getColors().accent,
+        pointHoverBorderColor:     BITheme.getColors().donutBorder, /* Hover border putih biar kontras */
         pointHoverBorderWidth:     2,
       },{
         label: "GMV",
@@ -771,8 +468,8 @@ function initChart(){
         tension:                   0.35,
         pointRadius:               0,
         pointHoverRadius:          5,
-        pointHoverBackgroundColor: "#FF7A00",
-        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBackgroundColor: BITheme.getColors().accent,
+        pointHoverBorderColor:     BITheme.getColors().donutBorder, /* Hover border putih biar kontras */
         pointHoverBorderWidth:     2,
       }]
     },
@@ -783,17 +480,12 @@ function initChart(){
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
-          borderColor:      "#E4E7EB",
           borderWidth:      1,
-          titleColor:       "#6B7280",
-          bodyColor:        "#1F2937",
           titleFont:        { size: 11, family: "Inter, sans-serif" },
           bodyFont:         { size: 13, weight: '700' },
           padding:          10,
           cornerRadius:     6,
           displayColors:    false,
-          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
           callbacks: {
             title: items => items[0].label,
             label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
@@ -802,14 +494,14 @@ function initChart(){
       },
       scales: {
         x: {
-          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          grid:   { drawBorder: false }, /* Grid abu-abu super soft netral */
           border: { display: false },
-          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+          ticks:  { font: { size: 11 }, maxTicksLimit: 10 }
         },
         y: {
-          grid:   { color: "#F3F4F6", drawBorder: false },
+          grid:   { drawBorder: false },
           border: { display: false },
-          ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
+          ticks:  { font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
         }
       }
     }
@@ -820,9 +512,9 @@ function initChart(){
   const ctx_cum = document.getElementById("nmvCumChart").getContext("2d");
 
   const grad_cum = ctx_cum.createLinearGradient(0, 0, 0, 500);
-  grad_cum.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
-  grad_cum.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
-  grad_cum.addColorStop(1,   "rgba(255, 122, 0, 0)");
+  grad_cum.addColorStop(0,   accentRgba(0.2));
+  grad_cum.addColorStop(0.6, accentRgba(0.02));
+  grad_cum.addColorStop(1,   accentRgba(0));
 
   nmvCum = new Chart(ctx_cum, {
     type: "line",
@@ -831,15 +523,15 @@ function initChart(){
       datasets: [{
         label: "NMV Cumulative",
         data:[],
-        borderColor:               "#FF7A00",
+        borderColor:               BITheme.getColors().accent,
         borderWidth:               2,
         backgroundColor:           grad_cum,
         fill:                      true,
         tension:                   0.35,
         pointRadius:               3,
         pointHoverRadius:          5,
-        pointHoverBackgroundColor: "#FF7A00",
-        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBackgroundColor: BITheme.getColors().accent,
+        pointHoverBorderColor:     BITheme.getColors().donutBorder, /* Hover border putih biar kontras */
         pointHoverBorderWidth:     2,
       }]
     },
@@ -850,17 +542,12 @@ function initChart(){
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
-          borderColor:      "#E4E7EB",
           borderWidth:      1,
-          titleColor:       "#6B7280",
-          bodyColor:        "#1F2937",
           titleFont:        { size: 11, family: "Inter, sans-serif" },
           bodyFont:         { size: 13, weight: '700' },
           padding:          10,
           cornerRadius:     6,
           displayColors:    false,
-          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
           callbacks: {
             title: items => items[0].label,
             label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
@@ -869,14 +556,14 @@ function initChart(){
       },
       scales: {
         x: {
-          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          grid:   { drawBorder: false }, /* Grid abu-abu super soft netral */
           border: { display: false },
-          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+          ticks:  { font: { size: 11 }, maxTicksLimit: 10 }
         },
         y: {
-          grid:   { color: "#F3F4F6", drawBorder: false },
+          grid:   { drawBorder: false },
           border: { display: false },
-          ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
+          ticks:  { font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
         }
       }
     }
@@ -885,7 +572,7 @@ function initChart(){
   // ===== PLATFORM CONTRIBUTION DONUT CHART
   const ctx_donut = document.getElementById("platformDonutChart").getContext("2d");
   const donutPalette = [
-    "#FF7A00", "#10B981", "#0055FF", "#FFB347", "#6B7280",
+    BITheme.getColors().accent, "#10B981", "#0055FF", "#FFB347", "#6B7280",
     "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6", "#14B8A6"
   ];
 
@@ -897,7 +584,7 @@ function initChart(){
         data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
         backgroundColor: donutPalette,
         borderWidth: 2,
-        borderColor: "#FFFFFF"
+        borderColor: BITheme.getColors().donutBorder
       }]
     },
     options: {
@@ -919,7 +606,7 @@ function initChart(){
   // ===== BRAND CONTRIBUTION DONUT CHART
   const ctx_donut_brand = document.getElementById("brandDonutChart").getContext("2d");
   const donutPalette_brand = [
-    "#FF7A00", "#10B981", "#0055FF", "#FFB347", "#6B7280",
+    BITheme.getColors().accent, "#10B981", "#0055FF", "#FFB347", "#6B7280",
     "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6", "#14B8A6"
   ];
 
@@ -931,7 +618,7 @@ function initChart(){
         data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
         backgroundColor: donutPalette_brand,
         borderWidth: 2,
-        borderColor: "#FFFFFF"
+        borderColor: BITheme.getColors().donutBorder
       }]
     },
     options: {
@@ -952,9 +639,9 @@ function initChart(){
 
   // ===== TOP PRODUCT BAR CHART
   const grad_bar = document.getElementById("topProductChart").getContext("2d").createLinearGradient(0, 0, 0, 320);
-  grad_bar.addColorStop(0,   "rgba(255, 122, 0, 0.2)");
-  grad_bar.addColorStop(0.6, "rgba(255, 122, 0, 0.02)");
-  grad_bar.addColorStop(1,   "rgba(255, 122, 0, 0)");
+  grad_bar.addColorStop(0,   accentRgba(0.2));
+  grad_bar.addColorStop(0.6, accentRgba(0.02));
+  grad_bar.addColorStop(1,   accentRgba(0));
 
   topProduct = new Chart(document.getElementById("topProductChart").getContext("2d"), {
     type: "bar",
@@ -963,15 +650,15 @@ function initChart(){
       datasets: [{
         label: "NMV",
         data: [],
-        borderColor:               "#FF7A00",
+        borderColor:               BITheme.getColors().accent,
         borderWidth:               2,
-        backgroundColor:           grad,
+        backgroundColor:           grad_bar,
         fill:                      true,
         tension:                   0.35,
         pointRadius:               0,
         pointHoverRadius:          5,
-        pointHoverBackgroundColor: "#FF7A00",
-        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBackgroundColor: BITheme.getColors().accent,
+        pointHoverBorderColor:     BITheme.getColors().donutBorder, /* Hover border putih biar kontras */
         pointHoverBorderWidth:     2,
       }]
     },
@@ -982,17 +669,12 @@ function initChart(){
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
-          borderColor:      "#E4E7EB",
           borderWidth:      2,
-          titleColor:       "#6B7280",
-          bodyColor:        "#1F2937",
           titleFont:        { size: 11, family: "Inter, sans-serif" },
           bodyFont:         { size: 13, weight: '700' },
           padding:          10,
           cornerRadius:     6,
           displayColors:    false,
-          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
           callbacks: {
             title: items => items[0].label,
             label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
@@ -1001,14 +683,14 @@ function initChart(){
       },
       scales: {
         x: {
-          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          grid:   { drawBorder: false }, /* Grid abu-abu super soft netral */
           border: { display: false },
-          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+          ticks:  { font: { size: 11 }, maxTicksLimit: 10 }
         },
         y: {
-          grid:   { color: "#F3F4F6", drawBorder: false },
+          grid:   { drawBorder: false },
           border: { display: false },
-          ticks:  { color: "#4B5563", font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
+          ticks:  { font: { size: 11 }, callback: v => (v / 1_000_000).toFixed(0) + " M" }
         }
       }
     }
@@ -1017,7 +699,7 @@ function initChart(){
   // ===== PAYMENT TYPE DONUT CHART
   const ctx_donut_payment = document.getElementById("paymentDonutChart").getContext("2d");
   const donutPalette_payment = [
-    "#FF7A00", // 1. Pure Orange (Warna Utama Lu)
+    BITheme.getColors().accent, // 1. Pure Orange (Warna Utama Lu)
     "#8F3300", // 2. Burnt Orange / Cokelat Oranye Tua (Sangat Gelap)
     "#FFAD60", // 3. Light Pastel Orange (Cerah lembut)
     "#D45500", // 4. Rust Orange (Oranye Bata Med-Dark)
@@ -1037,7 +719,7 @@ function initChart(){
         data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
         backgroundColor: donutPalette_payment,
         borderWidth: 2,
-        borderColor: "#FFFFFF"
+        borderColor: BITheme.getColors().donutBorder
       }]
     },
     options: {
@@ -1065,15 +747,15 @@ function initChart(){
       datasets: [{
         label: "Orders",
         data: [],
-        borderColor:               "#FF7A00",
+        borderColor:               BITheme.getColors().accent,
         borderWidth:               2,
         backgroundColor:           grad,
         fill:                      true,
         tension:                   0.35,
         pointRadius:               0,
         pointHoverRadius:          5,
-        pointHoverBackgroundColor: "#FF7A00",
-        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBackgroundColor: BITheme.getColors().accent,
+        pointHoverBorderColor:     BITheme.getColors().donutBorder, /* Hover border putih biar kontras */
         pointHoverBorderWidth:     2,
       }]
     },
@@ -1085,17 +767,12 @@ function initChart(){
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
-          borderColor:      "#E4E7EB",
           borderWidth:      2,
-          titleColor:       "#6B7280",
-          bodyColor:        "#1F2937",
           titleFont:        { size: 11, family: "Inter, sans-serif" },
           bodyFont:         { size: 13, weight: '700' },
           padding:          10,
           cornerRadius:     6,
           displayColors:    false,
-          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
           callbacks: {
             title: items => items[0].label,
             label: item  => `${Number(item.raw).toLocaleString()}`
@@ -1104,14 +781,14 @@ function initChart(){
       },
       scales: {
         y: {
-          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          grid:   { drawBorder: false }, /* Grid abu-abu super soft netral */
           border: { display: false },
-          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+          ticks:  { font: { size: 11 }, maxTicksLimit: 10 }
         },
         x: {
-          grid:   { color: "#F3F4F6", drawBorder: false },
+          grid:   { drawBorder: false },
           border: { display: false },
-          ticks:  { color: "#4B5563", font: { size: 11 }}
+          ticks:  { font: { size: 11 }}
         }
       }
     }
@@ -1120,7 +797,7 @@ function initChart(){
   // ===== NEW BUYER DONUT CHART
   const ctx_donut_new_buyer = document.getElementById("newBuyerDonutChart").getContext("2d");
   const donutPalette_new_buyer = [
-    "#FF7A00", "#10B981", "#0055FF", "#FFB347", "#6B7280",
+    BITheme.getColors().accent, "#10B981", "#0055FF", "#FFB347", "#6B7280",
     "#EC4899", "#8B5CF6", "#F59E0B", "#3B82F6", "#14B8A6"
   ];
 
@@ -1132,7 +809,7 @@ function initChart(){
         data: [], // Angka/Value tiap potongan (harus berurutan dengan label)
         backgroundColor: donutPalette_new_buyer,
         borderWidth: 2,
-        borderColor: "#FFFFFF"
+        borderColor: BITheme.getColors().donutBorder
       }]
     },
     options: {
@@ -1226,15 +903,15 @@ function initChart(){
       datasets: [{
         label: "Orders",
         data: [],
-        borderColor:               "#FF7A00",
+        borderColor:               BITheme.getColors().accent,
         borderWidth:               2,
         backgroundColor:           grad,
         fill:                      true,
         tension:                   0.35,
         pointRadius:               0,
         pointHoverRadius:          5,
-        pointHoverBackgroundColor: "#FF7A00",
-        pointHoverBorderColor:     "#FFFFFF", /* Hover border putih biar kontras */
+        pointHoverBackgroundColor: BITheme.getColors().accent,
+        pointHoverBorderColor:     BITheme.getColors().donutBorder, /* Hover border putih biar kontras */
         pointHoverBorderWidth:     2,
       }]
     },
@@ -1246,17 +923,12 @@ function initChart(){
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor:  "#FFFFFF", /* Tooltip jadi putih bersih */
-          borderColor:      "#E4E7EB",
           borderWidth:      2,
-          titleColor:       "#6B7280",
-          bodyColor:        "#1F2937",
           titleFont:        { size: 11, family: "Inter, sans-serif" },
           bodyFont:         { size: 13, weight: '700' },
           padding:          10,
           cornerRadius:     6,
           displayColors:    false,
-          boxShadow:        "0 4px 12px rgba(0,0,0,0.05)",
           callbacks: {
             title: items => items[0].label,
             label: item  => `${Number(item.raw).toLocaleString()}`
@@ -1265,20 +937,60 @@ function initChart(){
       },
       scales: {
         x: {
-          grid:   { color: "#F3F4F6", drawBorder: false }, /* Grid abu-abu super soft netral */
+          grid:   { drawBorder: false }, /* Grid abu-abu super soft netral */
           border: { display: false },
-          ticks:  { color: "#4B5563", font: { size: 11 }, maxTicksLimit: 10 }
+          ticks:  { font: { size: 11 }, maxTicksLimit: 10 }
         },
         y: {
-          grid:   { color: "#F3F4F6", drawBorder: false },
+          grid:   { drawBorder: false },
           border: { display: false },
-          ticks:  { color: "#4B5563", font: { size: 11 }}
+          ticks:  { font: { size: 11 }}
         }
       }
     }
   });
  
 }
+
+function makeGradient(canvasId, height) {
+  const grad = document.getElementById(canvasId).getContext("2d").createLinearGradient(0, 0, 0, height);
+  grad.addColorStop(0,   accentRgba(0.2));
+  grad.addColorStop(0.6, accentRgba(0.02));
+  grad.addColorStop(1,   accentRgba(0));
+  return grad;
+}
+
+// Re-applies colors that were only set once at chart-creation time (line
+// gradients, accent-tied strokes, donut borders). Chart.defaults handles
+// grid/tick/tooltip/legend globally already.
+function applyPageChartColors() {
+  if (!nmvTrend) return;
+  const c = BITheme.getColors();
+
+  nmvTrend.data.datasets[0].borderColor = c.accent;
+  nmvTrend.data.datasets[0].backgroundColor = makeGradient("nmvChart", 320);
+  nmvTrend.data.datasets[0].pointHoverBorderColor = c.donutBorder;
+
+  nmvCum.data.datasets[0].borderColor = c.accent;
+  nmvCum.data.datasets[0].backgroundColor = makeGradient("nmvCumChart", 500);
+  nmvCum.data.datasets[0].pointHoverBorderColor = c.donutBorder;
+
+  topProduct.data.datasets[0].borderColor = c.accent;
+  topProduct.data.datasets[0].backgroundColor = makeGradient("topProductChart", 320);
+  topProduct.data.datasets[0].pointHoverBorderColor = c.donutBorder;
+
+  [platformDonut, brandDonut, paymentDonut, newBuyerDonut].forEach((chart) => {
+    if (!chart) return;
+    if (Array.isArray(chart.data.datasets[0].backgroundColor)) {
+      chart.data.datasets[0].backgroundColor[0] = c.accent;
+    }
+    chart.data.datasets[0].borderColor = c.donutBorder;
+  });
+
+  [nmvTrend, nmvCum, platformDonut, brandDonut, topProduct, paymentDonut, deliveryOption, newBuyerDonut, priceBandChart]
+    .forEach((chart) => { if (chart) { try { chart.update(); } catch (e) {} } });
+}
+document.addEventListener('bithemechange', applyPageChartColors);
 
 async function loadDashboard(){
   const params = new URLSearchParams();
@@ -1379,6 +1091,7 @@ function registerEvents() {
 }
 registerEvents();
 initChart()
+applyPageChartColors();
 loadDashboard()
 
 </script>

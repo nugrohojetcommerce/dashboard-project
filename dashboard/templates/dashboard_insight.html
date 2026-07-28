@@ -816,7 +816,12 @@
     </div>
   </div>
 </div>
-
+<div id="loadingOverlay">
+    <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading dashboard...</div>
+    </div>
+</div>
 {% endblock %}
 
 
@@ -856,6 +861,16 @@ let debounceTimer;
 // with the cr_good_threshold / cr_warn_threshold values returned by the API.
 let CR_GOOD = 3.0;
 let CR_WARN = 1.0;
+
+function showLoading() {
+    $("#loadingOverlay").addClass("show");
+    $("body").css("overflow", "hidden");
+}
+
+function hideLoading() {
+    $("#loadingOverlay").removeClass("show");
+    $("body").css("overflow", "");
+}
 
 function crColor(v) {
   return v >= CR_GOOD ? "#059669" : v >= CR_WARN ? "#FF9500" : "#DC2626";
@@ -1475,254 +1490,264 @@ function applyPageChartColors() {
 document.addEventListener('bithemechange', applyPageChartColors);
 
 async function loadInsightDashboard() {
-  const params = new URLSearchParams();
+  showLoading();
+  try{
+    const params = new URLSearchParams();
 
-  ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
-  ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
-  ($("#categorySelect").val() || []).forEach((category) => params.append("category", category));
-  params.append("start_date", $("#startDate").val());
-  params.append("end_date", $("#endDate").val());
+    ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
+    ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
+    ($("#categorySelect").val() || []).forEach((category) => params.append("category", category));
+    params.append("start_date", $("#startDate").val());
+    params.append("end_date", $("#endDate").val());
 
-  const response = await fetch(`{% url 'insight_dashboard_api' %}?${params}`);
-  const data = await response.json();
+    const response = await fetch(`{% url 'insight_dashboard_api' %}?${params}`);
+    const data = await response.json();
 
-  CR_GOOD = data.cr_good_threshold ?? CR_GOOD;
-  CR_WARN = data.cr_warn_threshold ?? CR_WARN;
+    CR_GOOD = data.cr_good_threshold ?? CR_GOOD;
+    CR_WARN = data.cr_warn_threshold ?? CR_WARN;
 
-  const cards = data.cards;
-  const deltas = cards.deltas || {};
+    const cards = data.cards;
+    const deltas = cards.deltas || {};
 
-  // ===== SCORECARDS
-  $("#nmvCard").text(fmtRp(cards.total_nmv));
-  $("#gmvCard").text(fmtRp(cards.total_gmv));
-  $("#ordersCard").text(fmtNum(cards.total_net_orders));
-  $("#uvCard").text(fmtNum(cards.total_uv));
-  $("#pvCard").text(fmtNum(cards.total_pv));
-  $("#crCard").text(fmtPct(cards.conversion_rate));
-  $("#aovCard").text(fmtRp(cards.aov));
-  $("#itemsCard").text(fmtDec(cards.items_per_order));
-  $("#cancelCard").text(fmtPct(cards.cancellation_rate));
-  $("#leakCard").text(fmtPct(cards.gmv_leakage_rate));
+    // ===== SCORECARDS
+    $("#nmvCard").text(fmtRp(cards.total_nmv));
+    $("#gmvCard").text(fmtRp(cards.total_gmv));
+    $("#ordersCard").text(fmtNum(cards.total_net_orders));
+    $("#uvCard").text(fmtNum(cards.total_uv));
+    $("#pvCard").text(fmtNum(cards.total_pv));
+    $("#crCard").text(fmtPct(cards.conversion_rate));
+    $("#aovCard").text(fmtRp(cards.aov));
+    $("#itemsCard").text(fmtDec(cards.items_per_order));
+    $("#cancelCard").text(fmtPct(cards.cancellation_rate));
+    $("#leakCard").text(fmtPct(cards.gmv_leakage_rate));
 
-  renderDelta("nmvDelta", deltas.total_nmv, "up");
-  renderDelta("gmvDelta", deltas.total_gmv, "neutral");
-  renderDelta("ordersDelta", deltas.total_net_orders, "up");
-  renderDelta("uvDelta", deltas.total_uv, "up");
-  renderDelta("pvDelta", deltas.total_pv, "up");
-  renderDelta("crDelta", deltas.conversion_rate, "up");
-  renderDelta("aovDelta", deltas.aov, "up");
-  renderDelta("itemsDelta", deltas.items_per_order, "up");
-  renderDelta("cancelDelta", deltas.cancellation_rate, "down");
-  renderDelta("leakDelta", deltas.gmv_leakage_rate, "down");
+    renderDelta("nmvDelta", deltas.total_nmv, "up");
+    renderDelta("gmvDelta", deltas.total_gmv, "neutral");
+    renderDelta("ordersDelta", deltas.total_net_orders, "up");
+    renderDelta("uvDelta", deltas.total_uv, "up");
+    renderDelta("pvDelta", deltas.total_pv, "up");
+    renderDelta("crDelta", deltas.conversion_rate, "up");
+    renderDelta("aovDelta", deltas.aov, "up");
+    renderDelta("itemsDelta", deltas.items_per_order, "up");
+    renderDelta("cancelDelta", deltas.cancellation_rate, "down");
+    renderDelta("leakDelta", deltas.gmv_leakage_rate, "down");
 
-  // ===== CONVERSION RATE BADGE
-  const crVal = Number(cards.conversion_rate || 0);
-  const $crBadge = $("#crBadge");
-  $crBadge.text(crVal >= CR_GOOD ? "Healthy" : crVal >= CR_WARN ? "Borderline" : "Underperforming");
-  $crBadge.removeClass("ach-good ach-warn ach-bad");
-  $crBadge.addClass(crVal >= CR_GOOD ? "ach-good" : crVal >= CR_WARN ? "ach-warn" : "ach-bad");
+    // ===== CONVERSION RATE BADGE
+    const crVal = Number(cards.conversion_rate || 0);
+    const $crBadge = $("#crBadge");
+    $crBadge.text(crVal >= CR_GOOD ? "Healthy" : crVal >= CR_WARN ? "Borderline" : "Underperforming");
+    $crBadge.removeClass("ach-good ach-warn ach-bad");
+    $crBadge.addClass(crVal >= CR_GOOD ? "ach-good" : crVal >= CR_WARN ? "ach-warn" : "ach-bad");
 
-  // ===== SPOTLIGHT
-  const topNmvBg = cards.top_brand_group_by_nmv || {};
-  $("#topNmvBrandGroupName").text(topNmvBg.brand_group || "-");
-  $("#topNmvBrandGroupValue").text(fmtRp(topNmvBg.nmv || 0));
+    // ===== SPOTLIGHT
+    const topNmvBg = cards.top_brand_group_by_nmv || {};
+    $("#topNmvBrandGroupName").text(topNmvBg.brand_group || "-");
+    $("#topNmvBrandGroupValue").text(fmtRp(topNmvBg.nmv || 0));
 
-  const topCrBg = cards.top_brand_group_by_cr || {};
-  $("#topCrBrandGroupName").text(topCrBg.brand_group || "-");
-  $("#topCrBrandGroupValue").text(fmtPct(topCrBg.conversion_rate || 0));
+    const topCrBg = cards.top_brand_group_by_cr || {};
+    $("#topCrBrandGroupName").text(topCrBg.brand_group || "-");
+    $("#topCrBrandGroupValue").text(fmtPct(topCrBg.conversion_rate || 0));
 
-  // ===== DAILY TRAFFIC TREND
-  const daily = data.daily_trend_json || [];
-  trafficTrendChart.data.labels = daily.map(i => i.date);
-  trafficTrendChart.data.datasets[0].data = daily.map(i => i.page_views);
-  trafficTrendChart.data.datasets[1].data = daily.map(i => i.visitors);
-  trafficTrendChart.update();
+    // ===== DAILY TRAFFIC TREND
+    const daily = data.daily_trend_json || [];
+    trafficTrendChart.data.labels = daily.map(i => i.date);
+    trafficTrendChart.data.datasets[0].data = daily.map(i => i.page_views);
+    trafficTrendChart.data.datasets[1].data = daily.map(i => i.visitors);
+    trafficTrendChart.update();
 
-  // ===== FUNNEL
-  const funnel = data.funnel_json || {};
-  funnelChart.data.datasets[0].data = [funnel.visitors || 0, funnel.gross_orders || 0, funnel.net_orders || 0];
-  funnelChart.update();
-  $("#funnelInsightNote").html(
-    `Order rate (visitors → orders): <b>${fmtPct(funnel.order_rate)}</b>. ` +
-    `Fulfillment rate (gross → net orders): <b>${fmtPct(funnel.fulfillment_rate)}</b> ` +
-    `— the rest is cancelled or returned.`
-  );
+    // ===== FUNNEL
+    const funnel = data.funnel_json || {};
+    funnelChart.data.datasets[0].data = [funnel.visitors || 0, funnel.gross_orders || 0, funnel.net_orders || 0];
+    funnelChart.update();
+    $("#funnelInsightNote").html(
+      `Order rate (visitors → orders): <b>${fmtPct(funnel.order_rate)}</b>. ` +
+      `Fulfillment rate (gross → net orders): <b>${fmtPct(funnel.fulfillment_rate)}</b> ` +
+      `— the rest is cancelled or returned.`
+    );
 
-  // ===== CR TREND
-  crTrendChart.data.labels = daily.map(i => i.date);
-  crTrendChart.data.datasets[0].data = daily.map(i => i.conversion_rate);
-  crTrendChart.update();
+    // ===== CR TREND
+    crTrendChart.data.labels = daily.map(i => i.date);
+    crTrendChart.data.datasets[0].data = daily.map(i => i.conversion_rate);
+    crTrendChart.update();
 
-  // ===== NMV VS GMV TREND
-  nmvGmvTrendChart.data.labels = daily.map(i => i.date);
-  nmvGmvTrendChart.data.datasets[0].data = daily.map(i => i.gmv);
-  nmvGmvTrendChart.data.datasets[1].data = daily.map(i => i.nmv);
-  nmvGmvTrendChart.update();
+    // ===== NMV VS GMV TREND
+    nmvGmvTrendChart.data.labels = daily.map(i => i.date);
+    nmvGmvTrendChart.data.datasets[0].data = daily.map(i => i.gmv);
+    nmvGmvTrendChart.data.datasets[1].data = daily.map(i => i.nmv);
+    nmvGmvTrendChart.update();
 
-  // ===== ORDER TREND
-  orderTrendChart.data.labels = daily.map(i => i.date);
-  orderTrendChart.data.datasets[0].data = daily.map(i => i.gross_order_qty);
-  orderTrendChart.data.datasets[1].data = daily.map(i => i.net_order_qty);
-  orderTrendChart.update();
+    // ===== ORDER TREND
+    orderTrendChart.data.labels = daily.map(i => i.date);
+    orderTrendChart.data.datasets[0].data = daily.map(i => i.gross_order_qty);
+    orderTrendChart.data.datasets[1].data = daily.map(i => i.net_order_qty);
+    orderTrendChart.update();
 
-  // ===== LEAKAGE TREND
-  leakageTrendChart.data.labels = daily.map(i => i.date);
-  leakageTrendChart.data.datasets[0].data = daily.map(i => i.cancellation_rate);
-  leakageTrendChart.data.datasets[1].data = daily.map(i => i.gmv_leakage_rate);
-  leakageTrendChart.update();
+    // ===== LEAKAGE TREND
+    leakageTrendChart.data.labels = daily.map(i => i.date);
+    leakageTrendChart.data.datasets[0].data = daily.map(i => i.cancellation_rate);
+    leakageTrendChart.data.datasets[1].data = daily.map(i => i.gmv_leakage_rate);
+    leakageTrendChart.update();
 
-  // ===== TOP BRAND GROUP CHARTS
-  const topNmv = data.top_brand_group_nmv_json || [];
-  topBrandGroupNmvChart.data.labels = topNmv.map(i => i.brand_group);
-  topBrandGroupNmvChart.data.datasets[0].data = topNmv.map(i => i.nmv);
-  topBrandGroupNmvChart.update();
+    // ===== TOP BRAND GROUP CHARTS
+    const topNmv = data.top_brand_group_nmv_json || [];
+    topBrandGroupNmvChart.data.labels = topNmv.map(i => i.brand_group);
+    topBrandGroupNmvChart.data.datasets[0].data = topNmv.map(i => i.nmv);
+    topBrandGroupNmvChart.update();
 
-  const topCr = data.top_brand_group_cr_json || [];
-  topBrandGroupCrChart.data.labels = topCr.map(i => i.brand_group);
-  topBrandGroupCrChart.data.datasets[0].data = topCr.map(i => i.conversion_rate);
-  topBrandGroupCrChart.update();
+    const topCr = data.top_brand_group_cr_json || [];
+    topBrandGroupCrChart.data.labels = topCr.map(i => i.brand_group);
+    topBrandGroupCrChart.data.datasets[0].data = topCr.map(i => i.conversion_rate);
+    topBrandGroupCrChart.update();
 
-  // ===== EFFICIENCY QUADRANT
-  const quadrant = data.efficiency_quadrant_json || [];
-  const nmvMax = Math.max(1, ...quadrant.map(i => i.nmv));
-  efficiencyQuadrantChart.data.datasets[0].data = quadrant.map(i => ({
-    x: i.visitors, y: i.conversion_rate, nmv: i.nmv, label: i.brand_group,
-    r: 6 + (i.nmv / nmvMax) * 22,
-  }));
-  efficiencyQuadrantChart.$medianX = (data.quadrant_medians || {}).median_visitors;
-  efficiencyQuadrantChart.$medianY = (data.quadrant_medians || {}).median_conversion_rate;
-  efficiencyQuadrantChart.update();
+    // ===== EFFICIENCY QUADRANT
+    const quadrant = data.efficiency_quadrant_json || [];
+    const nmvMax = Math.max(1, ...quadrant.map(i => i.nmv));
+    efficiencyQuadrantChart.data.datasets[0].data = quadrant.map(i => ({
+      x: i.visitors, y: i.conversion_rate, nmv: i.nmv, label: i.brand_group,
+      r: 6 + (i.nmv / nmvMax) * 22,
+    }));
+    efficiencyQuadrantChart.$medianX = (data.quadrant_medians || {}).median_visitors;
+    efficiencyQuadrantChart.$medianY = (data.quadrant_medians || {}).median_conversion_rate;
+    efficiencyQuadrantChart.update();
 
-  // ===== PARETO
-  const pareto = data.pareto_json || [];
-  paretoChart.data.labels = pareto.map(i => i.brand_group);
-  paretoChart.data.datasets[0].data = pareto.map(i => i.nmv);
-  paretoChart.data.datasets[1].data = pareto.map(i => i.cumulative_pct);
-  paretoChart.update();
+    // ===== PARETO
+    const pareto = data.pareto_json || [];
+    paretoChart.data.labels = pareto.map(i => i.brand_group);
+    paretoChart.data.datasets[0].data = pareto.map(i => i.nmv);
+    paretoChart.data.datasets[1].data = pareto.map(i => i.cumulative_pct);
+    paretoChart.update();
 
-  // ===== DONUTS: PLATFORM
-  const pvPlatform = data.pv_by_platform_json || [];
-  pvByPlatformDonutChart.data.labels = pvPlatform.map(i => i.platform);
-  pvByPlatformDonutChart.data.datasets[0].data = pvPlatform.map(i => i.page_views);
-  pvByPlatformDonutChart.update();
+    // ===== DONUTS: PLATFORM
+    const pvPlatform = data.pv_by_platform_json || [];
+    pvByPlatformDonutChart.data.labels = pvPlatform.map(i => i.platform);
+    pvByPlatformDonutChart.data.datasets[0].data = pvPlatform.map(i => i.page_views);
+    pvByPlatformDonutChart.update();
 
-  const uvPlatform = data.uv_by_platform_json || [];
-  uvByPlatformDonutChart.data.labels = uvPlatform.map(i => i.platform);
-  uvByPlatformDonutChart.data.datasets[0].data = uvPlatform.map(i => i.visitors);
-  uvByPlatformDonutChart.update();
+    const uvPlatform = data.uv_by_platform_json || [];
+    uvByPlatformDonutChart.data.labels = uvPlatform.map(i => i.platform);
+    uvByPlatformDonutChart.data.datasets[0].data = uvPlatform.map(i => i.visitors);
+    uvByPlatformDonutChart.update();
 
-  // ===== PLATFORM RADAR
-  // const radar = data.platform_radar_json || [];
-  // const radarColors = [BITheme.getColors().accent, "#7C3AED", "#0891B2", "#059669", "#DB2777", "#4338CA"];
-  // platformRadarChart.data.datasets = radar.map((p, idx) => ({
-  //   label: p.platform,
-  //   data: [p.cr_norm, p.aov_norm, p.items_norm, p.engagement_norm],
-  //   borderColor: radarColors[idx % radarColors.length],
-  //   backgroundColor: radarColors[idx % radarColors.length] + "22",
-  //   pointBackgroundColor: radarColors[idx % radarColors.length],
-  //   borderWidth: 2,
-  // }));
-  // platformRadarChart.update();
+    // ===== PLATFORM RADAR
+    // const radar = data.platform_radar_json || [];
+    // const radarColors = [BITheme.getColors().accent, "#7C3AED", "#0891B2", "#059669", "#DB2777", "#4338CA"];
+    // platformRadarChart.data.datasets = radar.map((p, idx) => ({
+    //   label: p.platform,
+    //   data: [p.cr_norm, p.aov_norm, p.items_norm, p.engagement_norm],
+    //   borderColor: radarColors[idx % radarColors.length],
+    //   backgroundColor: radarColors[idx % radarColors.length] + "22",
+    //   pointBackgroundColor: radarColors[idx % radarColors.length],
+    //   borderWidth: 2,
+    // }));
+    // platformRadarChart.update();
 
-  // ===== DONUT: CATEGORY
-  // const nmvCategory = data.nmv_by_category_json || [];
-  // nmvByCategoryDonutChart.data.labels = nmvCategory.map(i => i.category);
-  // nmvByCategoryDonutChart.data.datasets[0].data = nmvCategory.map(i => i.nmv);
-  // nmvByCategoryDonutChart.update();
+    // ===== DONUT: CATEGORY
+    // const nmvCategory = data.nmv_by_category_json || [];
+    // nmvByCategoryDonutChart.data.labels = nmvCategory.map(i => i.category);
+    // nmvByCategoryDonutChart.data.datasets[0].data = nmvCategory.map(i => i.nmv);
+    // nmvByCategoryDonutChart.update();
 
-  // ===== DONUTS: BRAND
-  const pvBrand = data.pv_by_brand_json || [];
-  pvByBrandDonutChart.data.labels = pvBrand.map(i => i.brand);
-  pvByBrandDonutChart.data.datasets[0].data = pvBrand.map(i => i.page_views);
-  pvByBrandDonutChart.update();
+    // ===== DONUTS: BRAND
+    const pvBrand = data.pv_by_brand_json || [];
+    pvByBrandDonutChart.data.labels = pvBrand.map(i => i.brand);
+    pvByBrandDonutChart.data.datasets[0].data = pvBrand.map(i => i.page_views);
+    pvByBrandDonutChart.update();
 
-  const uvBrand = data.uv_by_brand_json || [];
-  uvByBrandDonutChart.data.labels = uvBrand.map(i => i.brand);
-  uvByBrandDonutChart.data.datasets[0].data = uvBrand.map(i => i.visitors);
-  uvByBrandDonutChart.update();
+    const uvBrand = data.uv_by_brand_json || [];
+    uvByBrandDonutChart.data.labels = uvBrand.map(i => i.brand);
+    uvByBrandDonutChart.data.datasets[0].data = uvBrand.map(i => i.visitors);
+    uvByBrandDonutChart.update();
 
-  // ===== DAY OF WEEK
-  const dow = data.day_of_week_json || [];
-  dayOfWeekChart.data.labels = dow.map(i => i.day);
-  dayOfWeekChart.data.datasets[0].data = dow.map(i => i.nmv);
-  dayOfWeekChart.data.datasets[1].data = dow.map(i => i.conversion_rate);
-  dayOfWeekChart.update();
+    // ===== DAY OF WEEK
+    const dow = data.day_of_week_json || [];
+    dayOfWeekChart.data.labels = dow.map(i => i.day);
+    dayOfWeekChart.data.datasets[0].data = dow.map(i => i.nmv);
+    dayOfWeekChart.data.datasets[1].data = dow.map(i => i.conversion_rate);
+    dayOfWeekChart.update();
 
-  // ===== TABLES
-  brandGroupTable.clear().rows.add(data.brand_group_table_json || []).draw();
-  platformTable.clear().rows.add(data.platform_performance_json || []).draw();
-  categoryTable.clear().rows.add(data.category_performance_json || []).draw();
+    // ===== TABLES
+    brandGroupTable.clear().rows.add(data.brand_group_table_json || []).draw();
+    platformTable.clear().rows.add(data.platform_performance_json || []).draw();
+    categoryTable.clear().rows.add(data.category_performance_json || []).draw();
 
-  // =========================================================================
-  // ===== PRODUCT DEEP DIVE
-  // =========================================================================
-  const minVisitorsForRate = data.min_visitors_for_rate ?? MIN_VISITORS_FOR_RATE;
-  const prodCards = data.product_cards || {};
-  const prodDeltas = prodCards.deltas || {};
+    // =========================================================================
+    // ===== PRODUCT DEEP DIVE
+    // =========================================================================
+    const minVisitorsForRate = data.min_visitors_for_rate ?? MIN_VISITORS_FOR_RATE;
+    const prodCards = data.product_cards || {};
+    const prodDeltas = prodCards.deltas || {};
 
-  // ===== PRODUCT SCORECARDS
-  $("#prodVisitorsCard").text(fmtNum(prodCards.total_product_visitors));
-  $("#prodPvCard").text(fmtNum(prodCards.total_product_page_views));
-  $("#prodAtcRateCard").text(fmtPct(prodCards.atc_rate));
-  $("#prodBounceRateCard").text(fmtPct(prodCards.bounce_rate));
+    // ===== PRODUCT SCORECARDS
+    $("#prodVisitorsCard").text(fmtNum(prodCards.total_product_visitors));
+    $("#prodPvCard").text(fmtNum(prodCards.total_product_page_views));
+    $("#prodAtcRateCard").text(fmtPct(prodCards.atc_rate));
+    $("#prodBounceRateCard").text(fmtPct(prodCards.bounce_rate));
 
-  renderDelta("prodVisitorsDelta", prodDeltas.total_product_visitors, "up");
-  renderDelta("prodPvDelta", prodDeltas.total_product_page_views, "up");
-  renderDelta("prodAtcRateDelta", prodDeltas.atc_rate, "up");
-  renderDelta("prodBounceRateDelta", prodDeltas.bounce_rate, "down");
+    renderDelta("prodVisitorsDelta", prodDeltas.total_product_visitors, "up");
+    renderDelta("prodPvDelta", prodDeltas.total_product_page_views, "up");
+    renderDelta("prodAtcRateDelta", prodDeltas.atc_rate, "up");
+    renderDelta("prodBounceRateDelta", prodDeltas.bounce_rate, "down");
 
-  // ===== DAILY PRODUCT TRAFFIC TREND
-  const prodDaily = data.product_daily_trend_json || [];
-  productTrafficTrendChart.data.labels = prodDaily.map(i => i.date);
-  productTrafficTrendChart.data.datasets[0].data = prodDaily.map(i => i.page_views);
-  productTrafficTrendChart.data.datasets[1].data = prodDaily.map(i => i.visitors);
-  productTrafficTrendChart.update();
+    // ===== DAILY PRODUCT TRAFFIC TREND
+    const prodDaily = data.product_daily_trend_json || [];
+    productTrafficTrendChart.data.labels = prodDaily.map(i => i.date);
+    productTrafficTrendChart.data.datasets[0].data = prodDaily.map(i => i.page_views);
+    productTrafficTrendChart.data.datasets[1].data = prodDaily.map(i => i.visitors);
+    productTrafficTrendChart.update();
 
-  // ===== DAILY ADD-TO-CART RATE
-  productAtcRateTrendChart.data.labels = prodDaily.map(i => i.date);
-  productAtcRateTrendChart.data.datasets[0].data = prodDaily.map(i => i.atc_rate);
-  productAtcRateTrendChart.update();
+    // ===== DAILY ADD-TO-CART RATE
+    productAtcRateTrendChart.data.labels = prodDaily.map(i => i.date);
+    productAtcRateTrendChart.data.datasets[0].data = prodDaily.map(i => i.atc_rate);
+    productAtcRateTrendChart.update();
 
-  // ===== TOP PRODUCTS BY VISITORS
-  const topProductsVisitors = data.top_products_visitors_json || [];
-  topProductsVisitorsChart.data.labels = topProductsVisitors.map(i => i.product_name);
-  topProductsVisitorsChart.data.datasets[0].data = topProductsVisitors.map(i => i.visitors);
-  topProductsVisitorsChart.update();
+    // ===== TOP PRODUCTS BY VISITORS
+    const topProductsVisitors = data.top_products_visitors_json || [];
+    topProductsVisitorsChart.data.labels = topProductsVisitors.map(i => i.product_name);
+    topProductsVisitorsChart.data.datasets[0].data = topProductsVisitors.map(i => i.visitors);
+    topProductsVisitorsChart.update();
 
-  // ===== TOP PRODUCTS BY ATC RATE
-  const topProductsAtcRate = data.top_products_atc_rate_json || [];
-  topProductsAtcRateChart.data.labels = topProductsAtcRate.map(i => i.product_name);
-  topProductsAtcRateChart.data.datasets[0].data = topProductsAtcRate.map(i => i.atc_rate);
-  topProductsAtcRateChart.update();
-  $("#topAtcSubtitle").text(`Highest ATC rate among products with at least ${fmtNum(minVisitorsForRate)} visitors to be reliable`);
+    // ===== TOP PRODUCTS BY ATC RATE
+    const topProductsAtcRate = data.top_products_atc_rate_json || [];
+    topProductsAtcRateChart.data.labels = topProductsAtcRate.map(i => i.product_name);
+    topProductsAtcRateChart.data.datasets[0].data = topProductsAtcRate.map(i => i.atc_rate);
+    topProductsAtcRateChart.update();
+    $("#topAtcSubtitle").text(`Highest ATC rate among products with at least ${fmtNum(minVisitorsForRate)} visitors to be reliable`);
 
-  // ===== PRODUCT EFFICIENCY QUADRANT
-  const prodQuadrant = data.product_quadrant_json || [];
-  const atcUnitsMax = Math.max(1, ...prodQuadrant.map(i => i.add_to_cart_units));
-  productQuadrantChart.data.datasets[0].data = prodQuadrant.map(i => ({
-    x: i.visitors, y: i.atc_rate, atc: i.add_to_cart_units, label: i.product_name,
-    r: 6 + (i.add_to_cart_units / atcUnitsMax) * 22,
-  }));
-  productQuadrantChart.$medianX = (data.product_quadrant_medians || {}).median_visitors;
-  productQuadrantChart.$medianY = (data.product_quadrant_medians || {}).median_atc_rate;
-  productQuadrantChart.update();
+    // ===== PRODUCT EFFICIENCY QUADRANT
+    const prodQuadrant = data.product_quadrant_json || [];
+    const atcUnitsMax = Math.max(1, ...prodQuadrant.map(i => i.add_to_cart_units));
+    productQuadrantChart.data.datasets[0].data = prodQuadrant.map(i => ({
+      x: i.visitors, y: i.atc_rate, atc: i.add_to_cart_units, label: i.product_name,
+      r: 6 + (i.add_to_cart_units / atcUnitsMax) * 22,
+    }));
+    productQuadrantChart.$medianX = (data.product_quadrant_medians || {}).median_visitors;
+    productQuadrantChart.$medianY = (data.product_quadrant_medians || {}).median_atc_rate;
+    productQuadrantChart.update();
 
-  // ===== TRAFFIC PARETO
-  const prodPareto = data.product_pareto_json || [];
-  productParetoChart.data.labels = prodPareto.map(i => i.product_name);
-  productParetoChart.data.datasets[0].data = prodPareto.map(i => i.visitors);
-  productParetoChart.data.datasets[1].data = prodPareto.map(i => i.cumulative_pct);
-  productParetoChart.update();
+    // ===== TRAFFIC PARETO
+    const prodPareto = data.product_pareto_json || [];
+    productParetoChart.data.labels = prodPareto.map(i => i.product_name);
+    productParetoChart.data.datasets[0].data = prodPareto.map(i => i.visitors);
+    productParetoChart.data.datasets[1].data = prodPareto.map(i => i.cumulative_pct);
+    productParetoChart.update();
 
-  // ===== TOP PRODUCTS BY BOUNCE RATE
-  const topProductsBounceRate = data.top_products_bounce_rate_json || [];
-  topProductsBounceRateChart.data.labels = topProductsBounceRate.map(i => i.product_name);
-  topProductsBounceRateChart.data.datasets[0].data = topProductsBounceRate.map(i => i.bounce_rate);
-  topProductsBounceRateChart.update();
-  $("#topBounceSubtitle").text(`Highest bounce among products with at least ${fmtNum(minVisitorsForRate)} visitors to be reliable — worth a landing-page review`);
+    // ===== TOP PRODUCTS BY BOUNCE RATE
+    const topProductsBounceRate = data.top_products_bounce_rate_json || [];
+    topProductsBounceRateChart.data.labels = topProductsBounceRate.map(i => i.product_name);
+    topProductsBounceRateChart.data.datasets[0].data = topProductsBounceRate.map(i => i.bounce_rate);
+    topProductsBounceRateChart.update();
+    $("#topBounceSubtitle").text(`Highest bounce among products with at least ${fmtNum(minVisitorsForRate)} visitors to be reliable — worth a landing-page review`);
 
-  // ===== PRODUCT PERFORMANCE TABLE
-  productTable.clear().rows.add(data.product_table_json || []).draw();
+    // ===== PRODUCT PERFORMANCE TABLE
+    productTable.clear().rows.add(data.product_table_json || []).draw();
+  }catch(err){
+        console.error(err);
+
+        alert(err.message || "Failed to load dashboard.");
+    }
+    finally{
+        hideLoading();
+    }
 }
 
 function debounceLoad() {

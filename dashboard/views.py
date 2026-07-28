@@ -7,6 +7,7 @@ from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.utils.dateparse import parse_date
+from django.views.decorators.cache import never_cache
 from dashboard.models import (
     OrderMartDashboardBrandDF as OrderMart,
     # User, UserBrand
@@ -30,7 +31,7 @@ from .services.dashboard_performance import (
 # ===== NEW: Consolidate Sales imports =====
 from .services.consolidated_sales import (
     get_consolidate_sales_data,
-    get_consolidate_brand_variants,
+    get_consolidate_brand_groups,
     get_consolidate_platforms,
 )
 
@@ -70,7 +71,7 @@ from .services.dashboard_insight import (
 #     user_brands = get_user_brands(user)
 #     return brand_filter(OrderMart.objects.all(), user_brands)
 
-
+@never_cache
 @login_required
 def brand_performance_new(
     request: HttpRequest,
@@ -112,7 +113,7 @@ def brand_performance_new(
         context,
     )
 
-
+@never_cache
 @login_required
 def brand_performance_api_new(
     request: HttpRequest,
@@ -192,7 +193,8 @@ def brand_performance_api_new(
         }
     )
 
-
+@never_cache
+@login_required
 def brand_performance(
     request: HttpRequest,
 ) -> HttpResponse:
@@ -216,13 +218,34 @@ def brand_performance(
         context,
     )
 
+def _parse_iso_date(value: str | None) -> date | None:
+    if not value:
+        return None
+    return date.fromisoformat(value)
 
+@never_cache
+@login_required
 def brand_performance_api(
     request: HttpRequest,
 ) -> JsonResponse:
 
     start_date = request.GET.get("start_date")
     end_date = request.GET.get("end_date")
+
+    # try:
+    #     start = _parse_iso_date(start_date)
+    #     end = _parse_iso_date(end_date)
+    # except ValueError:
+    #     return JsonResponse(
+    #         {"error": "Invalid date format. Expected YYYY-MM-DD."},
+    #         status=400,
+    #     )
+
+    # if start and end and start > end:
+    #     return JsonResponse(
+    #         {"error": "start_date must be less than or equal to end_date."},
+    #         status=400,
+    #     )
 
     selected_brands = request.GET.getlist("brand")
     selected_platforms = request.GET.getlist("platform")
@@ -234,6 +257,11 @@ def brand_performance_api(
         selected_brands=selected_brands,
         selected_platforms=selected_platforms,
     )
+    # if not data:
+    #     return JsonResponse(
+    #                 {"error": "Data not Found in selected filters."},
+    #                 status=400,
+    #             )
     return JsonResponse(data)
 
 
@@ -241,12 +269,14 @@ def brand_performance_api(
 # ===== NEW: Consolidate Sales — same flow/pattern as brand_performance
 # ======================================================================
 
+@never_cache
+@login_required
 def consolidate_sales(
     request: HttpRequest,
 ) -> HttpResponse:
     today = date.today() - timedelta(days=1)
     context: dict[str, Any] = {
-        "brands": get_consolidate_brand_variants(request.user),
+        "brands": get_consolidate_brand_groups(request.user),
         "platforms": get_consolidate_platforms(),
         "start_date": request.GET.get("start_date") or today.replace(day=1).isoformat(),
         "end_date": request.GET.get("end_date") or today.isoformat(),
@@ -258,7 +288,8 @@ def consolidate_sales(
         context,
     )
 
-
+@never_cache
+@login_required
 def consolidate_sales_api(
     request: HttpRequest,
 ) -> JsonResponse:
@@ -278,7 +309,8 @@ def consolidate_sales_api(
     )
     return JsonResponse(data)
 
-
+@never_cache
+@login_required
 def ads_dashboard(
     request: HttpRequest,
 ) -> HttpResponse:
@@ -297,7 +329,8 @@ def ads_dashboard(
         context,
     )
  
- 
+@never_cache
+@login_required 
 def ads_dashboard_api(
     request: HttpRequest,
 ) -> JsonResponse:
@@ -319,6 +352,8 @@ def ads_dashboard_api(
     )
     return JsonResponse(data)
 
+@never_cache
+@login_required
 def insight_dashboard(
     request: HttpRequest,
 ) -> HttpResponse:
@@ -337,7 +372,8 @@ def insight_dashboard(
         context,
     )
 
-
+@never_cache
+@login_required
 def insight_dashboard_api(
     request: HttpRequest,
 ) -> JsonResponse:
@@ -360,6 +396,7 @@ def insight_dashboard_api(
     return JsonResponse(data)
 
 
+@never_cache
 @login_required
 def update_profile(request):
     if request.method == "POST":
@@ -367,7 +404,7 @@ def update_profile(request):
         if form.is_valid():
             form.save()
             messages.success(request, "Your profile was successfully updated!")
-            return redirect("/")  # Redirect back to home/dashboard
+            return redirect("/profile")  # Redirect back to home/dashboard
     else:
         form = UserProfileForm(instance=request.user)
     assigned_brands = request.user.brands.all()

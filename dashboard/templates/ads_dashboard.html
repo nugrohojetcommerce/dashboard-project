@@ -534,7 +534,12 @@
     </div>
   </div>
 </div>
-
+<div id="loadingOverlay">
+    <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading dashboard...</div>
+    </div>
+</div>
 {% endblock %}
 
 
@@ -576,7 +581,15 @@ function roasColor(v) {
   const c = BITheme.getColors();
   return v >= ROAS_GOOD ? c.good : v >= ROAS_WARN ? c.warn : c.bad;
 }
+function showLoading() {
+    $("#loadingOverlay").addClass("show");
+    $("body").css("overflow", "hidden");
+}
 
+function hideLoading() {
+    $("#loadingOverlay").removeClass("show");
+    $("body").css("overflow", "");
+}
 function fmtRp(v) { return "Rp" + Number(v || 0).toLocaleString(undefined, { maximumFractionDigits: 0 }); }
 function fmtPct(v) { return Number(v || 0).toFixed(2) + "%"; }
 function fmtX(v) { return Number(v || 0).toFixed(2) + "x"; }
@@ -965,148 +978,159 @@ function applyPageChartColors() {
 document.addEventListener('bithemechange', applyPageChartColors);
 
 async function loadAdsDashboard() {
-  const params = new URLSearchParams();
+  showLoading();
+  try{
+    const params = new URLSearchParams();
 
-  ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
-  ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
-  ($("#adsTypeSelect").val() || []).forEach((adsType) => params.append("ads_type", adsType));
-  params.append("start_date", $("#startDate").val());
-  params.append("end_date", $("#endDate").val());
+    ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
+    ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
+    ($("#adsTypeSelect").val() || []).forEach((adsType) => params.append("ads_type", adsType));
+    params.append("start_date", $("#startDate").val());
+    params.append("end_date", $("#endDate").val());
 
-  const response = await fetch(`{% url 'ads_dashboard_api' %}?${params}`);
-  const data = await response.json();
+    const response = await fetch(`{% url 'ads_dashboard_api' %}?${params}`);
+    const data = await response.json();
 
-  ROAS_GOOD = data.roas_good_threshold ?? ROAS_GOOD;
-  ROAS_WARN = data.roas_warn_threshold ?? ROAS_WARN;
+    ROAS_GOOD = data.roas_good_threshold ?? ROAS_GOOD;
+    ROAS_WARN = data.roas_warn_threshold ?? ROAS_WARN;
 
-  const cards = data.cards;
-  const deltas = cards.deltas || {};
+    const cards = data.cards;
+    const deltas = cards.deltas || {};
 
-  // ===== SCORECARDS
-  $("#expenseCard").text(fmtRp(cards.total_expense));
-  $("#gmvCard").text(fmtRp(cards.total_gmv));
-  $("#roasCard").text(fmtX(cards.overall_roas));
-  $("#ctrCard").text(fmtPct(cards.overall_ctr));
-  $("#cvrCard").text(fmtPct(cards.overall_cvr));
-  $("#cpcCard").text(fmtRp(cards.overall_cpc));
-  $("#cpaCard").text(fmtRp(cards.overall_cpa));
-  $("#cpmCard").text(fmtRp(cards.overall_cpm));
-  $("#aovCard").text(fmtRp(cards.aov));
+    // ===== SCORECARDS
+    $("#expenseCard").text(fmtRp(cards.total_expense));
+    $("#gmvCard").text(fmtRp(cards.total_gmv));
+    $("#roasCard").text(fmtX(cards.overall_roas));
+    $("#ctrCard").text(fmtPct(cards.overall_ctr));
+    $("#cvrCard").text(fmtPct(cards.overall_cvr));
+    $("#cpcCard").text(fmtRp(cards.overall_cpc));
+    $("#cpaCard").text(fmtRp(cards.overall_cpa));
+    $("#cpmCard").text(fmtRp(cards.overall_cpm));
+    $("#aovCard").text(fmtRp(cards.aov));
 
-  renderDelta("expenseDelta", deltas.total_expense, "neutral");
-  renderDelta("gmvDelta", deltas.total_gmv, "up");
-  renderDelta("roasDelta", deltas.overall_roas, "up");
-  renderDelta("ctrDelta", deltas.overall_ctr, "up");
-  renderDelta("cvrDelta", deltas.overall_cvr, "up");
-  renderDelta("cpcDelta", deltas.overall_cpc, "down");
-  renderDelta("cpaDelta", deltas.overall_cpa, "down");
-  renderDelta("cpmDelta", deltas.overall_cpm, "down");
-  renderDelta("aovDelta", deltas.aov, "up");
+    renderDelta("expenseDelta", deltas.total_expense, "neutral");
+    renderDelta("gmvDelta", deltas.total_gmv, "up");
+    renderDelta("roasDelta", deltas.overall_roas, "up");
+    renderDelta("ctrDelta", deltas.overall_ctr, "up");
+    renderDelta("cvrDelta", deltas.overall_cvr, "up");
+    renderDelta("cpcDelta", deltas.overall_cpc, "down");
+    renderDelta("cpaDelta", deltas.overall_cpa, "down");
+    renderDelta("cpmDelta", deltas.overall_cpm, "down");
+    renderDelta("aovDelta", deltas.aov, "up");
 
-  // ===== ROAS BADGE
-  const roasVal = Number(cards.overall_roas || 0);
-  const $roasBadge = $("#roasBadge");
-  $roasBadge.text(roasVal >= ROAS_GOOD ? "Healthy" : roasVal >= ROAS_WARN ? "Borderline" : "Underperforming");
-  $roasBadge.removeClass("ach-good ach-warn ach-bad");
-  $roasBadge.addClass(roasVal >= ROAS_GOOD ? "ach-good" : roasVal >= ROAS_WARN ? "ach-warn" : "ach-bad");
+    // ===== ROAS BADGE
+    const roasVal = Number(cards.overall_roas || 0);
+    const $roasBadge = $("#roasBadge");
+    $roasBadge.text(roasVal >= ROAS_GOOD ? "Healthy" : roasVal >= ROAS_WARN ? "Borderline" : "Underperforming");
+    $roasBadge.removeClass("ach-good ach-warn ach-bad");
+    $roasBadge.addClass(roasVal >= ROAS_GOOD ? "ach-good" : roasVal >= ROAS_WARN ? "ach-warn" : "ach-bad");
 
-  // ===== SPOTLIGHT: BEST PERFORMING BRAND GROUP
-  const topRoasBg = cards.top_brand_group_by_roas || {};
-  $("#topRoasBrandGroupName").text(topRoasBg.brand_group || "-");
-  $("#topRoasBrandGroupValue").text(fmtX(topRoasBg.roas || 0));
+    // ===== SPOTLIGHT: BEST PERFORMING BRAND GROUP
+    const topRoasBg = cards.top_brand_group_by_roas || {};
+    $("#topRoasBrandGroupName").text(topRoasBg.brand_group || "-");
+    $("#topRoasBrandGroupValue").text(fmtX(topRoasBg.roas || 0));
 
-  const topGmvBg = cards.top_brand_group_by_gmv || {};
-  $("#topGmvBrandGroupName").text(topGmvBg.brand_group || "-");
-  $("#topGmvBrandGroupValue").text(fmtRp(topGmvBg.gmv || 0));
+    const topGmvBg = cards.top_brand_group_by_gmv || {};
+    $("#topGmvBrandGroupName").text(topGmvBg.brand_group || "-");
+    $("#topGmvBrandGroupValue").text(fmtRp(topGmvBg.gmv || 0));
 
-  // ===== TOP BRAND GROUP BY EXPENSE / ROAS
-  const bar_top_expense = data.top_brand_group_expense_json;
-  topBrandGroupExpenseChart.data.labels = bar_top_expense.map(i => i.brand_group);
-  topBrandGroupExpenseChart.data.datasets[0].data = bar_top_expense.map(i => i.expense);
-  topBrandGroupExpenseChart.update();
+    // ===== TOP BRAND GROUP BY EXPENSE / ROAS
+    const bar_top_expense = data.top_brand_group_expense_json;
+    topBrandGroupExpenseChart.data.labels = bar_top_expense.map(i => i.brand_group);
+    topBrandGroupExpenseChart.data.datasets[0].data = bar_top_expense.map(i => i.expense);
+    topBrandGroupExpenseChart.update();
 
-  const bar_top_roas = data.top_brand_group_roas_json;
-  topBrandGroupRoasChart.data.labels = bar_top_roas.map(i => i.brand_group);
-  topBrandGroupRoasChart.data.datasets[0].data = bar_top_roas.map(i => i.roas);
-  topBrandGroupRoasChart.update();
+    const bar_top_roas = data.top_brand_group_roas_json;
+    topBrandGroupRoasChart.data.labels = bar_top_roas.map(i => i.brand_group);
+    topBrandGroupRoasChart.data.datasets[0].data = bar_top_roas.map(i => i.roas);
+    topBrandGroupRoasChart.update();
 
-  // ===== EFFICIENCY QUADRANT
-  const quadrant = data.efficiency_quadrant_json || [];
-  const gmvMax = Math.max(1, ...quadrant.map(i => i.gmv));
-  efficiencyQuadrantChart.data.datasets[0].data = quadrant.map(i => ({
-    x: i.expense, y: i.roas, gmv: i.gmv, label: i.brand_group,
-    r: 6 + (i.gmv / gmvMax) * 22,
-  }));
-  efficiencyQuadrantChart.$medianExpense = (data.quadrant_medians || {}).median_expense;
-  efficiencyQuadrantChart.$medianRoas = (data.quadrant_medians || {}).median_roas;
-  efficiencyQuadrantChart.update();
+    // ===== EFFICIENCY QUADRANT
+    const quadrant = data.efficiency_quadrant_json || [];
+    const gmvMax = Math.max(1, ...quadrant.map(i => i.gmv));
+    efficiencyQuadrantChart.data.datasets[0].data = quadrant.map(i => ({
+      x: i.expense, y: i.roas, gmv: i.gmv, label: i.brand_group,
+      r: 6 + (i.gmv / gmvMax) * 22,
+    }));
+    efficiencyQuadrantChart.$medianExpense = (data.quadrant_medians || {}).median_expense;
+    efficiencyQuadrantChart.$medianRoas = (data.quadrant_medians || {}).median_roas;
+    efficiencyQuadrantChart.update();
 
-  // ===== PARETO
-  const pareto = data.pareto_json || [];
-  paretoChart.data.labels = pareto.map(i => i.brand_group);
-  paretoChart.data.datasets[0].data = pareto.map(i => i.expense);
-  paretoChart.data.datasets[1].data = pareto.map(i => i.cumulative_pct);
-  paretoChart.update();
+    // ===== PARETO
+    const pareto = data.pareto_json || [];
+    paretoChart.data.labels = pareto.map(i => i.brand_group);
+    paretoChart.data.datasets[0].data = pareto.map(i => i.expense);
+    paretoChart.data.datasets[1].data = pareto.map(i => i.cumulative_pct);
+    paretoChart.update();
 
-  // ===== EXPENSE BY PLATFORM (donut)
-  const donut_platform = data.platform_expense_json || [];
-  platformExpenseDonutChart.data.labels = donut_platform.map(i => i.platform);
-  platformExpenseDonutChart.data.datasets[0].data = donut_platform.map(i => i.expense);
-  platformExpenseDonutChart.update();
+    // ===== EXPENSE BY PLATFORM (donut)
+    const donut_platform = data.platform_expense_json || [];
+    platformExpenseDonutChart.data.labels = donut_platform.map(i => i.platform);
+    platformExpenseDonutChart.data.datasets[0].data = donut_platform.map(i => i.expense);
+    platformExpenseDonutChart.update();
 
-  // ===== PLATFORM RADAR
-  const radar = data.platform_radar_json || [];
-  const radarColors = [BITheme.getColors().accent, "#7C3AED", "#0891B2", "#059669", "#DB2777", "#4338CA"];
-  platformRadarChart.data.datasets = radar.map((p, idx) => ({
-    label: p.platform,
-    data: [p.ctr_norm, p.cvr_norm, p.roas_norm, p.efficiency_norm],
-    borderColor: radarColors[idx % radarColors.length],
-    backgroundColor: radarColors[idx % radarColors.length] + "22",
-    pointBackgroundColor: radarColors[idx % radarColors.length],
-    borderWidth: 2,
-  }));
-  platformRadarChart.update();
+    // ===== PLATFORM RADAR
+    const radar = data.platform_radar_json || [];
+    const radarColors = [BITheme.getColors().accent, "#7C3AED", "#0891B2", "#059669", "#DB2777", "#4338CA"];
+    platformRadarChart.data.datasets = radar.map((p, idx) => ({
+      label: p.platform,
+      data: [p.ctr_norm, p.cvr_norm, p.roas_norm, p.efficiency_norm],
+      borderColor: radarColors[idx % radarColors.length],
+      backgroundColor: radarColors[idx % radarColors.length] + "22",
+      pointBackgroundColor: radarColors[idx % radarColors.length],
+      borderWidth: 2,
+    }));
+    platformRadarChart.update();
 
-  // ===== EXPENSE VS GMV BY ADS TYPE
-  const double_bar = data.ads_type_double_bar_json || [];
-  adsTypeDoubleBar.data.labels = double_bar.map(i => i.ads_type);
-  adsTypeDoubleBar.data.datasets[0].data = double_bar.map(i => i.expense);
-  adsTypeDoubleBar.data.datasets[1].data = double_bar.map(i => i.gmv);
-  adsTypeDoubleBar.update();
+    // ===== EXPENSE VS GMV BY ADS TYPE
+    const double_bar = data.ads_type_double_bar_json || [];
+    adsTypeDoubleBar.data.labels = double_bar.map(i => i.ads_type);
+    adsTypeDoubleBar.data.datasets[0].data = double_bar.map(i => i.expense);
+    adsTypeDoubleBar.data.datasets[1].data = double_bar.map(i => i.gmv);
+    adsTypeDoubleBar.update();
 
-  // ===== DAILY TRENDS
-  const daily_trend = data.daily_trend_json || [];
-  dailyTrendChart.data.labels = daily_trend.map(i => i.date);
-  dailyTrendChart.data.datasets[0].data = daily_trend.map(i => i.expense);
-  dailyTrendChart.data.datasets[1].data = daily_trend.map(i => i.gmv);
-  dailyTrendChart.update();
+    // ===== DAILY TRENDS
+    const daily_trend = data.daily_trend_json || [];
+    dailyTrendChart.data.labels = daily_trend.map(i => i.date);
+    dailyTrendChart.data.datasets[0].data = daily_trend.map(i => i.expense);
+    dailyTrendChart.data.datasets[1].data = daily_trend.map(i => i.gmv);
+    dailyTrendChart.update();
 
-  roasCpaTrendChart.data.labels = daily_trend.map(i => i.date);
-  roasCpaTrendChart.data.datasets[0].data = daily_trend.map(i => i.roas);
-  roasCpaTrendChart.data.datasets[1].data = daily_trend.map(i => i.cpa);
-  roasCpaTrendChart.update();
+    roasCpaTrendChart.data.labels = daily_trend.map(i => i.date);
+    roasCpaTrendChart.data.datasets[0].data = daily_trend.map(i => i.roas);
+    roasCpaTrendChart.data.datasets[1].data = daily_trend.map(i => i.cpa);
+    roasCpaTrendChart.update();
 
-  ctrCvrTrendChart.data.labels = daily_trend.map(i => i.date);
-  ctrCvrTrendChart.data.datasets[0].data = daily_trend.map(i => i.ctr);
-  ctrCvrTrendChart.data.datasets[1].data = daily_trend.map(i => i.cvr);
-  ctrCvrTrendChart.update();
+    ctrCvrTrendChart.data.labels = daily_trend.map(i => i.date);
+    ctrCvrTrendChart.data.datasets[0].data = daily_trend.map(i => i.ctr);
+    ctrCvrTrendChart.data.datasets[1].data = daily_trend.map(i => i.cvr);
+    ctrCvrTrendChart.update();
 
-  // ===== FUNNEL
-  const funnel = data.funnel_json || {};
-  funnelChart.data.datasets[0].data = [funnel.impression || 0, funnel.clicks || 0, funnel.conversions || 0];
-  funnelChart.update();
+    // ===== FUNNEL
+    const funnel = data.funnel_json || {};
+    funnelChart.data.datasets[0].data = [funnel.impression || 0, funnel.clicks || 0, funnel.conversions || 0];
+    funnelChart.update();
 
-  // ===== DAY OF WEEK
-  const dow = data.day_of_week_json || [];
-  dayOfWeekChart.data.labels = dow.map(i => i.day);
-  dayOfWeekChart.data.datasets[0].data = dow.map(i => i.expense);
-  dayOfWeekChart.data.datasets[1].data = dow.map(i => i.roas);
-  dayOfWeekChart.update();
+    // ===== DAY OF WEEK
+    const dow = data.day_of_week_json || [];
+    dayOfWeekChart.data.labels = dow.map(i => i.day);
+    dayOfWeekChart.data.datasets[0].data = dow.map(i => i.expense);
+    dayOfWeekChart.data.datasets[1].data = dow.map(i => i.roas);
+    dayOfWeekChart.update();
 
-  // ===== TABLES
-  brandGroupTable.clear().rows.add(data.brand_group_table_json || []).draw();
-  platformTable.clear().rows.add(data.platform_performance_json || []).draw();
-  adsTypeTable.clear().rows.add(data.ads_type_performance_json || []).draw();
+    // ===== TABLES
+    brandGroupTable.clear().rows.add(data.brand_group_table_json || []).draw();
+    platformTable.clear().rows.add(data.platform_performance_json || []).draw();
+    adsTypeTable.clear().rows.add(data.ads_type_performance_json || []).draw();
+
+  }catch(err){
+        console.error(err);
+
+        alert(err.message || "Failed to load dashboard.");
+    }
+    finally{
+        hideLoading();
+    }
 }
 
 function debounceLoad() {

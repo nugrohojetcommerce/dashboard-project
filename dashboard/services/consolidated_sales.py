@@ -1,57 +1,77 @@
 from __future__ import annotations
 
 from datetime import date as date_cls
+from functools import lru_cache
 
 import pandas as pd
-from django.db.models import Sum, Subquery, OuterRef, DateField, Func, CharField, Min, Max, BigIntegerField
+from .dashboard_performance import (
+    brand_filter,
+    get_brand_variants,
+)
+from django.db.models import (
+    BigIntegerField,
+    CharField,
+    Func,
+    Max,
+    OuterRef,
+    Subquery,
+    Sum,
+    Q,
+)
 from django.db.models.functions import Cast, ExtractMonth, ExtractYear
 
-from dashboard.models import (
-    OrderMartUnionDWSDF as OrderMartUnion,
-    TargetData
-)
+from dashboard.models import OrderMartUnionDWSDF as OrderMartUnion
+from dashboard.models import TargetData
 
 # Reuse the same access-control + brand-matching helpers used by
 # brand_performance so both pages behave identically re: which brands
 # a user is allowed to see. `OrderMartUnionDWSDF` also has a `brand`
 # field, so these helpers work as-is on this table too.
-from .dashboard_performance import brand_filter, get_user_brands
+from .dashboard_performance import get_user_brands
 
 TOP_N = 10
 
 
-def get_consolidate_brand_variants(user):
-    """Analogous to get_brand_variants() in dashboard_performance.py,
-    but sourced from OrderMartUnionDWSDF instead of OrderMartDashboardBrandDF.
+@lru_cache(maxsize=1)
+def get_all_brand_variants():
+    return list(OrderMartUnion.objects.values_list("brand", flat=True).distinct())
+
+def get_consolidate_brand_groups(user):
+    """Retrieves a sorted, distinct list of brand groups from OrderMartUnion 
+    filtered by the user's allowed brand variants.
     """
-    user_brands = get_user_brands(user)
+    user_brands = get_brand_variants(user)
+    
+    if not user_brands:
+        return []
 
-    all_brands = list(
-        OrderMartUnion.objects.values_list("brand", flat=True).distinct()
+    # Build dynamic OR conditions for prefix matching on the brand field
+    query = Q()
+    for user_brand in user_brands:
+        if user_brand:
+            query |= Q(brand__istartswith=user_brand)
+
+    # Query distinct brand_group values
+    brand_groups = list(
+        OrderMartUnion.objects.filter(query)
+        .exclude(brand_group__isnull=True)
+        .exclude(brand_group="")
+        .values_list("brand_group", flat=True)
+        .distinct()
     )
 
-    return sorted(
-        [
-            brand
-            for brand in all_brands
-            if brand
-            and any(
-                brand.lower().startswith(user_brand.lower())
-                for user_brand in user_brands
-            )
-        ]
-    )
+    return sorted(brand_groups)
 
 
 def get_consolidate_platforms() -> list[str]:
-    return list(
-        OrderMartUnion.objects.values_list("platform", flat=True).distinct()
-    )
+    return list(OrderMartUnion.objects.values_list("platform", flat=True).distinct())
+
 
 class ToCharYYYYMM(Func):
-    function = 'TO_CHAR'
+    function = "TO_CHAR"
     template = "%(function)s(%(expressions)s, 'YYYYMM')"
     output_field = CharField()
+
 
 def _shift_month(d: date_cls, delta: int) -> date_cls:
     """Return the first day of the month `delta` months away from d."""
@@ -59,6 +79,7 @@ def _shift_month(d: date_cls, delta: int) -> date_cls:
     year = d.year + month_index // 12
     month = month_index % 12 + 1
     return date_cls(year, month, 1)
+
 
 def get_consolidate_sales_data(
     user,
@@ -71,33 +92,30 @@ def get_consolidate_sales_data(
     end_date = end_date or date_cls.today().isoformat()
 
     target_subquery = TargetData.objects.filter(
-            # Join Key 1: Brand Group harus sama (case-insensitive/sensitive disesuaikan)
-            Brand_Group=OuterRef('brand_group'),
-            
-            # Join Key 2: Konversi date_time (OrderMartUnion) jadi YYYYMM, lalu cocokkan dengan Order_Date
-            Order_Date=Cast(ToCharYYYYMM(OuterRef('date_time')), output_field=BigIntegerField())
-        ).values('Target')[:1]
-    
-    base_queryset = (
-        OrderMartUnion.objects.filter(
-            date_time__range=[start_date, end_date],
-        ).annotate(
-            target_sales=Subquery(target_subquery)
-        )
-    )
+        # Join Key 1: Brand Group harus sama (case-insensitive/sensitive disesuaikan)
+        Brand_Group=OuterRef("brand_group"),
+        # Join Key 2: Konversi date_time (OrderMartUnion) jadi YYYYMM, lalu cocokkan dengan Order_Date
+        Order_Date=Cast(
+            ToCharYYYYMM(OuterRef("date_time")), output_field=BigIntegerField()
+        ),
+    ).values("Target")[:1]
+
+    base_queryset = OrderMartUnion.objects.filter(
+        date_time__range=[start_date, end_date],
+    ).annotate(target_sales=Subquery(target_subquery))
     # print("ini ordermartunion: ",list(OrderMartUnion.objects.values()))
     # print("ini base query set: ",base_queryset)
 
     if selected_brands:
-        base_queryset = base_queryset.filter(brand__in=selected_brands)
+        base_queryset = base_queryset.filter(brand_group__in=selected_brands)
     else:
-        base_queryset = brand_filter(base_queryset, get_user_brands(user))
+        base_queryset = base_queryset.filter(brand_group__in=get_consolidate_brand_groups(user))
 
     if selected_platforms:
         base_queryset = base_queryset.filter(platform__in=selected_platforms)
 
     queryset = base_queryset
-
+    # len()
     # ===== Score Cards =====
     # Table is already daily-level (no order_number to count distinct on),
     # so "orders" and "quantity" come straight from the pre-aggregated
@@ -114,40 +132,51 @@ def get_consolidate_sales_data(
     # ===== Brand Group Table  =====
 
     queryset_with_month = queryset.annotate(
-        data_year=ExtractYear('date_time'),
-        data_month=ExtractMonth('date_time')
+        data_year=ExtractYear("date_time"), data_month=ExtractMonth("date_time")
     )
 
-    brand_group_monthly_rows = (
-        queryset_with_month.values("brand_group", "data_year", "data_month")
-        .annotate(
-            nmv=Sum("nmv"),
-            orders=Sum("net_order_qty"),
-            quantity=Sum("net_sales_qty"),
-            # Di level per bulan ini, kita ambil Max biar data harian ga bikin target kegulung
-            target_sales_monthly=Max("target_sales"), 
-        )
+    brand_group_monthly_rows = queryset_with_month.values(
+        "brand_group", "data_year", "data_month"
+    ).annotate(
+        nmv=Sum("nmv"),
+        orders=Sum("net_order_qty"),
+        quantity=Sum("net_sales_qty"),
+        # Di level per bulan ini, kita ambil Max biar data harian ga bikin target kegulung
+        target_sales_monthly=Max("target_sales"),
     )
 
     df_monthly = pd.DataFrame(list(brand_group_monthly_rows))
 
     if df_monthly.empty:
-        df_brand_group = pd.DataFrame(columns=["brand_group", "nmv", "orders", "quantity", "target_sales"])
+        df_brand_group = pd.DataFrame(
+            columns=["brand_group", "nmv", "orders", "quantity", "target_sales"]
+        )
     else:
-        if 'target_sales_monthly' in df_monthly.columns:
-            if df_monthly['target_sales_monthly'].dtype == 'object':
-                df_monthly['target_sales_monthly'] = df_monthly['target_sales_monthly'].str.replace(',', '', regex=True)
-            df_monthly['target_sales_monthly'] = pd.to_numeric(df_monthly['target_sales_monthly'], errors='coerce').fillna(0)
+        if "target_sales_monthly" in df_monthly.columns:
+            if df_monthly["target_sales_monthly"].dtype == "object":
+                df_monthly["target_sales_monthly"] = df_monthly[
+                    "target_sales_monthly"
+                ].str.replace(",", "", regex=True)
+            df_monthly["target_sales_monthly"] = pd.to_numeric(
+                df_monthly["target_sales_monthly"], errors="coerce"
+            ).fillna(0)
 
-        df_brand_group = df_monthly.groupby("brand_group").agg({
-            "nmv": "sum",
-            "orders": "sum",
-            "quantity": "sum",
-            "target_sales_monthly": "sum" # Di-sum antar bulan!
-        }).reset_index().rename(columns={"target_sales_monthly": "target_sales"})
+        df_brand_group = (
+            df_monthly.groupby("brand_group")
+            .agg(
+                {
+                    "nmv": "sum",
+                    "orders": "sum",
+                    "quantity": "sum",
+                    "target_sales_monthly": "sum",  # Di-sum antar bulan!
+                }
+            )
+            .reset_index()
+            .rename(columns={"target_sales_monthly": "target_sales"})
+        )
 
         df_brand_group = df_brand_group.sort_values(by="nmv", ascending=False).fillna(0)
-        
+
         for col in ["nmv", "orders", "quantity", "target_sales"]:
             df_brand_group[col] = df_brand_group[col].astype(int)
 
@@ -212,9 +241,11 @@ def get_consolidate_sales_data(
         ).fillna(0)
 
         df_trend_monthly["target_ach_monthly"] = df_trend_monthly.apply(
-            lambda row: row["nmv"] / row["target_sales_monthly"]
-            if row["target_sales_monthly"]
-            else 0,
+            lambda row: (
+                row["nmv"] / row["target_sales_monthly"]
+                if row["target_sales_monthly"]
+                else 0
+            ),
             axis=1,
         )
         df_trend_monthly = df_trend_monthly.sort_values(["data_year", "data_month"])
@@ -253,19 +284,6 @@ def get_consolidate_sales_data(
         cards["top_brand_group_by_nmv"] = {"brand_group": "-", "nmv": 0}
         cards["top_brand_group_by_ach"] = {"brand_group": "-", "target_ach": 0}
 
-    # brand_group_rows = (
-    #     queryset.values("brand_group")
-    #     .annotate(
-    #         nmv=Sum("nmv"),
-    #         orders=Sum("net_order_qty"),
-    #         quantity=Sum("net_sales_qty"),
-    #         target_sales=Max("target_sales"),
-    #     )
-    #     .order_by("-nmv")
-    # )
-    # df_brand_group = pd.DataFrame(list(brand_group_rows))
-    # df_brand_group = df_brand_group.fillna(0)
-
     brand_group_table = (
         [
             {
@@ -274,7 +292,9 @@ def get_consolidate_sales_data(
                 "orders": row["orders"],
                 "quantity": row["quantity"],
                 "target_sales": row["target_sales"],
-                "target_ach": row["nmv"]/row["target_sales"] if row["target_sales"] != 0 else 0
+                "target_ach": (
+                    row["nmv"] / row["target_sales"] if row["target_sales"] != 0 else 0
+                ),
             }
             for _, row in df_brand_group.iterrows()
         ]

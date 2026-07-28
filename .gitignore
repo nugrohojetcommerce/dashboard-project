@@ -25,3 +25,6 @@ media/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Django Settings (Local/Secret overrides)
+**/settings.py

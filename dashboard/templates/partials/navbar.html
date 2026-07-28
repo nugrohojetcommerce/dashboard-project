@@ -67,9 +67,19 @@
                     </span>
                 </label>
             </li>
-            <li class="nav-item">
-              <a href="{% url 'update_profile' %}" class="nav-link navbar-username">{{ request.user.username }}</a>
-            </li>
+            <!-- <li class="nav-item"> -->
+              <!-- <form action="{% url 'logout' %}" method="post" style="display: inline">
+                {% csrf_token %}
+                <button
+                  type="submit"
+                  class="nav-link navbar-username"
+                  style="background: none; border: none; padding: 0; cursor: pointer"
+                >
+                  Logout
+                </button>
+              </form> -->
+              <!-- <a href="{% url 'update_profile' %}" class="nav-link navbar-username">{{ request.user.username }}</a> -->
+            <!-- </li> -->
         </ul>
 
     </div>

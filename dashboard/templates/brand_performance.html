@@ -56,6 +56,51 @@
     flex-direction: column;
     gap: 16px;
   }
+  .dataTables_wrapper{
+      height:100%;
+  }
+
+  .dataTables_scroll{
+      border:none !important;
+  }
+
+  .dataTables_scrollHead{
+      border-bottom:1px solid var(--glass-border);
+  }
+
+  .dataTables_scrollBody{
+      border:none !important;
+  }
+
+  .dataTables_scrollBody::-webkit-scrollbar{
+      width:6px;
+  }
+
+  .dataTables_scrollBody::-webkit-scrollbar-thumb{
+      border-radius:10px;
+  }
+  .dataTables_wrapper .dataTables_filter {
+      float: none !important;
+
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+
+      margin-bottom: 12px;
+  }
+
+  .dataTables_wrapper .dataTables_filter label{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin:0;
+  }
+
+  .dataTables_wrapper .dataTables_filter input{
+      margin-left:0 !important;
+  }
+  
+
 </style>
 
 <div class="bp-header">
@@ -132,11 +177,15 @@
       <div class="metric-label"><span class="label-dot"></span>Net Merchandise Value</div>
       <div class="metric-value" id="nmvCard">0</div>
       <div class="metric-footer">
-        <span class="metric-change up">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          +8.4%
-        </span>
-        <span class="metric-vs">vs. prev. period</span>
+        <div>
+            <span class="metric-change up" id="nmvPrevGrowth"></span>
+            <div class="metric-vs">vs. prev. period</div>
+        </div>
+
+        <div style="text-align:right">
+            <span class="metric-change up" id="nmvYoYGrowth"></span>
+            <div class="metric-vs">vs. YoY</div>
+        </div>
       </div>
       <div class="metric-icon">💰</div>
     </div>
@@ -145,11 +194,15 @@
       <div class="metric-label"><span class="label-dot"></span>Gross Merchandise Value</div>
       <div class="metric-value" id="gmvCard">0</div>
       <div class="metric-footer">
-        <span class="metric-change up">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          +5.1%
-        </span>
-        <span class="metric-vs">vs. prev. period</span>
+        <div>
+            <span class="metric-change up" id="gmvPrevGrowth"></span>
+            <div class="metric-vs">vs. prev. period</div>
+        </div>
+
+        <div style="text-align:right">
+            <span class="metric-change up" id="gmvYoYGrowth"></span>
+            <div class="metric-vs">vs. YoY</div>
+        </div>
       </div>
       <div class="metric-icon">📦</div>
     </div>
@@ -196,11 +249,15 @@
       <div class="metric-label"><span class="label-dot"></span>Net Order Quantity</div>
       <div class="metric-value" id="orderCard">0</div>
       <div class="metric-footer">
-        <span class="metric-change up">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          +8.4%
-        </span>
-        <span class="metric-vs">vs. prev. period</span>
+        <div>
+            <span class="metric-change up" id="ordersPrevGrowth"></span>
+            <div class="metric-vs">vs. prev. period</div>
+        </div>
+
+        <div style="text-align:right">
+            <span class="metric-change up" id="ordersYoYGrowth"></span>
+            <div class="metric-vs">vs. YoY</div>
+        </div>
       </div>
       <div class="metric-icon">🛒</div>
     </div>
@@ -209,11 +266,15 @@
       <div class="metric-label"><span class="label-dot"></span>Net Sales Quantity</div>
       <div class="metric-value" id="quantityCard">0</div>
       <div class="metric-footer">
-        <span class="metric-change up">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          +8.4%
-        </span>
-        <span class="metric-vs">vs. prev. period</span>
+        <div>
+            <span class="metric-change up" id="quantityPrevGrowth"></span>
+            <div class="metric-vs">vs. prev. period</div>
+        </div>
+
+        <div style="text-align:right">
+            <span class="metric-change up" id="quantityYoYGrowth"></span>
+            <div class="metric-vs">vs. YoY</div>
+        </div>
       </div>
       <div class="metric-icon">📊</div>
     </div>
@@ -391,6 +452,55 @@
   </div>
 
 </div>
+<div class="row g-3 align-items-stretch pt-3" style="min-height: 300px;">
+
+    <div class="col-lg-8">
+        <div class="s-card chart-card h-100">
+
+            <div class="chart-header">
+                <div class="chart-title-group">
+                    <div class="chart-accent-bar"></div>
+                    <h3 class="chart-title">Province Distribution</h3>
+                </div>
+            </div>
+
+            <div class="chart-body">
+                <div id="provinceMap" style="height:600px;"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+    <div class="s-card chart-card h-100">
+
+        <div class="chart-header">
+            <div class="chart-title-group">
+                <div class="chart-accent-bar"></div>
+                <h3 class="chart-title">Province Ranking</h3>
+            </div>
+        </div>
+
+        <div class="chart-body">
+            <table id="provinceTable" class="table table-hover w-100">
+                <thead>
+                    <tr>
+                        <th>Province</th>
+                        <th>Net Order</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+<div id="loadingOverlay">
+    <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading dashboard...</div>
+    </div>
+</div>
 
 {{ trend_json|json_script:"trend-data" }}
 {{ trend_cum_json|json_script:"trend-cum-data" }}
@@ -408,6 +518,13 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<!-- maps -->
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+<link rel="stylesheet"
+href="https://cdn.datatables.net/scroller/2.3.1/css/scroller.bootstrap5.min.css">
+
+<script src="https://cdn.datatables.net/scroller/2.3.1/js/dataTables.scroller.min.js"></script>
+
 
 <script>
 $(document).ready(function () {
@@ -419,6 +536,54 @@ function selectAllBrands()    { $('#brandSelect option').prop('selected', true);
 function clearBrands()        { $('#brandSelect option').prop('selected', false); $('#brandSelect').trigger('change'); }
 function selectAllPlatforms() { $('#platformSelect option').prop('selected', true);  $('#platformSelect').trigger('change'); }
 function clearPlatforms()     { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
+
+let provinceMap;
+let indonesiaGeoJson;
+function showLoading() {
+    $("#loadingOverlay").addClass("show");
+    $("body").css("overflow", "hidden");
+}
+
+function hideLoading() {
+    $("#loadingOverlay").removeClass("show");
+    $("body").css("overflow", "");
+}
+
+
+const provinceNameMap = {
+    "West Java": "Jawa Barat",
+    "Central Java": "Jawa Tengah",
+    "East Java": "Jawa Timur",
+
+    "West Sumatra": "Sumatera Barat",
+    "North Sumatra": "Sumatera Utara",
+    "South Sumatra": "Sumatera Selatan",
+
+    "West Kalimantan": "Kalimantan Barat",
+    "Central Kalimantan": "Kalimantan Tengah",
+    "East Kalimantan": "Kalimantan Timur",
+    "South Kalimantan": "Kalimantan Selatan",
+    "North Kalimantan": "Kalimantan Utara",
+
+    "West Sulawesi": "Sulawesi Barat",
+    "Central Sulawesi": "Sulawesi Tengah",
+    "South Sulawesi": "Sulawesi Selatan",
+    "Southeast Sulawesi": "Sulawesi Tenggara",
+    "North Sulawesi": "Sulawesi Utara",
+
+    "West Nusa Tenggara": "Nusa Tenggara Barat",
+    "East Nusa Tenggara": "Nusa Tenggara Timur",
+
+    "Special Capital Region of Jakarta": "Jakarta Raya",
+    "Special Region of Yogyakarta": "Yogyakarta",
+
+    "Bangka Belitung Islands": "Bangka-Belitung",
+    "Riau Islands": "Kepulauan Riau",
+
+    "West Papua": "Irian Jaya Barat",
+    "North Maluku": "Maluku Utara",
+    "Other": null
+};
 
 let nmvTrend;
 let nmvCum;
@@ -434,7 +599,21 @@ function hexToRgba(hex, alpha) {
 }
 function accentRgba(alpha) { return hexToRgba(BITheme.getColors().accent, alpha); }
 
+async function initProvinceMap() {
+
+    provinceMap = echarts.init(
+        document.getElementById("provinceMap")
+    );
+
+    indonesiaGeoJson = await fetch("/static/maps/indonesia-province.geojson")
+        .then(r => r.json());
+    echarts.registerMap("Indonesia", indonesiaGeoJson);
+}
+
 function initChart(){
+
+  // ===province map
+  initProvinceMap();
   // ===== NMV LINE CHART
   const grad = document.getElementById("nmvChart").getContext("2d").createLinearGradient(0, 0, 0, 320);
   grad.addColorStop(0,   accentRgba(0.2));
@@ -480,6 +659,7 @@ function initChart(){
       plugins: {
         legend: { display: false },
         tooltip: {
+          itemSort: (a, b) => b.datasetIndex - a.datasetIndex,
           borderWidth:      1,
           titleFont:        { size: 11, family: "Inter, sans-serif" },
           bodyFont:         { size: 13, weight: '700' },
@@ -488,7 +668,7 @@ function initChart(){
           displayColors:    false,
           callbacks: {
             title: items => items[0].label,
-            label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
+            label: item  => `${item.dataset.label}:  Rp ${Number(item.raw).toLocaleString()}`
           }
         }
       },
@@ -828,6 +1008,22 @@ function initChart(){
     }
   });
 
+  provinceTable = $("#provinceTable").DataTable({
+
+        paging: false,
+        pageLength: 100,
+
+        scrollY: 540,
+        scrollCollapse: true,
+        scroller: true,
+
+        searching: true,
+        ordering: true,
+        info: false,
+        lengthChange: false,
+        order: [[1, "desc"]]
+  });
+
   topProductTable = $('#topProductsTable').DataTable({
     data: [],
     columns: [
@@ -992,94 +1188,375 @@ function applyPageChartColors() {
 }
 document.addEventListener('bithemechange', applyPageChartColors);
 
+// Maps
+function updateProvinceMap(data){
+    if (!Array.isArray(data) || data.length === 0) {
+        provinceMap.clear();
+
+        // provinceMap.setOption({
+        //     title: {
+        //         text: "No Data",
+        //         left: "center",
+        //         top: "middle"
+        //     }
+        // });
+
+        buildProvinceTable([]);
+        return;
+    }
+    data = data
+        .map(x=>({
+
+            name:provinceNameMap[x.name] ?? x.name,
+            value: Number(x.value) || 0
+            // value:x.value
+
+        }))
+        .filter(x=>x.name!==null);
+    
+    data = data
+    .map(item => ({
+        name: provinceNameMap[item.name] ?? item.name,
+        value: item.value
+    }))
+    .filter(item => item.name !== null);
+    provinceMap.setOption({
+
+        tooltip:{
+            trigger:"item",
+            formatter:params=>`
+
+                <b>${params.name}</b><br>
+
+                Net Order : ${(params.value||0).toLocaleString()}
+
+            `
+        },
+
+        visualMap:{
+
+            min:0,
+
+            max:Math.max(...data.map(x=>x.value)),
+
+            left:20,
+
+            bottom:20,
+
+            calculable:true,
+
+            inRange:{
+
+                color:[
+                    "#EAF7E5",
+                    "#C5E8B8",
+                    "#95D279",
+                    "#63B84B",
+                    "#2E7D32"
+                ]
+
+            }
+
+        },
+
+        series:[{
+
+
+            type: "map",
+            map: "Indonesia",
+
+            roam: true,
+
+            layoutCenter: ["50%", "50%"],
+            layoutSize: "90%",
+
+            scaleLimit: {
+                min: 1,
+                max: 8
+            },
+
+            // data: data
+
+            // type:"map",
+
+            // map:"Indonesia",
+
+            // roam:true,
+
+            zoom:1,
+
+            label:{
+
+                show:false
+
+            },
+
+            emphasis:{
+
+                label:{
+
+                    show:false
+
+                }
+
+            },
+
+            data:data
+
+        }]
+
+    });
+    setTimeout(() => provinceMap.resize(), 50);
+    buildProvinceTable(data);
+
+}
+
+let provinceTable;
+
+function buildProvinceTable(data){
+
+    data.sort((a,b)=>b.value-a.value);
+
+    if ($.fn.DataTable.isDataTable('#provinceTable')){
+        provinceTable.destroy();
+    }
+
+    $("#provinceTable tbody").empty();
+
+    data.forEach(row=>{
+
+        $("#provinceTable tbody").append(`
+            <tr>
+                <td>${row.name}</td>
+                <td>${row.value.toLocaleString()}</td>
+            </tr>
+        `);
+
+    });
+
+    // provinceTable = $("#provinceTable").DataTable({
+
+    //     pageLength:10,
+
+    //     order:[[1,"desc"]],
+
+    //     searching:true,
+
+    //     info:true,
+
+    //     lengthChange:false
+
+    // });
+    provinceTable = $("#provinceTable").DataTable({
+
+        paging: false,
+        pageLength: 100,
+
+        scrollY: 540,
+        scrollCollapse: true,
+        scroller: true,
+
+        searching: true,
+        ordering: true,
+        info: false,
+        lengthChange: false,
+
+        order: [[1, "desc"]]
+    });
+
+}
+
+// Maps
+function formatDate(dateStr) {
+    return new Date(dateStr).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    });
+}
+
+function updateDateBadges() {
+    const start = $("#startDate").val();
+    const end = $("#endDate").val();
+
+    if (!start || !end) return;
+
+    const text = `${formatDate(start)} - ${formatDate(end)}`;
+
+    $(".chart-badge").text(text);
+}
+
+function setGrowth(id, growth) {
+    const el = $(id);
+    // console.log(growth)
+    // Handle None, null, undefined, or empty values
+    if (growth === null || growth === undefined || growth === "None" || isNaN(growth)) {
+        el.removeClass("up down").html("-");
+        return;
+    }
+
+    const upArrow = `
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="3"
+             stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"/>
+        </svg>`;
+
+    const downArrow = `
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="3"
+             stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+        </svg>`;
+
+    if (growth >= 0) {
+        el.removeClass("down").addClass("up");
+        el.html(`${upArrow} +${growth.toFixed(2)}%`);
+    } else {
+        el.removeClass("up").addClass("down");
+        el.html(`${downArrow} ${growth.toFixed(2)}%`);
+    }
+}
+
+
 async function loadDashboard(){
-  const params = new URLSearchParams();
+  // const params = new URLSearchParams();
+  // // updateDateBadges();
 
-  ($("#brandSelect").val() || []).forEach((brand) =>
-    params.append("brand", brand),
-    );
+  // ($("#brandSelect").val() || []).forEach((brand) =>
+  //   params.append("brand", brand),
+  //   );
 
-  ($("#platformSelect").val() || []).forEach((platform) =>
-    params.append("platform", platform),
-  );
+  // ($("#platformSelect").val() || []).forEach((platform) =>
+  //   params.append("platform", platform),
+  // );
 
-  params.append("start_date", $("#startDate").val());
+  // params.append("start_date", $("#startDate").val());
 
-  params.append("end_date", $("#endDate").val());
+  // params.append("end_date", $("#endDate").val());
+  showLoading();
+  try{
 
-  const response = await fetch(`{% url 'brand_performance_api' %}?${params}`);
-  const data = await response.json();
+      const params = new URLSearchParams();
+      ($("#brandSelect").val() || []).forEach((brand)=>
+          params.append("brand", brand)
+      );
+      ($("#platformSelect").val() || []).forEach((platform)=>
+          params.append("platform", platform)
+      );
+      params.append("start_date", $("#startDate").val());
+      params.append("end_date", $("#endDate").val());
+      const response = await fetch(
+          `{% url 'brand_performance_api' %}?${params}`
+      );
+      // const response = await fetch(`{% url 'brand_performance_api' %}?${params}`);
+      if (!response.ok) {
+          let message = `Request failed (${response.status})`;
 
-  const trend = data.trend_json;
-  const trend_cum = data.trend_cum_json;
-  const donut_platform = data.platform_nmv_json;
-  const donut_brand = data.brand_nmv_json;
-  const bar_top_product = data.product_nmv_json;
-  const donut_payment = data.payment_type_orders_json;
-  const bar_delivery = data.delivery_option_orders_json;
-  const donut_new_buyer = data.new_existing_buyer_json;
-  const table_top_product = data.product_table_nmv_json;
-  const bar_price_band = data.price_band_orders_json;
-  // console.log("Isi data donut:", donut_platform);
+          try {
+              const error = await response.json();
+              message = error.error || error.message || message;
+          } catch (_) {}
 
-  // ===== SCORECARDS
-  $("#nmvCard").text("Rp" + Number(data.cards.total_nmv).toLocaleString());
-  $("#gmvCard").text("Rp" + Number(data.cards.total_gmv).toLocaleString());
-  $("#orderCard").text(Number(data.cards.total_orders).toLocaleString());
-  $("#quantityCard").text(Number(data.cards.total_quantity).toLocaleString());
+          throw new Error(message);
+          // return;
+      }
+      const data = await response.json();
 
-  // ===== NMV TREND
-  nmvTrend.data.labels = trend.map(i => i.date);
-  nmvTrend.data.datasets[0].data = trend.map(i => i.nmv);
-  nmvTrend.data.datasets[1].data = trend.map(i => i.gmv);
-  nmvTrend.update();
+      const trend = data.trend_json;
+      const trend_cum = data.trend_cum_json;
+      const donut_platform = data.platform_nmv_json;
+      const donut_brand = data.brand_nmv_json;
+      const bar_top_product = data.product_nmv_json;
+      const donut_payment = data.payment_type_orders_json;
+      const bar_delivery = data.delivery_option_orders_json;
+      const donut_new_buyer = data.new_existing_buyer_json;
+      const table_top_product = data.product_table_nmv_json;
+      const bar_price_band = data.price_band_orders_json;
+      const province_orders = data.province_orders_json;
+      updateProvinceMap(province_orders);
 
-  nmvCum.data.labels = trend_cum.map(i => i.date);
-  nmvCum.data.datasets[0].data = trend_cum.map(i => i.nmv);
-  nmvCum.update();
+      // ===== SCORECARDS
+      $("#nmvCard").text("Rp" + Number(data.cards.total_nmv).toLocaleString());
+      $("#gmvCard").text("Rp" + Number(data.cards.total_gmv).toLocaleString());
+      $("#orderCard").text(Number(data.cards.total_orders).toLocaleString());
+      $("#quantityCard").text(Number(data.cards.total_quantity).toLocaleString());
+      updateDateBadges();
+      setGrowth("#nmvPrevGrowth", data.cards.nmv_growth);
+      setGrowth("#nmvYoYGrowth", data.cards.nmv_yoy_growth);
 
-  // ===== PLATFORM DONUT CHART 
-  platformDonut.data.labels = donut_platform.map(i => i.platform);
-  platformDonut.data.datasets[0].data = donut_platform.map(i => i.nmv);
-  platformDonut.update();
+      setGrowth("#gmvPrevGrowth", data.cards.gmv_growth);
+      setGrowth("#gmvYoYGrowth", data.cards.gmv_yoy_growth);
 
-  // ===== BRAND DONUT CHART 
-  brandDonut.data.labels = donut_brand.map(i => i.brand);
-  brandDonut.data.datasets[0].data = donut_brand.map(i => i.nmv);
-  brandDonut.update();
+      setGrowth("#ordersPrevGrowth", data.cards.orders_growth);
+      setGrowth("#ordersYoYGrowth", data.cards.orders_yoy_growth);
 
-  // ===== TOP PRODUCT BAR
-  topProduct.data.labels = bar_top_product.map(i => i.product_name);
-  topProduct.data.datasets[0].data = bar_top_product.map(i => i.nmv);
-  topProduct.update();
+      setGrowth("#quantityPrevGrowth", data.cards.quantity_growth);
+      setGrowth("#quantityYoYGrowth", data.cards.quantity_yoy_growth);
+      
+      // $(".chart-badge").text()
 
-  // ===== PAYMENT DONUT CHART 
-  paymentDonut.data.labels = donut_payment.map(i => i.payment_type);
-  paymentDonut.data.datasets[0].data = donut_payment.map(i => i.orders);
-  paymentDonut.update();
+      // ===== NMV TREND
+      nmvTrend.data.labels = trend.map(i => i.date);
+      nmvTrend.data.datasets[0].data = trend.map(i => i.nmv);
+      nmvTrend.data.datasets[1].data = trend.map(i => i.gmv);
+      nmvTrend.update();
 
-  // ===== DELIVERY OPTION BAR
-  deliveryOption.data.labels = bar_delivery.map(i => i.delivery_option);
-  deliveryOption.data.datasets[0].data = bar_delivery.map(i => i.orders);
-  deliveryOption.update();
+      nmvCum.data.labels = trend_cum.map(i => i.date);
+      nmvCum.data.datasets[0].data = trend_cum.map(i => i.nmv);
+      nmvCum.update();
 
-  // ===== NEW BUYER DONUT CHART 
-  newBuyerDonut.data.labels = donut_new_buyer.map(i => i.buyer_type);
-  newBuyerDonut.data.datasets[0].data = donut_new_buyer.map(i => i.total_buyers);
-  newBuyerDonut.update();
+      // ===== PLATFORM DONUT CHART 
+      platformDonut.data.labels = donut_platform.map(i => i.platform);
+      platformDonut.data.datasets[0].data = donut_platform.map(i => i.nmv);
+      platformDonut.update();
 
-  // ===== TOP PRODUCT TABLE 
-  topProductTable.clear();
-  topProductTable.rows.add(table_top_product);
-  topProductTable.draw();
+      // ===== BRAND DONUT CHART 
+      brandDonut.data.labels = donut_brand.map(i => i.brand);
+      brandDonut.data.datasets[0].data = donut_brand.map(i => i.nmv);
+      brandDonut.update();
 
-  // ===== PRICE BAND BAR
-  priceBandChart.data.labels = bar_price_band.map(i => i.price_band);
-  priceBandChart.data.datasets[0].data = bar_price_band.map(i => i.orders);
-  priceBandChart.update();
+      // ===== TOP PRODUCT BAR
+      topProduct.data.labels = bar_top_product.map(i => i.product_name);
+      topProduct.data.datasets[0].data = bar_top_product.map(i => i.nmv);
+      topProduct.update();
+
+      // ===== PAYMENT DONUT CHART 
+      paymentDonut.data.labels = donut_payment.map(i => i.payment_type);
+      paymentDonut.data.datasets[0].data = donut_payment.map(i => i.orders);
+      paymentDonut.update();
+
+      // ===== DELIVERY OPTION BAR
+      deliveryOption.data.labels = bar_delivery.map(i => i.delivery_option);
+      deliveryOption.data.datasets[0].data = bar_delivery.map(i => i.orders);
+      deliveryOption.update();
+
+      // ===== NEW BUYER DONUT CHART 
+      newBuyerDonut.data.labels = donut_new_buyer.map(i => i.buyer_type);
+      newBuyerDonut.data.datasets[0].data = donut_new_buyer.map(i => i.total_buyers);
+      newBuyerDonut.update();
+
+      // ===== TOP PRODUCT TABLE 
+      topProductTable.clear();
+      topProductTable.rows.add(table_top_product);
+      topProductTable.draw();
+
+      // ===== PRICE BAND BAR
+      priceBandChart.data.labels = bar_price_band.map(i => i.price_band);
+      priceBandChart.data.datasets[0].data = bar_price_band.map(i => i.orders);
+      priceBandChart.update();
+    }
+    catch(err){
+        console.error(err);
+
+        alert(err.message || "Failed to load dashboard.");
+    }
+    finally{
+        hideLoading();
+    }
 }
 function debounceLoad() {
-  console.log("debounceload")
+  // console.log("debounceload");
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(loadDashboard, 300);
 }
@@ -1089,10 +1566,26 @@ function registerEvents() {
   $("#startDate").on("change", loadDashboard);
   $("#endDate").on("change", loadDashboard);
 }
+function resizeProvinceMap() {
+    if (provinceMap) {
+        provinceMap.resize();
+    }
+}
+const body = document.body;
+
+new MutationObserver(() => {
+    setTimeout(() => {
+        resizeProvinceMap();
+    }, 250);     // wait until sidebar animation finishes
+}).observe(body, {
+    attributes: true,
+    attributeFilter: ["class"]
+});
+window.addEventListener("resize", resizeProvinceMap);
 registerEvents();
-initChart()
+initChart();
 applyPageChartColors();
-loadDashboard()
+loadDashboard();
 
 </script>
 

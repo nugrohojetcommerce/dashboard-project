@@ -4,7 +4,7 @@
     background: var(--card-bg) !important;
     border-right: 1px solid var(--glass-border) !important;
     box-shadow: 6px 0 24px rgba(0, 0, 0, 0.03) !important;
-    transition: background .2s, border-color .2s;
+    /* transition: background .2s, border-color .2s; */
   }
 
   .sidebar-brand {
@@ -76,10 +76,13 @@
 <aside class="app-sidebar shadow-sm">
 
     <div class="sidebar-brand">
-        <a href="/" class="brand-link text-decoration-none d-flex align-items-center">
+        <!-- <a href="/" class="brand-link text-decoration-none d-flex align-items-center">
             <span class="brand-text">
                 BI Dashboard
             </span>
+        </a> -->
+        <a href="{% url 'update_profile' %}" class="brand-link text-decoration-none d-flex align-items-center">
+          <span class="brand-text">Hello, {{ request.user.first_name }} {{ request.user.last_name }}</span>
         </a>
     </div>
 

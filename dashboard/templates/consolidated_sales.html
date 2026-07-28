@@ -19,6 +19,7 @@
   .card-spotlight-ach::after { background: linear-gradient(90deg, var(--success), #34D399); }
   .card-spotlight-nmv .label-dot { background: #D97706; }
   .card-spotlight-ach .label-dot { background: var(--success); }
+  
 </style>
 
 <div class="bp-header">
@@ -39,7 +40,7 @@
   <div class="row g-3 align-items-start">
 
     <div class="col-md-4">
-      <label class="form-label">Brands</label>
+      <label class="form-label">Brand Groups</label>
       <select id="brandSelect" class="form-select" name="brand" multiple>
         {% for brand in brands %}
         <option value="{{ brand }}" {% if brand in selected_brands %}selected{% endif %}>{{ brand }}</option>
@@ -226,6 +227,12 @@
     </div>
   </div>
 </div>
+<div id="loadingOverlay">
+    <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading dashboard...</div>
+    </div>
+</div>
 
 {% endblock %}
 
@@ -252,7 +259,16 @@ function clearPlatforms()     { $('#platformSelect option').prop('selected', fal
 
 let topBrandGroupNmvChart, topBrandGroupAchChart, platformDonutChart, orderQtyDoubleBar, monthlyAchTrendChart, brandGroupTable;
 let debounceTimer;
+function showLoading() {
+  console.log("something")
+    $("#loadingOverlay").addClass("show");
+    $("body").css("overflow", "hidden");
+}
 
+function hideLoading() {
+    $("#loadingOverlay").removeClass("show");
+    $("body").css("overflow", "");
+}
 function getQualitativePalette() {
   const dark = BITheme.current === 'dark';
   return [
@@ -473,85 +489,96 @@ function applyPageChartColors() {
 document.addEventListener('bithemechange', applyPageChartColors);
 
 async function loadConsolidateSales() {
-  const params = new URLSearchParams();
+  showLoading();
+  try{
+      const params = new URLSearchParams();
+      ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
+      ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
+      params.append("start_date", $("#startDate").val());
+      params.append("end_date", $("#endDate").val());
 
-  ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
-  ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
-  params.append("start_date", $("#startDate").val());
-  params.append("end_date", $("#endDate").val());
+      const response = await fetch(`{% url 'consolidate_sales_api' %}?${params}`);
+      const data = await response.json();
 
-  const response = await fetch(`{% url 'consolidate_sales_api' %}?${params}`);
-  const data = await response.json();
+      const table_brand_group = data.brand_group_table_json;
+      const bar_top_nmv = data.top_brand_group_nmv_json;
+      const bar_top_ach = data.top_brand_group_target_ach_json;
+      const donut_platform = data.platform_nmv_json;
+      const double_bar = data.brand_group_double_bar_json;
+      const monthly_ach = data.monthly_brand_group_ach_json;
 
-  const table_brand_group = data.brand_group_table_json;
-  const bar_top_nmv = data.top_brand_group_nmv_json;
-  const bar_top_ach = data.top_brand_group_target_ach_json;
-  const donut_platform = data.platform_nmv_json;
-  const double_bar = data.brand_group_double_bar_json;
-  const monthly_ach = data.monthly_brand_group_ach_json;
+      $("#nmvCard").text("Rp" + Number(data.cards.total_nmv).toLocaleString());
+      $("#orderCard").text(Number(data.cards.total_orders).toLocaleString());
+      $("#quantityCard").text(Number(data.cards.total_quantity).toLocaleString());
 
-  $("#nmvCard").text("Rp" + Number(data.cards.total_nmv).toLocaleString());
-  $("#orderCard").text(Number(data.cards.total_orders).toLocaleString());
-  $("#quantityCard").text(Number(data.cards.total_quantity).toLocaleString());
+      const achPct = Number(data.cards.total_target_ach || 0) * 100;
+      const $nmvBadge = $("#nmvAchBadge");
+      $nmvBadge.text(achPct.toFixed(1) + "% of Target");
+      $nmvBadge.removeClass("ach-good ach-warn ach-bad");
+      $nmvBadge.addClass(achPct >= 100 ? "ach-good" : achPct >= 80 ? "ach-warn" : "ach-bad");
 
-  const achPct = Number(data.cards.total_target_ach || 0) * 100;
-  const $nmvBadge = $("#nmvAchBadge");
-  $nmvBadge.text(achPct.toFixed(1) + "% of Target");
-  $nmvBadge.removeClass("ach-good ach-warn ach-bad");
-  $nmvBadge.addClass(achPct >= 100 ? "ach-good" : achPct >= 80 ? "ach-warn" : "ach-bad");
+      const topNmvBg = data.cards.top_brand_group_by_nmv || {};
+      $("#topNmvBrandGroupName").text(topNmvBg.brand_group || "-");
+      $("#topNmvBrandGroupValue").text("Rp" + Number(topNmvBg.nmv || 0).toLocaleString());
 
-  const topNmvBg = data.cards.top_brand_group_by_nmv || {};
-  $("#topNmvBrandGroupName").text(topNmvBg.brand_group || "-");
-  $("#topNmvBrandGroupValue").text("Rp" + Number(topNmvBg.nmv || 0).toLocaleString());
+      const topAchBg = data.cards.top_brand_group_by_ach || {};
+      $("#topAchBrandGroupName").text(topAchBg.brand_group || "-");
+      $("#topAchBrandGroupValue").text((Number(topAchBg.target_ach || 0) * 100).toFixed(1) + "%");
 
-  const topAchBg = data.cards.top_brand_group_by_ach || {};
-  $("#topAchBrandGroupName").text(topAchBg.brand_group || "-");
-  $("#topAchBrandGroupValue").text((Number(topAchBg.target_ach || 0) * 100).toFixed(1) + "%");
+      topBrandGroupNmvChart.data.labels = bar_top_nmv.map(i => i.brand_group);
+      topBrandGroupNmvChart.data.datasets[0].data = bar_top_nmv.map(i => i.nmv);
+      topBrandGroupNmvChart.update();
 
-  topBrandGroupNmvChart.data.labels = bar_top_nmv.map(i => i.brand_group);
-  topBrandGroupNmvChart.data.datasets[0].data = bar_top_nmv.map(i => i.nmv);
-  topBrandGroupNmvChart.update();
+      topBrandGroupAchChart.data.labels = bar_top_ach.map(i => i.brand_group);
+      topBrandGroupAchChart.data.datasets[0].data = bar_top_ach.map(i => Number(i.target_ach) * 100);
+      topBrandGroupAchChart.update();
 
-  topBrandGroupAchChart.data.labels = bar_top_ach.map(i => i.brand_group);
-  topBrandGroupAchChart.data.datasets[0].data = bar_top_ach.map(i => Number(i.target_ach) * 100);
-  topBrandGroupAchChart.update();
+      platformDonutChart.data.labels = donut_platform.map(i => i.platform);
+      platformDonutChart.data.datasets[0].data = donut_platform.map(i => i.nmv);
+      platformDonutChart.update();
 
-  platformDonutChart.data.labels = donut_platform.map(i => i.platform);
-  platformDonutChart.data.datasets[0].data = donut_platform.map(i => i.nmv);
-  platformDonutChart.update();
+      orderQtyDoubleBar.data.labels = double_bar.map(i => i.brand_group);
+      orderQtyDoubleBar.data.datasets[0].data = double_bar.map(i => i.orders);
+      orderQtyDoubleBar.data.datasets[1].data = double_bar.map(i => i.quantity);
+      orderQtyDoubleBar.update();
 
-  orderQtyDoubleBar.data.labels = double_bar.map(i => i.brand_group);
-  orderQtyDoubleBar.data.datasets[0].data = double_bar.map(i => i.orders);
-  orderQtyDoubleBar.data.datasets[1].data = double_bar.map(i => i.quantity);
-  orderQtyDoubleBar.update();
+      brandGroupTable.clear();
+      brandGroupTable.rows.add(table_brand_group);
+      brandGroupTable.draw();
 
-  brandGroupTable.clear();
-  brandGroupTable.rows.add(table_brand_group);
-  brandGroupTable.draw();
+      const periods = [...new Set(monthly_ach.map(i => i.period))].sort();
+      const brandGroups = [...new Set(monthly_ach.map(i => i.brand_group))];
+      const lineColors = getQualitativePalette();
 
-  const periods = [...new Set(monthly_ach.map(i => i.period))].sort();
-  const brandGroups = [...new Set(monthly_ach.map(i => i.brand_group))];
-  const lineColors = getQualitativePalette();
+      const achDatasets = brandGroups.map((bg, idx) => {
+        const byPeriod = Object.fromEntries(
+          monthly_ach.filter(i => i.brand_group === bg).map(i => [i.period, i.target_ach * 100])
+        );
+        return {
+          label: bg,
+          data: periods.map(p => (byPeriod[p] !== undefined ? byPeriod[p] : null)),
+          borderColor: lineColors[idx % lineColors.length],
+          backgroundColor: lineColors[idx % lineColors.length],
+          spanGaps: true,
+          tension: 0.3,
+          pointRadius: 2,
+          borderWidth: 2,
+        };
+      });
 
-  const achDatasets = brandGroups.map((bg, idx) => {
-    const byPeriod = Object.fromEntries(
-      monthly_ach.filter(i => i.brand_group === bg).map(i => [i.period, i.target_ach * 100])
-    );
-    return {
-      label: bg,
-      data: periods.map(p => (byPeriod[p] !== undefined ? byPeriod[p] : null)),
-      borderColor: lineColors[idx % lineColors.length],
-      backgroundColor: lineColors[idx % lineColors.length],
-      spanGaps: true,
-      tension: 0.3,
-      pointRadius: 2,
-      borderWidth: 2,
-    };
-  });
+      monthlyAchTrendChart.data.labels = periods;
+      monthlyAchTrendChart.data.datasets = achDatasets;
+      monthlyAchTrendChart.update();
+  }
+  catch(err){
+        console.error(err);
 
-  monthlyAchTrendChart.data.labels = periods;
-  monthlyAchTrendChart.data.datasets = achDatasets;
-  monthlyAchTrendChart.update();
+        alert(err.message || "Failed to load dashboard.");
+    }
+    finally{
+        hideLoading();
+    }
+
 }
 
 function debounceLoad() {

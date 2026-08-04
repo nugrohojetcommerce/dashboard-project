@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Consolidate Sales{% endblock %}
+
+{% block content %}
+<div class="bp-header">
+  <h1>Daily Sales</h1>
+  <span class="bp-subtitle">/ Overview</span>
+</div>
+
+<form method="get" id="filterForm">
+<div class="s-card filter-panel mb-3">
+  <div class="filter-panel-header">
+    <div class="filter-icon">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    </div>
+    <span>Filters</span>
+  </div>
+
+  <div class="row g-3 align-items-start">
+    <div class="col-md-4">
+      <label class="form-label">Brand Groups</label>
+      <select id="brandSelect" class="form-select" name="brand" multiple>
+        {% for brand in brands %}
+        <option value="{{ brand }}" {% if brand in selected_brands %}selected{% endif %}>{{ brand }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllBrands()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearBrands()">Clear</button>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Platforms</label>
+      <select id="platformSelect" class="form-select" name="platform" multiple>
+        {% for platform in platforms %}
+        <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}</option>
+        {% endfor %}
+      </select>
+      <div class="mt-2 d-flex gap-2">
+        <button type="button" class="btn-ghost-amber" onclick="selectAllPlatforms()">Select All</button>
+        <button type="button" class="btn-ghost-muted" onclick="clearPlatforms()">Clear</button>
+      </div>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Start Date</label>
+      <input type="date" id="startDate" class="form-control" name="start_date" value="{{ start_date }}">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">End Date</label>
+      <input type="date" id="endDate" class="form-control" name="end_date" value="{{ end_date }}">
+    </div>
+  </div>
+</div>
+</form>
+
+<!-- Table 1: Brand & Platform Breakdown with Period Comparison and Growth -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title" id="periodTableTitle">Brand & Platform Period Aggregation Comparison</h3>
+        </div>
+        <button type="button" class="btn btn-success btn-sm" id="exportPeriodExcelBtn">Export Period Table</button>
+      </div>
+      <div class="chart-body" style="padding: 0;">
+        <div id="periodGrid" style="width: 100%; height: 420px; overflow: hidden;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Table 2: Daily Breakdown Spreadsheet -->
+<div class="row g-3 mb-3">
+  <div class="col-12">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Consolidated Daily Breakdown Spreadsheet</h3>
+        </div>
+        <button type="button" class="btn btn-success btn-sm" id="exportDailyExcelBtn">Export Daily Table</button>
+      </div>
+      <div class="chart-body" style="padding: 0;">
+        <div id="spreadsheetGrid" style="width: 100%; height: 500px; overflow: hidden;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="loadingOverlay">
+    <div class="loading-box">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading dashboard...</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css">
+<script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+$(document).ready(function () {
+  $('#brandSelect').select2({ width: '100%', placeholder: 'Select brands' });
+  $('#platformSelect').select2({ width: '100%', placeholder: 'Select platforms' });
+  
+  initSpreadsheets();
+  loadConsolidateSales();
+});
+
+function selectAllBrands()    { $('#brandSelect option').prop('selected', true);  $('#brandSelect').trigger('change'); }
+function clearBrands()        { $('#brandSelect option').prop('selected', false); $('#brandSelect').trigger('change'); }
+function selectAllPlatforms() { $('#platformSelect option').prop('selected', true);  $('#platformSelect').trigger('change'); }
+function clearPlatforms()     { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
+
+let hotInstance;
+let periodHotInstance;
+let debounceTimer;
+const moneyRenderer = (instance, td, row, col, prop, value) => {
+    td.innerHTML = Number(value || 0).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+};
+
+const integerRenderer = (instance, td, row, col, prop, value) => {
+    td.innerHTML = Number(value || 0).toLocaleString('en-US');
+};
+
+const percentRenderer = (instance, td, row, col, prop, value) => {
+    td.innerHTML = Number(value || 0).toLocaleString('en-US', {
+        style: 'percent',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+};
+
+function initSpreadsheets() {
+  
+  periodHotInstance = new Handsontable(document.getElementById("periodGrid"), {
+      data: [],
+      columns: [],
+
+      colHeaders: true,
+      rowHeaders: true,
+
+      fixedColumnsStart: 3,
+
+      manualColumnResize: true,
+      manualRowResize: true,
+
+      stretchH: "none",        // don't stretch hundreds of columns
+      autoWrapRow: false,
+      autoWrapCol: false,
+
+      renderAllRows: false,
+      viewportColumnRenderingOffset: 20,
+      viewportRowRenderingOffset: 30,
+
+      height: 420,
+
+      licenseKey: "non-commercial-and-evaluation"
+  });
+
+
+  document.getElementById('exportPeriodExcelBtn').addEventListener('click', function () {
+    periodHotInstance.getPlugin('exportFile').downloadFile('csv', {
+      filename: 'Brand_Platform_Pivoted_Aggregation',
+      mimeType: 'text/csv',
+      fileExtension: 'csv',
+      columnHeaders: true
+    });
+  });
+
+  // Daily Breakdown Grid Setup
+  hotInstance = new Handsontable(document.getElementById('spreadsheetGrid'), {
+    data: [],
+    colHeaders: [
+      'Date', 'Brand', 'Platform', 'NMV', 'GMV',  
+      'Net Orders', 'Gross Orders',
+      'Seller Discount','% Seller Disc to NMV','Platform Discount','% Platform Disc to NMV',
+      'Seller Voucher','% Seller Vouc to NMV', 'Platform Voucher','% Platform Vouc to NMV',
+      'AOV','ASP'
+    ],
+    columns: [
+      { data: 'create_order_date_time_date', type: 'text'},
+      { data: 'brand', type: 'text' },
+      { data: 'platform', type: 'text' },
+      { data: 'total_nmv', type: 'numeric', renderer: moneyRenderer},
+      { data: 'total_gmv', type: 'numeric', renderer: moneyRenderer },
+      { data: 'net_orders', type: 'numeric', renderer: integerRenderer },
+      { data: 'gross_orders', type: 'numeric', renderer: integerRenderer },
+      { data: 'seller_discount', type: 'numeric', renderer: moneyRenderer },
+      { data: 'seller_discount_percentage', type: 'numeric', renderer: percentRenderer },
+      { data: 'platform_discount', type: 'numeric', renderer: moneyRenderer },
+      { data: 'platform_discount_percentage', type: 'numeric', renderer: percentRenderer },
+      { data: 'total_seller_voucher', type: 'numeric', renderer: integerRenderer },
+      { data: 'seller_voucher_percentage', type: 'numeric', renderer: percentRenderer },
+      { data: 'total_platform_voucher', type: 'numeric', renderer: integerRenderer },
+      { data: 'platform_voucher_percentage', type: 'numeric', renderer: percentRenderer },
+      { data: 'AOV', type: 'numeric', renderer: integerRenderer },
+      { data: 'ASP', type: 'numeric', renderer: integerRenderer },
+    ],
+    rowHeaders: true,
+    fixedColumnsStart: 3,
+    height: '500px',
+    licenseKey: 'non-commercial-and-evaluation'
+  });
+
+  document.getElementById('exportDailyExcelBtn').addEventListener('click', function () {
+    hotInstance.getPlugin('exportFile').downloadFile('csv', {
+      filename: 'Consolidated_Daily_Sales_Report',
+      mimeType: 'text/csv',
+      fileExtension: 'csv',
+      columnHeaders: true
+    });
+  });
+}
+
+async function loadConsolidateSales() {
+  showLoading();
+  try {
+      const params = new URLSearchParams();
+      ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
+      ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
+      params.append("start_date", $("#startDate").val());
+      params.append("end_date", $("#endDate").val());
+
+      const response = await fetch(`{% url 'daily_sales_api' %}?${params}`);
+      const resJson = await response.json();
+
+      if (hotInstance) {
+          hotInstance.loadData(resJson.daily_data || []);
+      }
+      if (periodHotInstance && resJson.pivot_columns) {
+
+          periodHotInstance.updateSettings({
+              columns: resJson.pivot_columns,
+              colHeaders: resJson.pivot_columns.map(c => c.title)
+          });
+
+          periodHotInstance.loadData(resJson.pivot_data || []);
+      }
+  }
+  catch(err) {
+      console.error(err);
+      alert(err.message || "Failed to load dashboard.");
+  }
+  finally {
+      hideLoading();
+  }
+}
+function showLoading() {
+    $("#loadingOverlay").addClass("show");
+    $("body").css("overflow", "hidden");
+}
+
+function hideLoading() {
+    $("#loadingOverlay").removeClass("show");
+    $("body").css("overflow", "");
+}
+
+// async function loadConsolidateSales() {
+//   showLoading();
+//   try {
+//       const params = new URLSearchParams();
+//       ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
+//       ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
+//       params.append("start_date", $("#startDate").val());
+//       params.append("end_date", $("#endDate").val());
+
+//       const response = await fetch(`{% url 'daily_sales_api' %}?${params}`);
+//       const resJson = await response.json();
+
+//       if (hotInstance) {
+//           hotInstance.loadData(resJson.daily_data || []);
+//       }
+//       if (periodHotInstance) {
+//           periodHotInstance.loadData(resJson.period_data || []);
+          
+//           if (resJson.period_headers) {
+//               periodHotInstance.updateSettings({
+//                   colHeaders: [
+//                       'Brand',
+//                       'Platform',
+//                       'Metric', 
+//                       resJson.period_headers.selected, 
+//                       resJson.period_headers.previous, 
+//                       resJson.period_headers.yoy, 
+//                       'vs Previous Growth (%)', 
+//                       'vs YoY Growth (%)'
+//                   ]
+//               });
+//           }
+//       }
+//   }
+//   catch(err) {
+//       console.error(err);
+//       alert(err.message || "Failed to load dashboard.");
+//   }
+//   finally {
+//       hideLoading();
+//   }
+// }
+
+function debounceLoad() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(loadConsolidateSales, 300);
+}
+
+$("#brandSelect").on("change", debounceLoad);
+$("#platformSelect").on("change", debounceLoad);
+$("#startDate").on("change", loadConsolidateSales);
+$("#endDate").on("change", loadConsolidateSales);
+</script>
+{% endblock %}

@@ -3,6 +3,9 @@ from __future__ import annotations
 from datetime import date as date_cls
 from datetime import timedelta
 
+# from matplotlib.dates import relativedelta
+from dateutil.relativedelta import relativedelta
+
 import pandas as pd
 from django.db.models import Sum
 from django.db.models.functions import ExtractWeekDay, TruncDate
@@ -97,8 +100,8 @@ def _prev_period(start_date: str, end_date: str) -> tuple[str, str]:
     end = date_cls.fromisoformat(end_date)
     span_days = (end - start).days + 1
 
-    prev_end = start - timedelta(days=1)
-    prev_start = prev_end - timedelta(days=span_days - 1)
+    prev_end = end - relativedelta(months=1)
+    prev_start = start - relativedelta(months=1)
     return prev_start.isoformat(), prev_end.isoformat()
 
 

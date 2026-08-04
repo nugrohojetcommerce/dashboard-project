@@ -501,6 +501,82 @@
               transform:rotate(360deg);
           }
       }
+      /* ================= HANDSONTABLE THEME ================= */
+
+      .handsontable,
+      .ht_master,
+      .htCore {
+          background: var(--card-bg) !important;
+          color: var(--text-primary) !important;
+      }
+
+      .handsontable td,
+      .handsontable th {
+          background: var(--card-bg) !important;
+          color: var(--text-primary) !important;
+          border-color: var(--glass-border) !important;
+      }
+
+      .handsontable tbody th,
+      .handsontable thead th,
+      .handsontable .ht_clone_left th,
+      .handsontable .ht_clone_top th,
+      .handsontable .ht_clone_top_left_corner th {
+          background: var(--surface-muted) !important;
+          color: var(--text-primary) !important;
+          border-color: var(--glass-border) !important;
+          font-weight: 600;
+      }
+
+      .handsontable tr:hover td {
+          background: var(--glass-hover) !important;
+      }
+
+      .handsontable .current {
+          background: var(--orange-dim) !important;
+      }
+
+      .handsontable .area {
+          background: var(--orange-glow) !important;
+      }
+
+      .handsontable .htDimmed {
+          color: var(--text-muted) !important;
+      }
+
+      .handsontable .htNoFrame,
+      .handsontable .wtHolder,
+      .handsontable .wtHider {
+          background: var(--card-bg) !important;
+      }
+
+      .handsontable .htBorders div {
+          background: var(--orange) !important;
+      }
+
+      /* Scrollbars */
+
+      .handsontable ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+      }
+
+      .handsontable ::-webkit-scrollbar-thumb {
+          background: var(--glass-border);
+          border-radius: 10px;
+      }
+
+      .handsontable ::-webkit-scrollbar-track {
+          background: transparent;
+      }
+
+      /* Selected row/column headers */
+
+      .handsontable .currentHeader,
+      .handsontable .activeHeader {
+          background: var(--orange-dim) !important;
+          color: var(--orange) !important;
+      }
     </style>
 
     {% block extra_css %}
@@ -557,6 +633,19 @@
 
   function getStoredTheme() {
     return localStorage.getItem(THEME_KEY) || 'light';
+  }
+
+  function initSpreadsheets(){
+      document.addEventListener("bithemechange", function () {
+      if (hotInstance) {
+          hotInstance.render();
+      }
+
+      if (periodHotInstance) {
+          periodHotInstance.render();
+      }
+  });
+
   }
 
   function getThemeChartColors(theme) {

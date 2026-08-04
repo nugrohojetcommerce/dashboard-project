@@ -221,11 +221,13 @@ def apply_filters(queryset, user, selected_brands, selected_platforms):
 
 
 def calc_growth(current, previous):
+    print(f"Calculating growth: current={current}, previous={previous}")
     if current is None or previous is None:
         return None
     if previous == 0:
         return None if current > 0 else 0
-
+    print(round((current - previous) / previous * 100, 2))
+    # print(f"Calculating growth: current={current}, previous={previous}")
     return round((current - previous) / previous * 100, 2)
 
 
@@ -374,8 +376,8 @@ def get_brand_performance_data(
 
     period_days = (end - start).days + 1
 
-    prev_end = start - timedelta(days=1)
-    prev_start = prev_end - timedelta(days=period_days - 1)
+    prev_end = end - relativedelta(months=1)
+    prev_start = start - relativedelta(months=1)
     yoy_start = start - relativedelta(years=1)
     yoy_end = end - relativedelta(years=1)
 
@@ -435,13 +437,14 @@ def get_brand_performance_data(
         total_orders=Count("order_number", distinct=True, filter=Q(is_nmv=1)),
         total_quantity=Sum("quantity", filter=Q(is_nmv=1)),
     )
-    
+    print(f"current:{start_date} - {end_date}",cards)
     previous_cards = previous_queryset.aggregate(
         total_nmv=Sum("nmv"),
         total_gmv=Sum("gmv"),
         total_orders=Count("order_number", distinct=True, filter=Q(is_nmv=1)),
         total_quantity=Sum("quantity", filter=Q(is_nmv=1)),
     )
+    print(f"previous:{prev_start} - {prev_end}",previous_cards)
     yoy_cards = yoy_queryset.aggregate(
         total_nmv=Sum("nmv"),
         total_gmv=Sum("gmv"),

@@ -53,7 +53,8 @@ class OrderMartDashboardBrandDF(models.Model):
     # Date & Timestamp Fields
     # Jika tabel lu gak punya primary key 'id', kita pasang primary_key=True di filter_date atau date 
     # agar Django tidak komplain. Di sini gua asumsikan filter_date aman jadi jangkar primary key.
-    filter_date = models.DateField(primary_key=True) 
+    filter_date = models.DateField(null=True,blank=True)
+    key_id = models.SmallIntegerField(primary_key=True) 
     date = models.DateField(null=True, blank=True)
     first_transaction = models.DateTimeField(null=True, blank=True)
     prev_transaction = models.DateTimeField(null=True, blank=True)

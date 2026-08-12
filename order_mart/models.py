@@ -76,11 +76,11 @@ import django.db  # type: ignore
 #     class Meta:
 #         managed = False
 #         db_table = "postgre_order_mart_dwd_df"
-#         # indexes = [
-#         #     django.db.models.Index(fields=['order_number']),
-#         #     django.db.models.Index(fields=['create_order_date_time', 'brand', 'platform']),
-#         # ]
-#         # indexes = [models.Index(fields=['create_order_date_time', 'brand', 'platform'])]
+        # indexes = [
+        #     django.db.models.Index(fields=['order_number']),
+        #     django.db.models.Index(fields=['create_order_date_time', 'brand', 'platform']),
+        # ]
+        # indexes = [models.Index(fields=['create_order_date_time', 'brand', 'platform'])]
 
 class OrderMartDWDDF(django.db.models.Model):
     key_id = django.db.models.BigIntegerField(primary_key=True)

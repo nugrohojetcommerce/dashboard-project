@@ -116,7 +116,9 @@ def get_base_queryset(
 @lru_cache(maxsize=256)
 def get_user_brands_cached(user_id: int):
     return tuple(
-        UserBrand.objects.filter(user_id=user_id).values_list("brand__name", flat=True)
+        UserBrand.objects.filter(user_id=user_id)
+        .exclude(brand__name__iexact="Finetoday")
+        .values_list("brand__name", flat=True)
     )
 
 
@@ -190,7 +192,13 @@ def get_cards(filtered_data):
         for item in filtered_data
         if item["is_nmv"] == 1 and item["gmv"] is not None
     )
-    total_net_order = len({item["order_number"]for item in filtered_data if item["order_number"] is not None})
+    total_net_order = len(
+        {
+            item["order_number"]
+            for item in filtered_data
+            if item["order_number"] is not None
+        }
+    )
     total_net_quantity = sum(
         item["quantity"] for item in filtered_data if item["quantity"] is not None
     )
@@ -368,36 +376,26 @@ def run_query(func, queryset):
 def get_brand_performance_data(
     user, start_date=None, end_date=None, selected_brands=None, selected_platforms=None
 ):
-
     start_date = start_date or date.today().replace(day=1).isoformat()
     end_date = end_date or date.today().isoformat()
     start = datetime.fromisoformat(start_date).date()
     end = datetime.fromisoformat(end_date).date()
-
     period_days = (end - start).days + 1
-
     prev_end = end - relativedelta(months=1)
     prev_start = start - relativedelta(months=1)
     yoy_start = start - relativedelta(years=1)
     yoy_end = end - relativedelta(years=1)
-
     t1 = time.time()
     base_queryset = OrderMart.objects.filter(
         date__range=[start_date, end_date],
-        # brand__in=user_brands
-    )
-    # if not base_queryset:
+    ).exclude(brand__iexact="finetoday")
     previous_queryset = OrderMart.objects.filter(
         date__range=[prev_start, prev_end],
-        # brand__in=user_brands
-    )
+    ).exclude(brand__iexact="finetoday")
     yoy_queryset = OrderMart.objects.filter(
         date__range=[yoy_start, yoy_end],
-        # brand__in=user_brands
-    )
-
-    print(f"first checkpoint{time.time()-t1} seconds")
-
+    ).exclude(brand__iexact="finetoday")
+    print(f"first checkpoint {time.time()-t1} seconds")
     if selected_brands:
         base_queryset = base_queryset.filter(brand__in=selected_brands)
         previous_queryset = previous_queryset.filter(brand__in=selected_brands)
@@ -409,27 +407,15 @@ def get_brand_performance_data(
         base_queryset = base_queryset.filter(condition)
         previous_queryset = previous_queryset.filter(condition)
         yoy_queryset = yoy_queryset.filter(condition)
-        # base_queryset = brand_filter(base_queryset, get_user_brands(user))
-        # previous_queryset = brand_filter(previous_queryset, get_user_brands(user))
-        # yoy_queryset = brand_filter(yoy_queryset, get_user_brands(user))
-
-    print(f"second checkpoint{time.time()-t1} seconds")
-
+    print(f"second checkpoint {time.time()-t1} seconds")
     if selected_platforms:
         base_queryset = base_queryset.filter(platform__in=selected_platforms)
         previous_queryset = previous_queryset.filter(platform__in=selected_platforms)
         yoy_queryset = yoy_queryset.filter(platform__in=selected_platforms)
-    # if not base_queryset:
-    #     return None
-    # return JsonResponse(
-    #             {"error": "Invalid date format. Expected YYYY-MM-DD."},
-    #             status=400,
-    #         )
     queryset = base_queryset
     t = time.time()
-    # print(queryset.count())
     print(time.time() - t)
-    print(f"third checkpoint{time.time()-t1} seconds")
+    print(f"third checkpoint {time.time()-t1} seconds")
     # ===== Score Cards =====
     cards = queryset.aggregate(
         total_nmv=Sum("nmv"),
@@ -437,14 +423,14 @@ def get_brand_performance_data(
         total_orders=Count("order_number", distinct=True, filter=Q(is_nmv=1)),
         total_quantity=Sum("quantity", filter=Q(is_nmv=1)),
     )
-    print(f"current:{start_date} - {end_date}",cards)
+    print(f"current:{start_date} - {end_date}", cards)
     previous_cards = previous_queryset.aggregate(
         total_nmv=Sum("nmv"),
         total_gmv=Sum("gmv"),
         total_orders=Count("order_number", distinct=True, filter=Q(is_nmv=1)),
         total_quantity=Sum("quantity", filter=Q(is_nmv=1)),
     )
-    print(f"previous:{prev_start} - {prev_end}",previous_cards)
+    print(f"previous:{prev_start} - {prev_end}", previous_cards)
     yoy_cards = yoy_queryset.aggregate(
         total_nmv=Sum("nmv"),
         total_gmv=Sum("gmv"),
@@ -477,33 +463,26 @@ def get_brand_performance_data(
         cards["total_quantity"], yoy_cards["total_quantity"]
     )
     cards["total_nmv"] = float(cards["total_nmv"] or 0)
-
     cards["total_gmv"] = float(cards["total_gmv"] or 0)
-
     cards["total_orders"] = float(cards["total_orders"] or 0)
-
     cards["total_quantity"] = float(cards["total_quantity"] or 0)
     print("aggregation 2:", time.time() - t1, "seconds")
-    with ThreadPoolExecutor(max_workers=9) as executor:
+    # ===== Thread Pool Execution =====
+    with ThreadPoolExecutor(max_workers=11) as executor:
         future_trend = executor.submit(run_query, get_trend, queryset)
-        # print("aggregation trend:", time.time() - t1, "seconds")
+        future_trend_prev = executor.submit(run_query, get_trend, previous_queryset)
+        future_trend_yoy = executor.submit(run_query, get_trend, yoy_queryset)
         future_platform = executor.submit(run_query, get_platform, queryset)
-        # print("aggregation platform:", time.time() - t1, "seconds")
         future_brand = executor.submit(run_query, get_brand, queryset)
-        # print("aggregation brand:", time.time() - t1, "seconds")
         future_product = executor.submit(run_query, get_product, queryset)
-        # print("aggregation product:", time.time() - t1, "seconds")
         future_payment = executor.submit(run_query, get_payment, queryset)
-        # print("aggregation payment:", time.time() - t1, "seconds")
         future_delivery = executor.submit(run_query, get_delivery, queryset)
-        # print("aggregation delivery:", time.time() - t1, "seconds")
         future_buyer = executor.submit(run_query, get_buyer, queryset)
-        # print("aggregation buyer:", time.time() - t1, "seconds")
         future_priceband = executor.submit(run_query, get_priceband, queryset)
-        # print("aggregation price:", time.time() - t1, "seconds")
         future_province = executor.submit(run_query, get_province, queryset)
-        # print("aggregation province:", time.time() - t1, "seconds")
     trend_rows = future_trend.result()
+    prev_trend_rows = future_trend_prev.result()
+    yoy_trend_rows = future_trend_yoy.result()
     platform_rows = future_platform.result()
     brand_rows = future_brand.result()
     product_rows = future_product.result()
@@ -512,26 +491,70 @@ def get_brand_performance_data(
     new_existing_buyer_rows = future_buyer.result()
     price_band_rows = future_priceband.result()
     province_rows = future_province.result()
-    # ===== NMV Trends =====
-    trend = []
-    trend_cum = []
-
-    cum_nmv = 0.0
-
-    for row in trend_rows:
-        nmv = float(row["nmv"] or 0)
-        trend.append(
+    # ===== 1. Current Period Single Trend =====
+    trend = [
+        {
+            "date": (
+                r["date"].isoformat()
+                if hasattr(r["date"], "isoformat")
+                else str(r["date"])
+            ),
+            "nmv": float(r["nmv"] or 0),
+            "gmv": float(r["gmv"] or 0),
+        }
+        for r in trend_rows
+    ]
+    # ===== 2. 3-Period Daily Comparison (Graphic Data) =====
+    curr_map = {
+        (
+            r["date"].isoformat() if hasattr(r["date"], "isoformat") else str(r["date"])
+        ): r
+        for r in trend_rows
+    }
+    prev_map = {
+        (
+            r["date"].isoformat() if hasattr(r["date"], "isoformat") else str(r["date"])
+        ): r
+        for r in prev_trend_rows
+    }
+    yoy_map = {
+        (
+            r["date"].isoformat() if hasattr(r["date"], "isoformat") else str(r["date"])
+        ): r
+        for r in yoy_trend_rows
+    }
+    trend_comparison = []
+    for i in range(period_days):
+        curr_d = start + timedelta(days=i)
+        prev_d = prev_start + timedelta(days=i)
+        yoy_d = yoy_start + timedelta(days=i)
+        curr_d_str = curr_d.isoformat()
+        prev_d_str = prev_d.isoformat()
+        yoy_d_str = yoy_d.isoformat()
+        curr_r = curr_map.get(curr_d_str, {})
+        prev_r = prev_map.get(prev_d_str, {})
+        yoy_r = yoy_map.get(yoy_d_str, {})
+        c_nmv = float(curr_r.get("nmv") or 0)
+        c_gmv = float(curr_r.get("gmv") or 0)
+        p_nmv = float(prev_r.get("nmv") or 0)
+        p_gmv = float(prev_r.get("gmv") or 0)
+        y_nmv = float(yoy_r.get("nmv") or 0)
+        y_gmv = float(yoy_r.get("gmv") or 0)
+        trend_comparison.append(
             {
-                "date": row["date"].isoformat(),
-                "nmv": nmv,
-                "gmv": float(row["gmv"] or 0),
-            }
-        )
-        cum_nmv += nmv
-        trend_cum.append(
-            {
-                "date": row["date"].isoformat(),
-                "nmv": cum_nmv,
+                "day": i + 1,
+                "date": curr_d_str,
+                "current_nmv": c_nmv,
+                "current_gmv": c_gmv,
+                "prev_date": prev_d_str,
+                "previous_nmv": p_nmv,
+                "previous_gmv": p_gmv,
+                "yoy_date": yoy_d_str,
+                "yoy_nmv": y_nmv,
+                "yoy_gmv": y_gmv,
+                # Convenient shorthand aliases for charts
+                "nmv": c_nmv,
+                "prev_nmv": p_nmv,
             }
         )
     print("trend 1:", time.time() - t1, "seconds")
@@ -545,10 +568,11 @@ def get_brand_performance_data(
     # ===== Top Product by NMV =====
     product_table_nmv = []
     product_nmv = []
-
     for i, row in enumerate(product_rows):
+        name = row["product_name"] or row["sku_reference_no"] or "Unknown Product"
         item = {
-            "product_name": row["sku_reference_no"],
+            "product_name": name,
+            "sku": row["sku_reference_no"],
             "nmv": float(row["nmv"] or 0),
             "orders": row["orders"],
         }
@@ -565,14 +589,10 @@ def get_brand_performance_data(
     ]
     print("payment type:", time.time() - t1, "seconds")
     # ===== Delivery Option Contribution =====
-
-    # Definisikan anotasi untuk kategori delivery_group
-    # # Jalankan Queryset dengan mendaftarkan panjang karakternya dulu di .annotate()
     delivery_option_orders = [
         {"delivery_option": row["delivery_group"], "orders": row["orders"]}
         for row in delivery_option_rows
     ]
-
     print("Delivery :", time.time() - t1, "seconds")
     # ===== New vs Existing Buyer =====
     new_existing_buyer = [
@@ -580,16 +600,12 @@ def get_brand_performance_data(
         for row in new_existing_buyer_rows
     ]
     print("Buyer :", time.time() - t1, "seconds")
-
     # ===== Price Band Distribution =====
-
-    # Definisikan anotasi untuk kategori delivery_group
     price_band_orders = [
         {"price_band": row["price_band"], "orders": row["orders"]}
         for row in price_band_rows
     ]
     print("Price Band :", time.time() - t1, "seconds")
-
     province_orders = [
         {
             "name": row["province"],
@@ -598,7 +614,6 @@ def get_brand_performance_data(
         for row in province_rows
     ]
     print("chart constructions:", time.time() - t1, "seconds")
-
     return {
         "brands": selected_brands,
         "platforms": selected_platforms,
@@ -608,7 +623,7 @@ def get_brand_performance_data(
         "end_date": end_date,
         "cards": cards,
         "trend_json": trend,
-        "trend_cum_json": trend_cum,
+        "trend_comparison_json": trend_comparison,  # 3-period daily comparison graphics data
         "platform_nmv_json": platform_nmv,
         "brand_nmv_json": brand_nmv,
         "product_nmv_json": product_nmv,

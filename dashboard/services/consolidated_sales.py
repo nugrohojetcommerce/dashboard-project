@@ -36,12 +36,13 @@ TOP_N = 10
 def get_all_brand_variants():
     return list(OrderMartUnion.objects.values_list("brand", flat=True).distinct())
 
+
 def get_consolidate_brand_groups(user):
-    """Retrieves a sorted, distinct list of brand groups from OrderMartUnion 
+    """Retrieves a sorted, distinct list of brand groups from OrderMartUnion
     filtered by the user's allowed brand variants.
     """
     user_brands = get_brand_variants(user)
-    
+
     if not user_brands:
         return []
 
@@ -109,13 +110,14 @@ def get_consolidate_sales_data(
     if selected_brands:
         base_queryset = base_queryset.filter(brand_group__in=selected_brands)
     else:
-        base_queryset = base_queryset.filter(brand_group__in=get_consolidate_brand_groups(user))
+        base_queryset = base_queryset.filter(
+            brand_group__in=get_consolidate_brand_groups(user)
+        )
 
     if selected_platforms:
         base_queryset = base_queryset.filter(platform__in=selected_platforms)
 
     queryset = base_queryset
-    # len()
     # ===== Score Cards =====
     # Table is already daily-level (no order_number to count distinct on),
     # so "orders" and "quantity" come straight from the pre-aggregated

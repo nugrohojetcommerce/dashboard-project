@@ -99,7 +99,75 @@
   .dataTables_wrapper .dataTables_filter input{
       margin-left:0 !important;
   }
-  
+    /* Target button text directly to override base styles */
+  .btn-apply,
+  .btn-apply span,
+  .btn-apply * {
+    color: #FFFFFF !important;
+    font-weight: 800 !important;
+  }
+
+  .btn-apply {
+    width: auto !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 7px 18px;
+    border-radius: var(--radius-sm, 8px);
+    font-size: .8rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--orange, #FF7A00), var(--orange-deep, #E66B00));
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 14px var(--orange-glow, rgba(255, 122, 0, 0.4));
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .btn-apply svg {
+    stroke: #FFFFFF !important;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  }
+
+  .btn-apply:hover {
+    opacity: .95;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--orange-glow, rgba(255, 122, 0, 0.6));
+  }
+  .btn-apply:active {
+    transform: translateY(0) scale(0.96);
+  }
+
+  /* Vivid High-Contrast Pulse Animation when Filter Changes */
+  .btn-apply.pending-changes {
+    animation: btnVividPulse 1.2s infinite ease-in-out;
+  }
+  @keyframes btnVividPulse {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(255, 122, 0, 0.9), 0 4px 14px var(--orange-glow, rgba(255, 122, 0, 0.4));
+    }
+    50% {
+      transform: scale(1.04);
+      box-shadow: 0 0 0 10px rgba(255, 122, 0, 0), 0 6px 22px rgba(255, 122, 0, 0.8);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 rgba(255, 122, 0, 0), 0 4px 14px var(--orange-glow, rgba(255, 122, 0, 0.4));
+    }
+  }
+  #topProductsTable_wrapper {
+    font-size: .8rem;
+  }
+  #topProductsTable_wrapper table thead th,
+  #topProductsTable_wrapper table tbody td {
+    font-size: .8rem;
+    padding: 6px 10px;
+    line-height: 1.4;
+  }
 
 </style>
 
@@ -107,15 +175,22 @@
   <h1>Brand Performance</h1>
   <span class="bp-subtitle">/ Overview</span>
 </div>
-
 <form method="get" id="filterForm">
 <div class="s-card filter-panel">
 
-  <div class="filter-panel-header">
-    <div class="filter-icon">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+  <div class="filter-panel-header d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-2">
+      <div class="filter-icon">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      </div>
+      <span>Filters</span>
     </div>
-    <span>Filters</span>
+
+    <!-- Apply Filter Button in Header -->
+    <button type="submit" class="btn-apply">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      <span>Apply Filter</span>
+    </button>
   </div>
 
   <div class="row g-3 align-items-start">
@@ -234,12 +309,12 @@
       <div class="chart-header">
         <div class="chart-title-group">
           <div class="chart-accent-bar"></div>
-          <h3 class="chart-title">NMV Cumulative</h3>
+          <h3 class="chart-title">3-Period NMV Comparison</h3>
         </div>
         <span class="chart-badge">Daily</span>
       </div>
       <div class="chart-body">
-        <canvas id="nmvCumChart"></canvas>
+        <canvas id="nmvCompChart"></canvas>
       </div>
     </div>
   </div>
@@ -384,13 +459,6 @@
 
   <div class="col-lg-4">
     <div class="s-card chart-card h-100">
-      <!-- <div class="chart-header">
-        <div class="chart-title-group">
-          <div class="chart-accent-bar"></div>
-          <h3 class="chart-title">Top Products - Detail</h3>
-        </div>
-        <span class="chart-badge">{{ start_date }} - {{ end_date }}</span>
-      </div> -->
       <div class="chart-body">
         <table id="topProductsTable" class="table table-sm w-100">
           <thead>
@@ -465,7 +533,7 @@
             </div>
 
             <div class="chart-body">
-                <div id="provinceMap" style="height:600px;"></div>
+                <div id="provinceMap" style="height:400px;"></div>
             </div>
 
         </div>
@@ -503,7 +571,7 @@
 </div>
 
 {{ trend_json|json_script:"trend-data" }}
-{{ trend_cum_json|json_script:"trend-cum-data" }}
+{{ trend_comparison_json|json_script:"trend-comparison-data" }}
 {{ platform_nmv_json|json_script:"platform-nmv-data" }}
 
 
@@ -586,9 +654,19 @@ const provinceNameMap = {
 };
 
 let nmvTrend;
-let nmvCum;
+let nmvComp;
 let platformDonut;
+let brandDonut;
+let topProduct;
+let paymentDonut;
+let deliveryOption;
+let newBuyerDonut;
+let priceBandChart;
+let topProductTable;
+let provinceTable;
 let debounceTimer;
+let trendCompData = [];
+
 function hexToRgba(hex, alpha) {
   hex = hex.replace('#', '');
   if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
@@ -610,14 +688,22 @@ async function initProvinceMap() {
     echarts.registerMap("Indonesia", indonesiaGeoJson);
 }
 
+function makeBarGradient(canvasId, height) {
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  const grad = ctx.createLinearGradient(0, 0, 0, height);
+  grad.addColorStop(0,   accentRgba(0.85)); // High opacity top
+  grad.addColorStop(1,   accentRgba(0.30)); // Soft bottom
+  return grad;
+}
+
 function initChart(){
 
   // ===province map
   initProvinceMap();
   // ===== NMV LINE CHART
   const grad = document.getElementById("nmvChart").getContext("2d").createLinearGradient(0, 0, 0, 320);
-  grad.addColorStop(0,   accentRgba(0.2));
-  grad.addColorStop(0.6, accentRgba(0.02));
+  grad.addColorStop(0,   accentRgba(0.3));
+  grad.addColorStop(0.6, accentRgba(0.05));
   grad.addColorStop(1,   accentRgba(0));
 
   nmvTrend = new Chart(document.getElementById("nmvChart").getContext("2d"), {
@@ -686,42 +772,75 @@ function initChart(){
       }
     }
   });
+  
+    // ===== 3-PERIOD NMV COMPARISON LINE CHART
+  const ctx_comp = document.getElementById("nmvCompChart").getContext("2d");
 
-  // ===== CUMULATIVE NMV LINE CHART
+  const grad_comp = ctx_comp.createLinearGradient(0, 0, 0, 320);
+  grad_comp.addColorStop(0,   accentRgba(0.2));
+  grad_comp.addColorStop(0.6, accentRgba(0.02));
+  grad_comp.addColorStop(1,   accentRgba(0));
 
-  const ctx_cum = document.getElementById("nmvCumChart").getContext("2d");
-
-  const grad_cum = ctx_cum.createLinearGradient(0, 0, 0, 500);
-  grad_cum.addColorStop(0,   accentRgba(0.2));
-  grad_cum.addColorStop(0.6, accentRgba(0.02));
-  grad_cum.addColorStop(1,   accentRgba(0));
-
-  nmvCum = new Chart(ctx_cum, {
+  nmvComp = new Chart(ctx_comp, {
     type: "line",
     data: {
-      labels:[],
-      datasets: [{
-        label: "NMV Cumulative",
-        data:[],
-        borderColor:               BITheme.getColors().accent,
-        borderWidth:               2,
-        backgroundColor:           grad_cum,
-        fill:                      true,
-        tension:                   0.35,
-        pointRadius:               3,
-        pointHoverRadius:          5,
-        pointHoverBackgroundColor: BITheme.getColors().accent,
-        pointHoverBorderColor:     BITheme.getColors().donutBorder, /* Hover border putih biar kontras */
-        pointHoverBorderWidth:     2,
-      }]
+      labels: [],
+      datasets: [
+        {
+          label: "Current Period",
+          data: [],
+          borderColor:               BITheme.getColors().accent,
+          borderWidth:               2,
+          backgroundColor:           grad_comp,
+          fill:                      true,
+          tension:                   0.35,
+          pointRadius:               0,
+          pointHoverRadius:          5,
+          pointHoverBackgroundColor: BITheme.getColors().accent,
+          pointHoverBorderColor:     BITheme.getColors().donutBorder,
+          pointHoverBorderWidth:     2,
+        },
+        {
+          label: "Prev. Period",
+          data: [],
+          borderColor:               "#0055FF",
+          borderWidth:               2,
+          backgroundColor:           "transparent",
+          fill:                      false,
+          tension:                   0.35,
+          pointRadius:               0,
+          pointHoverRadius:          5,
+          pointHoverBackgroundColor: "#0055FF",
+          pointHoverBorderColor:     BITheme.getColors().donutBorder,
+          pointHoverBorderWidth:     2,
+        },
+        {
+          label: "YoY",
+          data: [],
+          borderColor:               "#10B981",
+          borderWidth:               2,
+          backgroundColor:           "transparent",
+          fill:                      false,
+          tension:                   0.35,
+          pointRadius:               0,
+          pointHoverRadius:          5,
+          pointHoverBackgroundColor: "#10B981",
+          pointHoverBorderColor:     BITheme.getColors().donutBorder,
+          pointHoverBorderWidth:     2,
+        }
+      ]
     },
     options: {
       responsive:          true,
       maintainAspectRatio: false,
       interaction: { intersect: false, mode: "index" },
       plugins: {
-        legend: { display: false },
-        tooltip: {
+        legend: {
+          display: true,
+          position: "top",
+          labels: { font: { size: 11, family: "Inter, sans-serif" }, usePointStyle: true }
+        },
+                tooltip: {
           borderWidth:      1,
           titleFont:        { size: 11, family: "Inter, sans-serif" },
           bodyFont:         { size: 13, weight: '700' },
@@ -730,13 +849,30 @@ function initChart(){
           displayColors:    false,
           callbacks: {
             title: items => items[0].label,
-            label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
+            label: function(item) {
+              const dataPoint = trendCompData[item.dataIndex] || {};
+              let dateStr = item.label;
+
+              if (item.datasetIndex === 0 && dataPoint.date) {
+                dateStr = dataPoint.date;
+              } else if (item.datasetIndex === 1 && dataPoint.prev_date) {
+                dateStr = dataPoint.prev_date;
+              } else if (item.datasetIndex === 2 && dataPoint.yoy_date) {
+                dateStr = dataPoint.yoy_date;
+              }
+
+              return `${dateStr}:  Rp ${Number(item.raw).toLocaleString()}`;
+            }
           }
         }
+
+
+
+
       },
       scales: {
         x: {
-          grid:   { drawBorder: false }, /* Grid abu-abu super soft netral */
+          grid:   { drawBorder: false },
           border: { display: false },
           ticks:  { font: { size: 11 }, maxTicksLimit: 10 }
         },
@@ -747,7 +883,7 @@ function initChart(){
         }
       }
     }
-  });
+  }); 
 
   // ===== PLATFORM CONTRIBUTION DONUT CHART
   const ctx_donut = document.getElementById("platformDonutChart").getContext("2d");
@@ -816,7 +952,7 @@ function initChart(){
       }
     }
   });
-
+   window.fullTopProductNames = [];
   // ===== TOP PRODUCT BAR CHART
   const grad_bar = document.getElementById("topProductChart").getContext("2d").createLinearGradient(0, 0, 0, 320);
   grad_bar.addColorStop(0,   accentRgba(0.2));
@@ -831,15 +967,9 @@ function initChart(){
         label: "NMV",
         data: [],
         borderColor:               BITheme.getColors().accent,
-        borderWidth:               2,
+        borderWidth:               1.5,
         backgroundColor:           grad_bar,
-        fill:                      true,
-        tension:                   0.35,
-        pointRadius:               0,
-        pointHoverRadius:          5,
-        pointHoverBackgroundColor: BITheme.getColors().accent,
-        pointHoverBorderColor:     BITheme.getColors().donutBorder, /* Hover border putih biar kontras */
-        pointHoverBorderWidth:     2,
+        borderRadius:              4,
       }]
     },
     options: {
@@ -849,23 +979,38 @@ function initChart(){
       plugins: {
         legend: { display: false },
         tooltip: {
-          borderWidth:      2,
+          borderWidth:      1,
           titleFont:        { size: 11, family: "Inter, sans-serif" },
           bodyFont:         { size: 13, weight: '700' },
           padding:          10,
           cornerRadius:     6,
           displayColors:    false,
           callbacks: {
-            title: items => items[0].label,
-            label: item  => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
+            // Hover Tooltip: Show full untruncated product name
+            title: function(items) {
+              const idx = items[0].dataIndex;
+              return (window.fullTopProductNames && window.fullTopProductNames[idx]) 
+                ? window.fullTopProductNames[idx] 
+                : items[0].label;
+            },
+            label: item => `NMV:  Rp ${Number(item.raw).toLocaleString()}`
           }
         }
       },
       scales: {
         x: {
-          grid:   { drawBorder: false }, /* Grid abu-abu super soft netral */
+          grid:   { drawBorder: false },
           border: { display: false },
-          ticks:  { font: { size: 11 }, maxTicksLimit: 10 }
+          ticks:  {
+            font: { size: 10 },
+            maxRotation: 30,
+            minRotation: 0,
+            // Truncate X-Axis Labels for clean visibility
+            callback: function(val) {
+              const label = this.getLabelForValue(val);
+              return (label && label.length > 18) ? label.substring(0, 18) + '...' : label;
+            }
+          }
         },
         y: {
           grid:   { drawBorder: false },
@@ -875,8 +1020,6 @@ function initChart(){
       }
     }
   });
-
-  // ===== PAYMENT TYPE DONUT CHART
   const ctx_donut_payment = document.getElementById("paymentDonutChart").getContext("2d");
   const donutPalette_payment = [
     BITheme.getColors().accent, // 1. Pure Orange (Warna Utama Lu)
@@ -1013,7 +1156,7 @@ function initChart(){
         paging: false,
         pageLength: 100,
 
-        scrollY: 540,
+        scrollY: 340,
         scrollCollapse: true,
         scroller: true,
 
@@ -1027,7 +1170,15 @@ function initChart(){
   topProductTable = $('#topProductsTable').DataTable({
     data: [],
     columns: [
-      { data: 'product_name' },
+      { 
+        data: 'product_name',
+        render: function(data, type) {
+          if (type === 'sort' || type === 'type') return data;
+          const fullStr = (data || '').replace(/"/g, '&quot;');
+          const truncated = (data && data.length > 25) ? data.substring(0, 25) + '...' : data;
+          return `<span title="${fullStr}" style="cursor: help; display: inline-block; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${truncated}</span>`;
+        }
+      },
       { data: 'nmv', render: function(v, type) {
           if (type === 'sort' || type === 'type') return parseFloat(v);
           return `<span>Rp ${Number(v).toLocaleString()}</span>`;
@@ -1037,56 +1188,16 @@ function initChart(){
     ],
     order: [[1, 'desc']],
     autoWidth: false,
-    paging: true,
-    // searching: true,
+    paging: false,
+    scrollY: 380,
+    scrollCollapse: true,
+    scroller: true,
     ordering: true,
-    pageLength: 10,
+    info: false,
+    lengthChange: false,
     language: {
-      search:     '',
+      search: '',
       searchPlaceholder: 'Search...',
-      lengthMenu: 'Show _MENU_',
-      info:       '_START_–_END_ of _TOTAL_',
-    },
-    createdRow: function(row) {
-      $(row).css({
-        'font-size':   '.82rem',
-        'color':       '#E8D5B7',
-        'border-bottom': '1px solid rgba(255,122,0,0.06)',
-      });
-    },
-    initComplete: function() {
-      // search input
-      $('#topProductsTable_filter input').css({
-        'background':  'rgba(255,255,255,0.04)',
-        'border':      '1px solid rgba(255,122,0,0.18)',
-        'border-radius': '6px',
-        'color':       '#000000',
-        'font-size':   '.78rem',
-        'padding':     '4px 8px',
-      });
-      // info & length
-      $('#topProductsTable_info, #topProductsTable_length select').css({
-        'font-size': '.72rem',
-        'color':     '#B08060',
-      });
-      // pagination
-      $('#topProductsTable_paginate').css({
-        'font-size': '.46rem',
-      });
-      $('#topProductsTable_paginate .pagination').css({
-          'display': 'flex',
-          'flex-wrap': 'wrap',
-      });
-      $('#topProductsTable_paginate .page-item').css({
-          'flex': '1',
-          'text-align' : 'center'
-      });
-      $('#topProductsTable_paginate .paginate_button').css({
-          'font-size': '.12rem',
-          'padding': '2px 2px',  /* Memperkecil ruang di dalam tombol */
-          'margin': '0 1px',     /* Memperdekat jarak antar tombol */
-          'line-height': '1'     /* Menghilangkan tinggi baris berlebih */
-      });
     }
   });
 
@@ -1167,9 +1278,11 @@ function applyPageChartColors() {
   nmvTrend.data.datasets[0].backgroundColor = makeGradient("nmvChart", 320);
   nmvTrend.data.datasets[0].pointHoverBorderColor = c.donutBorder;
 
-  nmvCum.data.datasets[0].borderColor = c.accent;
-  nmvCum.data.datasets[0].backgroundColor = makeGradient("nmvCumChart", 500);
-  nmvCum.data.datasets[0].pointHoverBorderColor = c.donutBorder;
+  if (nmvComp) {
+    nmvComp.data.datasets[0].borderColor = c.accent;
+    nmvComp.data.datasets[0].backgroundColor = makeGradient("nmvCompChart", 320);
+    nmvComp.data.datasets[0].pointHoverBorderColor = c.donutBorder;
+  }
 
   topProduct.data.datasets[0].borderColor = c.accent;
   topProduct.data.datasets[0].backgroundColor = makeGradient("topProductChart", 320);
@@ -1183,7 +1296,7 @@ function applyPageChartColors() {
     chart.data.datasets[0].borderColor = c.donutBorder;
   });
 
-  [nmvTrend, nmvCum, platformDonut, brandDonut, topProduct, paymentDonut, deliveryOption, newBuyerDonut, priceBandChart]
+  [nmvTrend, nmvComp, platformDonut, brandDonut, topProduct, paymentDonut, deliveryOption, newBuyerDonut, priceBandChart]
     .forEach((chart) => { if (chart) { try { chart.update(); } catch (e) {} } });
 }
 document.addEventListener('bithemechange', applyPageChartColors);
@@ -1192,15 +1305,6 @@ document.addEventListener('bithemechange', applyPageChartColors);
 function updateProvinceMap(data){
     if (!Array.isArray(data) || data.length === 0) {
         provinceMap.clear();
-
-        // provinceMap.setOption({
-        //     title: {
-        //         text: "No Data",
-        //         left: "center",
-        //         top: "middle"
-        //     }
-        // });
-
         buildProvinceTable([]);
         return;
     }
@@ -1275,14 +1379,6 @@ function updateProvinceMap(data){
                 max: 8
             },
 
-            // data: data
-
-            // type:"map",
-
-            // map:"Indonesia",
-
-            // roam:true,
-
             zoom:1,
 
             label:{
@@ -1311,8 +1407,6 @@ function updateProvinceMap(data){
 
 }
 
-let provinceTable;
-
 function buildProvinceTable(data){
 
     data.sort((a,b)=>b.value-a.value);
@@ -1334,25 +1428,12 @@ function buildProvinceTable(data){
 
     });
 
-    // provinceTable = $("#provinceTable").DataTable({
-
-    //     pageLength:10,
-
-    //     order:[[1,"desc"]],
-
-    //     searching:true,
-
-    //     info:true,
-
-    //     lengthChange:false
-
-    // });
     provinceTable = $("#provinceTable").DataTable({
 
         paging: false,
         pageLength: 100,
 
-        scrollY: 540,
+        scrollY: 340,
         scrollCollapse: true,
         scroller: true,
 
@@ -1388,8 +1469,6 @@ function updateDateBadges() {
 
 function setGrowth(id, growth) {
     const el = $(id);
-    // console.log(growth)
-    // Handle None, null, undefined, or empty values
     if (growth === null || growth === undefined || growth === "None" || isNaN(growth)) {
         el.removeClass("up down").html("-");
         return;
@@ -1420,20 +1499,6 @@ function setGrowth(id, growth) {
 
 
 async function loadDashboard(){
-  // const params = new URLSearchParams();
-  // // updateDateBadges();
-
-  // ($("#brandSelect").val() || []).forEach((brand) =>
-  //   params.append("brand", brand),
-  //   );
-
-  // ($("#platformSelect").val() || []).forEach((platform) =>
-  //   params.append("platform", platform),
-  // );
-
-  // params.append("start_date", $("#startDate").val());
-
-  // params.append("end_date", $("#endDate").val());
   showLoading();
   try{
 
@@ -1449,7 +1514,6 @@ async function loadDashboard(){
       const response = await fetch(
           `{% url 'brand_performance_api' %}?${params}`
       );
-      // const response = await fetch(`{% url 'brand_performance_api' %}?${params}`);
       if (!response.ok) {
           let message = `Request failed (${response.status})`;
 
@@ -1459,12 +1523,11 @@ async function loadDashboard(){
           } catch (_) {}
 
           throw new Error(message);
-          // return;
       }
       const data = await response.json();
 
       const trend = data.trend_json;
-      const trend_cum = data.trend_cum_json;
+      const trend_comp = data.trend_comparison_json || [];
       const donut_platform = data.platform_nmv_json;
       const donut_brand = data.brand_nmv_json;
       const bar_top_product = data.product_nmv_json;
@@ -1474,6 +1537,7 @@ async function loadDashboard(){
       const table_top_product = data.product_table_nmv_json;
       const bar_price_band = data.price_band_orders_json;
       const province_orders = data.province_orders_json;
+      trendCompData = data.trend_comparison_json;
       updateProvinceMap(province_orders);
 
       // ===== SCORECARDS
@@ -1493,8 +1557,6 @@ async function loadDashboard(){
 
       setGrowth("#quantityPrevGrowth", data.cards.quantity_growth);
       setGrowth("#quantityYoYGrowth", data.cards.quantity_yoy_growth);
-      
-      // $(".chart-badge").text()
 
       // ===== NMV TREND
       nmvTrend.data.labels = trend.map(i => i.date);
@@ -1502,9 +1564,29 @@ async function loadDashboard(){
       nmvTrend.data.datasets[1].data = trend.map(i => i.gmv);
       nmvTrend.update();
 
-      nmvCum.data.labels = trend_cum.map(i => i.date);
-      nmvCum.data.datasets[0].data = trend_cum.map(i => i.nmv);
-      nmvCum.update();
+      // ===== 3-PERIOD NMV COMPARISON CHART (DATE LABELS) =====
+      // X-Axis: Format dates as "DD MMM" (e.g. "01 Aug", "02 Aug")
+      nmvComp.data.labels = trend_comp.map(i => i.date);
+      nmvComp.data.datasets[0].data = trend_comp.map(i => i.current_nmv);
+      nmvComp.data.datasets[1].data = trend_comp.map(i => i.previous_nmv);
+      nmvComp.data.datasets[2].data = trend_comp.map(i => i.yoy_nmv);
+      nmvComp.update();
+
+      // Legend Series: Display date range for each of the 3 periods
+      if (trend_comp.length > 0) {
+        const first = trend_comp[0];
+        const last = trend_comp[trend_comp.length - 1];
+
+        nmvComp.data.datasets[0].label = `${formatDate(first.date)} - ${formatDate(last.date)}`;
+        nmvComp.data.datasets[1].label = `${formatDate(first.prev_date)} - ${formatDate(last.prev_date)}`;
+        nmvComp.data.datasets[2].label = `${formatDate(first.yoy_date)} - ${formatDate(last.yoy_date)}`;
+      }
+
+      nmvComp.data.datasets[0].data = trend_comp.map(i => i.current_nmv);
+      nmvComp.data.datasets[1].data = trend_comp.map(i => i.previous_nmv);
+      nmvComp.data.datasets[2].data = trend_comp.map(i => i.yoy_nmv);
+      nmvComp.update();
+
 
       // ===== PLATFORM DONUT CHART 
       platformDonut.data.labels = donut_platform.map(i => i.platform);
@@ -1517,11 +1599,12 @@ async function loadDashboard(){
       brandDonut.update();
 
       // ===== TOP PRODUCT BAR
+      window.fullTopProductNames = bar_top_product.map(i => i.product_name);
       topProduct.data.labels = bar_top_product.map(i => i.product_name);
       topProduct.data.datasets[0].data = bar_top_product.map(i => i.nmv);
       topProduct.update();
 
-      // ===== PAYMENT DONUT CHART 
+      // ===== PAYMENT TYPE DONUT
       paymentDonut.data.labels = donut_payment.map(i => i.payment_type);
       paymentDonut.data.datasets[0].data = donut_payment.map(i => i.orders);
       paymentDonut.update();
@@ -1531,40 +1614,47 @@ async function loadDashboard(){
       deliveryOption.data.datasets[0].data = bar_delivery.map(i => i.orders);
       deliveryOption.update();
 
-      // ===== NEW BUYER DONUT CHART 
+      // ===== NEW BUYER DONUT
       newBuyerDonut.data.labels = donut_new_buyer.map(i => i.buyer_type);
       newBuyerDonut.data.datasets[0].data = donut_new_buyer.map(i => i.total_buyers);
       newBuyerDonut.update();
+
+      // ===== PRICE BAND BAR
+      priceBandChart.data.labels = bar_price_band.map(i => i.price_band);
+      priceBandChart.data.datasets[0].data = bar_price_band.map(i => i.orders);
+      priceBandChart.update();
 
       // ===== TOP PRODUCT TABLE 
       topProductTable.clear();
       topProductTable.rows.add(table_top_product);
       topProductTable.draw();
 
-      // ===== PRICE BAND BAR
-      priceBandChart.data.labels = bar_price_band.map(i => i.price_band);
-      priceBandChart.data.datasets[0].data = bar_price_band.map(i => i.orders);
-      priceBandChart.update();
-    }
-    catch(err){
-        console.error(err);
+  }
+  catch(err){
+      console.error(err);
 
-        alert(err.message || "Failed to load dashboard.");
-    }
-    finally{
-        hideLoading();
-    }
+      alert(err.message || "Failed to load dashboard.");
+  }
+  finally{
+      hideLoading();
+  }
 }
 function debounceLoad() {
-  // console.log("debounceload");
   clearTimeout(debounceTimer);
   debounceTimer = setTimeout(loadDashboard, 300);
 }
+
 function registerEvents() {
-  $("#brandSelect").on("change", debounceLoad);
-  $("#platformSelect").on("change", debounceLoad);
-  $("#startDate").on("change", loadDashboard);
-  $("#endDate").on("change", loadDashboard);
+  // Highlight button with pulse animation when any filter changes
+  $("#brandSelect, #platformSelect, #startDate, #endDate").on("change", function() {
+    $(".btn-apply").addClass("pending-changes");
+  });
+  // Remove pulse animation and reload dashboard on form submit
+  $("#filterForm").on("submit", function(e) {
+    e.preventDefault();
+    $(".btn-apply").removeClass("pending-changes");
+    loadDashboard();
+  });
 }
 function resizeProvinceMap() {
     if (provinceMap) {

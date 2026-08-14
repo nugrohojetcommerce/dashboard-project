@@ -270,8 +270,54 @@ def daily_sales_api(request: HttpRequest) -> JsonResponse:
             {"data": f"{metric_key}_growth_yoy", "title": f"{metric_label} vs YoY", "type": "numeric"},
         ])
     
+    # Compute summary KPIs
+    summary_kpi = base_qs.aggregate(
+        total_nmv=Coalesce(Sum("total_nmv"), 0.0, output_field=FloatField()),
+        total_gmv=Coalesce(Sum("total_gmv"), 0.0, output_field=FloatField()),
+        net_orders=Coalesce(Sum("net_orders"), 0.0, output_field=FloatField()),
+        seller_discount=Coalesce(Sum("seller_discount"), 0.0, output_field=FloatField()),
+        platform_discount=Coalesce(Sum("platform_discount"), 0.0, output_field=FloatField()),
+        net_quantity=Coalesce(Sum("net_quantity"), 0.0, output_field=FloatField()),
+    )
+    
+    nmv = summary_kpi["total_nmv"]
+    orders = summary_kpi["net_orders"]
+    qty = summary_kpi["net_quantity"]
+    
+    summary_kpi["AOV"] = nmv / orders if orders else 0
+    summary_kpi["ASP"] = nmv / qty if qty else 0
+
+    # Compute trend data for line chart
+    trend_qs = base_qs.values("create_order_date_time_date").annotate(
+        nmv=Coalesce(Sum("total_nmv"), 0.0, output_field=FloatField()),
+        gmv=Coalesce(Sum("total_gmv"), 0.0, output_field=FloatField())
+    ).order_by("create_order_date_time_date")
+    
+    trend_data = [
+        {
+            "date": row["create_order_date_time_date"].isoformat() if row["create_order_date_time_date"] else "",
+            "nmv": row["nmv"],
+            "gmv": row["gmv"]
+        } for row in trend_qs
+    ]
+
+    # Compute platform contribution for donut chart
+    platform_qs = base_qs.values("platform").annotate(
+        nmv=Coalesce(Sum("total_nmv"), 0.0, output_field=FloatField())
+    ).order_by("-nmv")
+    
+    platform_data = [
+        {
+            "platform": row["platform"],
+            "nmv": row["nmv"]
+        } for row in platform_qs
+    ]
+    
     return JsonResponse({
         "daily_data": daily_data,
         "pivot_data": pivot_rows,
         "pivot_columns": columns_config,
+        "summary_kpi": summary_kpi,
+        "trend_data": trend_data,
+        "platform_data": platform_data,
     })

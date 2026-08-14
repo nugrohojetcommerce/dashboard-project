@@ -28,3 +28,6 @@ Thumbs.db
 
 # Django Settings (Local/Secret overrides)
 **/settings.py
+
+# AI Agent Config
+.agents/

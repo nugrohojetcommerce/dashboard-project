@@ -57,18 +57,126 @@
 </div>
 </form>
 
-<!-- Table 1: Brand & Platform Breakdown with Period Comparison and Growth -->
-<div class="row g-3 mb-4">
+<!-- KPI Summary Cards -->
+<div class="row g-3 mb-4" id="kpiCardsContainer">
+  <!-- Filled via JS -->
+  <div class="col-md-3">
+    <div class="s-card text-center p-3">
+      <h6 class="text-muted mb-2">Total NMV</h6>
+      <h3 class="mb-0" id="kpiNmv">Rp 0</h3>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="s-card text-center p-3">
+      <h6 class="text-muted mb-2">Total GMV</h6>
+      <h3 class="mb-0" id="kpiGmv">Rp 0</h3>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="s-card text-center p-3">
+      <h6 class="text-muted mb-2">Net Orders</h6>
+      <h3 class="mb-0" id="kpiOrders">0</h3>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="s-card text-center p-3">
+      <h6 class="text-muted mb-2">AOV</h6>
+      <h3 class="mb-0" id="kpiAov">Rp 0</h3>
+    </div>
+  </div>
+</div>
+
+<!-- Target Pacing Section -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="s-card p-3">
+      <div class="d-flex justify-content-between align-items-end mb-2">
+        <div>
+          <h6 class="text-muted mb-1">NMV Target Achievement</h6>
+          <h4 class="mb-0"><span id="targetAchievedText">0%</span> <small class="text-muted" style="font-size: 0.6em;">of Target</small></h4>
+        </div>
+        <div style="width: 250px;">
+          <label class="form-label" style="font-size: 0.8rem; margin-bottom: 2px;">Set Monthly Target (Rp)</label>
+          <input type="number" class="form-control form-control-sm" id="targetInput" placeholder="e.g. 1000000000" value="1000000000">
+        </div>
+      </div>
+      <div class="progress" style="height: 12px; background-color: var(--border-color);">
+        <div class="progress-bar" id="targetProgressBar" role="progressbar" style="width: 0%; transition: width 0.5s ease-in-out;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-3 mb-3">
   <div class="col-12">
     <div class="s-card chart-card">
       <div class="chart-header">
         <div class="chart-title-group">
           <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Daily Sales Trend (with Campaign Highlights)</h3>
+        </div>
+      </div>
+      <div class="chart-body" style="padding: 15px;">
+        <div id="trendChart" style="width: 100%; height: 350px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-8">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Discount & Subsidy Efficiency</h3>
+        </div>
+      </div>
+      <div class="chart-body" style="padding: 15px;">
+        <div id="discountChart" style="width: 100%; height: 350px;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="s-card chart-card">
+      <div class="chart-header">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
+          <h3 class="chart-title">Platform Contribution</h3>
+        </div>
+      </div>
+      <div class="chart-body" style="padding: 15px;">
+        <div id="platformChart" style="width: 100%; height: 350px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Table Builder Header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Custom Tables</h4>
+  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customTableModal">
+    + Add Custom Table
+  </button>
+</div>
+<div id="customTablesContainer"></div>
+
+<!-- Table 1: Brand & Platform Breakdown with Period Comparison and Growth -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div class="chart-title-group">
+          <div class="chart-accent-bar"></div>
           <h3 class="chart-title" id="periodTableTitle">Brand & Platform Period Aggregation Comparison</h3>
         </div>
-        <button type="button" class="btn btn-success btn-sm" id="exportPeriodExcelBtn">Export Period Table</button>
+        <div>
+          <button type="button" class="btn btn-outline-primary btn-sm me-2" id="copyPeriodBtn">Copy Table</button>
+          <button type="button" class="btn btn-success btn-sm" id="exportPeriodExcelBtn">Export Period Table</button>
+        </div>
       </div>
-      <div class="chart-body" style="padding: 0;">
+      <div style="background-color: var(--card-bg, #ffffff);">
         <div id="periodGrid" style="width: 100%; height: 420px; overflow: hidden;"></div>
       </div>
     </div>
@@ -78,15 +186,26 @@
 <!-- Table 2: Daily Breakdown Spreadsheet -->
 <div class="row g-3 mb-3">
   <div class="col-12">
-    <div class="s-card chart-card">
-      <div class="chart-header">
+    <div>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
         <div class="chart-title-group">
           <div class="chart-accent-bar"></div>
           <h3 class="chart-title">Consolidated Daily Breakdown Spreadsheet</h3>
         </div>
-        <button type="button" class="btn btn-success btn-sm" id="exportDailyExcelBtn">Export Daily Table</button>
+        <div class="d-flex gap-2 align-items-center">
+            <div class="dropdown">
+              <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="globalMetricDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Select Metrics
+              </button>
+              <ul class="dropdown-menu p-3" aria-labelledby="globalMetricDropdown" id="globalMetricSelector" style="width: 250px;">
+                <!-- Filled via JS -->
+              </ul>
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm" id="copyDailyBtn">Copy Table</button>
+            <button type="button" class="btn btn-success btn-sm" id="exportDailyExcelBtn">Export Daily Table</button>
+        </div>
       </div>
-      <div class="chart-body" style="padding: 0;">
+      <div style="background-color: var(--card-bg, #ffffff);">
         <div id="spreadsheetGrid" style="width: 100%; height: 500px; overflow: hidden;"></div>
       </div>
     </div>
@@ -99,6 +218,87 @@
         <div class="loading-text">Loading dashboard...</div>
     </div>
 </div>
+
+<!-- Custom Table Builder Modal -->
+<div class="modal fade" id="customTableModal" tabindex="-1" aria-labelledby="customTableModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content s-card" style="border: none;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+        <h5 class="modal-title" id="customTableModalLabel">Build Custom Table</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="customTableForm">
+          <div class="mb-3">
+            <label class="form-label">Table Title</label>
+            <input type="text" class="form-control" id="customTableTitle" placeholder="e.g., Shopee Performance for Brand A" required>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Brand</label>
+              <select id="customTableBrand" class="form-select" required>
+                <option value="">Select Brand...</option>
+                {% for brand in brands %}
+                <option value="{{ brand }}">{{ brand }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Platform</label>
+              <select id="customTablePlatform" class="form-select" required>
+                <option value="">Select Platform...</option>
+                {% for platform in platforms %}
+                <option value="{{ platform }}">{{ platform }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Metrics to Show</label>
+            <div class="d-flex flex-wrap gap-3">
+              <div class="form-check">
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="total_nmv" id="metricNMV" checked>
+                <label class="form-check-label" for="metricNMV">NMV</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="total_gmv" id="metricGMV" checked>
+                <label class="form-check-label" for="metricGMV">GMV</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="net_orders" id="metricOrders" checked>
+                <label class="form-check-label" for="metricOrders">Net Orders</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="gross_orders" id="metricGrossOrders">
+                <label class="form-check-label" for="metricGrossOrders">Gross Orders</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="AOV" id="metricAOV" checked>
+                <label class="form-check-label" for="metricAOV">AOV</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="ASP" id="metricASP" checked>
+                <label class="form-check-label" for="metricASP">ASP</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="seller_discount" id="metricSellerDisc">
+                <label class="form-check-label" for="metricSellerDisc">Seller Discount</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="platform_discount" id="metricPlatformDisc">
+                <label class="form-check-label" for="metricPlatformDisc">Platform Discount</label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" onclick="buildCustomTable()">Build Table</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -109,6 +309,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css">
 <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 $(document).ready(function () {
@@ -160,9 +362,11 @@ function initSpreadsheets() {
       manualColumnResize: true,
       manualRowResize: true,
 
-      stretchH: "none",        // don't stretch hundreds of columns
+      stretchH: "all",        // fill screen even if few columns
       autoWrapRow: false,
       autoWrapCol: false,
+
+      columnSorting: true,
 
       renderAllRows: false,
       viewportColumnRenderingOffset: 20,
@@ -173,6 +377,17 @@ function initSpreadsheets() {
       licenseKey: "non-commercial-and-evaluation"
   });
 
+  document.getElementById('copyPeriodBtn').addEventListener('click', function () {
+    const tsvData = periodHotInstance.getPlugin('exportFile').exportAsString('csv', { 
+        columnHeaders: true,
+        columnDelimiter: '\t'
+    });
+    navigator.clipboard.writeText(tsvData).then(() => {
+        alert("Table copied to clipboard!");
+    }).catch(err => {
+        alert("Failed to copy table: " + err);
+    });
+  });
 
   document.getElementById('exportPeriodExcelBtn').addEventListener('click', function () {
     periodHotInstance.getPlugin('exportFile').downloadFile('csv', {
@@ -183,39 +398,93 @@ function initSpreadsheets() {
     });
   });
 
+  // Definition of all possible metrics for the Global Table
+  const globalMetricsDef = [
+    { id: 'total_nmv', label: 'NMV', type: 'numeric', render: moneyRenderer, default: true },
+    { id: 'total_gmv', label: 'GMV', type: 'numeric', render: moneyRenderer, default: true },
+    { id: 'net_orders', label: 'Net Orders', type: 'numeric', render: integerRenderer, default: true },
+    { id: 'net_quantity', label: 'Net Quantity', type: 'numeric', render: integerRenderer, default: true },
+    { id: 'gross_orders', label: 'Gross Orders', type: 'numeric', render: integerRenderer, default: false },
+    { id: 'seller_discount', label: 'Seller Discount', type: 'numeric', render: moneyRenderer, default: false },
+    { id: 'seller_discount_percentage', label: '% Seller Disc to NMV', type: 'numeric', render: percentRenderer, default: false },
+    { id: 'platform_discount', label: 'Platform Discount', type: 'numeric', render: moneyRenderer, default: false },
+    { id: 'platform_discount_percentage', label: '% Platform Disc to NMV', type: 'numeric', render: percentRenderer, default: false },
+    { id: 'total_seller_voucher', label: 'Seller Voucher', type: 'numeric', render: integerRenderer, default: false },
+    { id: 'seller_voucher_percentage', label: '% Seller Vouc to NMV', type: 'numeric', render: percentRenderer, default: false },
+    { id: 'total_platform_voucher', label: 'Platform Voucher', type: 'numeric', render: integerRenderer, default: false },
+    { id: 'platform_voucher_percentage', label: '% Platform Vouc to NMV', type: 'numeric', render: percentRenderer, default: false },
+    { id: 'AOV', label: 'AOV', type: 'numeric', render: integerRenderer, default: false },
+    { id: 'ASP', label: 'ASP', type: 'numeric', render: integerRenderer, default: false },
+  ];
+
+  // Populate Dropdown
+  const $dropdown = $('#globalMetricSelector');
+  $dropdown.empty();
+  globalMetricsDef.forEach(m => {
+      $dropdown.append(`
+        <li>
+          <div class="form-check ms-2">
+            <input class="form-check-input global-metric-cb" type="checkbox" value="${m.id}" id="gcb_${m.id}" ${m.default ? 'checked' : ''}>
+            <label class="form-check-label" for="gcb_${m.id}">${m.label}</label>
+          </div>
+        </li>
+      `);
+  });
+
+  // Function to build columns based on selected metrics
+  function getGlobalColumns() {
+      const colHeaders = ['Date', 'Brand', 'Platform'];
+      const columns = [
+        { data: 'create_order_date_time_date', type: 'text'},
+        { data: 'brand', type: 'text' },
+        { data: 'platform', type: 'text' },
+      ];
+
+      $('.global-metric-cb:checked').each(function() {
+          const val = $(this).val();
+          const def = globalMetricsDef.find(d => d.id === val);
+          if (def) {
+              colHeaders.push(def.label);
+              columns.push({ data: def.id, type: def.type, renderer: def.render });
+          }
+      });
+      return { colHeaders, columns };
+  }
+
+  const initialConfig = getGlobalColumns();
+
   // Daily Breakdown Grid Setup
   hotInstance = new Handsontable(document.getElementById('spreadsheetGrid'), {
     data: [],
-    colHeaders: [
-      'Date', 'Brand', 'Platform', 'NMV', 'GMV',  
-      'Net Orders', 'Gross Orders',
-      'Seller Discount','% Seller Disc to NMV','Platform Discount','% Platform Disc to NMV',
-      'Seller Voucher','% Seller Vouc to NMV', 'Platform Voucher','% Platform Vouc to NMV',
-      'AOV','ASP'
-    ],
-    columns: [
-      { data: 'create_order_date_time_date', type: 'text'},
-      { data: 'brand', type: 'text' },
-      { data: 'platform', type: 'text' },
-      { data: 'total_nmv', type: 'numeric', renderer: moneyRenderer},
-      { data: 'total_gmv', type: 'numeric', renderer: moneyRenderer },
-      { data: 'net_orders', type: 'numeric', renderer: integerRenderer },
-      { data: 'gross_orders', type: 'numeric', renderer: integerRenderer },
-      { data: 'seller_discount', type: 'numeric', renderer: moneyRenderer },
-      { data: 'seller_discount_percentage', type: 'numeric', renderer: percentRenderer },
-      { data: 'platform_discount', type: 'numeric', renderer: moneyRenderer },
-      { data: 'platform_discount_percentage', type: 'numeric', renderer: percentRenderer },
-      { data: 'total_seller_voucher', type: 'numeric', renderer: integerRenderer },
-      { data: 'seller_voucher_percentage', type: 'numeric', renderer: percentRenderer },
-      { data: 'total_platform_voucher', type: 'numeric', renderer: integerRenderer },
-      { data: 'platform_voucher_percentage', type: 'numeric', renderer: percentRenderer },
-      { data: 'AOV', type: 'numeric', renderer: integerRenderer },
-      { data: 'ASP', type: 'numeric', renderer: integerRenderer },
-    ],
+    colHeaders: initialConfig.colHeaders,
+    columns: initialConfig.columns,
     rowHeaders: true,
     fixedColumnsStart: 3,
     height: '500px',
+    stretchH: 'all',
+    columnSorting: true,
     licenseKey: 'non-commercial-and-evaluation'
+  });
+
+  // Listen to dropdown changes to update hotInstance
+  $(document).on('change', '.global-metric-cb', function() {
+      const newConfig = getGlobalColumns();
+      hotInstance.updateSettings({
+          colHeaders: newConfig.colHeaders,
+          columns: newConfig.columns
+      });
+  });
+
+  document.getElementById('copyDailyBtn').addEventListener('click', function () {
+    const tsvData = hotInstance.getPlugin('exportFile').exportAsString('csv', { 
+        columnHeaders: true,
+        columnDelimiter: '\t'
+    });
+    navigator.clipboard.writeText(tsvData).then(() => {
+        alert("Table copied to clipboard!");
+    }).catch(err => {
+        alert("Failed to copy table: " + err);
+    });
   });
 
   document.getElementById('exportDailyExcelBtn').addEventListener('click', function () {
@@ -226,6 +495,195 @@ function initSpreadsheets() {
       columnHeaders: true
     });
   });
+}
+
+let trendChartInstance = null;
+let platformChartInstance = null;
+let discountChartInstance = null;
+let currentTotalNmv = 0;
+
+// Target Pacing Logic
+document.getElementById('targetInput').addEventListener('input', updateTargetPacing);
+
+function updateTargetPacing() {
+    const targetVal = parseFloat(document.getElementById('targetInput').val || document.getElementById('targetInput').value) || 1;
+    const progress = (currentTotalNmv / targetVal) * 100;
+    const boundedProgress = Math.min(Math.max(progress, 0), 100);
+    
+    document.getElementById('targetAchievedText').innerText = progress.toFixed(1) + '%';
+    const bar = document.getElementById('targetProgressBar');
+    bar.style.width = boundedProgress + '%';
+    
+    if (progress >= 100) {
+        bar.className = 'progress-bar bg-success';
+    } else if (progress >= 80) {
+        bar.className = 'progress-bar bg-info';
+    } else if (progress >= 50) {
+        bar.className = 'progress-bar bg-warning';
+    } else {
+        bar.className = 'progress-bar bg-danger';
+    }
+}
+
+function renderCharts(trendData, platformData, dailyData) {
+    if (!trendChartInstance) {
+        trendChartInstance = echarts.init(document.getElementById('trendChart'));
+    }
+    if (!platformChartInstance) {
+        platformChartInstance = echarts.init(document.getElementById('platformChart'));
+    }
+    if (!discountChartInstance) {
+        discountChartInstance = echarts.init(document.getElementById('discountChart'));
+    }
+
+    // Trend Chart
+    const dates = trendData.map(item => item.date);
+    const nmvSeries = trendData.map(item => item.nmv);
+    const gmvSeries = trendData.map(item => item.gmv);
+
+    const themeColors = window.BITheme && typeof window.BITheme.getColors === 'function' ? window.BITheme.getColors() : { text: '#333', grid: '#eee' };
+
+    // Helper for Campaign Dates
+    const campaignData = [];
+    dates.forEach((dateStr, index) => {
+        const d = new Date(dateStr);
+        const day = d.getDate();
+        const month = d.getMonth() + 1;
+        if (day === 25) {
+            campaignData.push({ name: 'Payday', xAxis: dateStr, yAxis: nmvSeries[index], value: 'Payday' });
+        } else if (day === month) {
+            campaignData.push({ name: 'Twin Date', xAxis: dateStr, yAxis: nmvSeries[index], value: `${day}.${month}` });
+        }
+    });
+
+    trendChartInstance.setOption({
+        tooltip: { trigger: 'axis', backgroundColor: themeColors.tooltipBg, borderColor: themeColors.tooltipBorder, textStyle: { color: themeColors.tooltipBody } },
+        legend: { data: ['NMV', 'GMV'], bottom: 0, textStyle: { color: themeColors.text } },
+        grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
+        xAxis: { type: 'category', boundaryGap: false, data: dates,
+                 axisLabel: { color: themeColors.textMuted },
+                 splitLine: { lineStyle: { color: themeColors.grid } }
+        },
+        yAxis: { type: 'value', 
+                 axisLabel: { color: themeColors.textMuted, formatter: (value) => 'Rp ' + (value / 1000000).toFixed(0) + 'M' },
+                 splitLine: { lineStyle: { color: themeColors.grid } }
+        },
+        series: [
+            { 
+                name: 'NMV', type: 'line', smooth: true, data: nmvSeries, itemStyle: { color: themeColors.accent || '#0d6efd' },
+                markPoint: {
+                    data: campaignData,
+                    symbol: 'pin',
+                    symbolSize: 45,
+                    itemStyle: { color: themeColors.accent2 || '#e83e8c' },
+                    label: { fontSize: 10, color: '#fff' }
+                }
+            },
+            { name: 'GMV', type: 'line', smooth: true, data: gmvSeries, itemStyle: { color: themeColors.warn || '#ffc107' } }
+        ]
+    });
+
+    // Platform Donut Chart
+    const pieData = platformData.map(item => ({
+        name: item.platform,
+        value: item.nmv
+    }));
+
+    platformChartInstance.setOption({
+        tooltip: { trigger: 'item', backgroundColor: themeColors.tooltipBg, borderColor: themeColors.tooltipBorder, textStyle: { color: themeColors.tooltipBody }, formatter: '{b}: Rp {c} ({d}%)' },
+        legend: { bottom: 0, textStyle: { color: themeColors.text } },
+        series: [
+            {
+                name: 'Platform NMV',
+                type: 'pie',
+                radius: ['40%', '70%'],
+                avoidLabelOverlap: false,
+                itemStyle: {
+                    borderRadius: 10,
+                    borderColor: themeColors.donutBorder || '#fff',
+                    borderWidth: 2
+                },
+                label: { show: false, position: 'center' },
+                emphasis: {
+                    label: { show: true, fontSize: '18', fontWeight: 'bold', color: themeColors.text }
+                },
+                labelLine: { show: false },
+                data: pieData
+            }
+        ]
+    });
+
+    // Discount Efficiency Chart (Stacked Bar + Line)
+    if (dailyData && dailyData.length > 0) {
+        const discAgg = {};
+        dailyData.forEach(row => {
+            const d = row.create_order_date_time_date;
+            if (!discAgg[d]) discAgg[d] = { gmv: 0, sDisc: 0, pDisc: 0, sVouc: 0, pVouc: 0 };
+            discAgg[d].gmv += Number(row.total_gmv || 0);
+            discAgg[d].sDisc += Number(row.seller_discount || 0);
+            discAgg[d].pDisc += Number(row.platform_discount || 0);
+            discAgg[d].sVouc += Number(row.total_seller_voucher || 0);
+            discAgg[d].pVouc += Number(row.total_platform_voucher || 0);
+        });
+        
+        const sortedDates = Object.keys(discAgg).sort();
+        const sDiscSeries = sortedDates.map(d => discAgg[d].sDisc);
+        const pDiscSeries = sortedDates.map(d => discAgg[d].pDisc);
+        const sVoucSeries = sortedDates.map(d => discAgg[d].sVouc);
+        const pVoucSeries = sortedDates.map(d => discAgg[d].pVouc);
+        
+        const depthSeries = sortedDates.map(d => {
+            const sumDisc = discAgg[d].sDisc + discAgg[d].pDisc + discAgg[d].sVouc + discAgg[d].pVouc;
+            return discAgg[d].gmv > 0 ? (sumDisc / discAgg[d].gmv * 100).toFixed(2) : 0;
+        });
+
+        discountChartInstance.setOption({
+            tooltip: { trigger: 'axis', backgroundColor: themeColors.tooltipBg, borderColor: themeColors.tooltipBorder, textStyle: { color: themeColors.tooltipBody } },
+            legend: { data: ['Seller Disc', 'Platform Disc', 'Seller Vouc', 'Platform Vouc', 'Discount Depth %'], bottom: 0, textStyle: { color: themeColors.text } },
+            grid: { left: '3%', right: '4%', bottom: '20%', containLabel: true },
+            xAxis: { type: 'category', data: sortedDates, axisLabel: { color: themeColors.textMuted } },
+            yAxis: [
+                { type: 'value', name: 'Value', axisLabel: { color: themeColors.textMuted, formatter: (val) => 'Rp ' + (val/1000000).toFixed(0) + 'M' }, splitLine: { lineStyle: { color: themeColors.grid } } },
+                { type: 'value', name: 'Depth %', axisLabel: { color: themeColors.textMuted, formatter: '{value} %' }, splitLine: { show: false } }
+            ],
+            series: [
+                { name: 'Seller Disc', type: 'bar', stack: 'total', data: sDiscSeries, itemStyle: { color: '#ff7f50' } },
+                { name: 'Platform Disc', type: 'bar', stack: 'total', data: pDiscSeries, itemStyle: { color: '#87cefa' } },
+                { name: 'Seller Vouc', type: 'bar', stack: 'total', data: sVoucSeries, itemStyle: { color: '#da70d6' } },
+                { name: 'Platform Vouc', type: 'bar', stack: 'total', data: pVoucSeries, itemStyle: { color: '#32cd32' } },
+                { name: 'Discount Depth %', type: 'line', yAxisIndex: 1, data: depthSeries, itemStyle: { color: themeColors.accent || '#ff0000' }, smooth: true, symbolSize: 6 }
+            ]
+        });
+    }
+
+    // Resize charts on window resize
+    window.addEventListener('resize', () => {
+        trendChartInstance.resize();
+        platformChartInstance.resize();
+        if(discountChartInstance) discountChartInstance.resize();
+    });
+}
+
+// Re-render charts when theme changes
+document.addEventListener('bithemechange', () => {
+    // We can just call renderCharts again with the existing data if it's stored.
+    // Or simpler, trigger a reload or re-apply options.
+    // Since we don't store data globally, we can call loadConsolidateSales() which is debounced.
+    if(trendChartInstance) debounceLoad();
+});
+
+function updateKpiCards(kpi) {
+    if (!kpi) return;
+    const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+    const formatNumber = (val) => new Intl.NumberFormat('id-ID').format(val);
+
+    currentTotalNmv = kpi.total_nmv || 0;
+    updateTargetPacing();
+
+    document.getElementById('kpiNmv').innerText = formatCurrency(kpi.total_nmv || 0);
+    document.getElementById('kpiGmv').innerText = formatCurrency(kpi.total_gmv || 0);
+    document.getElementById('kpiOrders').innerText = formatNumber(kpi.net_orders || 0);
+    document.getElementById('kpiAov').innerText = formatCurrency(kpi.AOV || 0);
 }
 
 async function loadConsolidateSales() {
@@ -240,16 +698,21 @@ async function loadConsolidateSales() {
       const response = await fetch(`{% url 'daily_sales_api' %}?${params}`);
       const resJson = await response.json();
 
+      // Update KPIs and Charts
+      updateKpiCards(resJson.summary_kpi);
+      if (resJson.trend_data && resJson.platform_data) {
+          renderCharts(resJson.trend_data, resJson.platform_data, resJson.daily_data || []);
+      }
+
+      // Update Tables
       if (hotInstance) {
           hotInstance.loadData(resJson.daily_data || []);
       }
       if (periodHotInstance && resJson.pivot_columns) {
-
           periodHotInstance.updateSettings({
               columns: resJson.pivot_columns,
               colHeaders: resJson.pivot_columns.map(c => c.title)
           });
-
           periodHotInstance.loadData(resJson.pivot_data || []);
       }
   }
@@ -323,5 +786,163 @@ $("#brandSelect").on("change", debounceLoad);
 $("#platformSelect").on("change", debounceLoad);
 $("#startDate").on("change", loadConsolidateSales);
 $("#endDate").on("change", loadConsolidateSales);
+
+let customTableCounter = 0;
+const customTables = {};
+
+async function buildCustomTable() {
+    const title = $("#customTableTitle").val();
+    const brand = $("#customTableBrand").val();
+    const platform = $("#customTablePlatform").val();
+    
+    if(!title || !brand || !platform) {
+        alert("Please fill Title, Brand, and Platform.");
+        return;
+    }
+
+    const selectedMetrics = [];
+    $(".custom-metric-cb:checked").each(function() {
+        selectedMetrics.push($(this).val());
+    });
+
+    if(selectedMetrics.length === 0) {
+        alert("Please select at least one metric.");
+        return;
+    }
+    
+    const startDate = $("#startDate").val();
+    const endDate = $("#endDate").val();
+    
+    // Close modal
+    const modalEl = document.getElementById('customTableModal');
+    let modal = bootstrap.Modal.getInstance(modalEl);
+    if (!modal) {
+        modal = new bootstrap.Modal(modalEl);
+    }
+    modal.hide();
+    
+    showLoading();
+    
+    try {
+        const params = new URLSearchParams();
+        params.append("brand", brand);
+        params.append("platform", platform);
+        params.append("start_date", startDate);
+        params.append("end_date", endDate);
+        
+        const response = await fetch(`{% url 'daily_sales_api' %}?${params}`);
+        const resJson = await response.json();
+        
+        customTableCounter++;
+        const tableId = 'customTable_' + customTableCounter;
+        
+        const cardHtml = `
+        <div class="row g-3 mb-4" id="card_${tableId}">
+          <div class="col-12">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="chart-title-group">
+                  <div class="chart-accent-bar"></div>
+                  <h3 class="chart-title">${title} (${brand} - ${platform})</h3>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary me-2" onclick="copyCustomTable('${tableId}')">Copy</button>
+                    <button class="btn btn-sm btn-outline-success me-2" onclick="exportCustomTable('${tableId}', '${title}')">Export</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeCustomTable('${tableId}')">Remove</button>
+                </div>
+              </div>
+              <div style="background-color: var(--card-bg, #ffffff);">
+                <div id="${tableId}" style="width: 100%; height: 400px; overflow: hidden;"></div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+        
+        $("#customTablesContainer").append(cardHtml);
+        
+        // Define headers based on metrics selected
+        const allMetricsMap = {
+            'total_nmv': { label: 'NMV', type: 'numeric', render: moneyRenderer },
+            'total_gmv': { label: 'GMV', type: 'numeric', render: moneyRenderer },
+            'net_orders': { label: 'Net Orders', type: 'numeric', render: integerRenderer },
+            'gross_orders': { label: 'Gross Orders', type: 'numeric', render: integerRenderer },
+            'AOV': { label: 'AOV', type: 'numeric', render: integerRenderer },
+            'ASP': { label: 'ASP', type: 'numeric', render: integerRenderer },
+            'seller_discount': { label: 'Seller Discount', type: 'numeric', render: moneyRenderer },
+            'platform_discount': { label: 'Platform Discount', type: 'numeric', render: moneyRenderer },
+        };
+        
+        const colHeaders = ['Date', 'Brand', 'Platform'];
+        const columns = [
+            { data: 'create_order_date_time_date', type: 'text' },
+            { data: 'brand', type: 'text' },
+            { data: 'platform', type: 'text' },
+        ];
+        
+        selectedMetrics.forEach(m => {
+            if(allMetricsMap[m]) {
+                colHeaders.push(allMetricsMap[m].label);
+                columns.push({
+                    data: m,
+                    type: allMetricsMap[m].type,
+                    renderer: allMetricsMap[m].render
+                });
+            }
+        });
+        
+        const hot = new Handsontable(document.getElementById(tableId), {
+            data: resJson.daily_data || [],
+            colHeaders: colHeaders,
+            columns: columns,
+            rowHeaders: true,
+            fixedColumnsStart: 3,
+            height: 400,
+            stretchH: 'all',
+            columnSorting: true,
+            licenseKey: 'non-commercial-and-evaluation'
+        });
+        
+        customTables[tableId] = hot;
+        
+    } catch(err) {
+        console.error(err);
+        alert("Failed to build custom table: " + err.message);
+    } finally {
+        hideLoading();
+    }
+}
+
+function removeCustomTable(tableId) {
+    if(customTables[tableId]) {
+        customTables[tableId].destroy();
+        delete customTables[tableId];
+    }
+    $("#card_" + tableId).remove();
+}
+
+function exportCustomTable(tableId, title) {
+    if(customTables[tableId]) {
+        customTables[tableId].getPlugin('exportFile').downloadFile('csv', {
+          filename: title.replace(/[^a-z0-9]/gi, '_').toLowerCase(),
+          mimeType: 'text/csv',
+          fileExtension: 'csv',
+          columnHeaders: true
+        });
+    }
+}
+
+function copyCustomTable(tableId) {
+    if(customTables[tableId]) {
+        const tsvData = customTables[tableId].getPlugin('exportFile').exportAsString('csv', { 
+            columnHeaders: true,
+            columnDelimiter: '\t'
+        });
+        navigator.clipboard.writeText(tsvData).then(() => {
+            alert("Table copied to clipboard!");
+        }).catch(err => {
+            alert("Failed to copy table: " + err);
+        });
+    }
+}
 </script>
 {% endblock %}

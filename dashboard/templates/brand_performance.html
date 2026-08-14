@@ -159,6 +159,15 @@
       box-shadow: 0 0 0 0 rgba(255, 122, 0, 0), 0 4px 14px var(--orange-glow, rgba(255, 122, 0, 0.4));
     }
   }
+  #topProductsTable_wrapper {
+    font-size: .8rem;
+  }
+  #topProductsTable_wrapper table thead th,
+  #topProductsTable_wrapper table tbody td {
+    font-size: .8rem;
+    padding: 6px 10px;
+    line-height: 1.4;
+  }
 
 </style>
 
@@ -524,7 +533,7 @@
             </div>
 
             <div class="chart-body">
-                <div id="provinceMap" style="height:600px;"></div>
+                <div id="provinceMap" style="height:400px;"></div>
             </div>
 
         </div>
@@ -1147,7 +1156,7 @@ function initChart(){
         paging: false,
         pageLength: 100,
 
-        scrollY: 540,
+        scrollY: 340,
         scrollCollapse: true,
         scroller: true,
 
@@ -1179,14 +1188,16 @@ function initChart(){
     ],
     order: [[1, 'desc']],
     autoWidth: false,
-    paging: true,
+    paging: false,
+    scrollY: 380,
+    scrollCollapse: true,
+    scroller: true,
     ordering: true,
-    pageLength: 10,
+    info: false,
+    lengthChange: false,
     language: {
       search: '',
       searchPlaceholder: 'Search...',
-      lengthMenu: 'Show _MENU_',
-      info: '_START_–_END_ of _TOTAL_',
     }
   });
 
@@ -1422,7 +1433,7 @@ function buildProvinceTable(data){
         paging: false,
         pageLength: 100,
 
-        scrollY: 540,
+        scrollY: 340,
         scrollCollapse: true,
         scroller: true,
 

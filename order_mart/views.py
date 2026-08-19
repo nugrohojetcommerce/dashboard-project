@@ -33,15 +33,12 @@ def get_user_brands_cached(user_id: int):
         UserBrand.objects.filter(user_id=user_id).values_list("brand__name", flat=True)
     )
 
-
 @lru_cache(maxsize=1)
 def get_all_brand_variants():
     return list(OrderMartDWDDF.objects.values_list("brand", flat=True).distinct())
 
-
 def get_user_brands(user: User) -> list[str]:
     return list(get_user_brands_cached(user.id))
-
 
 def get_brand_variants(user):
     user_brands = get_user_brands(user)
@@ -56,9 +53,6 @@ def get_brand_variants(user):
         ]
     )
 
-
-@django.views.decorators.cache.never_cache
-@login_required
 def index(request):
     today = date.today() - timedelta(days=1)  # noqa: DTZ011
     context: dict[str, Any] = {
@@ -79,7 +73,6 @@ def index(request):
         context,
     )
 
-
 def apply_filters(qs, request, user):
     selected_brands = request.GET.getlist("brand")
     selected_platforms = request.GET.getlist("platform")
@@ -97,26 +90,20 @@ def apply_filters(qs, request, user):
 
     return qs
 
-
 def get_aggregated_metrics_by_group(qs):
-    grouped = qs.values("brand", "platform").annotate(
-        total_nmv=Coalesce(Sum("total_nmv"), 0.0, output_field=FloatField()),
-        total_gmv=Coalesce(Sum("total_gmv"), 0.0, output_field=FloatField()),
-        net_orders=Coalesce(Sum("net_orders"), 0.0, output_field=FloatField()),
-        gross_orders=Coalesce(Sum("gross_orders"), 0.0, output_field=FloatField()),
-        net_quantity=Coalesce(Sum("net_quantity"), 0.0, output_field=FloatField()),
-        seller_discount=Coalesce(
-            Sum("seller_discount"), 0.0, output_field=FloatField()
-        ),
-        platform_discount=Coalesce(
-            Sum("platform_discount"), 0.0, output_field=FloatField()
-        ),
-        total_seller_voucher=Coalesce(
-            Sum("total_seller_voucher"), 0.0, output_field=FloatField()
-        ),
-        total_platform_voucher=Coalesce(
-            Sum("total_platform_voucher"), 0.0, output_field=FloatField()
-        ),
+    grouped = (
+        qs.values("brand", "platform")
+        .annotate(
+            total_nmv=Coalesce(Sum("total_nmv"), 0.0, output_field=FloatField()),
+            total_gmv=Coalesce(Sum("total_gmv"), 0.0, output_field=FloatField()),
+            net_orders=Coalesce(Sum("net_orders"), 0.0, output_field=FloatField()),
+            gross_orders=Coalesce(Sum("gross_orders"), 0.0, output_field=FloatField()),
+            net_quantity=Coalesce(Sum("net_quantity"), 0.0, output_field=FloatField()),
+            seller_discount=Coalesce(Sum("seller_discount"), 0.0, output_field=FloatField()),
+            platform_discount=Coalesce(Sum("platform_discount"), 0.0, output_field=FloatField()),
+            total_seller_voucher=Coalesce(Sum("total_seller_voucher"), 0.0, output_field=FloatField()),
+            total_platform_voucher=Coalesce(Sum("total_platform_voucher"), 0.0, output_field=FloatField()),
+        )
     )
 
     result = {}
@@ -127,7 +114,9 @@ def get_aggregated_metrics_by_group(qs):
         orders = row["net_orders"]
         qty = row["net_quantity"]
 
-        row["seller_discount_percentage"] = row["seller_discount"] / nmv if nmv else 0
+        row["seller_discount_percentage"] = (
+            row["seller_discount"] / nmv if nmv else 0
+        )
 
         row["platform_discount_percentage"] = (
             row["platform_discount"] / nmv if nmv else 0
@@ -148,7 +137,6 @@ def get_aggregated_metrics_by_group(qs):
 
     return result
 
-
 @django.views.decorators.cache.never_cache
 @login_required
 def daily_sales_api(request: HttpRequest) -> JsonResponse:
@@ -156,7 +144,7 @@ def daily_sales_api(request: HttpRequest) -> JsonResponse:
     end_date = request.GET.get("end_date")
     start_date = start_date or date.today().replace(day=1).isoformat()  # noqa: DTZ011
     end_date = end_date or date.today().isoformat()  # noqa: DTZ011
-
+    
     start = datetime.fromisoformat(start_date).date()
     end = datetime.fromisoformat(end_date).date()
     user = request.user
@@ -168,97 +156,41 @@ def daily_sales_api(request: HttpRequest) -> JsonResponse:
 
     dt_start = make_aware(datetime.combine(start, dtime.min))
     dt_end = make_aware(datetime.combine(end, dtime.max))
-
+    
     prev_dt_start = make_aware(datetime.combine(prev_start, dtime.min))
     prev_dt_end = make_aware(datetime.combine(prev_end, dtime.max))
-
+    
     yoy_dt_start = make_aware(datetime.combine(yoy_start, dtime.min))
     yoy_dt_end = make_aware(datetime.combine(yoy_end, dtime.max))
 
-    base_qs = apply_filters(
-        OrderMartDWDDF.objects.filter(
-            create_order_date_time_date__range=[dt_start, dt_end]
-        ),
-        request,
-        user,
-    )
-    prev_qs = apply_filters(
-        OrderMartDWDDF.objects.filter(
-            create_order_date_time_date__range=[prev_dt_start, prev_dt_end]
-        ),
-        request,
-        user,
-    )
-    yoy_qs = apply_filters(
-        OrderMartDWDDF.objects.filter(
-            create_order_date_time_date__range=[yoy_dt_start, yoy_dt_end]
-        ),
-        request,
-        user,
-    )
+    base_qs = apply_filters(OrderMartDWDDF.objects.filter(create_order_date_time_date__range=[dt_start, dt_end]), request, user)
+    prev_qs = apply_filters(OrderMartDWDDF.objects.filter(create_order_date_time_date__range=[prev_dt_start, prev_dt_end]), request, user)
+    yoy_qs = apply_filters(OrderMartDWDDF.objects.filter(create_order_date_time_date__range=[yoy_dt_start, yoy_dt_end]), request, user)
 
     queryset = base_qs.annotate(
         seller_discount_percentage=Case(
-            When(
-                total_nmv__gt=0,
-                then=ExpressionWrapper(
-                    F("seller_discount") / F("total_nmv"), output_field=FloatField()
-                ),
-            ),
-            default=Value(0.0),
-            output_field=FloatField(),
+            When(total_nmv__gt=0, then=ExpressionWrapper(F("seller_discount") / F("total_nmv"), output_field=FloatField())),
+            default=Value(0.0), output_field=FloatField()
         ),
         platform_discount_percentage=Case(
-            When(
-                total_nmv__gt=0,
-                then=ExpressionWrapper(
-                    F("platform_discount") / F("total_nmv"), output_field=FloatField()
-                ),
-            ),
-            default=Value(0.0),
-            output_field=FloatField(),
+            When(total_nmv__gt=0, then=ExpressionWrapper(F("platform_discount") / F("total_nmv"), output_field=FloatField())),
+            default=Value(0.0), output_field=FloatField()
         ),
         seller_voucher_percentage=Case(
-            When(
-                total_nmv__gt=0,
-                then=ExpressionWrapper(
-                    F("total_seller_voucher") / F("total_nmv"),
-                    output_field=FloatField(),
-                ),
-            ),
-            default=Value(0.0),
-            output_field=FloatField(),
+            When(total_nmv__gt=0, then=ExpressionWrapper(F("total_seller_voucher") / F("total_nmv"), output_field=FloatField())),
+            default=Value(0.0), output_field=FloatField()
         ),
         platform_voucher_percentage=Case(
-            When(
-                total_nmv__gt=0,
-                then=ExpressionWrapper(
-                    F("total_platform_voucher") / F("total_nmv"),
-                    output_field=FloatField(),
-                ),
-            ),
-            default=Value(0.0),
-            output_field=FloatField(),
+            When(total_nmv__gt=0, then=ExpressionWrapper(F("total_platform_voucher") / F("total_nmv"), output_field=FloatField())),
+            default=Value(0.0), output_field=FloatField()
         ),
         AOV=Case(
-            When(
-                net_orders__gt=0,
-                then=ExpressionWrapper(
-                    F("total_nmv") / F("net_orders"), output_field=FloatField()
-                ),
-            ),
-            default=Value(0.0),
-            output_field=FloatField(),
+            When(net_orders__gt=0, then=ExpressionWrapper(F("total_nmv") / F("net_orders"), output_field=FloatField())),
+            default=Value(0.0), output_field=FloatField()
         ),
         ASP=Case(
-            When(
-                net_quantity__gt=0,
-                then=ExpressionWrapper(
-                    F("total_nmv") / F("net_quantity"), output_field=FloatField()
-                ),
-            ),
-            default=Value(0.0),
-            output_field=FloatField(),
+            When(net_quantity__gt=0, then=ExpressionWrapper(F("total_nmv") / F("net_quantity"), output_field=FloatField())),
+            default=Value(0.0), output_field=FloatField()
         ),
     ).order_by("-create_order_date_time_date")
 
@@ -268,9 +200,7 @@ def daily_sales_api(request: HttpRequest) -> JsonResponse:
     prev_map = get_aggregated_metrics_by_group(prev_qs)
     yoy_map = get_aggregated_metrics_by_group(yoy_qs)
 
-    all_keys = sorted(
-        list(set(current_map.keys()) | set(prev_map.keys()) | set(yoy_map.keys()))
-    )  # noqa: C414
+    all_keys = sorted(list(set(current_map.keys()) | set(prev_map.keys()) | set(yoy_map.keys())))  # noqa: C414
     period_label = f"{start.strftime('%Y%m%d')}-{end.strftime('%Y%m%d')}"
 
     metric_definitions = [
@@ -314,10 +244,14 @@ def daily_sales_api(request: HttpRequest) -> JsonResponse:
 
             row[f"{metric_key}_selected"] = curr
             row[f"{metric_key}_prev"] = prev
-            row[f"{metric_key}_growth_prev"] = (curr - prev) / prev if prev else 0
+            row[f"{metric_key}_growth_prev"] = (
+                (curr - prev) / prev if prev else 0
+            )
 
             row[f"{metric_key}_yoy"] = yy
-            row[f"{metric_key}_growth_yoy"] = (curr - yy) / yy if yy else 0
+            row[f"{metric_key}_growth_yoy"] = (
+                (curr - yy) / yy if yy else 0
+            )
 
         pivot_rows.append(row)
 
@@ -328,40 +262,62 @@ def daily_sales_api(request: HttpRequest) -> JsonResponse:
     ]
     for metric_key, metric_label in metric_definitions:
 
-        columns_config.extend(
-            [
-                {
-                    "data": f"{metric_key}_selected",
-                    "title": f"{metric_label} Selected",
-                    "type": "numeric",
-                },
-                {
-                    "data": f"{metric_key}_prev",
-                    "title": f"{metric_label} Prev",
-                    "type": "numeric",
-                },
-                {
-                    "data": f"{metric_key}_growth_prev",
-                    "title": f"{metric_label} vs Prev",
-                    "type": "numeric",
-                },
-                {
-                    "data": f"{metric_key}_yoy",
-                    "title": f"{metric_label} YoY",
-                    "type": "numeric",
-                },
-                {
-                    "data": f"{metric_key}_growth_yoy",
-                    "title": f"{metric_label} vs YoY",
-                    "type": "numeric",
-                },
-            ]
-        )
-
-    return JsonResponse(
-        {
-            "daily_data": daily_data,
-            "pivot_data": pivot_rows,
-            "pivot_columns": columns_config,
-        }
+        columns_config.extend([
+            {"data": f"{metric_key}_selected", "title": f"{metric_label} Selected", "type": "numeric"},
+            {"data": f"{metric_key}_prev", "title": f"{metric_label} Prev", "type": "numeric"},
+            {"data": f"{metric_key}_growth_prev", "title": f"{metric_label} vs Prev", "type": "numeric"},
+            {"data": f"{metric_key}_yoy", "title": f"{metric_label} YoY", "type": "numeric"},
+            {"data": f"{metric_key}_growth_yoy", "title": f"{metric_label} vs YoY", "type": "numeric"},
+        ])
+    
+    # Compute summary KPIs
+    summary_kpi = base_qs.aggregate(
+        total_nmv=Coalesce(Sum("total_nmv"), 0.0, output_field=FloatField()),
+        total_gmv=Coalesce(Sum("total_gmv"), 0.0, output_field=FloatField()),
+        net_orders=Coalesce(Sum("net_orders"), 0.0, output_field=FloatField()),
+        seller_discount=Coalesce(Sum("seller_discount"), 0.0, output_field=FloatField()),
+        platform_discount=Coalesce(Sum("platform_discount"), 0.0, output_field=FloatField()),
+        net_quantity=Coalesce(Sum("net_quantity"), 0.0, output_field=FloatField()),
     )
+    
+    nmv = summary_kpi["total_nmv"]
+    orders = summary_kpi["net_orders"]
+    qty = summary_kpi["net_quantity"]
+    
+    summary_kpi["AOV"] = nmv / orders if orders else 0
+    summary_kpi["ASP"] = nmv / qty if qty else 0
+
+    # Compute trend data for line chart
+    trend_qs = base_qs.values("create_order_date_time_date").annotate(
+        nmv=Coalesce(Sum("total_nmv"), 0.0, output_field=FloatField()),
+        gmv=Coalesce(Sum("total_gmv"), 0.0, output_field=FloatField())
+    ).order_by("create_order_date_time_date")
+    
+    trend_data = [
+        {
+            "date": row["create_order_date_time_date"].isoformat() if row["create_order_date_time_date"] else "",
+            "nmv": row["nmv"],
+            "gmv": row["gmv"]
+        } for row in trend_qs
+    ]
+
+    # Compute platform contribution for donut chart
+    platform_qs = base_qs.values("platform").annotate(
+        nmv=Coalesce(Sum("total_nmv"), 0.0, output_field=FloatField())
+    ).order_by("-nmv")
+    
+    platform_data = [
+        {
+            "platform": row["platform"],
+            "nmv": row["nmv"]
+        } for row in platform_qs
+    ]
+    
+    return JsonResponse({
+        "daily_data": daily_data,
+        "pivot_data": pivot_rows,
+        "pivot_columns": columns_config,
+        "summary_kpi": summary_kpi,
+        "trend_data": trend_data,
+        "platform_data": platform_data,
+    })

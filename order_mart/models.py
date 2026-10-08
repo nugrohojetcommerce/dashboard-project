@@ -86,6 +86,7 @@ class OrderMartDWDDF(django.db.models.Model):
     key_id = django.db.models.BigIntegerField(primary_key=True)
     create_order_date_time_date = django.db.models.DateField(blank=True,null=True)
     brand = django.db.models.TextField()
+    brand_group = django.db.models.TextField()
     platform = django.db.models.TextField()
     total_nmv = django.db.models.BigIntegerField(null=True, blank=True)
     total_gmv = django.db.models.BigIntegerField(null=True, blank=True)
@@ -97,6 +98,8 @@ class OrderMartDWDDF(django.db.models.Model):
     seller_discount = django.db.models.BigIntegerField(null=True, blank=True)
     total_seller_voucher = django.db.models.BigIntegerField(null=True, blank=True)
     total_platform_voucher = django.db.models.BigIntegerField(null=True, blank=True)
+    page_view = django.db.models.BigIntegerField(null=True, blank=True)
+    visitors = django.db.models.BigIntegerField(null=True, blank=True)
 
     class Meta:
         managed = False

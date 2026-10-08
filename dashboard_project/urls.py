@@ -22,6 +22,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('dashboard.urls')),
     path('order_mart/', include('order_mart.urls')),
+    path('brand_performance_v2/', include('brand_performance_v2.urls')),
     # path('accounts/', include('django.contrib.auth.urls')),
 ]
 

@@ -41,7 +41,7 @@ SECRET_KEY = 'django-insecure-si_^a#gu(wu0d(f1jxfsgwf*nt8f@%fn)87vlhyy3o7(jq$@8b
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'dashboard',
     'order_mart',
+    'brand_performance_v2',
     # "debug_toolbar",
 ]
 

@@ -1,0 +1,2922 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Brand Performance v2 — Executive Summary{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+  /* =====================================================================
+     BRAND PERFORMANCE v2 — page-scoped design layer (.bp2)
+     Built on top of base.html tokens so light/dark theme still works.
+     ===================================================================== */
+  .bp2 {
+    --c-indigo: #6366F1;
+    --c-violet: #8B5CF6;
+    --c-sky:    #0EA5E9;
+    --c-teal:   #14B8A6;
+    --c-amber:  #F59E0B;
+    --c-rose:   #F43F5E;
+    --c-emerald:#10B981;
+    --c-slate:  #94A3B8;
+    --bp2-radius: 16px;
+    --bp2-radius-sm: 10px;
+    --bp2-border: color-mix(in srgb, var(--text-muted) 16%, transparent);
+    --bp2-surface: var(--card-bg);
+    --bp2-surface-2: color-mix(in srgb, var(--text-muted) 5%, var(--card-bg));
+    --bp2-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 8px 24px -14px rgba(16, 24, 40, .12);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text-primary);
+  }
+  .bp2 .mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum"; }
+
+  /* ── Surfaces ── */
+  .bp2-card {
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: var(--bp2-radius);
+    box-shadow: var(--bp2-shadow);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    min-width: 0;
+  }
+  .bp2-card.hoverable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 1px 2px rgba(16,24,40,.04), 0 16px 32px -14px rgba(16,24,40,.18);
+  }
+  .bp2-section-title {
+    display: flex; align-items: center; gap: 12px;
+    font-size: .74rem; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-muted);
+    margin: 26px 0 12px;
+  }
+  .bp2-section-title::after { content: ''; flex: 1; height: 1px; background: var(--bp2-border); }
+
+  /* ── Top bar: tabs + filters + actions ── */
+  .bp2-topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px 16px; flex-wrap: wrap; margin-bottom: 18px;
+  }
+  .bp2-segment, .bp2-multiseg, .bp2-topbar-filters {
+    display: inline-flex; align-items: center; padding: 4px; gap: 4px;
+    background: var(--bp2-surface-2);
+    border: 1px solid var(--bp2-border);
+    border-radius: 12px;
+  }
+  .bp2-segment a, .bp2-segment button, .bp2-multiseg button {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 13px; border-radius: 9px; border: 0;
+    font-size: .78rem; font-weight: 600; text-decoration: none;
+    color: var(--text-muted); background: transparent; cursor: pointer;
+    transition: all .15s ease; white-space: nowrap;
+  }
+  .bp2-multiseg button { padding: 5px 11px; font-size: .75rem; }
+  .bp2-segment a:hover, .bp2-segment button:hover, .bp2-multiseg button:hover { color: var(--text-primary); }
+  .bp2-segment .active, .bp2-multiseg button.active {
+    background: var(--bp2-surface); color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(16,24,40,.10), 0 0 0 1px var(--bp2-border);
+  }
+  .bp2-segment .disabled { opacity: .5; pointer-events: none; }
+  .bp2-soon {
+    font-size: .58rem; font-weight: 700; padding: 2px 6px; border-radius: 6px;
+    background: var(--orange-dim); color: var(--orange-bright); letter-spacing: .04em;
+  }
+
+  .bp2-filter-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 0 10px; border-radius: 9px;
+    background: var(--bp2-surface); border: 1px solid var(--bp2-border);
+    height: 30px; font-size: .76rem; font-weight: 600; color: var(--text-muted);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .bp2-filter-pill:focus-within { border-color: var(--orange); box-shadow: 0 0 0 2px var(--orange-dim); }
+  .bp2-filter-pill i { font-size: .74rem; }
+  .bp2-filter-pill select, .bp2-filter-pill input {
+    border: 0; outline: 0; background: transparent;
+    color: var(--text-primary); font-size: .76rem; font-weight: 600;
+    font-family: inherit; cursor: pointer; padding: 0; max-width: 150px;
+  }
+  .bp2-filter-reset {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 9px; border: 0;
+    background: transparent; color: var(--text-muted); cursor: pointer; transition: all .15s ease;
+  }
+  .bp2-filter-reset:hover { background: var(--bp2-surface); color: var(--orange); }
+
+  /* ── Custom Multi-select Dropdown Pills ── */
+  .bp2-dropdown-wrap {
+    position: relative;
+    display: inline-flex;
+  }
+  .bp2-dropdown-trigger {
+    cursor: pointer;
+    border: 1px solid var(--bp2-border);
+    outline: 0;
+    user-select: none;
+    gap: 6px;
+    padding: 0 10px;
+  }
+  .bp2-dropdown-trigger:hover {
+    border-color: color-mix(in srgb, var(--orange) 60%, var(--bp2-border));
+    color: var(--text-primary);
+  }
+  .bp2-dropdown-wrap.open .bp2-dropdown-trigger {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 2px var(--orange-dim);
+    color: var(--text-primary);
+  }
+  .bp2-dropdown-label {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+  }
+  .bp2-dropdown-badge {
+    background: var(--orange);
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    line-height: 1.3;
+  }
+  .bp2-dropdown-caret {
+    font-size: .65rem;
+    color: var(--text-muted);
+    transition: transform .18s ease;
+    margin-left: 2px;
+  }
+  .bp2-dropdown-wrap.open .bp2-dropdown-caret {
+    transform: rotate(180deg);
+  }
+  .bp2-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 120;
+    min-width: 250px;
+    max-width: 320px;
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px -6px rgba(16, 24, 40, .22), 0 2px 6px rgba(16, 24, 40, .06);
+    display: none;
+    flex-direction: column;
+    padding: 10px;
+  }
+  .bp2-dropdown-wrap.open .bp2-dropdown-menu {
+    display: flex;
+    animation: bp2pop .15s ease-out;
+  }
+  @keyframes bp2pop {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .bp2-dropdown-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--bp2-surface-2);
+    border: 1px solid var(--bp2-border);
+    margin-bottom: 6px;
+  }
+  .bp2-dropdown-search input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: .76rem;
+    font-weight: 600;
+    width: 100%;
+    font-family: inherit;
+  }
+  .bp2-dropdown-search i {
+    font-size: .72rem;
+    color: var(--text-muted);
+  }
+  .bp2-dropdown-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 2px 4px 6px;
+    border-bottom: 1px solid var(--bp2-border);
+    margin-bottom: 4px;
+  }
+  .bp2-dropdown-action-btn {
+    background: transparent;
+    border: 0;
+    color: var(--orange);
+    font-size: .7rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .bp2-dropdown-action-btn:hover {
+    text-decoration: underline;
+  }
+  .bp2-dropdown-options {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 2px;
+  }
+  .bp2-dropdown-options::-webkit-scrollbar {
+    width: 5px;
+  }
+  .bp2-dropdown-options::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--text-muted) 30%, transparent);
+    border-radius: 4px;
+  }
+  .bp2-dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .76rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    transition: background .12s, color .12s;
+    user-select: none;
+  }
+  .bp2-dropdown-option:hover {
+    background: var(--bp2-surface-2);
+    color: var(--text-primary);
+  }
+  .bp2-dropdown-option input {
+    display: none;
+  }
+  .bp2-custom-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    border: 1.5px solid color-mix(in srgb, var(--text-muted) 40%, transparent);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    transition: all .15s ease;
+    background: var(--bp2-surface);
+  }
+  .bp2-custom-check i {
+    font-size: .72rem;
+    color: #fff;
+    transform: scale(0);
+    transition: transform .12s ease;
+    font-weight: 900;
+  }
+  .bp2-dropdown-option input:checked + .bp2-custom-check {
+    background: var(--orange);
+    border-color: var(--orange);
+  }
+  .bp2-dropdown-option input:checked + .bp2-custom-check i {
+    transform: scale(1);
+  }
+  .bp2-dropdown-option.selected {
+    color: var(--text-primary);
+  }
+  .bp2-dropdown-footer {
+    padding-top: 8px;
+    margin-top: 4px;
+    border-top: 1px solid var(--bp2-border);
+    display: flex;
+    justify-content: flex-end;
+  }
+  .bp2-dropdown-apply-btn {
+    background: var(--orange);
+    color: #fff;
+    border: 0;
+    border-radius: 7px;
+    padding: 5px 14px;
+    font-size: .72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .bp2-dropdown-apply-btn:hover {
+    opacity: .9;
+  }
+
+  .bp2-actions { display: flex; gap: 8px; }
+  .bp2-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 13px; border-radius: 10px;
+    font-size: .76rem; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--bp2-border); background: var(--bp2-surface);
+    color: var(--text-sub); transition: all .15s ease;
+  }
+  .bp2-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .bp2-btn .bi-file-earmark-excel { color: #16A34A; }
+  .bp2-btn .bi-file-earmark-pdf { color: #E11D48; }
+
+  /* ── Hero ── */
+  .bp2-hero {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 12px; flex-wrap: wrap; margin-bottom: 4px;
+  }
+  .bp2-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--orange);
+  }
+  .bp2-eyebrow .pulse {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--orange);
+    box-shadow: 0 0 0 0 var(--orange-glow); animation: bp2pulse 2s infinite;
+  }
+  @keyframes bp2pulse {
+    0% { box-shadow: 0 0 0 0 var(--orange-glow); }
+    70% { box-shadow: 0 0 0 8px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+  .bp2-hero h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -.025em; margin: 4px 0 2px; }
+  .bp2-hero p { margin: 0; color: var(--text-muted); font-size: .82rem; }
+  .bp2-asof {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border-radius: 999px;
+    background: var(--bp2-surface); border: 1px solid var(--bp2-border);
+    font-size: .76rem; color: var(--text-sub); font-weight: 600;
+  }
+  .bp2-asof b { color: var(--text-primary); }
+
+  /* ── KPI cards ── */
+  .bp2-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 1200px) { .bp2-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px)  { .bp2-kpi-grid { grid-template-columns: 1fr; } }
+  .bp2-kpi { padding: 16px 18px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  .bp2-kpi-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .bp2-kpi-label { font-size: .76rem; font-weight: 600; color: var(--text-muted); }
+  .bp2-icon {
+    width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+    display: grid; place-items: center; font-size: .95rem;
+    color: var(--k); background: color-mix(in srgb, var(--k) 12%, transparent);
+  }
+  .bp2-kpi-value {
+    font-size: clamp(1.15rem, 1.35vw + .4rem, 1.55rem); font-weight: 800;
+    letter-spacing: -.02em; line-height: 1.15; white-space: nowrap;
+  }
+  .bp2-kpi-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    margin-top: 8px; font-size: .72rem; color: var(--text-muted);
+  }
+  .bp2-kpi-foot b { color: var(--text-primary); }
+  .bp2-spark { height: 36px; margin-top: auto; padding-top: 8px; box-sizing: content-box; }
+  .bp2-progress {
+    position: relative; height: 8px; border-radius: 999px; margin-top: 12px;
+    background: color-mix(in srgb, var(--text-muted) 14%, transparent); overflow: visible;
+  }
+  .bp2-progress > span {
+    position: absolute; inset: 0 auto 0 0; border-radius: 999px;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--k) 65%, white), var(--k));
+    transition: width .8s cubic-bezier(.2,.8,.2,1);
+  }
+  .bp2-progress > i {
+    position: absolute; top: -4px; width: 2px; height: 16px; border-radius: 2px;
+    background: var(--text-primary); opacity: .5;
+  }
+
+  /* ── Chips ── */
+  .chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 3px 8px; border-radius: 999px;
+    font-size: .7rem; font-weight: 700; white-space: nowrap; line-height: 1.3;
+  }
+  .chip.up   { color: #047857; background: #D1FAE5; }
+  .chip.down { color: #BE123C; background: #FFE4E6; }
+  .chip.flat { color: var(--text-muted); background: color-mix(in srgb, var(--text-muted) 12%, transparent); }
+  [data-theme="dark"] .chip.up   { color: #34D399; background: rgba(52, 211, 153, .12); }
+  [data-theme="dark"] .chip.down { color: #FB7185; background: rgba(251, 113, 133, .12); }
+  .chip.sm { padding: 2px 6px; font-size: .66rem; }
+
+  /* ── Spotlight ── */
+  .bp2-spot-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.45fr) minmax(0, 1.25fr);
+    gap: 14px;
+    align-items: stretch;
+  }
+  @media (max-width: 1200px) {
+    .bp2-spot-grid { grid-template-columns: 1fr 1fr; }
+    .bp2-alerts { grid-column: 1 / -1; }
+  }
+  @media (max-width: 768px) {
+    .bp2-spot-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Combined Top & Bottom Performer card */
+  .bp2-performer-combo {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .bp2-combo-row {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+  }
+  .bp2-combo-row.bottom {
+    margin-top: 0;
+  }
+  .bp2-combo-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .bp2-performer-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .62rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .bp2-performer-tag.top {
+    color: var(--c-emerald);
+    background: color-mix(in srgb, var(--c-emerald) 10%, transparent);
+  }
+  .bp2-performer-tag.bottom {
+    color: var(--c-rose);
+    background: color-mix(in srgb, var(--c-rose) 10%, transparent);
+  }
+  .bp2-performer-body {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+  }
+  .bp2-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: .84rem;
+    color: #fff;
+  }
+  .bp2-avatar.top {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--c-emerald) 75%, white), var(--c-emerald));
+  }
+  .bp2-avatar.bottom {
+    background: linear-gradient(135deg, color-mix(in srgb, var(--c-rose) 75%, white), var(--c-rose));
+  }
+  .bp2-performer-info {
+    min-width: 0;
+    flex: 1;
+  }
+  .bp2-performer-name {
+    font-size: .88rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .bp2-performer-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    margin-top: 1px;
+    font-size: .7rem;
+    color: var(--text-muted);
+  }
+  .bp2-combo-divider {
+    height: 1px;
+    background: var(--bp2-border);
+    margin: 4px 0;
+  }
+  .bp2-leakage-card {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .bp2-leakage-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 0;
+  }
+  .bp2-leakage-head h3 {
+    font-size: .88rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bp2-leakage-head h3 i {
+    color: var(--orange);
+  }
+  .bp2-leakage-head p {
+    margin: 2px 0 0;
+    font-size: .7rem;
+    color: var(--text-muted);
+  }
+  .bp2-leakage-badge {
+    font-size: .68rem;
+    font-weight: 700;
+    color: var(--text-sub);
+    background: var(--bp2-surface-2);
+    padding: 3px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    border: 1px solid var(--bp2-border);
+  }
+  .bp2-leakage-badge b {
+    color: var(--orange);
+  }
+  .bp2-gauge-wrap {
+    display: grid;
+    grid-template-columns: minmax(135px, 1.22fr) minmax(130px, 1fr);
+    gap: 12px;
+    align-items: center;
+    flex: 1;
+    margin: auto 0;
+  }
+  .bp2-gauge-canvas-wrap {
+    position: relative;
+    height: 128px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .bp2-gauge-canvas-wrap .bp2-donut-center {
+    position: absolute;
+    inset: 0;
+    top: auto;
+    bottom: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    pointer-events: none;
+    text-align: center;
+    line-height: 1.1;
+  }
+  .bp2-gauge-canvas-wrap .bp2-donut-center small {
+    display: block;
+    font-size: .62rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 2px;
+  }
+  .bp2-gauge-canvas-wrap .bp2-donut-center strong {
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+  .bp2-gauge-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: center;
+  }
+  .bp2-gauge-stats div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 5px 9px;
+    border-radius: 8px;
+    background: var(--bp2-surface-2);
+    border: 1px solid var(--bp2-border);
+  }
+  .bp2-gauge-stats span {
+    font-size: .68rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    white-space: nowrap;
+  }
+  .bp2-gauge-stats strong {
+    font-size: .78rem;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
+  }
+
+  .bp2-alerts { padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; }
+  .bp2-alerts-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .bp2-alerts-head h3 { font-size: .88rem; font-weight: 700; margin: 0; }
+  .bp2-alerts-head h3 i { color: var(--orange); margin-right: 4px; }
+  .bp2-alert {
+    display: grid; grid-template-columns: 32px minmax(0, 1fr) auto auto; gap: 10px; align-items: center;
+    padding: 6px 9px; border-radius: 10px; margin-bottom: 5px;
+    background: color-mix(in srgb, var(--a) 7%, transparent);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+    user-select: none;
+  }
+  .bp2-alert:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--a) 40%, transparent);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  }
+  .bp2-alert:last-child { margin-bottom: 0; }
+  .bp2-alert.critical { --a: var(--c-rose); }
+  .bp2-alert.warning  { --a: var(--c-amber); }
+  .bp2-alert.ok       { --a: var(--c-emerald); cursor: default; }
+  .bp2-alert.ok:hover { transform: none; box-shadow: none; border-color: transparent; }
+  .bp2-alert-count {
+    width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center;
+    font-weight: 800; font-size: .9rem; color: var(--a);
+    background: color-mix(in srgb, var(--a) 14%, transparent);
+  }
+  .bp2-alert-title { font-size: .78rem; font-weight: 700; }
+  .bp2-alert-brands { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+  .bp2-alert-brands span {
+    font-size: .64rem; font-weight: 600; padding: 1px 6px; border-radius: 5px;
+    background: var(--bp2-surface); border: 1px solid var(--bp2-border); color: var(--text-sub);
+  }
+  .bp2-alert-meta { text-align: right; font-size: .64rem; color: var(--text-muted); white-space: nowrap; }
+  .bp2-alert-meta b { display: block; color: var(--a); font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; }
+  .bp2-alert-arrow { font-size: .75rem; color: var(--text-muted); transition: transform .15s; }
+  .bp2-alert:hover .bp2-alert-arrow { transform: translateX(2px); color: var(--text-primary); }
+
+  /* ── Pulse tiles ── */
+  .bp2-pulse-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 1000px) { .bp2-pulse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px)  { .bp2-pulse-grid { grid-template-columns: 1fr; } }
+  .bp2-pulse { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .bp2-pulse-label { font-size: .72rem; font-weight: 700; color: var(--text-muted); }
+  .bp2-pulse-value { font-size: 1.15rem; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; }
+  .bp2-pulse-row { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; font-size: .66rem; color: var(--text-muted); }
+  .bp2-pulse-foot {
+    margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--bp2-border);
+    display: flex; justify-content: space-between; align-items: center; gap: 6px;
+    font-size: .7rem; color: var(--text-muted);
+  }
+  .bp2-pulse-foot span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bp2-pulse-foot b { color: var(--text-primary); font-weight: 700; }
+
+  /* ── Charts ── */
+  .bp2-chart-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.25fr); gap: 14px; }
+  .bp2-chart-full { display: block; margin-top: 14px; }
+  @media (max-width: 1200px) { .bp2-chart-grid { grid-template-columns: 1fr; } }
+  .bp2-chart { padding: 16px 18px 18px; display: flex; flex-direction: column; }
+  .bp2-chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  .bp2-chart-head h3 { font-size: .92rem; font-weight: 700; margin: 0; letter-spacing: -.01em; }
+  .bp2-chart-head p { margin: 2px 0 0; font-size: .74rem; color: var(--text-muted); }
+  .bp2-chart-body { position: relative; height: 280px; }
+  .bp2-chart-body.sm { height: 235px; }
+  .bp2-donut-wrap {
+    display: grid;
+    grid-template-columns: minmax(200px, 1.05fr) minmax(180px, 1.2fr);
+    align-items: center;
+    gap: 16px;
+    height: 100%;
+  }
+  @media (max-width: 768px) {
+    .bp2-donut-wrap { grid-template-columns: 1fr; }
+  }
+  .bp2-donut-center { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; text-align: center; }
+  .bp2-donut-center small { display: block; font-size: .64rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .bp2-donut-center strong {
+    font-size: clamp(0.72rem, 0.9vw, 0.88rem);
+    font-weight: 800;
+    max-width: 90%;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    margin: 2px auto 0;
+  }
+  .bp2-legend { display: flex; flex-direction: column; gap: 7px; max-height: 220px; overflow-y: auto; padding-right: 4px; }
+  .bp2-legend-item { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 46px; gap: 8px; align-items: center; font-size: .72rem; }
+  .bp2-legend-item i { width: 10px; height: 10px; border-radius: 3px; }
+  .bp2-legend-item span { color: var(--text-sub); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bp2-legend-item em { font-style: normal; color: var(--text-muted); }
+  .bp2-legend-item b { text-align: right; }
+
+  /* ── Tables ── */
+  .bp2-table-card { overflow: hidden; }
+  .bp2-table-toolbar {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px 14px; flex-wrap: wrap;
+    padding: 12px 16px; border-bottom: 1px solid var(--bp2-border);
+  }
+  .bp2-table-toolbar.is-split-3 {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px 16px;
+  }
+  .bp2-table-toolbar.is-split-3 > .bp2-toolbar-left {
+    justify-self: start;
+    min-width: 0;
+  }
+  .bp2-table-toolbar.is-split-3 > .bp2-toolbar-center {
+    justify-self: center;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+  }
+  .bp2-table-toolbar.is-split-3 > .bp2-toolbar-right {
+    justify-self: end;
+    display: flex;
+    justify-content: flex-end;
+  }
+  @media (max-width: 992px) {
+    .bp2-table-toolbar.is-split-3 {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+    .bp2-table-toolbar.is-split-3 > .bp2-toolbar-center {
+      order: 3;
+      width: 100%;
+      margin-top: 4px;
+    }
+  }
+  .bp2-groupchips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px 0;
+  }
+  .bp2-chip-check-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px 5px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .73rem;
+    font-weight: 600;
+    user-select: none;
+    border: 1px solid var(--bp2-border);
+    background: var(--bp2-surface-2);
+    color: var(--text-muted);
+    transition: all .15s ease;
+  }
+  .bp2-chip-check-item:hover {
+    border-color: color-mix(in srgb, var(--g, var(--orange)) 45%, var(--bp2-border));
+    color: var(--text-primary);
+  }
+  .bp2-chip-check-item input[type="checkbox"] {
+    display: none;
+  }
+  .bp2-chip-box {
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    border: 1.5px solid color-mix(in srgb, var(--text-muted) 45%, transparent);
+    background: var(--bp2-surface);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    transition: all .15s ease;
+  }
+  .bp2-chip-box i {
+    font-size: .62rem;
+    color: #fff;
+    transform: scale(0);
+    transition: transform .12s ease;
+    font-weight: 900;
+  }
+  .bp2-chip-check-item.active {
+    background: var(--bp2-surface);
+    border-color: var(--g, var(--orange));
+    color: var(--text-primary);
+    box-shadow: 0 1px 4px color-mix(in srgb, var(--g, var(--orange)) 15%, transparent);
+  }
+  .bp2-chip-check-item.active .bp2-chip-box {
+    background: var(--g, var(--orange));
+    border-color: var(--g, var(--orange));
+  }
+  .bp2-chip-check-item.active .bp2-chip-box i {
+    transform: scale(1);
+  }
+
+  .bp2-search {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 10px; width: 240px; max-width: 100%;
+    border: 1px solid var(--bp2-border); background: var(--bp2-surface-2); margin: 0;
+  }
+  .bp2-search:focus-within { border-color: var(--orange); }
+  .bp2-search input { border: 0; outline: 0; background: transparent; color: var(--text-primary); font-size: .78rem; width: 100%; }
+  .bp2-search i { color: var(--text-muted); }
+
+  .bp2-table-wrap { overflow: auto; max-height: 600px; margin-top: 12px; }
+  .bp2-table-wrap::-webkit-scrollbar { height: 10px; width: 10px; }
+  .bp2-table-wrap::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-muted) 30%, transparent); border-radius: 10px; border: 2px solid var(--card-bg); }
+  table.bp2-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .75rem; }
+  table.bp2-table th, table.bp2-table td { white-space: nowrap; }
+  table.bp2-table thead th {
+    position: sticky; z-index: 6; font-weight: 700; text-align: center;
+    color: var(--text-sub); background: var(--card-bg);
+  }
+  table.bp2-table thead tr.g th { top: 0; height: 34px; font-size: .72rem; }
+  table.bp2-table thead tr.s th {
+    top: 34px; height: 28px; font-size: .62rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);
+    border-bottom: 1px solid var(--bp2-border);
+  }
+  table.bp2-table thead th.grp {
+    color: var(--text-primary);
+    background: var(--bp2-surface-2);
+    border-top: 2.5px solid var(--g);
+    border-left: 1px solid var(--bp2-border);
+    font-size: .74rem;
+    font-weight: 700;
+  }
+  table.bp2-table thead tr.s th.grp-sub {
+    background: var(--bp2-surface-2);
+    color: var(--text-muted);
+    padding: 0 10px;
+    font-size: .62rem;
+    font-weight: 600;
+  }
+  table.bp2-table thead tr.s th.grp-sub.first {
+    border-left: 1px solid var(--bp2-border);
+  }
+  table.bp2-table tbody td {
+    padding: 8px 10px; border-bottom: 1px solid color-mix(in srgb, var(--text-muted) 9%, transparent);
+    color: var(--text-primary); background: var(--card-bg);
+  }
+  table.bp2-table tbody td.num { text-align: right; font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum"; }
+  table.bp2-table tbody td.mtd { background: transparent; font-weight: 700; color: var(--text-primary); }
+  table.bp2-table tbody td.first {
+    border-left: 1px solid color-mix(in srgb, var(--text-muted) 14%, transparent);
+    box-shadow: none;
+  }
+  table.bp2-table tbody tr:nth-child(even) td:not(.mtd) { background: var(--bp2-surface-2); }
+  table.bp2-table tbody tr:hover td { background: color-mix(in srgb, var(--orange) 6%, var(--card-bg)) !important; }
+  table.bp2-table .stick { position: sticky; z-index: 4; }
+  table.bp2-table thead .stick { z-index: 8; background: var(--card-bg); text-align: left; padding: 0 10px; color: var(--text-muted); font-size: .64rem; text-transform: uppercase; letter-spacing: .06em; overflow: hidden; text-overflow: ellipsis; }
+  table.bp2-table tbody .stick { overflow: hidden; text-overflow: ellipsis; }
+  table.bp2-table .stick.last { box-shadow: 6px 0 10px -8px rgba(16,24,40,.25); }
+  .bp2-tag {
+    display: inline-flex; align-items: center; max-width: 100%;
+    font-size: .68rem; font-weight: 600; padding: 2px 7px; border-radius: 6px;
+    background: var(--bp2-surface-2); border: 1px solid var(--bp2-border);
+    color: var(--text-sub);
+    line-height: 1.2; overflow: hidden; text-overflow: ellipsis;
+  }
+  .bp2-brandcell { font-weight: 700; color: var(--text-primary); }
+  .bp2-empty { text-align: center; padding: 40px 12px !important; color: var(--text-muted); }
+
+  /* Podium Top 3 (Gold, Silver, Bronze) */
+  .bp2-podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 14px 16px 0; }
+  @media (max-width: 768px) { .bp2-podium { grid-template-columns: 1fr; } }
+  .bp2-pod {
+    padding: 12px 14px; border-radius: 14px; display: flex; gap: 12px; align-items: center; min-width: 0;
+    background: var(--bp2-surface-2);
+    border: 1.5px solid var(--bp2-border);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .bp2-pod:hover {
+    transform: translateY(-2px);
+  }
+  /* Gold / Emas (Rank 1) */
+  .bp2-pod.r1 {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.18) 0%, rgba(245, 158, 11, 0.05) 100%);
+    border: 1.5px solid #F59E0B;
+    box-shadow: 0 4px 16px -2px rgba(245, 158, 11, 0.25);
+  }
+  .bp2-pod.r1 .bp2-medal {
+    background: linear-gradient(135deg, #FBBF24 0%, #D97706 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.45);
+    border: 1px solid #FDE68A;
+  }
+  .bp2-pod.r1 .bp2-pod-name {
+    color: #B45309;
+    font-weight: 800;
+  }
+  /* Silver / Perak (Rank 2) */
+  .bp2-pod.r2 {
+    background: linear-gradient(135deg, rgba(203, 213, 225, 0.28) 0%, rgba(148, 163, 184, 0.08) 100%);
+    border: 1.5px solid #94A3B8;
+    box-shadow: 0 4px 16px -2px rgba(148, 163, 184, 0.2);
+  }
+  .bp2-pod.r2 .bp2-medal {
+    background: linear-gradient(135deg, #CBD5E1 0%, #64748B 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(100, 116, 139, 0.35);
+    border: 1px solid #F1F5F9;
+  }
+  .bp2-pod.r2 .bp2-pod-name {
+    color: #475569;
+    font-weight: 800;
+  }
+  /* Bronze / Perunggu (Rank 3) */
+  .bp2-pod.r3 {
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.2) 0%, rgba(217, 119, 6, 0.06) 100%);
+    border: 1.5px solid #EA580C;
+    box-shadow: 0 4px 16px -2px rgba(234, 88, 12, 0.22);
+  }
+  .bp2-pod.r3 .bp2-medal {
+    background: linear-gradient(135deg, #FB923C 0%, #C2410C 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(194, 65, 12, 0.4);
+    border: 1px solid #FED7AA;
+  }
+  .bp2-pod.r3 .bp2-pod-name {
+    color: #C2410C;
+    font-weight: 800;
+  }
+
+  /* Dark mode overrides for podium */
+  [data-theme="dark"] .bp2-pod.r1 {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.08) 100%);
+    border-color: #F59E0B;
+  }
+  [data-theme="dark"] .bp2-pod.r1 .bp2-pod-name { color: #FCD34D; }
+  [data-theme="dark"] .bp2-pod.r2 {
+    background: linear-gradient(135deg, rgba(148, 163, 184, 0.22) 0%, rgba(71, 85, 105, 0.1) 100%);
+    border-color: #94A3B8;
+  }
+  [data-theme="dark"] .bp2-pod.r2 .bp2-pod-name { color: #E2E8F0; }
+  [data-theme="dark"] .bp2-pod.r3 {
+    background: linear-gradient(135deg, rgba(234, 88, 12, 0.22) 0%, rgba(180, 83, 9, 0.08) 100%);
+    border-color: #F97316;
+  }
+  [data-theme="dark"] .bp2-pod.r3 .bp2-pod-name { color: #FDBA74; }
+
+  .bp2-medal {
+    width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
+    font-weight: 800; color: #fff; flex-shrink: 0; font-size: 1rem;
+  }
+  .bp2-medal i { line-height: 1; }
+  .bp2-pod-rank { font-size: .78rem; font-weight: 800; opacity: .85; margin-right: 4px; }
+  .bp2-pod > div:last-child { min-width: 0; }
+  .bp2-pod-name { font-weight: 800; font-size: .88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bp2-pod-meta { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: .72rem; color: var(--text-muted); margin-top: 2px; }
+  .bp2-rank {
+    display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 8px;
+    font-size: .7rem; font-weight: 800; background: var(--bp2-surface-2); color: var(--text-sub);
+  }
+  .bp2-rank.r1 { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; font-weight: 800; }
+  .bp2-rank.r2 { background: #F1F5F9; color: #334155; border: 1px solid #CBD5E1; font-weight: 800; }
+  .bp2-rank.r3 { background: #FFEDD5; color: #9A3412; border: 1px solid #FDBA74; font-weight: 800; }
+  [data-theme="dark"] .bp2-rank.r1 { background: rgba(245, 158, 11, .25); color: #FCD34D; border-color: rgba(245, 158, 11, .5); }
+  [data-theme="dark"] .bp2-rank.r2 { background: rgba(148, 163, 184, .25); color: #E2E8F0; border-color: rgba(148, 163, 184, .5); }
+  [data-theme="dark"] .bp2-rank.r3 { background: rgba(217, 119, 6, .25); color: #FDBA74; border-color: rgba(217, 119, 6, .5); }
+  .bp2-share { display: flex; align-items: center; gap: 8px; }
+  .bp2-share > div { flex: 1; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--text-muted) 14%, transparent); overflow: hidden; }
+  .bp2-share > div > span { display: block; height: 100%; border-radius: 999px; background: var(--orange); }
+  .bp2-share em { font-style: normal; font-size: .7rem; color: var(--text-muted); width: 38px; text-align: right; }
+
+  /* ── Anomaly Detail Modal ── */
+  .bp2-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: bp2fade .2s ease;
+  }
+  .bp2-modal {
+    width: 100%;
+    max-width: 860px;
+    max-height: 88vh;
+    background: #ffffff !important;
+    color: #0F172A !important;
+    border: 1px solid rgba(203, 213, 225, 0.8) !important;
+    border-radius: 18px;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.45), 0 0 0 1px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    opacity: 1 !important;
+    animation: bp2modalpop .22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  [data-theme="dark"] .bp2-modal {
+    background: #1E293B !important;
+    color: #F8FAFC !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+  @keyframes bp2modalpop {
+    from { opacity: 0; transform: scale(.96) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .bp2-modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #E2E8F0;
+    background: #F8FAFC !important;
+  }
+  [data-theme="dark"] .bp2-modal-head {
+    background: #0F172A !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  .bp2-modal-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .bp2-modal-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bp2-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid #CBD5E1;
+    background: #ffffff;
+    color: #64748B;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    font-size: .85rem;
+    transition: all .15s ease;
+  }
+  [data-theme="dark"] .bp2-modal-close {
+    background: #1E293B;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #94A3B8;
+  }
+  .bp2-modal-close:hover {
+    color: #0F172A;
+    border-color: var(--orange);
+    background: #F1F5F9;
+  }
+  [data-theme="dark"] .bp2-modal-close:hover {
+    color: #fff;
+    background: #334155;
+  }
+  .bp2-modal-body {
+    padding: 18px 20px;
+    overflow-y: auto;
+    flex: 1;
+    background: #ffffff !important;
+  }
+  [data-theme="dark"] .bp2-modal-body {
+    background: #1E293B !important;
+  }
+  .bp2-modal-sub {
+    font-size: .78rem;
+    color: #64748B;
+    margin: 0 0 12px;
+  }
+  [data-theme="dark"] .bp2-modal-sub {
+    color: #94A3B8;
+  }
+  .bp2-modal-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border-top: 1px solid #E2E8F0;
+    background: #F8FAFC !important;
+    font-size: .76rem;
+    color: #64748B;
+  }
+  [data-theme="dark"] .bp2-modal-foot {
+    background: #0F172A !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #94A3B8;
+  }
+  .bp2-modal table.bp2-table thead th {
+    background: #F1F5F9 !important;
+    color: #0F172A !important;
+    border-bottom: 1px solid #E2E8F0;
+    font-size: .72rem;
+    font-weight: 700;
+  }
+  [data-theme="dark"] .bp2-modal table.bp2-table thead th {
+    background: #0F172A !important;
+    color: #F8FAFC !important;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+  .bp2-modal table.bp2-table tbody td {
+    background: transparent !important;
+    color: inherit;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+  }
+  [data-theme="dark"] .bp2-modal table.bp2-table tbody td {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+  .bp2-modal table.bp2-table tbody tr:hover td {
+    background: rgba(255, 122, 0, 0.06) !important;
+  }
+  .bp2-modal-filter-btn {
+    padding: 3px 8px;
+    font-size: .68rem;
+    font-weight: 700;
+    border-radius: 6px;
+    border: 1px solid var(--bp2-border);
+    background: var(--bp2-surface);
+    color: var(--orange);
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .bp2-modal-filter-btn:hover {
+    background: var(--orange);
+    color: #fff;
+    border-color: var(--orange);
+  }
+  .bp2-prog-mini {
+    width: 60px;
+    height: 5px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text-muted) 16%, transparent);
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+    overflow: hidden;
+  }
+  .bp2-prog-mini span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  /* Loading skeleton */
+  .bp2.is-loading .skel {
+    color: transparent !important; border-radius: 8px;
+    background: linear-gradient(90deg, var(--bp2-surface-2) 25%, color-mix(in srgb, var(--text-muted) 14%, transparent) 50%, var(--bp2-surface-2) 75%);
+    background-size: 200% 100%; animation: bp2shimmer 1.2s infinite;
+  }
+  .bp2.is-loading .skel * { visibility: hidden; }
+  @keyframes bp2shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .bp2 .reveal { animation: bp2fade .45s ease both; }
+  @keyframes bp2fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bp2 is-loading" id="pdfContent">
+
+  <!-- ── Top bar ── -->
+  <div class="bp2-topbar">
+    <nav class="bp2-segment" aria-label="Page sections">
+      <a href="{% url 'brand_performance_v2' %}" class="active"><i class="bi bi-grid-1x2-fill"></i> Summary</a>
+      <a href="#" class="disabled" title="Custom period, SKU drill-down"><i class="bi bi-graph-up-arrow"></i> Analytics <span class="bp2-soon">SOON</span></a>
+    </nav>
+
+    <!-- Slim Topbar Filters (between tabs and export actions) -->
+    <div class="bp2-topbar-filters" data-html2canvas-ignore="true">
+      <div class="bp2-filter-pill" title="As of date">
+        <i class="bi bi-calendar3"></i>
+        <input type="date" id="asOfDateFilter" value="{{ as_of_date }}" max="{{ latest_date }}" onchange="loadDashboardData()">
+      </div>
+
+      <!-- Custom Multi-select: Brand -->
+      <div class="bp2-dropdown-wrap" id="brandDropdownWrap">
+        <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="brandDropdownTrigger" aria-haspopup="true" aria-expanded="false" title="Filter brands">
+          <i class="bi bi-tag"></i>
+          <span class="bp2-dropdown-label" id="brandDropdownLabel">All brands</span>
+          <span class="bp2-dropdown-badge" id="brandDropdownBadge" style="display:none">0</span>
+          <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+        </button>
+        <div class="bp2-dropdown-menu" id="brandDropdownMenu">
+          <div class="bp2-dropdown-search">
+            <i class="bi bi-search"></i>
+            <input type="text" id="brandSearchInput" placeholder="Search brands…" autocomplete="off">
+          </div>
+          <div class="bp2-dropdown-actions">
+            <button type="button" class="bp2-dropdown-action-btn" id="brandSelectAll">Select all</button>
+            <button type="button" class="bp2-dropdown-action-btn" id="brandClearAll">Clear</button>
+          </div>
+          <div class="bp2-dropdown-options" id="brandOptionsList">
+            {% for b in brands %}
+            <label class="bp2-dropdown-option" data-value="{{ b }}">
+              <input type="checkbox" value="{{ b }}" {% if b == selected_brand %}checked{% endif %}>
+              <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
+              <span class="bp2-option-text">{{ b }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="bp2-dropdown-footer">
+            <button type="button" class="bp2-dropdown-apply-btn" id="brandApplyBtn">Apply</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Multi-select: Platform -->
+      <div class="bp2-dropdown-wrap" id="platformDropdownWrap">
+        <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="platformDropdownTrigger" aria-haspopup="true" aria-expanded="false" title="Filter platforms">
+          <i class="bi bi-shop"></i>
+          <span class="bp2-dropdown-label" id="platformDropdownLabel">All platforms</span>
+          <span class="bp2-dropdown-badge" id="platformDropdownBadge" style="display:none">0</span>
+          <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+        </button>
+        <div class="bp2-dropdown-menu" id="platformDropdownMenu">
+          <div class="bp2-dropdown-search">
+            <i class="bi bi-search"></i>
+            <input type="text" id="platformSearchInput" placeholder="Search platforms…" autocomplete="off">
+          </div>
+          <div class="bp2-dropdown-actions">
+            <button type="button" class="bp2-dropdown-action-btn" id="platformSelectAll">Select all</button>
+            <button type="button" class="bp2-dropdown-action-btn" id="platformClearAll">Clear</button>
+          </div>
+          <div class="bp2-dropdown-options" id="platformOptionsList">
+            {% for p in platforms %}
+            <label class="bp2-dropdown-option" data-value="{{ p }}">
+              <input type="checkbox" value="{{ p }}" {% if p == selected_platform %}checked{% endif %}>
+              <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
+              <span class="bp2-option-text">{{ p }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="bp2-dropdown-footer">
+            <button type="button" class="bp2-dropdown-apply-btn" id="platformApplyBtn">Apply</button>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="bp2-filter-reset" id="btnResetFilters" onclick="resetFilters()" title="Reset filters">
+        <i class="bi bi-arrow-counterclockwise"></i>
+      </button>
+    </div>
+
+    <div class="bp2-actions" data-html2canvas-ignore="true">
+      <button type="button" class="bp2-btn" id="btnExportExcel" onclick="exportToExcel()"><i class="bi bi-file-earmark-excel"></i> Export .xlsx</button>
+      <button type="button" class="bp2-btn" id="btnExportPdf" onclick="exportToPDF()"><i class="bi bi-file-earmark-pdf"></i> Export PDF</button>
+    </div>
+  </div>
+
+  <!-- ── Hero ── -->
+  <header class="bp2-hero">
+    <div>
+      <span class="bp2-eyebrow"><span class="pulse"></span> Executive Summary</span>
+      <h1>Brand &amp; Platform Performance</h1>
+      <p>Daily pulse, month-to-date progress and growth vs previous periods.</p>
+    </div>
+    <div class="bp2-asof"><i class="bi bi-calendar-check"></i> Data as of <b id="asOfLabel">—</b></div>
+  </header>
+
+  <!-- ── KPI cards ── -->
+  <div class="bp2-section-title">Month-to-date</div>
+  <section class="bp2-kpi-grid">
+    <article class="bp2-card hoverable bp2-kpi" style="--k: var(--c-indigo);">
+      <div class="bp2-kpi-head"><span class="bp2-kpi-label">MTD Target NMV</span><span class="bp2-icon"><i class="bi bi-bullseye"></i></span></div>
+      <div class="bp2-kpi-value mono skel" id="cardTargetNmv">Rp 0</div>
+      <div class="bp2-kpi-foot"><span id="cardTargetSub">MTD Cutoff Target</span></div>
+      <div class="bp2-progress" title="Run-rate vs target"><span id="runrateVsTargetBar" style="width:0"></span></div>
+      <div class="bp2-kpi-foot"><span>Run-rate covers</span><b id="runrateVsTargetPct">0%</b></div>
+    </article>
+
+    <article class="bp2-card hoverable bp2-kpi" style="--k: var(--orange);">
+      <div class="bp2-kpi-head"><span class="bp2-kpi-label">MTD Actual NMV</span><span class="bp2-icon"><i class="bi bi-cash-stack"></i></span></div>
+      <div class="bp2-kpi-value mono skel" id="cardActualNmv">Rp 0</div>
+      <div class="bp2-kpi-foot"><span>vs previous MTD</span><span id="cardMtdGrowth" class="chip flat">—</span></div>
+      <div class="bp2-spark"><canvas id="sparkNmv"></canvas></div>
+    </article>
+
+    <article class="bp2-card hoverable bp2-kpi" id="achCard" style="--k: var(--c-emerald);">
+      <div class="bp2-kpi-head"><span class="bp2-kpi-label">Target Achievement</span><span class="bp2-icon"><i class="bi bi-trophy"></i></span></div>
+      <div class="bp2-kpi-value mono skel" id="cardAchievement">0%</div>
+      <div class="bp2-progress" title="Achievement (bar) vs cutoff benchmark 100% (marker)"><span id="achBar" style="width:0"></span><i id="paceMarker" style="left:100%"></i></div>
+      <div class="bp2-kpi-foot"><span>Cutoff benchmark <b id="paceLabel">100%</b></span><span id="paceChip" class="chip flat">—</span></div>
+    </article>
+
+    <article class="bp2-card hoverable bp2-kpi" style="--k: var(--c-violet);">
+      <div class="bp2-kpi-head"><span class="bp2-kpi-label">Run-rate NMV</span><span class="bp2-icon"><i class="bi bi-speedometer2"></i></span></div>
+      <div class="bp2-kpi-value mono skel" id="cardRunrateNmv">Rp 0</div>
+      <div class="bp2-kpi-foot"><span>Projected full month</span></div>
+      <div class="bp2-kpi-foot"><span>Gap to target</span><b id="runrateGap" class="mono">—</b></div>
+    </article>
+  </section>
+
+  <!-- ── Spotlight: performers + NMV vs GMV gauge + alerts ── -->
+  <div class="bp2-section-title">Today's spotlight</div>
+  <section class="bp2-spot-grid">
+    <!-- Card 1: Combined Top & Bottom Performers -->
+    <article class="bp2-card hoverable bp2-performer-combo">
+      <div class="bp2-combo-row top">
+        <div class="bp2-combo-head">
+          <span class="bp2-performer-tag top"><i class="bi bi-trophy-fill"></i> Top performer</span>
+          <span id="topPerformerChip" class="chip flat">—</span>
+        </div>
+        <div class="bp2-performer-body">
+          <div class="bp2-avatar top" id="topPerformerAvatar">—</div>
+          <div class="bp2-performer-info">
+            <div class="bp2-performer-name skel" id="topPerformerBrand">—</div>
+            <div class="bp2-performer-meta"><span class="mono" id="topPerformerValue">GMV Rp 0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bp2-combo-divider"></div>
+
+      <div class="bp2-combo-row bottom">
+        <div class="bp2-combo-head">
+          <span class="bp2-performer-tag bottom"><i class="bi bi-exclamation-octagon-fill"></i> Bottom performer</span>
+          <span id="bottomPerformerChip" class="chip flat">—</span>
+        </div>
+        <div class="bp2-performer-body">
+          <div class="bp2-avatar bottom" id="bottomPerformerAvatar">—</div>
+          <div class="bp2-performer-info">
+            <div class="bp2-performer-name skel" id="bottomPerformerBrand">—</div>
+            <div class="bp2-performer-meta"><span class="mono" id="bottomPerformerValue">GMV Rp 0</span></div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 2: NMV vs GMV (Leakage Gauge) moved to spotlight -->
+    <article class="bp2-card hoverable bp2-leakage-card">
+      <div class="bp2-leakage-head">
+        <div>
+          <h3><i class="bi bi-pie-chart-fill"></i> NMV vs GMV</h3>
+          <p>Gross to net conversion (MTD)</p>
+        </div>
+        <span class="bp2-leakage-badge"><b id="gaugeRatio">—</b> conv.</span>
+      </div>
+      <div class="bp2-gauge-wrap">
+        <div class="bp2-gauge-canvas-wrap">
+          <canvas id="comparisonChart"></canvas>
+          <div class="bp2-donut-center">
+            <div><small>Conversion</small><strong class="mono" id="gaugeRatioCenter">—</strong></div>
+          </div>
+        </div>
+        <div class="bp2-gauge-stats">
+          <div><span>GMV</span><strong class="mono" id="gaugeGmv">—</strong></div>
+          <div><span>NMV</span><strong class="mono" id="gaugeNmv">—</strong></div>
+          <div><span>Leakage</span><strong class="mono" id="gaugeLeak">—</strong></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 3: Anomaly Watch -->
+    <article class="bp2-card bp2-alerts">
+      <div class="bp2-alerts-head">
+        <h3><i class="bi bi-activity"></i> Anomaly watch</h3>
+        <span class="chip flat" id="alertTotalChip">—</span>
+      </div>
+      <div id="anomalyList"><div class="skel" style="height:150px"></div></div>
+    </article>
+  </section>
+
+  <!-- ── Today pulse ── -->
+  <div class="bp2-section-title">Today's pulse</div>
+  <section class="bp2-pulse-grid" id="topKpiSummaryBody">
+    {% for i in "12345678" %}<div class="bp2-card bp2-pulse"><div class="skel" style="height:96px"></div></div>{% endfor %}
+  </section>
+
+  <!-- ── Charts ── -->
+  <div class="bp2-section-title">Trends &amp; mix</div>
+  <section class="bp2-chart-grid">
+    <article class="bp2-card bp2-chart">
+      <div class="bp2-chart-head">
+        <div><h3>Daily trend — MTD vs M-1</h3><p>Same day-of-month comparison against last month</p></div>
+        <div class="bp2-multiseg" id="trendMetricSeg">
+          <button type="button" data-metric="nmv" class="active">NMV</button>
+          <button type="button" data-metric="target">Target</button>
+          <button type="button" data-metric="gmv">GMV</button>
+          <button type="button" data-metric="net_order">Orders</button>
+          <button type="button" data-metric="visitors">Visitors</button>
+        </div>
+      </div>
+      <div class="bp2-chart-body"><canvas id="dailyTrendChart"></canvas></div>
+    </article>
+
+    <article class="bp2-card bp2-chart">
+      <div class="bp2-chart-head"><div><h3>NMV share by brand</h3><p>Month-to-date</p></div></div>
+      <div class="bp2-donut-wrap">
+        <div class="bp2-chart-body sm">
+          <canvas id="brandGroupChart"></canvas>
+          <div class="bp2-donut-center"><div><small>Total NMV</small><strong class="mono" id="donutTotal">—</strong></div></div>
+        </div>
+        <div class="bp2-legend" id="brandGroupLegend"></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="bp2-chart-full">
+    <article class="bp2-card bp2-chart">
+      <div class="bp2-chart-head">
+        <div><h3>Platform contribution</h3><p>MTD NMV distribution across e-commerce channels</p></div>
+      </div>
+      <div class="bp2-chart-body" style="height: 220px;"><canvas id="platformChart"></canvas></div>
+    </article>
+  </section>
+
+  <!-- ── Table 1: Brand Leaderboard ── -->
+  <div class="bp2-section-title">Brand leaderboard</div>
+  <section class="bp2-card bp2-table-card">
+    <div class="bp2-table-toolbar is-split-3">
+      <div class="bp2-toolbar-left">
+        <h3 style="font-size: .95rem; font-weight: 700; margin: 0; letter-spacing: -.01em;">MTD Brand Leaderboard</h3>
+        <p style="margin: 2px 0 0; font-size: .74rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="lbSubTitle">Ranked by Month-to-Date Net Merchandise Value (NMV)</p>
+      </div>
+      <div class="bp2-toolbar-center">
+        <div class="bp2-segment" id="leaderboardModeToggle" aria-label="Leaderboard ranking mode">
+          <button type="button" class="active" data-mode="nmv"><i class="bi bi-cash-stack"></i> NMV</button>
+          <button type="button" data-mode="target_ach"><i class="bi bi-trophy"></i> Target Ach.</button>
+          <button type="button" data-mode="growth"><i class="bi bi-graph-up-arrow"></i> Growth (MoM)</button>
+        </div>
+      </div>
+      <div class="bp2-toolbar-right">
+        <label class="bp2-search"><i class="bi bi-search"></i><input type="search" id="lbSearch" placeholder="Search leaderboard brand…"></label>
+      </div>
+    </div>
+    <div class="bp2-podium" id="podium"></div>
+    <div class="bp2-table-wrap">
+      <table class="bp2-table" id="leaderboardTable">
+        <thead id="leaderboardTableHead"></thead>
+        <tbody id="leaderboardTableBody"><tr><td class="bp2-empty">Loading leaderboard…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Table 2: All Metrics Matrix (with Platform Toggle) ── -->
+  <div class="bp2-section-title">All metrics matrix</div>
+  <section class="bp2-card bp2-table-card">
+    <div class="bp2-table-toolbar">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <span style="font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);"><i class="bi bi-shop"></i> Platform:</span>
+        <div class="bp2-segment" id="platformTableToggle">
+          <button type="button" class="active" data-plat="All">All platforms</button>
+        </div>
+      </div>
+      <label class="bp2-search"><i class="bi bi-search"></i><input type="search" id="tableSearch" placeholder="Search brand or group…"></label>
+    </div>
+    <div class="bp2-groupchips" id="groupChips"></div>
+    <div class="bp2-table-wrap">
+      <table class="bp2-table" id="pivotTable">
+        <thead id="pivotTableHead"></thead>
+        <tbody id="pivotTableBody"><tr><td class="bp2-empty">Loading performance data…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- ── Anomaly Detail Modal ── -->
+<div class="bp2 bp2-modal-backdrop" id="anomalyModalBackdrop" style="display: none;" onclick="handleModalBackdropClick(event)">
+  <div class="bp2-modal" role="dialog" aria-modal="true" aria-labelledby="anomalyModalTitle">
+    <div class="bp2-modal-head">
+      <div class="bp2-modal-title-wrap">
+        <h3 class="bp2-modal-title" id="anomalyModalTitle"><i class="bi bi-exclamation-triangle-fill"></i> Anomaly Detail</h3>
+        <span class="chip" id="anomalyModalBadge"></span>
+      </div>
+      <button type="button" class="bp2-modal-close" onclick="closeAnomalyModal()" aria-label="Close modal">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="bp2-modal-body">
+      <p class="bp2-modal-sub" id="anomalyModalSubtitle"></p>
+      <div class="bp2-table-wrap" style="max-height: 480px; margin-top: 0;">
+        <table class="bp2-table" id="anomalyTable">
+          <thead id="anomalyTableHead"></thead>
+          <tbody id="anomalyTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="bp2-modal-foot">
+      <span id="anomalyModalFootNote">Click on "Filter" to isolate any specific brand on the dashboard.</span>
+      <button type="button" class="btn btn-sm btn-secondary" onclick="closeAnomalyModal()" style="font-size: .78rem; font-weight: 600; padding: 4px 14px; border-radius: 8px;">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  /* ================================================================
+     Config
+     ================================================================ */
+  const API_URL = "{% url 'brand_performance_v2_summary_api' %}";
+
+  const GROUPS = {
+    sales:   { label: 'Sales',      color: '#6366F1' },
+    promo:   { label: 'Promo cost', color: '#F59E0B' },
+    orders:  { label: 'Orders',     color: '#14B8A6' },
+    traffic: { label: 'Traffic',    color: '#0EA5E9' },
+    eff:     { label: 'Efficiency', color: '#8B5CF6' },
+  };
+
+  // inverse = an increase is bad (red)
+  const METRICS = [
+    { key: 'target', label: 'Target', group: 'sales', fmt: 'curr' },
+    { key: 'target_achievement', label: 'Target Ach.', group: 'sales', fmt: 'pct' },
+    { key: 'nmv', label: 'NMV', group: 'sales', fmt: 'curr' },
+    { key: 'gmv', label: 'GMV', group: 'sales', fmt: 'curr' },
+    { key: 'voucher_paid_by_platform', label: 'Voucher Platform', group: 'promo', fmt: 'curr' },
+    { key: 'voucher_paid_by_seller', label: 'Voucher Seller', group: 'promo', fmt: 'curr', inverse: true },
+    { key: 'discount_from_platform', label: 'Discount Platform', group: 'promo', fmt: 'curr' },
+    { key: 'discount_from_seller', label: 'Discount Seller', group: 'promo', fmt: 'curr', inverse: true },
+    { key: 'net_order', label: 'Net Order', group: 'orders', fmt: 'num' },
+    { key: 'gross_order', label: 'Gross Order', group: 'orders', fmt: 'num' },
+    { key: 'net_quantity', label: 'Net Qty', group: 'orders', fmt: 'num' },
+    { key: 'gross_quantity', label: 'Gross Qty', group: 'orders', fmt: 'num' },
+    { key: 'page_views', label: 'Page Views', group: 'traffic', fmt: 'num' },
+    { key: 'visitors', label: 'Visitors', group: 'traffic', fmt: 'num' },
+    { key: 'cvr', label: 'CVR', group: 'traffic', fmt: 'pct' },
+    { key: 'cr', label: 'Cancel/Return', group: 'eff', fmt: 'pct', inverse: true },
+    { key: 'abs', label: 'ABS', group: 'eff', fmt: 'dec' },
+    { key: 'aov', label: 'AOV', group: 'eff', fmt: 'curr' },
+    { key: 'asp', label: 'ASP', group: 'eff', fmt: 'curr' },
+  ];
+  const LB_METRICS = ['target', 'target_achievement', 'nmv', 'gmv', 'net_order', 'visitors', 'cvr'];
+
+  const SUBCOLS = [
+    { key: 'today', label: 'Today', title: 'Value on the as-of date' },
+    { key: 'vs_prev_day', label: 'Δ D-1', title: 'vs yesterday', growth: true },
+    { key: 'vs_7d_avg', label: 'Δ 7D', title: 'vs average of previous 7 days', growth: true },
+    { key: 'vs_prev_month_day', label: 'Δ M-1', title: 'vs same day last month', growth: true },
+    { key: 'mtd', label: 'MTD', title: 'Month-to-date total', mtd: true },
+    { key: 'vs_prev_mtd', label: 'Δ MTD', title: 'vs same period last month', growth: true },
+  ];
+
+  const PALETTE = ['#6366F1', '#F59E0B', '#14B8A6', '#F43F5E', '#0EA5E9', '#8B5CF6', '#84CC16', '#EC4899', '#94A3B8'];
+  const PLATFORM_COLORS = {
+    shopee: '#EE4D2D', tokopedia: '#03AC0E', tiktok: '#14B8A6', 'tiktok shop': '#14B8A6',
+    lazada: '#4F46E5', blibli: '#0095DA', bukalapak: '#E31E52',
+  };
+
+  const TREND_METRIC_CONFIG = {
+    nmv:       { label: 'NMV',      color: '#FF7A00', isMoney: true },
+    target:    { label: 'Target',   color: '#3B82F6', isMoney: true },
+    gmv:       { label: 'GMV',      color: '#6366F1', isMoney: true },
+    net_order: { label: 'Orders',   color: '#14B8A6', isMoney: false },
+    visitors:  { label: 'Visitors', color: '#0EA5E9', isMoney: false },
+  };
+
+  let state = {
+    data: null,
+    trendMetrics: new Set(['nmv']),
+    activeGroups: new Set(Object.keys(GROUPS)),
+    activePlatformTable: 'All',
+    leaderboardMode: 'nmv',
+    selectedBrands: new Set(),
+    selectedPlatforms: new Set(),
+    charts: {},
+  };
+
+  /* ================================================================
+     Helpers
+     ================================================================ */
+  const $ = (id) => document.getElementById(id);
+  const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  // Numbers are formatted FULL (no humanized B, M, K, Jt, Rb suffixes)
+  const fmtCurr = (v) => 'Rp ' + Math.round(Number(v) || 0).toLocaleString('id-ID');
+  const fmtNum = (v) => Math.round(Number(v) || 0).toLocaleString('id-ID');
+  const fmtPct = (v) => (Number(v) || 0).toFixed(2) + '%';
+  const fmtDec = (v) => (Number(v) || 0).toFixed(2);
+  const FMT = { curr: fmtCurr, num: fmtNum, pct: fmtPct, dec: fmtDec };
+
+  function isDarkMode() {
+    return document.documentElement.getAttribute('data-theme') === 'dark';
+  }
+
+  function getChartTooltipConfig() {
+    const dark = isDarkMode();
+    return {
+      backgroundColor: dark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.98)',
+      titleColor: dark ? '#F8FAFC' : '#0F172A',
+      bodyColor: dark ? '#CBD5E1' : '#334155',
+      borderColor: dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(15, 23, 42, 0.12)',
+      borderWidth: 1,
+      padding: 10,
+      cornerRadius: 10,
+      boxPadding: 4,
+      usePointStyle: true,
+      titleFont: { size: 12, weight: '700', family: "'Plus Jakarta Sans', sans-serif" },
+      bodyFont: { size: 11, weight: '600', family: "'Plus Jakarta Sans', sans-serif" },
+      boxWidth: 8,
+    };
+  }
+
+  function chip(val, opts = {}) {
+    const { inverse = false, suffix = '%', sm = false } = opts;
+    const size = sm ? ' sm' : '';
+    if (val === null || val === undefined || isNaN(val)) return `<span class="chip flat${size}">—</span>`;
+    const n = Number(val);
+    if (Math.abs(n) < 0.05) return `<span class="chip flat${size}">0.0${suffix}</span>`;
+    const good = inverse ? n < 0 : n > 0;
+    const arrow = n > 0 ? '▲' : '▼';
+    return `<span class="chip ${good ? 'up' : 'down'}${size}">${arrow} ${Math.abs(n).toFixed(1)}${suffix}</span>`;
+  }
+  function setChip(el, val, opts) { el.outerHTML = chip(val, opts).replace('<span ', `<span id="${el.id}" `); }
+
+  function initials(name) {
+    if (!name || name === '-') return '—';
+    return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  }
+  function colorFor(label, i) {
+    const k = String(label || '').toLowerCase();
+    return PLATFORM_COLORS[k] || PALETTE[i % PALETTE.length];
+  }
+  function hashColor(str) {
+    let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return PALETTE[h % PALETTE.length];
+  }
+  function daysInMonth(iso) { const d = new Date(iso + 'T00:00:00'); return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); }
+
+  function destroyChart(key) { if (state.charts[key]) { state.charts[key].destroy(); delete state.charts[key]; } }
+  function gradient(ctx, area, color, a1 = .28, a2 = 0) {
+    const g = ctx.createLinearGradient(0, area.top, 0, area.bottom);
+    g.addColorStop(0, hexA(color, a1)); g.addColorStop(1, hexA(color, a2));
+    return g;
+  }
+  function hexA(hex, a) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    const n = parseInt(hex, 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+  }
+  function accent() { const v = cssVar('--orange'); return v.startsWith('#') ? v : '#FF7A00'; }
+
+  /* ================================================================
+     Data loading
+     ================================================================ */
+  async function loadDashboardData() {
+    const root = $('pdfContent');
+    root.classList.add('is-loading');
+    const url = new URL(API_URL, window.location.origin);
+    
+    const asOfDate = $('asOfDateFilter').value;
+    if (asOfDate) url.searchParams.set('as_of_date', asOfDate);
+
+    if (state.selectedBrands.size > 0) {
+      state.selectedBrands.forEach(b => url.searchParams.append('brand', b));
+    }
+    if (state.selectedPlatforms.size > 0) {
+      state.selectedPlatforms.forEach(p => url.searchParams.append('platform', p));
+    }
+
+    try {
+      const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      state.data = await res.json();
+      renderAll();
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err);
+      $('pivotTableBody').innerHTML = `<tr><td class="bp2-empty">Failed to load data. Please retry.</td></tr>`;
+      $('leaderboardTableBody').innerHTML = `<tr><td class="bp2-empty">Failed to load data. Please retry.</td></tr>`;
+    } finally {
+      root.classList.remove('is-loading');
+    }
+  }
+
+  function renderAll() {
+    const d = state.data;
+    $('asOfLabel').textContent = new Date(d.as_of_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    renderCards(d.cards, d.as_of_date, d.charts.daily_trend);
+    renderPerformers(d.top_performers);
+    renderAnomalies(d.anomalies);
+    renderPulse(d.today_kpi_overview);
+    renderCharts();
+    renderPlatformTableToggle();
+    renderPivotTable();
+    renderLeaderboard();
+    applySearch();
+  }
+
+  /* ================================================================
+     KPI cards
+     ================================================================ */
+  function renderCards(c, asOf, trend) {
+    if (!c) return;
+    const dim = daysInMonth(asOf);
+    const day = new Date(asOf + 'T00:00:00').getDate();
+    const pace = day / dim * 100;
+    const monthName = new Date(asOf + 'T00:00:00').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+
+    $('cardTargetNmv').textContent = fmtCurr(c.target_nmv);
+    $('cardTargetSub').textContent = `MTD Cutoff Target (Day ${day} of ${dim})`;
+
+    $('cardActualNmv').textContent = fmtCurr(c.actual_nmv);
+    setChip($('cardMtdGrowth'), c.mtd_growth_pct);
+
+    const ach = Number(c.achievement_pct) || 0;
+    $('cardAchievement').textContent = ach.toFixed(1) + '%';
+    $('achBar').style.width = Math.min(ach, 100) + '%';
+    $('paceMarker').style.left = 'calc(100% - 1px)';
+    $('paceLabel').textContent = '100%';
+    const vsBenchmark = ach - 100;
+    $('achCard').style.setProperty('--k', vsBenchmark >= 0 ? 'var(--c-emerald)' : (vsBenchmark > -15 ? 'var(--c-amber)' : 'var(--c-rose)'));
+    setChip($('paceChip'), vsBenchmark, { suffix: '%' });
+
+    $('cardRunrateNmv').textContent = fmtCurr(c.runrate_nmv);
+    const fullTarget = c.full_month_target || (day ? (c.target_nmv / day * dim) : c.target_nmv);
+    const cover = fullTarget ? c.runrate_nmv / fullTarget * 100 : 0;
+    $('runrateVsTargetBar').style.width = Math.min(cover, 100) + '%';
+    $('runrateVsTargetPct').textContent = cover.toFixed(1) + '%';
+    const gap = (c.runrate_nmv || 0) - (fullTarget || 0);
+    $('runrateGap').textContent = (gap >= 0 ? '+' : '−') + fmtCurr(Math.abs(gap));
+    $('runrateGap').style.color = gap >= 0 ? 'var(--c-emerald)' : 'var(--c-rose)';
+
+    // sparkline
+    destroyChart('spark');
+    const col = accent();
+    state.charts.spark = new Chart($('sparkNmv'), {
+      type: 'line',
+      data: {
+        labels: (trend || []).map(t => t.day),
+        datasets: [{
+          data: (trend || []).map(t => t.mtd.nmv),
+          borderColor: col, borderWidth: 2, pointRadius: 0, tension: .4, fill: true,
+          backgroundColor: (ctx) => ctx.chart.chartArea ? gradient(ctx.chart.ctx, ctx.chart.chartArea, col, .25) : 'transparent',
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: { duration: 600 },
+        plugins: { legend: { display: false }, tooltip: { enabled: false } },
+        scales: { x: { display: false }, y: { display: false } },
+      },
+    });
+  }
+
+  /* ================================================================
+     Performers & anomalies
+     ================================================================ */
+  function renderPerformers(tp) {
+    if (!tp) return;
+    [['top', tp.top], ['bottom', tp.bottom]].forEach(([k, p]) => {
+      p = p || {};
+      $(`${k}PerformerAvatar`).textContent = initials(p.brand);
+      $(`${k}PerformerBrand`).textContent = p.brand || '—';
+      $(`${k}PerformerValue`).textContent = 'GMV ' + fmtCurr(p.today_gmv);
+      setChip($(`${k}PerformerChip`), p.growth);
+    });
+  }
+
+  function renderAnomalies(list) {
+    const box = $('anomalyList');
+    if (!box) return;
+    if (!list || !list.length) { box.innerHTML = '<div class="bp2-empty">No anomaly rules configured.</div>'; return; }
+    const flagged = list.reduce((s, a) => s + (a.total_brands || 0), 0);
+    $('alertTotalChip').className = 'chip ' + (flagged ? 'down' : 'up');
+    $('alertTotalChip').textContent = flagged ? `${flagged} flags` : 'All clear';
+
+    box.innerHTML = list.map(a => {
+      const n = a.total_brands || 0;
+      const cls = n === 0 ? 'ok' : (a.severity === 'Critical' ? 'critical' : 'warning');
+      const brands = (a.affected_brands && a.affected_brands !== 'None') ? a.affected_brands.split(',').map(s => s.trim()).filter(Boolean) : [];
+      const more = n > brands.length ? `<span>+${n - brands.length} more</span>` : '';
+      const brandHtml = brands.length ? brands.map(b => `<span>${esc(b)}</span>`).join('') + more : '<span>No brand affected</span>';
+      const isClickable = n > 0;
+      const clickAttr = isClickable ? `onclick="openAnomalyModal('${esc(a.id)}')"` : '';
+      const arrowIcon = isClickable ? `<div class="bp2-alert-arrow"><i class="bi bi-chevron-right"></i></div>` : '';
+      return `
+        <div class="bp2-alert ${cls}" ${clickAttr} role="${isClickable ? 'button' : 'region'}" title="${isClickable ? 'Click to view breakdown data' : ''}">
+          <div class="bp2-alert-count">${n === 0 ? '<i class="bi bi-check2"></i>' : n}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="bp2-alert-title">${esc(a.issue)}</div>
+            <div class="bp2-alert-brands">${brandHtml}</div>
+          </div>
+          <div class="bp2-alert-meta"><b>${n === 0 ? 'OK' : esc(a.severity)}</b>${esc(a.threshold)}</div>
+          ${arrowIcon}
+        </div>`;
+    }).join('');
+  }
+
+  /* ================================================================
+     Anomaly Detail Modal Controller
+     ================================================================ */
+  function openAnomalyModal(anomalyId) {
+    const d = state.data;
+    if (!d || !d.anomalies) return;
+    const anomaly = d.anomalies.find(a => a.id === anomalyId);
+    if (!anomaly || !anomaly.items || !anomaly.items.length) return;
+
+    const modalBackdrop = $('anomalyModalBackdrop');
+    const modalTitle = $('anomalyModalTitle');
+    const modalBadge = $('anomalyModalBadge');
+    const modalSubtitle = $('anomalyModalSubtitle');
+    const thead = $('anomalyTableHead');
+    const tbody = $('anomalyTableBody');
+
+    const isCritical = anomaly.severity === 'Critical';
+    modalTitle.innerHTML = `<i class="bi ${isCritical ? 'bi-exclamation-octagon-fill' : 'bi-exclamation-triangle-fill'}" style="color: ${isCritical ? 'var(--c-rose)' : 'var(--c-amber)'}"></i> ${esc(anomaly.issue)}`;
+    modalBadge.className = `chip ${isCritical ? 'down' : 'flat'}`;
+    modalBadge.textContent = `${anomaly.total_brands} brands affected • Threshold: ${anomaly.threshold}`;
+
+    if (anomalyId === 'behind_target') {
+      modalSubtitle.textContent = 'Brands lagging behind Month-to-Date target cutoff (< 80% achievement or < -20% vs last month). Sorted by achievement % ascending.';
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 44px; text-align: center;">#</th>
+          <th style="min-width: 140px;">Brand</th>
+          <th style="min-width: 110px;">Group</th>
+          <th style="min-width: 130px; text-align: right;">MTD NMV</th>
+          <th style="min-width: 130px; text-align: right;">Target</th>
+          <th style="min-width: 150px;">Achievement</th>
+          <th style="min-width: 130px; text-align: right;">Gap to Target</th>
+          <th style="width: 90px; text-align: center;">Action</th>
+        </tr>`;
+      tbody.innerHTML = anomaly.items.map((item, idx) => {
+        const achPct = Math.min(Math.max(item.achievement_pct, 0), 100);
+        const achColor = item.achievement_pct < 60 ? 'var(--c-rose)' : (item.achievement_pct < 80 ? 'var(--c-amber)' : 'var(--c-emerald)');
+        return `
+          <tr>
+            <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${idx + 1}</td>
+            <td><strong style="color: var(--text-primary); font-weight: 700;">${esc(item.brand)}</strong></td>
+            <td><span class="bp2-tag" style="--t:${hashColor(item.brand_group)}">${esc(item.brand_group)}</span></td>
+            <td class="num mono">${fmtCurr(item.actual_nmv)}</td>
+            <td class="num mono" style="color: var(--text-muted);">${fmtCurr(item.target_nmv)}</td>
+            <td>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span class="bp2-prog-mini"><span style="width: ${achPct}%; background: ${achColor};"></span></span>
+                <span class="mono" style="font-weight: 700; color: ${achColor}; font-size: .76rem;">${fmtPct(item.achievement_pct)}</span>
+              </div>
+            </td>
+            <td class="num mono" style="color: var(--c-rose); font-weight: 600;">- ${fmtCurr(item.gap)}</td>
+            <td style="text-align: center;">
+              <button type="button" class="bp2-modal-filter-btn" onclick="filterToBrand('${esc(item.brand)}')">Filter</button>
+            </td>
+          </tr>`;
+      }).join('');
+    } else if (anomalyId === 'cvr_drop') {
+      modalSubtitle.textContent = 'Brands with Conversion Rate drop (Δ ≤ -0.50%) compared to previous day. Sorted by steepest drop.';
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 44px; text-align: center;">#</th>
+          <th style="min-width: 140px;">Brand</th>
+          <th style="min-width: 110px;">Group</th>
+          <th style="min-width: 110px; text-align: right;">Today CVR</th>
+          <th style="min-width: 110px; text-align: right;">Prev CVR</th>
+          <th style="min-width: 110px; text-align: center;">CVR Delta</th>
+          <th style="min-width: 110px; text-align: right;">Visitors</th>
+          <th style="min-width: 110px; text-align: right;">Net Orders</th>
+          <th style="width: 90px; text-align: center;">Action</th>
+        </tr>`;
+      tbody.innerHTML = anomaly.items.map((item, idx) => {
+        return `
+          <tr>
+            <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${idx + 1}</td>
+            <td><strong style="color: var(--text-primary); font-weight: 700;">${esc(item.brand)}</strong></td>
+            <td><span class="bp2-tag" style="--t:${hashColor(item.brand_group)}">${esc(item.brand_group)}</span></td>
+            <td class="num mono">${fmtPct(item.today_cvr)}</td>
+            <td class="num mono" style="color: var(--text-muted);">${fmtPct(item.prev_cvr)}</td>
+            <td style="text-align: center;">${chip(item.delta_cvr, { suffix: 'pp', sm: true })}</td>
+            <td class="num mono">${fmtNum(item.today_visitors)}</td>
+            <td class="num mono">${fmtNum(item.today_orders)}</td>
+            <td style="text-align: center;">
+              <button type="button" class="bp2-modal-filter-btn" onclick="filterToBrand('${esc(item.brand)}')">Filter</button>
+            </td>
+          </tr>`;
+      }).join('');
+    } else if (anomalyId === 'high_cr') {
+      modalSubtitle.textContent = 'Brands with today Cancellation & Return rate ≥ 20.0% (min. 10 gross orders). Sorted by CR % descending.';
+      thead.innerHTML = `
+        <tr>
+          <th style="width: 44px; text-align: center;">#</th>
+          <th style="min-width: 140px;">Brand</th>
+          <th style="min-width: 110px;">Group</th>
+          <th style="min-width: 110px; text-align: center;">CR %</th>
+          <th style="min-width: 120px; text-align: right;">Gross Orders</th>
+          <th style="min-width: 120px; text-align: right;">Net Orders</th>
+          <th style="min-width: 130px; text-align: right;">Cancel/Return Qty</th>
+          <th style="width: 90px; text-align: center;">Action</th>
+        </tr>`;
+      tbody.innerHTML = anomaly.items.map((item, idx) => {
+        return `
+          <tr>
+            <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${idx + 1}</td>
+            <td><strong style="color: var(--text-primary); font-weight: 700;">${esc(item.brand)}</strong></td>
+            <td><span class="bp2-tag" style="--t:${hashColor(item.brand_group)}">${esc(item.brand_group)}</span></td>
+            <td style="text-align: center;"><span class="chip down sm">▲ ${fmtPct(item.cr_pct)}</span></td>
+            <td class="num mono">${fmtNum(item.gross_orders)}</td>
+            <td class="num mono">${fmtNum(item.net_orders)}</td>
+            <td class="num mono" style="color: var(--c-rose); font-weight: 600;">${fmtNum(item.cancelled_orders)}</td>
+            <td style="text-align: center;">
+              <button type="button" class="bp2-modal-filter-btn" onclick="filterToBrand('${esc(item.brand)}')">Filter</button>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    modalBackdrop.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAnomalyModal() {
+    const modalBackdrop = $('anomalyModalBackdrop');
+    if (modalBackdrop) modalBackdrop.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+
+  function handleModalBackdropClick(e) {
+    if (e.target.id === 'anomalyModalBackdrop') {
+      closeAnomalyModal();
+    }
+  }
+
+  function filterToBrand(brandName) {
+    closeAnomalyModal();
+    state.selectedBrands.clear();
+    state.selectedBrands.add(brandName);
+    const label = $('brandDropdownLabel');
+    const badge = $('brandDropdownBadge');
+    if (label) label.textContent = brandName;
+    if (badge) badge.style.display = 'none';
+    const optionsList = $('brandOptionsList');
+    if (optionsList) {
+      optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+        const val = opt.dataset.value;
+        const isChecked = (val === brandName);
+        const cb = opt.querySelector('input[type="checkbox"]');
+        if (cb) cb.checked = isChecked;
+        opt.classList.toggle('selected', isChecked);
+      });
+    }
+    loadDashboardData();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAnomalyModal();
+  });
+
+  /* ================================================================
+     Today pulse tiles
+     ================================================================ */
+  function renderPulse(rows) {
+    const box = $('topKpiSummaryBody');
+    rows = (rows || []).filter(r => r.kpi !== 'Target (IDR)');
+    if (!rows.length) { box.innerHTML = '<div class="bp2-empty">No data.</div>'; return; }
+    box.innerHTML = rows.map((r, i) => {
+      const fmt = r.is_curr ? fmtCurr : (r.is_pct ? fmtPct : fmtNum);
+      const sfx = r.is_pct ? 'pp' : '%';
+      return `
+        <article class="bp2-card hoverable bp2-pulse reveal" style="animation-delay:${i * 40}ms">
+          <span class="bp2-pulse-label">${esc(r.kpi)}</span>
+          <span class="bp2-pulse-value mono">${fmt(r.today)}</span>
+          <div class="bp2-pulse-row">${chip(r.vs_yesterday_pct, { suffix: sfx, sm: true })}<span>D-1</span>${chip(r.vs_7d_avg_pct, { suffix: sfx, sm: true })}<span>7D</span></div>
+          <div class="bp2-pulse-foot"><span>MTD <b class="mono">${fmt(r.mtd)}</b></span>${chip(r.vs_last_mtd_pct, { suffix: sfx, sm: true })}</div>
+        </article>`;
+    }).join('');
+  }
+
+  /* ================================================================
+     Charts
+     ================================================================ */
+  function baseOpts() {
+    const grid = hexA('#94A3B8', .15);
+    const tick = cssVar('--text-muted') || '#6B7280';
+    return {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: getChartTooltipConfig(),
+      },
+      scales: {
+        x: { grid: { display: false }, border: { display: false }, ticks: { color: tick, font: { size: 11 } } },
+        y: { grid: { color: grid }, border: { display: false }, ticks: { color: tick, font: { size: 11 } } },
+      },
+    };
+  }
+
+  function renderCharts() {
+    renderTrend();
+    renderBrandGroupDonut();
+    renderPlatformBars();
+    renderGauge();
+  }
+
+  function renderTrend() {
+    const d = state.data; if (!d) return;
+    const rows = d.charts.daily_trend || [];
+    const selected = Array.from(state.trendMetrics);
+    if (!selected.length) selected.push('nmv');
+
+    const hasMoney = selected.some(m => TREND_METRIC_CONFIG[m].isMoney);
+    const hasCount = selected.some(m => !TREND_METRIC_CONFIG[m].isMoney);
+    const dualAxis = hasMoney && hasCount;
+
+    const grid = hexA('#94A3B8', .15);
+    const tick = cssVar('--text-muted') || '#6B7280';
+    const isDark = isDarkMode();
+
+    const datasets = [];
+    selected.forEach(m => {
+      const cfg = TREND_METRIC_CONFIG[m];
+      const yAxisID = (dualAxis && !cfg.isMoney) ? 'y1' : 'y';
+
+      // MTD dataset (solid line)
+      datasets.push({
+        label: `${cfg.label} (MTD)`,
+        data: rows.map(r => r.mtd[m] || 0),
+        borderColor: cfg.color,
+        borderWidth: 2.5,
+        tension: .35,
+        fill: selected.length === 1,
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointBackgroundColor: cfg.color,
+        backgroundColor: (ctx) => (selected.length === 1 && ctx.chart.chartArea) ? gradient(ctx.chart.ctx, ctx.chart.chartArea, cfg.color, .25) : 'transparent',
+        yAxisID: yAxisID,
+      });
+
+      // Last month dataset (dashed line)
+      datasets.push({
+        label: `${cfg.label} (M-1)`,
+        data: rows.map(r => r.prev_mtd[m] || 0),
+        borderColor: hexA(cfg.color, isDark ? .65 : .5),
+        borderWidth: 2,
+        borderDash: [5, 4],
+        tension: .35,
+        fill: false,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointBackgroundColor: hexA(cfg.color, .6),
+        yAxisID: yAxisID,
+      });
+    });
+
+    const opts = {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'end',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            boxWidth: 8,
+            color: cssVar('--text-sub') || '#475569',
+            font: { size: 11, weight: '600' },
+          },
+        },
+        tooltip: {
+          ...getChartTooltipConfig(),
+          callbacks: {
+            label: (c) => {
+              const isM = c.dataset.label.includes('NMV') || c.dataset.label.includes('Target') || c.dataset.label.includes('GMV');
+              return ` ${c.dataset.label}: ${isM ? fmtCurr(c.raw) : fmtNum(c.raw)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: tick, font: { size: 11 }, callback: function(v) { return this.getLabelForValue(v).replace('Day ', ''); } },
+        },
+        y: {
+          position: 'left',
+          grid: { color: grid },
+          border: { display: false },
+          ticks: {
+            color: tick,
+            font: { size: 11 },
+            callback: (v) => hasMoney ? fmtCurr(v) : fmtNum(v),
+          },
+        },
+      },
+    };
+
+    if (dualAxis) {
+      opts.scales.y1 = {
+        position: 'right',
+        grid: { display: false },
+        border: { display: false },
+        ticks: {
+          color: tick,
+          font: { size: 11 },
+          callback: (v) => fmtNum(v),
+        },
+      };
+    }
+
+    destroyChart('trend');
+    state.charts.trend = new Chart($('dailyTrendChart'), {
+      type: 'line',
+      data: {
+        labels: rows.map(r => r.day),
+        datasets: datasets,
+      },
+      options: opts,
+    });
+  }
+
+  function renderBrandGroupDonut() {
+    const share = state.data?.charts?.brand_share || state.data?.charts?.brand_group_share || {};
+    const labels = Object.keys(share), values = Object.values(share);
+    const total = values.reduce((a, b) => a + b, 0);
+    const colors = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+    $('donutTotal').textContent = fmtCurr(total);
+    $('brandGroupLegend').innerHTML = labels.map((l, i) => `
+      <div class="bp2-legend-item"><i style="background:${colors[i]}"></i><span title="${esc(l)}">${esc(l)}</span>
+      <em class="mono">${fmtCurr(values[i])}</em><b class="mono">${total ? (values[i] / total * 100).toFixed(1) : '0.0'}%</b></div>`).join('')
+      || '<div class="bp2-empty">No data</div>';
+
+    destroyChart('donut');
+    state.charts.donut = new Chart($('brandGroupChart'), {
+      type: 'doughnut',
+      data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: cssVar('--card-bg') || '#fff', borderWidth: 3, hoverOffset: 6, borderRadius: 6, spacing: 2 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '72%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            ...getChartTooltipConfig(),
+            callbacks: { label: (c) => ` ${c.label}: ${fmtCurr(c.raw)} (${total ? (c.raw / total * 100).toFixed(1) : 0}%)` }
+          },
+        },
+      },
+    });
+  }
+
+  function renderPlatformBars() {
+    const share = state.data.charts.platform_share || {};
+    const labels = Object.keys(share), values = Object.values(share);
+    const total = values.reduce((a, b) => a + b, 0);
+    const colors = labels.map((l, i) => colorFor(l, i));
+    const opts = baseOpts();
+    opts.indexAxis = 'y';
+    opts.interaction = { mode: 'nearest', intersect: true };
+    opts.scales.x.grid = { color: hexA('#94A3B8', .15) };
+    opts.scales.x.ticks.callback = (v) => fmtCurr(v);
+    opts.scales.y.grid = { display: false };
+    opts.scales.y.ticks.font = { size: 12, weight: '600' };
+    opts.plugins.tooltip = {
+      ...getChartTooltipConfig(),
+      callbacks: { label: (c) => ` ${fmtCurr(c.raw)} · ${total ? (c.raw / total * 100).toFixed(1) : 0}%` }
+    };
+
+    destroyChart('platform');
+    state.charts.platform = new Chart($('platformChart'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: values, backgroundColor: colors.map(c => hexA(c, .85)), hoverBackgroundColor: colors, borderRadius: 8, borderSkipped: false, barThickness: 20 }] },
+      options: opts,
+      plugins: [{
+        id: 'pctLabels',
+        afterDatasetsDraw(chart) {
+          const { ctx } = chart; ctx.save();
+          ctx.font = '700 11px "Plus Jakarta Sans", sans-serif';
+          ctx.fillStyle = cssVar('--text-sub') || '#4B5563'; ctx.textBaseline = 'middle';
+          chart.getDatasetMeta(0).data.forEach((bar, i) => {
+            const pct = total ? (values[i] / total * 100).toFixed(1) + '%' : '';
+            ctx.fillText(pct, bar.x + 8, bar.y);
+          });
+          ctx.restore();
+        },
+      }],
+    });
+  }
+
+  function renderGauge() {
+    const comp = state.data.charts.comparison || {};
+    const gmv = comp.gmv || 0, nmv = comp.nmv || 0, leak = Math.max(gmv - nmv, 0);
+    const ratio = gmv ? nmv / gmv * 100 : 0;
+    const ratioStr = ratio.toFixed(1) + '%';
+    if ($('gaugeRatio')) $('gaugeRatio').textContent = ratioStr;
+    if ($('gaugeRatioCenter')) $('gaugeRatioCenter').textContent = ratioStr;
+    if ($('gaugeGmv')) $('gaugeGmv').textContent = fmtCurr(gmv);
+    if ($('gaugeNmv')) $('gaugeNmv').textContent = fmtCurr(nmv);
+    if ($('gaugeLeak')) $('gaugeLeak').textContent = fmtCurr(leak);
+
+    destroyChart('gauge');
+    state.charts.gauge = new Chart($('comparisonChart'), {
+      type: 'doughnut',
+      data: { labels: ['NMV', 'Leakage (GMV − NMV)'], datasets: [{ data: [nmv, leak], backgroundColor: [accent(), hexA('#F43F5E', .75)], borderWidth: 0, borderRadius: 8, spacing: 3 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, rotation: -90, circumference: 180, cutout: '70%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            ...getChartTooltipConfig(),
+            callbacks: { label: (c) => ` ${c.label}: ${fmtCurr(c.raw)}` }
+          }
+        },
+      },
+    });
+  }
+
+  /* ================================================================
+     Tables
+     ================================================================ */
+  function visibleMetrics() { return METRICS.filter(m => state.activeGroups.has(m.group)); }
+
+  function renderPlatformTableToggle() {
+    let plats = state.data?.platforms_in_data || ['All'];
+    const box = $('platformTableToggle');
+    if (!box) return;
+
+    // If only one platform is filtered from top filter or present in data, omit 'All'
+    const singleFilteredPlatform = state.selectedPlatforms.size === 1 ? Array.from(state.selectedPlatforms)[0] : null;
+    if (singleFilteredPlatform) {
+      plats = plats.filter(p => p !== 'All');
+      if (plats.length === 0) plats = [singleFilteredPlatform];
+    } else if (plats.length === 2 && plats.includes('All')) {
+      plats = plats.filter(p => p !== 'All');
+    }
+
+    if (!plats.includes(state.activePlatformTable) || plats.length === 1) {
+      state.activePlatformTable = plats[0];
+    }
+
+    box.innerHTML = plats.map(p => `
+      <button type="button" class="${state.activePlatformTable === p ? 'active' : ''}" data-plat="${esc(p)}">
+        ${esc(p === 'All' ? 'All platforms' : p)}
+      </button>
+    `).join('');
+  }
+
+  function renderGroupChips() {
+    const box = $('groupChips');
+    if (!box) return;
+    box.innerHTML = Object.entries(GROUPS).map(([k, g]) => {
+      const active = state.activeGroups.has(k);
+      return `
+        <label class="bp2-chip-check-item ${active ? 'active' : ''}" data-group="${k}" style="--g:${g.color}">
+          <input type="checkbox" value="${k}" ${active ? 'checked' : ''}>
+          <span class="bp2-chip-box"><i class="bi bi-check-lg"></i></span>
+          <span>${g.label}</span>
+        </label>`;
+    }).join('');
+  }
+
+  function buildHead(stickyCols, metrics) {
+    let left = 0;
+    const stickyTh = stickyCols.map((c, i) => {
+      const th = `<th rowspan="2" class="stick ${i === stickyCols.length - 1 ? 'last' : ''}" style="left:${left}px;min-width:${c.w}px;width:${c.w}px">${c.label}</th>`;
+      left += c.w; return th;
+    }).join('');
+    const g = metrics.map(m => `<th colspan="${SUBCOLS.length}" class="grp" style="--g:${GROUPS[m.group].color}">${m.label}</th>`).join('');
+    const s = metrics.map(m => SUBCOLS.map((sc, i) =>
+      `<th class="grp-sub ${i === 0 ? 'first' : ''}" style="--g:${GROUPS[m.group].color}" title="${sc.title}">${sc.label}</th>`).join('')).join('');
+    return `<tr class="g">${stickyTh}${g}</tr><tr class="s">${s}</tr>`;
+  }
+
+  function metricCells(metricsObj, metrics) {
+    return metrics.map(m => {
+      const v = metricsObj[m.key] || {};
+      const f = FMT[m.fmt];
+      const color = GROUPS[m.group].color;
+      return SUBCOLS.map((sc, i) => {
+        const cls = ['num', sc.mtd ? 'mtd' : '', i === 0 ? 'first' : ''].join(' ');
+        const content = sc.growth ? chip(v[sc.key], { inverse: m.inverse, sm: true }) : f(v[sc.key]);
+        return `<td class="${cls}" style="--g:${color}">${content}</td>`;
+      }).join('');
+    }).join('');
+  }
+
+  function stickyTd(html, left, w, last, extra = '') {
+    return `<td class="stick ${last ? 'last' : ''} ${extra}" style="left:${left}px;min-width:${w}px;width:${w}px">${html}</td>`;
+  }
+
+  function renderPivotTable() {
+    const pivotByPlat = state.data?.pivot_by_platform || {};
+    const rows = pivotByPlat[state.activePlatformTable] || state.data?.pivot_table || [];
+    const metrics = visibleMetrics();
+    // Sticky columns: Only Brand group and Brand! Platform column removed!
+    const cols = [{ label: 'Brand group', w: 120 }, { label: 'Brand', w: 150 }];
+    renderGroupChips();
+    $('pivotTableHead').innerHTML = buildHead(cols, metrics);
+    const span = cols.length + metrics.length * SUBCOLS.length;
+    if (!rows.length) { $('pivotTableBody').innerHTML = `<tr><td class="bp2-empty" colspan="${span}">No matching data for this platform.</td></tr>`; return; }
+
+    $('pivotTableBody').innerHTML = rows.map(r => {
+      const search = `${r.brand_group} ${r.brand}`.toLowerCase();
+      return `<tr data-search="${esc(search)}">
+        ${stickyTd(`<span class="bp2-tag" style="--t:${hashColor(r.brand_group)}">${esc(r.brand_group)}</span>`, 0, 120)}
+        ${stickyTd(`<span class="bp2-brandcell">${esc(r.brand)}</span>`, 120, 150, true)}
+        ${metricCells(r.metrics, metrics)}
+      </tr>`;
+    }).join('');
+  }
+
+  function renderLeaderboard() {
+    const rawRows = state.data?.leaderboard || [];
+    if (!rawRows.length) {
+      $('podium').innerHTML = '';
+      $('leaderboardTableBody').innerHTML = `<tr><td class="bp2-empty" colspan="20">No leaderboard data.</td></tr>`;
+      return;
+    }
+
+    const mode = state.leaderboardMode || 'nmv';
+
+    // 1. Sort rows based on active mode
+    const rows = [...rawRows];
+    if (mode === 'target_ach') {
+      rows.sort((a, b) => {
+        const valA = Number(a.metrics?.target_achievement?.mtd) || 0;
+        const valB = Number(b.metrics?.target_achievement?.mtd) || 0;
+        return valB - valA;
+      });
+      if ($('lbSubTitle')) $('lbSubTitle').textContent = 'Ranked by Month-to-Date Target Achievement (%)';
+    } else if (mode === 'growth') {
+      rows.sort((a, b) => {
+        const valA = a.metrics?.nmv?.vs_prev_mtd;
+        const valB = b.metrics?.nmv?.vs_prev_mtd;
+        const numA = (valA !== null && valA !== undefined) ? Number(valA) : -Infinity;
+        const numB = (valB !== null && valB !== undefined) ? Number(valB) : -Infinity;
+        return numB - numA;
+      });
+      if ($('lbSubTitle')) $('lbSubTitle').textContent = 'Ranked by Month-to-Date Growth vs Previous Month (MoM %)';
+    } else {
+      // Default: NMV
+      rows.sort((a, b) => {
+        const valA = Number(a.metrics?.nmv?.mtd) || 0;
+        const valB = Number(b.metrics?.nmv?.mtd) || 0;
+        return valB - valA;
+      });
+      if ($('lbSubTitle')) $('lbSubTitle').textContent = 'Ranked by Month-to-Date Net Merchandise Value (NMV)';
+    }
+
+    // 2. Re-assign dynamic ranking 1, 2, 3...
+    rows.forEach((r, idx) => {
+      r._dynamicRank = idx + 1;
+    });
+
+    // 3. Configure 4th column header according to mode
+    let col4Label = 'MTD share';
+    if (mode === 'target_ach') col4Label = 'Target Ach.';
+    else if (mode === 'growth') col4Label = 'MoM Growth';
+
+    const metrics = METRICS.filter(m => LB_METRICS.includes(m.key));
+    const cols = [
+      { label: '#', w: 48 },
+      { label: 'Brand', w: 140 },
+      { label: 'Group', w: 110 },
+      { label: col4Label, w: 130 }
+    ];
+    $('leaderboardTableHead').innerHTML = buildHead(cols, metrics);
+
+    // 4. Render Podium (Top 3 of current mode)
+    const totalMtd = rows.reduce((s, r) => s + (r.metrics?.nmv?.mtd || 0), 0);
+    const maxMtd = Math.max(...rows.map(r => r.metrics?.nmv?.mtd || 0), 1);
+
+    $('podium').innerHTML = rows.slice(0, 3).map(r => {
+      const rk = r._dynamicRank;
+      const icon = rk === 1
+        ? '<i class="bi bi-trophy-fill"></i>'
+        : (rk === 2
+          ? '<i class="bi bi-award-fill"></i>'
+          : '<i class="bi bi-star-fill"></i>');
+
+      let metaHtml = '';
+      if (mode === 'target_ach') {
+        const ach = Number(r.metrics?.target_achievement?.mtd) || 0;
+        const achColor = ach >= 100 ? 'var(--c-emerald)' : 'var(--orange)';
+        metaHtml = `
+          <span class="mono" style="font-weight:800; color:${achColor}; font-size:.85rem;">${ach.toFixed(1)}%</span>
+          <span class="mono" style="font-size:.7rem; color:var(--text-muted); margin-left:4px;">(${fmtCurr(r.metrics?.nmv?.mtd)})</span>
+        `;
+      } else if (mode === 'growth') {
+        metaHtml = `
+          ${chip(r.metrics?.nmv?.vs_prev_mtd, { sm: true })}
+          <span class="mono" style="font-size:.72rem; color:var(--text-muted); margin-left:4px;">${fmtCurr(r.metrics?.nmv?.mtd)}</span>
+        `;
+      } else {
+        metaHtml = `
+          <span class="mono" style="font-weight:700;">${fmtCurr(r.metrics?.nmv?.mtd)}</span>
+          ${chip(r.metrics?.nmv?.vs_prev_mtd, { sm: true })}
+        `;
+      }
+
+      return `
+      <div class="bp2-pod r${rk}">
+        <div class="bp2-medal">${icon}</div>
+        <div>
+          <div class="bp2-pod-name"><span class="bp2-pod-rank">#${rk}</span>${esc(r.brand)}</div>
+          <div class="bp2-pod-meta">${metaHtml}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // 5. Render Table rows
+    $('leaderboardTableBody').innerHTML = rows.map(r => {
+      const rk = r._dynamicRank;
+      const rankBadgeCls = rk <= 3 ? `r${rk}` : '';
+      const search = `${r.brand_group} ${r.brand}`.toLowerCase();
+
+      let col4Html = '';
+      if (mode === 'target_ach') {
+        const ach = Number(r.metrics?.target_achievement?.mtd) || 0;
+        const barW = Math.min(Math.max(ach, 0), 100);
+        const achColor = ach >= 100 ? 'var(--c-emerald)' : 'var(--orange)';
+        col4Html = `
+          <div class="bp2-share">
+            <div><span style="width:${barW.toFixed(1)}%; background:${achColor};"></span></div>
+            <em class="mono" style="font-weight:700; color:${achColor}; width:46px;">${ach.toFixed(1)}%</em>
+          </div>
+        `;
+      } else if (mode === 'growth') {
+        col4Html = `
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+            ${chip(r.metrics?.nmv?.vs_prev_mtd, { sm: true })}
+            <span class="mono" style="font-size:.68rem; color:var(--text-muted);">${fmtCurr(r.metrics?.nmv?.mtd)}</span>
+          </div>
+        `;
+      } else {
+        const mtd = r.metrics?.nmv?.mtd || 0;
+        const pct = totalMtd ? (mtd / totalMtd * 100).toFixed(1) : '0.0';
+        col4Html = `
+          <div class="bp2-share">
+            <div><span style="width:${Math.min((mtd / maxMtd * 100), 100).toFixed(1)}%"></span></div>
+            <em class="mono">${pct}%</em>
+          </div>
+        `;
+      }
+
+      return `<tr data-search="${esc(search)}">
+        ${stickyTd(`<span class="bp2-rank ${rankBadgeCls}">${rk}</span>`, 0, 48)}
+        ${stickyTd(`<span class="bp2-brandcell">${esc(r.brand)}</span>`, 48, 140)}
+        ${stickyTd(`<span class="bp2-tag" style="--t:${hashColor(r.brand_group)}">${esc(r.brand_group)}</span>`, 188, 110)}
+        ${stickyTd(col4Html, 298, 130, true)}
+        ${metricCells(r.metrics, metrics)}
+      </tr>`;
+    }).join('');
+  }
+
+  function applySearch() {
+    const q1 = ($('tableSearch').value || '').trim().toLowerCase();
+    document.querySelectorAll('#pivotTableBody tr[data-search]').forEach(tr => {
+      tr.style.display = !q1 || tr.dataset.search.includes(q1) ? '' : 'none';
+    });
+
+    const q2 = ($('lbSearch')?.value || '').trim().toLowerCase();
+    document.querySelectorAll('#leaderboardTableBody tr[data-search]').forEach(tr => {
+      tr.style.display = !q2 || tr.dataset.search.includes(q2) ? '' : 'none';
+    });
+  }
+
+  /* ================================================================
+     Multi-select dropdown controller
+     ================================================================ */
+  function initMultiSelect(type) {
+    const wrap = $(type + 'DropdownWrap');
+    const trigger = $(type + 'DropdownTrigger');
+    const menu = $(type + 'DropdownMenu');
+    const label = $(type + 'DropdownLabel');
+    const badge = $(type + 'DropdownBadge');
+    const searchInput = $(type + 'SearchInput');
+    const selectAllBtn = $(type + 'SelectAll');
+    const clearAllBtn = $(type + 'ClearAll');
+    const applyBtn = $(type + 'ApplyBtn');
+    const optionsList = $(type + 'OptionsList');
+    const stateSet = type === 'brand' ? state.selectedBrands : state.selectedPlatforms;
+
+    if (!wrap || !trigger || !menu || !optionsList) return;
+
+    // Read initial selections from checked inputs if any
+    optionsList.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+      stateSet.add(cb.value);
+    });
+
+    function updateUI() {
+      const count = stateSet.size;
+      if (count === 0) {
+        label.textContent = type === 'brand' ? 'All brands' : 'All platforms';
+        badge.style.display = 'none';
+      } else if (count === 1) {
+        label.textContent = Array.from(stateSet)[0];
+        badge.style.display = 'none';
+      } else {
+        label.textContent = `${count} ${type}s`;
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+      }
+
+      optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+        const val = opt.dataset.value;
+        const isChecked = stateSet.has(val);
+        const cb = opt.querySelector('input[type="checkbox"]');
+        if (cb) cb.checked = isChecked;
+        opt.classList.toggle('selected', isChecked);
+      });
+    }
+
+    // Toggle dropdown open
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasOpen = wrap.classList.contains('open');
+      document.querySelectorAll('.bp2-dropdown-wrap.open').forEach(w => {
+        if (w !== wrap) {
+          w.classList.remove('open');
+          const tr = w.querySelector('.bp2-dropdown-trigger');
+          if (tr) tr.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (!wasOpen) {
+        wrap.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        if (searchInput) {
+          searchInput.value = '';
+          optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => opt.style.display = '');
+          setTimeout(() => searchInput.focus(), 60);
+        }
+      } else {
+        wrap.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Option checkbox toggle
+    optionsList.addEventListener('change', (e) => {
+      const cb = e.target.closest('input[type="checkbox"]');
+      if (!cb) return;
+      const opt = cb.closest('.bp2-dropdown-option');
+      const val = opt.dataset.value;
+      if (cb.checked) {
+        stateSet.add(val);
+      } else {
+        stateSet.delete(val);
+      }
+      updateUI();
+    });
+
+    // Real-time search filter
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const q = (e.target.value || '').trim().toLowerCase();
+        optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+          const text = opt.dataset.value.toLowerCase();
+          opt.style.display = !q || text.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    // Select all action
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+          if (opt.style.display !== 'none') {
+            stateSet.add(opt.dataset.value);
+          }
+        });
+        updateUI();
+      });
+    }
+
+    // Clear all action
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        stateSet.clear();
+        updateUI();
+      });
+    }
+
+    // Apply button action
+    if (applyBtn) {
+      applyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        wrap.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        if (type === 'platform') {
+          state.activePlatformTable = 'All';
+        }
+        loadDashboardData();
+      });
+    }
+
+    // Initial sync
+    updateUI();
+  }
+
+  /* ================================================================
+     Interactions
+     ================================================================ */
+  function resetFilters() {
+    $('asOfDateFilter').value = '{{ latest_date }}';
+    state.selectedBrands.clear();
+    state.selectedPlatforms.clear();
+    state.activePlatformTable = 'All';
+    state.leaderboardMode = 'nmv';
+    const lbModeToggle = $('leaderboardModeToggle');
+    if (lbModeToggle) {
+      lbModeToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.mode === 'nmv'));
+    }
+
+    ['brand', 'platform'].forEach(type => {
+      const optList = $(type + 'OptionsList');
+      if (optList) {
+        optList.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+        optList.querySelectorAll('.bp2-dropdown-option').forEach(op => op.classList.remove('selected'));
+      }
+      const lbl = $(type + 'DropdownLabel');
+      if (lbl) lbl.textContent = type === 'brand' ? 'All brands' : 'All platforms';
+      const bdg = $(type + 'DropdownBadge');
+      if (bdg) bdg.style.display = 'none';
+      const search = $(type + 'SearchInput');
+      if (search) search.value = '';
+    });
+
+    document.querySelectorAll('.bp2-dropdown-wrap.open').forEach(w => w.classList.remove('open'));
+    loadDashboardData();
+  }
+
+  // Close dropdown on click outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.bp2-dropdown-wrap')) {
+      document.querySelectorAll('.bp2-dropdown-wrap.open').forEach(wrap => {
+        wrap.classList.remove('open');
+        const trigger = wrap.querySelector('.bp2-dropdown-trigger');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
+
+  $('trendMetricSeg').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-metric]'); if (!btn) return;
+    const m = btn.dataset.metric;
+    if (state.trendMetrics.has(m)) {
+      if (state.trendMetrics.size > 1) {
+        state.trendMetrics.delete(m);
+        btn.classList.remove('active');
+      }
+    } else {
+      state.trendMetrics.add(m);
+      btn.classList.add('active');
+    }
+    renderTrend();
+  });
+
+  $('platformTableToggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-plat]'); if (!btn) return;
+    state.activePlatformTable = btn.dataset.plat;
+    $('platformTableToggle').querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    renderPivotTable();
+    applySearch();
+  });
+
+  const lbModeToggle = $('leaderboardModeToggle');
+  if (lbModeToggle) {
+    lbModeToggle.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-mode]');
+      if (!btn) return;
+      state.leaderboardMode = btn.dataset.mode;
+      lbModeToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      renderLeaderboard();
+      applySearch();
+    });
+  }
+
+  $('groupChips').addEventListener('click', (e) => {
+    const item = e.target.closest('[data-group]'); if (!item) return;
+    e.preventDefault();
+    const g = item.dataset.group;
+    if (state.activeGroups.has(g)) { if (state.activeGroups.size > 1) state.activeGroups.delete(g); }
+    else state.activeGroups.add(g);
+    renderPivotTable(); applySearch();
+  });
+
+  $('tableSearch').addEventListener('input', applySearch);
+  const lbSearchInput = $('lbSearch');
+  if (lbSearchInput) lbSearchInput.addEventListener('input', applySearch);
+
+  // Re-theme charts when the global theme toggles (event fired by base.html BITheme)
+  document.addEventListener('bithemechange', () => {
+    if (state.data) {
+      renderCharts();
+      renderCards(state.data.cards, state.data.as_of_date, state.data.charts.daily_trend);
+    }
+  });
+
+  /* ================================================================
+     Exports
+     ================================================================ */
+  function exportToExcel() {
+    const pivotByPlat = state.data?.pivot_by_platform || {};
+    const rows = pivotByPlat[state.activePlatformTable] || state.data?.pivot_table;
+    if (!rows || !rows.length) { alert('Data is not ready to export.'); return; }
+    const out = rows.map(r => {
+      const o = { 'Brand Group': r.brand_group, 'Brand': r.brand, 'Platform View': state.activePlatformTable };
+      METRICS.forEach(m => {
+        const v = r.metrics[m.key] || {};
+        SUBCOLS.forEach(sc => { o[`${m.label} | ${sc.label}`] = v[sc.key]; });
+      });
+      return o;
+    });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(out), 'Performance Summary');
+    XLSX.writeFile(wb, `Brand_Performance_Summary_${state.data.as_of_date}_${state.activePlatformTable}.xlsx`);
+  }
+
+  async function exportToPDF() {
+    const btn = $('btnExportPdf');
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" style="width:12px;height:12px;margin-right:6px;border-width:2px;display:inline-block;vertical-align:middle;"></span> Generating PDF…';
+    }
+
+    try {
+      const targetEl = $('pdfContent');
+      if (!targetEl) throw new Error('Dashboard element not found.');
+
+      const h2c = window.html2canvas;
+      if (!h2c) throw new Error('PDF render engine (html2canvas) is not loaded.');
+
+      const jsPDFClass = window.jspdf?.jsPDF;
+      if (!jsPDFClass) throw new Error('PDF generator library (jsPDF) is not loaded.');
+
+      // Make sure all active chart animations are completed and rendered
+      Object.values(state.charts || {}).forEach(ch => {
+        if (ch && typeof ch.update === 'function') {
+          try { ch.update('none'); } catch (e) {}
+        }
+      });
+
+      const isDark = isDarkMode();
+      const asOf = state.data?.as_of_date || 'latest';
+      const filename = `Brand_Performance_Summary_${asOf}.pdf`;
+      const liveWidth = targetEl.offsetWidth;
+
+      // Render dashboard element into a single crisp continuous canvas using html2canvas-pro
+      const canvas = await h2c(targetEl, {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+        scrollX: 0,
+        scrollY: 0,
+        ignoreElements: (el) => {
+          return el.classList.contains('bp2-topbar') ||
+                 el.getAttribute('data-html2canvas-ignore') === 'true' ||
+                 el.classList.contains('bp2-modal-backdrop') ||
+                 el.id === 'anomalyModalBackdrop';
+        },
+        onclone: (clonedDoc) => {
+          const clonedEl = clonedDoc.getElementById('pdfContent');
+          if (clonedEl) {
+            // Keep the exact same width as the live dashboard plus small border cushion
+            const totalW = liveWidth + 24;
+            clonedEl.style.width = totalW + 'px';
+            clonedEl.style.maxWidth = totalW + 'px';
+            clonedEl.style.minWidth = totalW + 'px';
+            clonedEl.style.padding = '14px 12px';
+            clonedEl.style.boxSizing = 'border-box';
+            clonedEl.style.margin = '0 auto';
+
+            // Show active filter tag in the executive hero header if any filter is set
+            const asOfWrap = clonedEl.querySelector('.bp2-asof');
+            if (asOfWrap) {
+              const brandList = Array.from(state.selectedBrands || []);
+              const platList = Array.from(state.selectedPlatforms || []);
+              const filterNotes = [];
+              if (brandList.length > 0) filterNotes.push(`Brand: ${brandList.join(', ')}`);
+              if (platList.length > 0) filterNotes.push(`Platform: ${platList.join(', ')}`);
+              if (state.activePlatformTable && state.activePlatformTable !== 'All') {
+                filterNotes.push(`Table Platform: ${state.activePlatformTable}`);
+              }
+              if (filterNotes.length > 0) {
+                const filterTag = clonedDoc.createElement('div');
+                filterTag.style.fontSize = '0.72rem';
+                filterTag.style.fontWeight = '600';
+                filterTag.style.color = isDark ? '#94A3B8' : '#64748B';
+                filterTag.style.marginTop = '4px';
+                filterTag.textContent = filterNotes.join(' • ');
+                asOfWrap.appendChild(filterTag);
+              }
+            }
+          }
+
+          // 1. Constrain every card to prevent any overflow or hover transforms
+          clonedDoc.querySelectorAll('.bp2-card').forEach((card) => {
+            card.style.overflow = 'hidden';
+            card.style.transform = 'none';
+            card.style.transition = 'none';
+          });
+
+          // 2. Expand tables so all rows are visible without internal scrollbars
+          clonedDoc.querySelectorAll('.bp2-table-wrap').forEach((wrap) => {
+            wrap.style.overflow = 'visible';
+            wrap.style.maxHeight = 'none';
+          });
+          clonedDoc.querySelectorAll('table.bp2-table thead th').forEach((th) => {
+            th.style.position = 'static';
+          });
+
+          // 3. Convert all live Chart.js canvases into crisp, contained static images
+          // This avoids html2canvas canvas matrix distortion and eliminates chart overflow completely
+          const liveCanvases = targetEl.querySelectorAll('canvas');
+          liveCanvases.forEach((liveC) => {
+            if (!liveC.id) return;
+            const clonedC = clonedDoc.getElementById(liveC.id);
+            if (!clonedC) return;
+            try {
+              const dataUrl = liveC.toDataURL('image/png');
+              const img = clonedDoc.createElement('img');
+              img.src = dataUrl;
+              img.style.display = 'block';
+              img.style.maxWidth = '100%';
+              img.style.maxHeight = '100%';
+              img.style.objectFit = 'contain';
+              img.style.margin = '0 auto';
+
+              // Set matching explicit height container
+              if (liveC.id === 'comparisonChart') {
+                img.style.height = '128px';
+                img.style.width = '100%';
+              } else if (liveC.id === 'brandGroupChart') {
+                img.style.height = '235px';
+                img.style.width = '100%';
+              } else if (liveC.id === 'dailyTrendChart') {
+                img.style.height = '280px';
+                img.style.width = '100%';
+              } else if (liveC.id === 'platformChart') {
+                img.style.height = '220px';
+                img.style.width = '100%';
+              } else if (liveC.id === 'sparkNmv') {
+                img.style.height = '36px';
+                img.style.width = '100%';
+                img.style.objectFit = 'fill';
+              } else {
+                img.style.width = '100%';
+                img.style.height = '100%';
+              }
+
+              if (clonedC.parentNode) {
+                clonedC.parentNode.replaceChild(img, clonedC);
+              }
+            } catch (err) {
+              console.warn('Canvas clone replacement failed for ' + liveC.id, err);
+            }
+          });
+        }
+      });
+
+      if (!canvas || !canvas.width || !canvas.height) {
+        throw new Error('Failed to capture dashboard content.');
+      }
+
+      // 4. Create single continuous page PDF matching exact canvas dimensions (no page breaks!)
+      const scaleFactor = 0.75; // Standard 96 DPI CSS px to 72 DPI PDF pt mapping
+      const ptWidth = Math.round((liveWidth + 24) * scaleFactor);
+      const ptHeight = Math.round((canvas.height / canvas.width) * ptWidth);
+
+      const isLandscape = ptWidth > ptHeight;
+      const pdf = new jsPDFClass({
+        orientation: isLandscape ? 'landscape' : 'portrait',
+        unit: 'pt',
+        format: [ptWidth, ptHeight],
+        compress: true,
+      });
+
+      const actualW = pdf.internal.pageSize.getWidth();
+      const actualH = pdf.internal.pageSize.getHeight();
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      pdf.addImage(imgData, 'JPEG', 0, 0, actualW, actualH, undefined, 'FAST');
+
+      // Trigger automatic file download
+      pdf.save(filename);
+    } catch (err) {
+      console.error('PDF export error:', err);
+      alert('Export PDF error: ' + (err.message || err));
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+      document.querySelectorAll('.html2pdf__container').forEach(c => c.remove());
+    }
+  }
+
+  // expose for inline handlers
+  Object.assign(window, { loadDashboardData, resetFilters, exportToExcel, exportToPDF, openAnomalyModal, closeAnomalyModal, handleModalBackdropClick, filterToBrand });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initMultiSelect('brand');
+    initMultiSelect('platform');
+    loadDashboardData();
+  });
+})();
+</script>
+{% endblock %}

@@ -406,12 +406,43 @@
       .chart-body { flex: 1; position: relative; min-height: 260px; }
       .chart-body.tall { min-height: 320px; }
 
-      /* ── responsive table wrapper (mobile horizontal scroll) ── */
+      /* ── responsive table wrapper (mobile horizontal scroll) & global scrollbars ── */
       .table-responsive { -webkit-overflow-scrolling: touch; }
       .table-responsive table th, .table-responsive table td { white-space: nowrap; }
-      .table-responsive::-webkit-scrollbar { height: 6px; }
-      .table-responsive::-webkit-scrollbar-track { background: transparent; }
-      .table-responsive::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 4px; }
+
+      /* Global theme-aware scrollbars */
+      :root {
+        --app-scroll-track: transparent;
+        --app-scroll-thumb: rgba(148, 163, 184, 0.35);
+        --app-scroll-thumb-hover: rgba(148, 163, 184, 0.55);
+      }
+      [data-theme="dark"], [data-bs-theme="dark"], body.dark-mode {
+        color-scheme: dark;
+        --app-scroll-track: transparent;
+        --app-scroll-thumb: rgba(255, 255, 255, 0.22);
+        --app-scroll-thumb-hover: rgba(255, 255, 255, 0.38);
+      }
+      html, body {
+        scrollbar-width: thin;
+        scrollbar-color: var(--app-scroll-thumb) var(--app-scroll-track);
+      }
+      ::-webkit-scrollbar {
+        width: 7px;
+        height: 7px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--app-scroll-track);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--app-scroll-thumb);
+        border-radius: 999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--app-scroll-thumb-hover);
+      }
+      ::-webkit-scrollbar-corner {
+        background: transparent;
+      }
 
       /* DataTables theme-aware text */
       table.dataTable,

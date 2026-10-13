@@ -5,4 +5,7 @@ urlpatterns = [
     path("", views.summary_view, name="brand_performance_v2"),
     path("summary/", views.summary_view, name="brand_performance_v2_summary"),
     path("api/summary/", views.summary_api, name="brand_performance_v2_summary_api"),
+    path("analytics/", views.analytics_view, name="brand_performance_v2_analytics"),
+    path("api/analytics/", views.analytics_api, name="brand_performance_v2_analytics_api"),
 ]
+

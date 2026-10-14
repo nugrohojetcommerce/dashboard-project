@@ -420,6 +420,8 @@ def get_analytics_performance_data(
     prev_orders_series = []
     curr_views_series = []
     prev_views_series = []
+    curr_visitors_series = []
+    prev_visitors_series = []
 
     for i in range(num_days):
         c_date = start_d + timedelta(days=i)
@@ -438,6 +440,8 @@ def get_analytics_performance_data(
         p_ord = float(p_data.get("net_orders") or 0)
         c_view = float(c_data.get("pageviews") or 0)
         p_view = float(p_data.get("pageviews") or 0)
+        c_vis = float(c_data.get("visitors") or 0)
+        p_vis = float(p_data.get("visitors") or 0)
 
         trend_labels.append(c_date.strftime("%d %b"))
         trend_days.append({
@@ -458,6 +462,8 @@ def get_analytics_performance_data(
         prev_orders_series.append(p_ord)
         curr_views_series.append(c_view)
         prev_views_series.append(p_view)
+        curr_visitors_series.append(c_vis)
+        prev_visitors_series.append(p_vis)
 
     trend_chart_data = {
         "labels": trend_labels,
@@ -468,6 +474,7 @@ def get_analytics_performance_data(
             "gmv": {"current": curr_gmv_series, "previous": prev_gmv_series},
             "net_order": {"current": curr_orders_series, "previous": prev_orders_series},
             "pageviews": {"current": curr_views_series, "previous": prev_views_series},
+            "visitors": {"current": curr_visitors_series, "previous": prev_visitors_series},
         },
     }
 
@@ -520,21 +527,26 @@ def get_analytics_performance_data(
         for pt in platform_targets
     ]
 
-    # B. Top SKUs (NMV Share) from ProductMartSummary
-    top_sku_qs = prod_curr_qs.values(
-        "sku_code"
-    ).annotate(
-        product_name=Max("product_name"),
-        nmv=Sum("nmv"),
-        gmv=Sum("gmv"),
-        net_qty=Sum("net_quantity"),
-    ).order_by("-nmv")[:8]
+    # B. Top SKUs (NMV Share) from ProductMartSummary (Top 20, positive NMV only, remainder as Others)
+    all_positive_skus = list(
+        prod_curr_qs.values("sku_code")
+        .annotate(
+            product_name=Max("product_name"),
+            nmv=Sum("nmv"),
+            gmv=Sum("gmv"),
+            net_qty=Sum("net_quantity"),
+        )
+        .filter(nmv__gt=0)
+        .order_by("-nmv")
+    )
 
-    total_sku_nmv = float(prod_curr_qs.aggregate(Sum("nmv"))["nmv__sum"] or 0)
+    total_sku_nmv = sum(float(r.get("nmv") or 0) for r in all_positive_skus)
+    top_20_skus = all_positive_skus[:20]
+    remaining_skus = all_positive_skus[20:]
 
     sku_donut = []
     accum_sku_nmv = 0.0
-    for r in top_sku_qs:
+    for r in top_20_skus:
         n = float(r.get("nmv") or 0)
         accum_sku_nmv += n
         share = round((n / total_sku_nmv * 100), 1) if total_sku_nmv > 0 else 0.0
@@ -551,15 +563,15 @@ def get_analytics_performance_data(
             "share_pct": share,
         })
 
-    if total_sku_nmv > accum_sku_nmv:
-        other_nmv = total_sku_nmv - accum_sku_nmv
+    remaining_nmv = total_sku_nmv - accum_sku_nmv
+    if remaining_nmv > 0:
         sku_donut.append({
             "sku_code": "Others",
-            "product_name": "Remaining SKUs",
+            "product_name": f"Remaining {len(remaining_skus)} SKUs",
             "name": "Others",
-            "full_name": "Remaining SKUs",
-            "value": other_nmv,
-            "share_pct": round((other_nmv / total_sku_nmv * 100), 1),
+            "full_name": f"Remaining {len(remaining_skus)} SKUs",
+            "value": round(remaining_nmv, 2),
+            "share_pct": round((remaining_nmv / total_sku_nmv * 100), 1) if total_sku_nmv > 0 else 0.0,
         })
 
     # C. Product Groups (Dummy / Placeholder as requested by user)

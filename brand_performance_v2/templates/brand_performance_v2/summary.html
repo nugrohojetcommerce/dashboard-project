@@ -664,7 +664,242 @@
   .bp2-alert-arrow { font-size: .75rem; color: var(--text-muted); transition: transform .15s; }
   .bp2-alert:hover .bp2-alert-arrow { transform: translateX(2px); color: var(--text-primary); }
 
-  /* ── Pulse tiles ── */
+  /* ── Pulse tiles & Bento Today Pulse Hub ── */
+  .bp2-bento-master {
+    margin-bottom: 20px;
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: var(--bp2-radius);
+    box-shadow: var(--bp2-shadow);
+    overflow: hidden;
+  }
+  .bp2-bento-body {
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .bp2-bento-row-top {
+    display: grid;
+    grid-template-columns: 1.18fr 0.82fr;
+    gap: 14px;
+  }
+  @media (max-width: 1024px) {
+    .bp2-bento-row-top { grid-template-columns: 1fr; }
+  }
+
+  .bp2-bento-segment {
+    background: var(--bp2-surface-2);
+    border: 1px solid var(--bp2-border);
+    border-radius: var(--bp2-radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .bp2-bento-seg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .bp2-bento-seg-header i { font-size: .85rem; color: var(--orange); }
+  .bp2-bento-pill {
+    font-size: .68rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    color: var(--text-muted);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .bp2-bento-pill b { color: var(--text-primary); }
+
+  .bento-rev-top {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 12px;
+  }
+  .bento-rev-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  @media (max-width: 640px) {
+    .bento-rev-top, .bento-rev-bottom { grid-template-columns: 1fr; }
+  }
+
+  .bento-hero-tile {
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .bento-hero-tile.primary-nmv {
+    border-color: color-mix(in srgb, var(--orange) 35%, var(--bp2-border));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--orange-dim) 40%, var(--bp2-surface)), var(--bp2-surface));
+  }
+  .bento-hero-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px -4px rgba(16, 24, 40, .10);
+  }
+  .bento-tile-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .bento-tile-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+  .bento-tile-value {
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+  }
+  .bento-tile-value.lg {
+    font-size: 1.55rem;
+    color: var(--orange);
+  }
+  .bento-sub-metric {
+    font-size: .68rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed color-mix(in srgb, var(--bp2-border) 70%, transparent);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .bento-sub-metric b { color: var(--text-primary); }
+
+  .bento-mini-tile {
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: transform .18s;
+  }
+  .bento-mini-tile:hover { transform: translateY(-1px); }
+  .bento-mini-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .bento-mini-label { font-size: .68rem; font-weight: 700; color: var(--text-muted); }
+  .bento-mini-val {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -.01em;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .bento-mini-sub { font-size: .66rem; color: var(--text-muted); }
+  .bento-mini-sub b { color: var(--text-primary); }
+
+  .bento-econ-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .bento-econ-tile {
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 4px;
+    transition: transform .18s;
+  }
+  .bento-econ-tile:hover { transform: translateY(-1px); }
+
+  .bento-promo-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+  @media (max-width: 900px) {
+    .bento-promo-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 480px) {
+    .bento-promo-strip { grid-template-columns: 1fr; }
+  }
+  .bento-promo-tile {
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: transform .18s;
+  }
+  .bento-promo-tile:hover { transform: translateY(-1px); }
+
+  .bento-subsidy-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 2px;
+  }
+  .bento-subsidy-bar {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--bp2-surface);
+    overflow: hidden;
+    display: flex;
+    border: 1px solid var(--bp2-border);
+  }
+  .bento-sub-fill-plat {
+    background: #8B5CF6;
+    height: 100%;
+    transition: width .5s ease;
+  }
+  .bento-sub-fill-seller {
+    background: #F59E0B;
+    height: 100%;
+    transition: width .5s ease;
+  }
+  .bento-subsidy-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: .65rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .bento-subsidy-labels .dot-plat { color: #8B5CF6; }
+  .bento-subsidy-labels .dot-seller { color: #F59E0B; }
+  .chip-sub {
+    font-size: .65rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-left: 2px;
+  }
+
   .bp2-pulse-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
   @media (max-width: 1000px) { .bp2-pulse-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 560px)  { .bp2-pulse-grid { grid-template-columns: 1fr; } }
@@ -1389,10 +1624,12 @@
     </article>
   </section>
 
-  <!-- ── Today pulse ── -->
+  <!-- ── Today pulse (Bento Hub) ── -->
   <div class="bp2-section-title">Today's pulse</div>
-  <section class="bp2-pulse-grid" id="topKpiSummaryBody">
-    {% for i in "12345678" %}<div class="bp2-card bp2-pulse"><div class="skel" style="height:96px"></div></div>{% endfor %}
+  <section class="bp2-bento-master" id="topKpiSummaryMaster">
+    <div class="bp2-bento-body" id="topKpiSummaryBody">
+      <div class="skel" style="height:260px; border-radius:12px;"></div>
+    </div>
   </section>
 
   <!-- ── Charts ── -->
@@ -1407,6 +1644,7 @@
           <button type="button" data-metric="gmv">GMV</button>
           <button type="button" data-metric="net_order">Orders</button>
           <button type="button" data-metric="visitors">Visitors</button>
+          <button type="button" data-metric="pageviews">Page Views</button>
         </div>
       </div>
       <div class="bp2-chart-body"><canvas id="dailyTrendChart"></canvas></div>
@@ -1566,11 +1804,12 @@
   };
 
   const TREND_METRIC_CONFIG = {
-    nmv:       { label: 'NMV',      color: '#FF7A00', isMoney: true },
-    target:    { label: 'Target',   color: '#3B82F6', isMoney: true },
-    gmv:       { label: 'GMV',      color: '#6366F1', isMoney: true },
-    net_order: { label: 'Orders',   color: '#14B8A6', isMoney: false },
-    visitors:  { label: 'Visitors', color: '#0EA5E9', isMoney: false },
+    nmv:       { label: 'NMV',        color: '#FF7A00', isMoney: true },
+    target:    { label: 'Target',     color: '#3B82F6', isMoney: true },
+    gmv:       { label: 'GMV',        color: '#6366F1', isMoney: true },
+    net_order: { label: 'Orders',     color: '#14B8A6', isMoney: false },
+    visitors:  { label: 'Visitors',   color: '#0EA5E9', isMoney: false },
+    pageviews: { label: 'Page Views', color: '#EC4899', isMoney: false },
   };
 
   let state = {
@@ -1698,7 +1937,7 @@
     renderCards(d.cards, d.as_of_date, d.charts.daily_trend);
     renderPerformers(d.top_performers);
     renderAnomalies(d.anomalies);
-    renderPulse(d.today_kpi_overview);
+    renderPulse(d.today_kpi_overview, d.today_pulse_hub);
     renderCharts();
     renderPlatformTableToggle();
     renderPivotTable();
@@ -1963,13 +2202,232 @@
   });
 
   /* ================================================================
-     Today pulse tiles
+     Today pulse Bento Hub
      ================================================================ */
-  function renderPulse(rows) {
+  function renderPulse(rows, pulseHub) {
     const box = $('topKpiSummaryBody');
+    if (!box) return;
+
+    if (!pulseHub && state.data?.today_pulse_hub) {
+      pulseHub = state.data.today_pulse_hub;
+    }
+
+    if (pulseHub && pulseHub.today) {
+      const t = pulseHub.today;
+      const pd = pulseHub.prev_day || {};
+      const m = pulseHub.mtd || {};
+      const g = pulseHub.growth || {};
+
+      const targetVal = t.target || 0;
+      const nmvVal = t.nmv || 0;
+      const gmvVal = t.gmv || 0;
+      const achRate = t.target_achievement || 0;
+      const realization = gmvVal > 0 ? (nmvVal / gmvVal * 100) : 0;
+
+      const platDisc = t.discount_from_platform || 0;
+      const sellerDisc = t.discount_from_seller || 0;
+      const platVouch = t.voucher_paid_by_platform || 0;
+      const sellerVouch = t.voucher_paid_by_seller || 0;
+      const totalPlat = platDisc + platVouch;
+      const totalSeller = sellerDisc + sellerVouch;
+      const totalInvest = totalPlat + totalSeller;
+      const platPct = totalInvest > 0 ? (totalPlat / totalInvest * 100) : 50;
+      const sellerPct = totalInvest > 0 ? (totalSeller / totalInvest * 100) : 50;
+
+      box.innerHTML = `
+        <!-- Row 1: Top 2-Column Split (Revenue Pulse + Unit Economics & Traffic) -->
+        <div class="bp2-bento-row-top">
+          <!-- Segment A: Revenue & Order Volume Pulse -->
+          <div class="bp2-bento-segment segment-revenue">
+            <div class="bp2-bento-seg-header">
+              <span><i class="bi bi-graph-up-arrow"></i> Revenue &amp; Volume Pulse</span>
+              <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                <span class="bp2-bento-pill">Target: <b class="mono">${fmtCurr(targetVal)}</b></span>
+                <span class="bp2-bento-pill">Ach: <b class="mono">${fmtPct(achRate)}</b></span>
+                <span class="bp2-bento-pill">Realization: <b class="mono">${realization.toFixed(1)}%</b></span>
+              </div>
+            </div>
+
+            <div class="bento-rev-top">
+              <!-- NMV Hero Card -->
+              <div class="bento-hero-tile primary-nmv">
+                <div class="bento-tile-head">
+                  <span class="bento-tile-label"><i class="bi bi-cash-stack" style="color:var(--orange);"></i> Today NMV</span>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <span title="Growth vs Yesterday (D-1)">${chip(g.nmv_d1, { sm: true })} <span class="chip-sub">D-1</span></span>
+                    <span title="Growth vs 7-Day Average">${chip(g.nmv_7d, { sm: true })} <span class="chip-sub">7D</span></span>
+                  </div>
+                </div>
+                <div class="bento-tile-value lg mono">${fmtCurr(t.nmv)}</div>
+                <div class="bento-sub-metric">
+                  <div><span>Target:</span> <b class="mono">${fmtCurr(targetVal)}</b> (<span style="color:var(--c-emerald); font-weight:700;">${fmtPct(achRate)}</span>)</div>
+                  <div><span>Yesterday (D-1):</span> <b class="mono">${fmtCurr(pd.nmv)}</b></div>
+                </div>
+              </div>
+
+              <!-- GMV Hero Card -->
+              <div class="bento-hero-tile">
+                <div class="bento-tile-head">
+                  <span class="bento-tile-label"><i class="bi bi-wallet2" style="color:var(--c-indigo);"></i> Today GMV</span>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <span title="Growth vs Yesterday (D-1)">${chip(g.gmv_d1, { sm: true })} <span class="chip-sub">D-1</span></span>
+                    <span title="Growth vs 7-Day Average">${chip(g.gmv_7d, { sm: true })} <span class="chip-sub">7D</span></span>
+                  </div>
+                </div>
+                <div class="bento-tile-value mono">${fmtCurr(t.gmv)}</div>
+                <div class="bento-sub-metric">
+                  <div><span>Yesterday (D-1):</span> <b class="mono">${fmtCurr(pd.gmv)}</b></div>
+                  <div><span>MTD:</span> <b class="mono">${fmtCurr(m.gmv)}</b></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Micro Tiles: Net Orders & Net Quantity -->
+            <div class="bento-rev-bottom">
+              <div class="bento-mini-tile">
+                <div class="bento-mini-head">
+                  <span class="bento-mini-label"><i class="bi bi-bag-check" style="color:var(--c-emerald);"></i> Net Orders</span>
+                  <span title="Growth vs Yesterday (D-1)">${chip(g.orders_d1, { sm: true })}</span>
+                </div>
+                <div class="bento-mini-val mono">${fmtNum(t.net_order)}</div>
+                <div class="bento-mini-sub">
+                  Gross: <b class="mono">${fmtNum(t.gross_order)}</b> • Cancel (CR): <b class="mono" style="${t.cr > 15 ? 'color:var(--c-rose); font-weight:700;' : ''}">${fmtPct(t.cr)}</b>
+                </div>
+              </div>
+
+              <div class="bento-mini-tile">
+                <div class="bento-mini-head">
+                  <span class="bento-mini-label"><i class="bi bi-box-seam" style="color:var(--c-sky);"></i> Net Quantity</span>
+                  <span title="Growth vs Yesterday (D-1)">${chip(g.qty_d1, { sm: true })}</span>
+                </div>
+                <div class="bento-mini-val mono">${fmtNum(t.net_quantity)}</div>
+                <div class="bento-mini-sub">
+                  Gross: <b class="mono">${fmtNum(t.gross_quantity)}</b> • Basket (ABS): <b class="mono">${Number(t.abs || 0).toFixed(2)}</b>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Segment B: Unit Economics & Traffic -->
+          <div class="bp2-bento-segment segment-economics">
+            <div class="bp2-bento-seg-header">
+              <span><i class="bi bi-speedometer2"></i> Unit Economics &amp; Traffic</span>
+              <span class="bp2-bento-pill">Efficiency</span>
+            </div>
+
+            <div class="bento-econ-grid">
+              <!-- AOV -->
+              <div class="bento-econ-tile">
+                <div class="bento-mini-head">
+                  <span class="bento-mini-label"><i class="bi bi-cart-check" style="color:var(--c-violet);"></i> AOV</span>
+                  <span title="Growth vs Yesterday (D-1)">${chip(g.aov_d1, { sm: true })}</span>
+                </div>
+                <div class="bento-mini-val mono">${fmtCurr(t.aov)}</div>
+                <div class="bento-mini-sub">D-1: <b class="mono">${fmtCurr(pd.aov)}</b></div>
+              </div>
+
+              <!-- ASP -->
+              <div class="bento-econ-tile">
+                <div class="bento-mini-head">
+                  <span class="bento-mini-label"><i class="bi bi-tag" style="color:var(--c-teal);"></i> ASP</span>
+                  <span title="Growth vs Yesterday (D-1)">${chip(g.asp_d1, { sm: true })}</span>
+                </div>
+                <div class="bento-mini-val mono">${fmtCurr(t.asp)}</div>
+                <div class="bento-mini-sub">D-1: <b class="mono">${fmtCurr(pd.asp)}</b></div>
+              </div>
+
+              <!-- CVR -->
+              <div class="bento-econ-tile">
+                <div class="bento-mini-head">
+                  <span class="bento-mini-label"><i class="bi bi-funnel" style="color:var(--c-amber);"></i> CVR</span>
+                  <span title="Difference vs Yesterday (D-1)">${chip(g.cvr_d1, { suffix: 'pp', sm: true })}</span>
+                </div>
+                <div class="bento-mini-val mono">${fmtPct(t.cvr)}</div>
+                <div class="bento-mini-sub">Orders / Visitors</div>
+              </div>
+
+              <!-- Visitors & Traffic -->
+              <div class="bento-econ-tile">
+                <div class="bento-mini-head">
+                  <span class="bento-mini-label"><i class="bi bi-eye" style="color:var(--c-rose);"></i> Visitors</span>
+                  <span title="Growth vs Yesterday (D-1)">${chip(g.visitors_d1, { sm: true })}</span>
+                </div>
+                <div class="bento-mini-val mono">${fmtNum(t.visitors)}</div>
+                <div class="bento-mini-sub">Pageviews: <b class="mono">${fmtNum(t.page_views)}</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Bottom Segment (Promo, Voucher & Discount Investments) -->
+        <div class="bp2-bento-segment segment-promo">
+          <div class="bp2-bento-seg-header">
+            <span><i class="bi bi-ticket-perforated"></i> Promo, Voucher &amp; Discount Investments</span>
+            <span class="bp2-bento-pill">Subsidy Split</span>
+          </div>
+
+          <div class="bento-promo-strip">
+            <!-- Platform Voucher -->
+            <div class="bento-promo-tile">
+              <div class="bento-mini-head">
+                <span class="bento-mini-label" style="color:#8B5CF6;"><i class="bi bi-ticket-perforated"></i> Platform Voucher</span>
+                <span title="Growth vs Yesterday (D-1)">${chip(g.plat_vouch_d1, { sm: true })}</span>
+              </div>
+              <div class="bento-mini-val mono">${fmtCurr(t.voucher_paid_by_platform)}</div>
+              <div class="bento-mini-sub">D-1: <b class="mono">${fmtCurr(pd.voucher_paid_by_platform)}</b></div>
+            </div>
+
+            <!-- Seller Voucher -->
+            <div class="bento-promo-tile">
+              <div class="bento-mini-head">
+                <span class="bento-mini-label" style="color:#EC4899;"><i class="bi bi-ticket-detailed"></i> Seller Voucher</span>
+                <span title="Growth vs Yesterday (D-1)">${chip(g.seller_vouch_d1, { sm: true })}</span>
+              </div>
+              <div class="bento-mini-val mono">${fmtCurr(t.voucher_paid_by_seller)}</div>
+              <div class="bento-mini-sub">D-1: <b class="mono">${fmtCurr(pd.voucher_paid_by_seller)}</b></div>
+            </div>
+
+            <!-- Platform Discount -->
+            <div class="bento-promo-tile">
+              <div class="bento-mini-head">
+                <span class="bento-mini-label" style="color:#0EA5E9;"><i class="bi bi-percent"></i> Platform Discount</span>
+                <span title="Growth vs Yesterday (D-1)">${chip(g.plat_disc_d1, { sm: true })}</span>
+              </div>
+              <div class="bento-mini-val mono">${fmtCurr(t.discount_from_platform)}</div>
+              <div class="bento-mini-sub">D-1: <b class="mono">${fmtCurr(pd.discount_from_platform)}</b></div>
+            </div>
+
+            <!-- Seller Discount -->
+            <div class="bento-promo-tile">
+              <div class="bento-mini-head">
+                <span class="bento-mini-label" style="color:#F59E0B;"><i class="bi bi-tags"></i> Seller Discount</span>
+                <span title="Growth vs Yesterday (D-1)">${chip(g.seller_disc_d1, { sm: true })}</span>
+              </div>
+              <div class="bento-mini-val mono">${fmtCurr(t.discount_from_seller)}</div>
+              <div class="bento-mini-sub">D-1: <b class="mono">${fmtCurr(pd.discount_from_seller)}</b></div>
+            </div>
+          </div>
+
+          <!-- Mini Subsidy Proportion Bar -->
+          <div class="bento-subsidy-bar-wrap">
+            <div class="bento-subsidy-bar">
+              <div class="bento-sub-fill-plat" style="width:${platPct}%;"></div>
+              <div class="bento-sub-fill-seller" style="width:${sellerPct}%;"></div>
+            </div>
+            <div class="bento-subsidy-labels">
+              <span><i class="bi bi-circle-fill dot-plat"></i> Platform Covered: <b class="mono">${platPct.toFixed(1)}%</b> (${fmtCurr(totalPlat)})</span>
+              <span><i class="bi bi-circle-fill dot-seller"></i> Seller Funded: <b class="mono">${sellerPct.toFixed(1)}%</b> (${fmtCurr(totalSeller)})</span>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // Fallback if pulseHub is not provided
     rows = (rows || []).filter(r => r.kpi !== 'Target (IDR)');
     if (!rows.length) { box.innerHTML = '<div class="bp2-empty">No data.</div>'; return; }
-    box.innerHTML = rows.map((r, i) => {
+    box.innerHTML = `<div class="bp2-pulse-grid">` + rows.map((r, i) => {
       const fmt = r.is_curr ? fmtCurr : (r.is_pct ? fmtPct : fmtNum);
       const sfx = r.is_pct ? 'pp' : '%';
       return `
@@ -1979,7 +2437,7 @@
           <div class="bp2-pulse-row">${chip(r.vs_yesterday_pct, { suffix: sfx, sm: true })}<span>D-1</span>${chip(r.vs_7d_avg_pct, { suffix: sfx, sm: true })}<span>7D</span></div>
           <div class="bp2-pulse-foot"><span>MTD <b class="mono">${fmt(r.mtd)}</b></span>${chip(r.vs_last_mtd_pct, { suffix: sfx, sm: true })}</div>
         </article>`;
-    }).join('');
+    }).join('') + `</div>`;
   }
 
   /* ================================================================

@@ -348,12 +348,12 @@ def get_summary_performance_data(
         # Populate daily trend for Day 1..current_day_num
         if is_mtd:
             d_idx = row_date.day
-            for m in ["total_nmv", "total_gmv", "net_orders", "visitors", "target"]:
+            for m in ["total_nmv", "total_gmv", "net_orders", "visitors", "target", "page_view"]:
                 daily_trend_map[d_idx]["mtd"][m] += float(r.get(m) or 0)
 
         if is_prev_mtd and row_date.day <= current_day_num:
             d_idx = row_date.day
-            for m in ["total_nmv", "total_gmv", "net_orders", "visitors", "target"]:
+            for m in ["total_nmv", "total_gmv", "net_orders", "visitors", "target", "page_view"]:
                 daily_trend_map[d_idx]["prev_mtd"][m] += float(r.get(m) or 0)
 
         for m in metric_cols:
@@ -586,6 +586,51 @@ def get_summary_performance_data(
     def diff_pt(curr, base):
         return round(curr - base, 2) if base is not None else None
 
+    # Compute 7-day daily average for volumetric metrics
+    p7_daily_avg = {}
+    for k, v in p7_der.items():
+        if k in ("target", "nmv", "gmv", "net_order", "gross_order", "net_quantity", "gross_quantity", "page_views", "visitors", "voucher_paid_by_platform", "voucher_paid_by_seller", "discount_from_platform", "discount_from_seller"):
+            p7_daily_avg[k] = (v / 7.0) if v else 0.0
+        else:
+            p7_daily_avg[k] = v
+
+    today_pulse_hub = {
+        "today": t_der,
+        "prev_day": p_der,
+        "prev_7d_avg": p7_daily_avg,
+        "mtd": m_der,
+        "prev_mtd": pm_der,
+        "growth": {
+            # vs D-1 (yesterday)
+            "nmv_d1": calc_growth(t_der["nmv"], p_der["nmv"]),
+            "gmv_d1": calc_growth(t_der["gmv"], p_der["gmv"]),
+            "orders_d1": calc_growth(t_der["net_order"], p_der["net_order"]),
+            "qty_d1": calc_growth(t_der["net_quantity"], p_der["net_quantity"]),
+            "aov_d1": calc_growth(t_der["aov"], p_der["aov"]),
+            "asp_d1": calc_growth(t_der["asp"], p_der["asp"]),
+            "cvr_d1": diff_pt(t_der["cvr"], p_der["cvr"]),
+            "cr_d1": diff_pt(t_der["cr"], p_der["cr"]),
+            "visitors_d1": calc_growth(t_der["visitors"], p_der["visitors"]),
+            "page_views_d1": calc_growth(t_der["page_views"], p_der["page_views"]),
+            "plat_vouch_d1": calc_growth(t_der["voucher_paid_by_platform"], p_der["voucher_paid_by_platform"]),
+            "seller_vouch_d1": calc_growth(t_der["voucher_paid_by_seller"], p_der["voucher_paid_by_seller"]),
+            "plat_disc_d1": calc_growth(t_der["discount_from_platform"], p_der["discount_from_platform"]),
+            "seller_disc_d1": calc_growth(t_der["discount_from_seller"], p_der["discount_from_seller"]),
+
+            # vs 7D average
+            "nmv_7d": calc_growth(t_der["nmv"], p7_daily_avg["nmv"]),
+            "gmv_7d": calc_growth(t_der["gmv"], p7_daily_avg["gmv"]),
+            "orders_7d": calc_growth(t_der["net_order"], p7_daily_avg["net_order"]),
+            "qty_7d": calc_growth(t_der["net_quantity"], p7_daily_avg["net_quantity"]),
+            "visitors_7d": calc_growth(t_der["visitors"], p7_daily_avg["visitors"]),
+
+            # vs M-1 (MTD vs prev MTD)
+            "nmv_mtd": calc_growth(m_der["nmv"], pm_der["nmv"]),
+            "gmv_mtd": calc_growth(m_der["gmv"], pm_der["gmv"]),
+            "orders_mtd": calc_growth(m_der["net_order"], pm_der["net_order"]),
+        }
+    }
+
     today_kpi_overview = [
         {
             "kpi": "Target (IDR)",
@@ -708,6 +753,7 @@ def get_summary_performance_data(
                 "gmv": m_vals["total_gmv"],
                 "net_order": m_vals["net_orders"],
                 "visitors": m_vals["visitors"],
+                "pageviews": m_vals["page_view"],
             },
             "prev_mtd": {
                 "nmv": pm_vals["total_nmv"],
@@ -715,6 +761,7 @@ def get_summary_performance_data(
                 "gmv": pm_vals["total_gmv"],
                 "net_order": pm_vals["net_orders"],
                 "visitors": pm_vals["visitors"],
+                "pageviews": pm_vals["page_view"],
             },
         })
 
@@ -810,6 +857,7 @@ def get_summary_performance_data(
         "top_performers": top_performers,
         "anomalies": anomalies,
         "today_kpi_overview": today_kpi_overview,
+        "today_pulse_hub": today_pulse_hub,
         "charts": {
             "brand_share": dict(sorted(brand_nmv_map.items(), key=lambda x: x[1], reverse=True)),
             "brand_group_share": dict(sorted(bg_nmv_map.items(), key=lambda x: x[1], reverse=True)),

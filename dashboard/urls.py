@@ -19,12 +19,13 @@ from .views import (
     insight_dashboard
 )
 from django.views.decorators.cache import never_cache
+from django.views.generic import RedirectView
 
 
 urlpatterns = [
     # =============== contoh
     path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
-    path('', brand_performance, name="brand_performance"),
+    path('', RedirectView.as_view(url='/brand_performance_v2/', permanent=False), name="home_redirect"),
     path('brand_performance_api_new', brand_performance_api_new, name="brand_performance_api_new"),
     # path('',brand_performance_view),
     # path('api/gmv', api_gmv),

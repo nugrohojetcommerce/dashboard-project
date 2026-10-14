@@ -4,7 +4,6 @@
 {% block title %}Brand Performance v2 — Analytics{% endblock %}
 
 {% block extra_css %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -456,21 +455,27 @@
 
   .bp2-preset-pill {
     background: transparent;
-    border: 0;
+    border: 1px solid transparent;
     font-size: .7rem;
     font-weight: 600;
     color: var(--text-muted);
-    padding: 3px 8px;
+    padding: 3px 9px;
     border-radius: 6px;
     cursor: pointer;
-    transition: all .15s;
+    transition: all .15s ease;
   }
 
-  .bp2-preset-pill:hover,
+  .bp2-preset-pill:hover {
+    color: var(--text-primary);
+    background: rgba(148, 163, 184, 0.12);
+  }
+
   .bp2-preset-pill.active {
     background: var(--bp2-surface);
-    color: var(--text-primary);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    color: var(--c-indigo);
+    font-weight: 700;
+    border-color: var(--bp2-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
   }
 
   /* Actions */
@@ -873,15 +878,124 @@
   }
 
   .placeholder-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: .62rem;
     font-weight: 700;
     letter-spacing: .04em;
-    padding: 2px 6px;
+    padding: 2px 7px;
     border-radius: 4px;
     background: var(--orange-dim);
     color: var(--orange);
     text-transform: uppercase;
   }
+
+  /* ── Product Groups Under Development Overlay ── */
+  .bp2-under-dev-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: color-mix(in srgb, var(--bp2-surface) 60%, transparent);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    border-radius: 0 0 var(--bp2-radius) var(--bp2-radius);
+    pointer-events: auto;
+    transition: background .2s ease;
+  }
+
+  .bp2-under-dev-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--bp2-surface) 92%, transparent);
+    border: 1px solid color-mix(in srgb, var(--orange) 35%, var(--bp2-border));
+    box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
+    max-width: 90%;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: bp2FadeUp .3s ease-out;
+  }
+
+  .bp2-under-dev-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
+    background: var(--orange-dim);
+    color: var(--orange);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--orange) 20%, transparent);
+  }
+
+  .bp2-under-dev-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+  }
+
+  .bp2-under-dev-title {
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    letter-spacing: -.01em;
+  }
+
+  .bp2-under-dev-sub {
+    font-size: .72rem;
+    color: var(--text-muted);
+    line-height: 1.35;
+    font-weight: 500;
+  }
+
+  .bp2-dev-pulse {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, .7);
+    animation: bp2Pulse 2s infinite;
+  }
+
+  @keyframes bp2Pulse {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--orange) 60%, transparent);
+    }
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 6px transparent;
+    }
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  @keyframes bp2FadeUp {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
 
   /* ── Bento Executive Performance Hub ── */
   .bp2-bento-master {
@@ -1684,8 +1798,8 @@
     align-items: center;
   }
   .quad-title {
-    font-size: .76rem;
-    font-weight: 700;
+    font-size: .88rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: .04em;
     display: flex;
@@ -1757,6 +1871,78 @@
     .scatter-chart-wrap {
       height: 480px;
     }
+  }
+
+  /* Scatter Zoom Toolbar */
+  .scatter-zoom-toolbar {
+    position: absolute;
+    top: 16px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 15;
+    pointer-events: auto;
+  }
+  .scatter-zoom-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bp2-surface-2);
+    border: 1px solid var(--bp2-border);
+    padding: 3px 8px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: .88;
+  }
+  @media (max-width: 768px) {
+    .scatter-zoom-hint {
+      display: none;
+    }
+  }
+  .scatter-zoom-btn-group {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: 8px;
+    padding: 2px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .scatter-zoom-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+    color: var(--text-primary);
+    border-radius: 6px;
+    font-size: .82rem;
+    cursor: pointer;
+    transition: all .15s ease;
+    padding: 0;
+  }
+  .scatter-zoom-btn:hover {
+    background: var(--bp2-surface-2);
+    color: var(--c-indigo);
+  }
+  .scatter-zoom-btn.active {
+    color: var(--c-indigo);
+    background: rgba(99, 102, 241, 0.12);
+  }
+  #productScatterChart {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  #productScatterChart:active {
+    cursor: grabbing;
   }
 
   .scatter-detail-panel {
@@ -2269,6 +2455,38 @@
     opacity: 0.85;
   }
 
+  [data-theme="dark"] .scatter-zoom-btn-group,
+  [data-bs-theme="dark"] .scatter-zoom-btn-group,
+  body.dark-mode .scatter-zoom-btn-group {
+    background: #151D2E;
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+  [data-theme="dark"] .scatter-zoom-btn,
+  [data-bs-theme="dark"] .scatter-zoom-btn,
+  body.dark-mode .scatter-zoom-btn {
+    color: #E2E8F0;
+  }
+  [data-theme="dark"] .scatter-zoom-btn:hover,
+  [data-bs-theme="dark"] .scatter-zoom-btn:hover,
+  body.dark-mode .scatter-zoom-btn:hover {
+    background: #1E293B;
+    color: #38BDF8;
+  }
+  [data-theme="dark"] .scatter-zoom-btn.active,
+  [data-bs-theme="dark"] .scatter-zoom-btn.active,
+  body.dark-mode .scatter-zoom-btn.active {
+    color: #38BDF8;
+    background: rgba(56, 189, 248, 0.18);
+  }
+  [data-theme="dark"] .scatter-zoom-hint,
+  [data-bs-theme="dark"] .scatter-zoom-hint,
+  body.dark-mode .scatter-zoom-hint {
+    background: #121826;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #94A3B8;
+  }
+
 </style>
 {% endblock %}
 
@@ -2289,22 +2507,22 @@
       <div class="bp2-filter-pill" title="Start Date">
         <i class="bi bi-calendar-event"></i>
         <input type="date" id="startDateFilter" value="{{ start_date }}" min="{{ min_date }}" max="{{ latest_date }}"
-          onchange="applyFilters()">
+          onchange="onDateFilterChange()">
       </div>
       <span style="font-size: .75rem; color: var(--text-muted); font-weight:700;">–</span>
       <div class="bp2-filter-pill" title="End Date">
         <i class="bi bi-calendar-check"></i>
         <input type="date" id="endDateFilter" value="{{ end_date }}" min="{{ min_date }}" max="{{ latest_date }}"
-          onchange="applyFilters()">
+          onchange="onDateFilterChange()">
       </div>
 
       <!-- Quick Preset Range Pills -->
-      <div class="bp2-preset-pills">
-        <button type="button" class="bp2-preset-pill" onclick="setPresetRange(7)">7D</button>
-        <button type="button" class="bp2-preset-pill" onclick="setPresetRange(14)">14D</button>
-        <button type="button" class="bp2-preset-pill active" id="preset30D" onclick="setPresetRange(30)">30D</button>
-        <button type="button" class="bp2-preset-pill" onclick="setPresetThisMonth()">MTD</button>
-        <button type="button" class="bp2-preset-pill" onclick="setPresetLastMonth()">Last M</button>
+      <div class="bp2-preset-pills" id="timeframePresetPills">
+        <button type="button" class="bp2-preset-pill" data-preset="7d" onclick="setPresetRange(7, this)">7D</button>
+        <button type="button" class="bp2-preset-pill" data-preset="14d" onclick="setPresetRange(14, this)">14D</button>
+        <button type="button" class="bp2-preset-pill active" data-preset="30d" id="preset30D" onclick="setPresetRange(30, this)">30D</button>
+        <button type="button" class="bp2-preset-pill" data-preset="mtd" onclick="setPresetThisMonth(this)">MTD</button>
+        <button type="button" class="bp2-preset-pill" data-preset="last_month" onclick="setPresetLastMonth(this)">Last M</button>
       </div>
 
       <!-- Single-select: Brand -->
@@ -2712,6 +2930,8 @@
                 <label class="bp2-dropdown-option"><input type="checkbox" value="orders_prev"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Net Order (M-1)</span></label>
                 <label class="bp2-dropdown-option"><input type="checkbox" value="views_curr"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Pageviews (Actual)</span></label>
                 <label class="bp2-dropdown-option"><input type="checkbox" value="views_prev"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Pageviews (M-1)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="visitors_curr"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Visitors (Actual)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="visitors_prev"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Visitors (M-1)</span></label>
               </div>
             </div>
           </div>
@@ -2784,17 +3004,35 @@
       </div>
     </div>
 
-    <!-- 7. Product Groups (Placeholder) -->
+    <!-- 7. Product Groups (Under Development) -->
     <div class="bp2-card" style="margin-bottom:0;">
       <div class="bp2-card-header">
         <div class="bp2-card-title-group">
           <h2 class="bp2-card-title">
             <span class="badge-num">7</span> Product Groups
-            <span class="placeholder-tag">Placeholder</span>
+            <span class="placeholder-tag"><i class="bi bi-tools"></i> Under Development</span>
           </h2>
         </div>
       </div>
-      <div class="bp2-donut-wrap">
+      <div class="bp2-donut-wrap" style="position: relative;">
+        <!-- Under Development Overlay -->
+        <div class="bp2-under-dev-overlay">
+          <div class="bp2-under-dev-pill">
+            <div class="bp2-under-dev-icon">
+              <i class="bi bi-tools"></i>
+            </div>
+            <div class="bp2-under-dev-text">
+              <div class="bp2-under-dev-title">
+                <span>Under Development</span>
+                <span class="bp2-dev-pulse"></span>
+              </div>
+              <div class="bp2-under-dev-sub">
+                Mapping category brand ke SKU sedang dipersiapkan
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="bp2-chart-body sm">
           <canvas id="groupDonutCanvas"></canvas>
           <div class="bp2-donut-center">
@@ -2833,7 +3071,7 @@
     <div class="scatter-summary-cards">
       <div class="scatter-quad-card q1" id="cardQ1" onclick="filterScatterByQuadrant('Q1')" title="Klik untuk highlight dan lihat daftar Top SKU Stars">
         <div class="quad-header">
-          <span class="quad-title"><i class="bi bi-star-fill"></i> Q1: Stars</span>
+          <span class="quad-title">Q1: Stars</span>
           <span class="quad-count-badge" id="q1Count">0 SKUs</span>
         </div>
         <div class="quad-val-row">
@@ -2845,7 +3083,7 @@
 
       <div class="scatter-quad-card q2" id="cardQ2" onclick="filterScatterByQuadrant('Q2')" title="Klik untuk highlight dan lihat daftar Top SKU Promo Drivers">
         <div class="quad-header">
-          <span class="quad-title"><i class="bi bi-rocket-takeoff-fill"></i> Q2: Promo Drivers</span>
+          <span class="quad-title">Q2: Promo Drivers</span>
           <span class="quad-count-badge" id="q2Count">0 SKUs</span>
         </div>
         <div class="quad-val-row">
@@ -2857,7 +3095,7 @@
 
       <div class="scatter-quad-card q3" id="cardQ3" onclick="filterScatterByQuadrant('Q3')" title="Klik untuk highlight dan lihat daftar Top SKU Sleepers">
         <div class="quad-header">
-          <span class="quad-title"><i class="bi bi-moon-stars-fill"></i> Q3: Sleepers</span>
+          <span class="quad-title">Q3: Sleepers</span>
           <span class="quad-count-badge" id="q3Count">0 SKUs</span>
         </div>
         <div class="quad-val-row">
@@ -2867,16 +3105,16 @@
         <div class="quad-desc">Low NMV • Low Discount (Potensial Diberi Dorongan Promo)</div>
       </div>
 
-      <div class="scatter-quad-card q4" id="cardQ4" onclick="filterScatterByQuadrant('Q4')" title="Klik untuk highlight dan lihat daftar Top SKU Paling Inefficient">
+      <div class="scatter-quad-card q4" id="cardQ4" onclick="filterScatterByQuadrant('Q4')" title="Klik untuk highlight dan lihat daftar Top SKU Inefficient">
         <div class="quad-header">
-          <span class="quad-title"><i class="bi bi-exclamation-triangle-fill"></i> Q4: Inefficient</span>
+          <span class="quad-title">Q4: Inefficient</span>
           <span class="quad-count-badge" id="q4Count">0 SKUs</span>
         </div>
         <div class="quad-val-row">
           <span class="quad-val" id="q4Nmv">Rp 0</span>
           <span class="quad-share" id="q4Share">0%</span>
         </div>
-        <div class="quad-desc">Low NMV • High Discount (Promo Boncos / Kurang Efektif)</div>
+        <div class="quad-desc">Low NMV • High Discount (Promo Kurang Efektif / Perlu Evaluasi)</div>
       </div>
     </div>
 
@@ -2906,6 +3144,23 @@
     <!-- Main Body: Chart + Detail Panel -->
     <div class="scatter-body-layout">
       <div class="scatter-chart-wrap">
+        <!-- Floating Zoom & Pan Controls -->
+        <div class="scatter-zoom-toolbar" data-html2canvas-ignore="true">
+          <div class="scatter-zoom-hint" title="Gunakan mouse wheel untuk zoom, drag untuk geser">
+            <i class="bi bi-arrows-move"></i> Drag to pan • Scroll to zoom
+          </div>
+          <div class="scatter-zoom-btn-group">
+            <button type="button" class="scatter-zoom-btn" onclick="zoomScatter(1.25)" title="Zoom In (+)">
+              <i class="bi bi-zoom-in"></i>
+            </button>
+            <button type="button" class="scatter-zoom-btn" onclick="zoomScatter(0.8)" title="Zoom Out (-)">
+              <i class="bi bi-zoom-out"></i>
+            </button>
+            <button type="button" class="scatter-zoom-btn" id="scatterZoomResetBtn" onclick="resetScatterZoom()" title="Reset Zoom & Pan">
+              <i class="bi bi-arrows-angle-contract"></i>
+            </button>
+          </div>
+        </div>
         <canvas id="productScatterChart"></canvas>
       </div>
 
@@ -3134,7 +3389,16 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 <script>
+  if (typeof Chart !== 'undefined' && typeof ChartZoom !== 'undefined') {
+    try {
+      Chart.register(ChartZoom);
+    } catch (e) {
+      console.warn('ChartZoom registration notice:', e);
+    }
+  }
   /* =====================================================================
      EXECUTIVE ANALYTICS JAVASCRIPT ENGINE
      ===================================================================== */
@@ -3282,6 +3546,7 @@
   /* ── DOM Ready & Global Theme Change Listener ── */
   document.addEventListener('DOMContentLoaded', () => {
     setupMultiSelectDropdowns();
+    syncActivePresetPill();
     loadAnalyticsData();
   });
 
@@ -3449,7 +3714,9 @@
         'orders_curr': 'Net Order',
         'orders_prev': 'Order (M-1)',
         'views_curr': 'Views',
-        'views_prev': 'Views (M-1)'
+        'views_prev': 'Views (M-1)',
+        'visitors_curr': 'Visitors',
+        'visitors_prev': 'Visitors (M-1)'
       };
       const names = [...selectedTrendLines].map(k => labelsMap[k] || k);
       if (names.length <= 2) {
@@ -3561,50 +3828,156 @@
   }
 
   /* =====================================================================
-     PRESET DATE BUTTONS
+     PRESET DATE LOGIC & HELPERS (Timezone-Safe Local YYYY-MM-DD)
      ===================================================================== */
-  function setPresetRange(days) {
-    document.querySelectorAll('.bp2-preset-pill').forEach(b => b.classList.remove('active'));
+  function formatLocalDateYMD(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function parseLocalDateYMD(str) {
+    if (!str) return new Date();
+    const parts = str.split('-').map(Number);
+    // Use midday 12:00:00 to avoid any timezone or midnight boundary issues
+    return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
+  }
+
+  function getPresetAnchorDate() {
     const endInput = document.getElementById('endDateFilter');
+    const maxDateStr = (endInput && endInput.getAttribute('max')) || '{{ latest_date }}';
+    return parseLocalDateYMD(maxDateStr);
+  }
+
+  function calculatePresetRange(days) {
+    const endD = getPresetAnchorDate();
+    const startD = new Date(endD.getFullYear(), endD.getMonth(), endD.getDate() - (days - 1), 12, 0, 0);
+    return {
+      start: formatLocalDateYMD(startD),
+      end: formatLocalDateYMD(endD)
+    };
+  }
+
+  function calculatePresetThisMonth() {
+    const endD = getPresetAnchorDate();
+    // 1st of current month
+    const startD = new Date(endD.getFullYear(), endD.getMonth(), 1, 12, 0, 0);
+    return {
+      start: formatLocalDateYMD(startD),
+      end: formatLocalDateYMD(endD)
+    };
+  }
+
+  function calculatePresetLastMonth() {
+    const refD = getPresetAnchorDate();
+    const curYear = refD.getFullYear();
+    const curMonth = refD.getMonth(); // 0-indexed (e.g. 9 for October)
+
+    // Start: 1st day of the previous month
+    const startD = new Date(curYear, curMonth - 1, 1, 12, 0, 0);
+    // End: Last day of the previous month (day 0 of current month in JS)
+    const endD = new Date(curYear, curMonth, 0, 12, 0, 0);
+
+    return {
+      start: formatLocalDateYMD(startD),
+      end: formatLocalDateYMD(endD)
+    };
+  }
+
+  function setActivePresetPill(btnOrPreset) {
+    document.querySelectorAll('.bp2-preset-pill').forEach(b => b.classList.remove('active'));
+    if (!btnOrPreset) return;
+    if (typeof btnOrPreset === 'string') {
+      const el = document.querySelector(`.bp2-preset-pill[data-preset="${btnOrPreset}"]`);
+      if (el) el.classList.add('active');
+    } else if (btnOrPreset && btnOrPreset.classList) {
+      btnOrPreset.classList.add('active');
+    }
+  }
+
+  function syncActivePresetPill() {
     const startInput = document.getElementById('startDateFilter');
+    const endInput = document.getElementById('endDateFilter');
+    if (!startInput || !endInput) return;
 
-    const maxDateStr = endInput.getAttribute('max') || '{{ latest_date }}';
-    const endD = new Date(maxDateStr);
-    const startD = new Date(endD);
-    startD.setDate(startD.getDate() - (days - 1));
+    const s = startInput.value;
+    const e = endInput.value;
 
-    startInput.value = startD.toISOString().slice(0, 10);
-    endInput.value = endD.toISOString().slice(0, 10);
+    const r7 = calculatePresetRange(7);
+    const r14 = calculatePresetRange(14);
+    const r30 = calculatePresetRange(30);
+    const rMtd = calculatePresetThisMonth();
+    const rLastM = calculatePresetLastMonth();
+
+    document.querySelectorAll('.bp2-preset-pill').forEach(b => b.classList.remove('active'));
+
+    if (s === r7.start && e === r7.end) {
+      setActivePresetPill('7d');
+    } else if (s === r14.start && e === r14.end) {
+      setActivePresetPill('14d');
+    } else if (s === r30.start && e === r30.end) {
+      setActivePresetPill('30d');
+    } else if (s === rMtd.start && e === rMtd.end) {
+      setActivePresetPill('mtd');
+    } else if (s === rLastM.start && e === rLastM.end) {
+      setActivePresetPill('last_month');
+    }
+  }
+
+  function setPresetRange(days, btnElement) {
+    const { start, end } = calculatePresetRange(days);
+    const startInput = document.getElementById('startDateFilter');
+    const endInput = document.getElementById('endDateFilter');
+
+    startInput.value = start;
+    endInput.value = end;
+
+    if (btnElement) {
+      setActivePresetPill(btnElement);
+    } else {
+      setActivePresetPill(`${days}d`);
+    }
+
     applyFilters();
   }
 
-  function setPresetThisMonth() {
-    document.querySelectorAll('.bp2-preset-pill').forEach(b => b.classList.remove('active'));
-    const endInput = document.getElementById('endDateFilter');
+  function setPresetThisMonth(btnElement) {
+    const { start, end } = calculatePresetThisMonth();
     const startInput = document.getElementById('startDateFilter');
+    const endInput = document.getElementById('endDateFilter');
 
-    const maxDateStr = endInput.getAttribute('max') || '{{ latest_date }}';
-    const endD = new Date(maxDateStr);
-    const startD = new Date(endD.getFullYear(), endD.getMonth(), 1);
+    startInput.value = start;
+    endInput.value = end;
 
-    startInput.value = startD.toISOString().slice(0, 10);
-    endInput.value = endD.toISOString().slice(0, 10);
+    if (btnElement) {
+      setActivePresetPill(btnElement);
+    } else {
+      setActivePresetPill('mtd');
+    }
+
     applyFilters();
   }
 
-  function setPresetLastMonth() {
-    document.querySelectorAll('.bp2-preset-pill').forEach(b => b.classList.remove('active'));
-    const endInput = document.getElementById('endDateFilter');
+  function setPresetLastMonth(btnElement) {
+    const { start, end } = calculatePresetLastMonth();
     const startInput = document.getElementById('startDateFilter');
+    const endInput = document.getElementById('endDateFilter');
 
-    const maxDateStr = endInput.getAttribute('max') || '{{ latest_date }}';
-    const endD = new Date(maxDateStr);
-    const firstOfCurrent = new Date(endD.getFullYear(), endD.getMonth(), 1);
-    const lastOfPrev = new Date(firstOfCurrent - 1);
-    const firstOfPrev = new Date(lastOfPrev.getFullYear(), lastOfPrev.getMonth(), 1);
+    startInput.value = start;
+    endInput.value = end;
 
-    startInput.value = firstOfPrev.toISOString().slice(0, 10);
-    endInput.value = lastOfPrev.toISOString().slice(0, 10);
+    if (btnElement) {
+      setActivePresetPill(btnElement);
+    } else {
+      setActivePresetPill('last_month');
+    }
+
+    applyFilters();
+  }
+
+  function onDateFilterChange() {
+    syncActivePresetPill();
     applyFilters();
   }
 
@@ -3633,9 +4006,7 @@
     document.getElementById('platformDropdownBadge').style.display = 'none';
     selectedPlatforms = [];
 
-    document.querySelectorAll('.bp2-preset-pill').forEach(b => b.classList.remove('active'));
-    document.getElementById('preset30D')?.classList.add('active');
-
+    syncActivePresetPill();
     loadAnalyticsData();
   }
 
@@ -4183,6 +4554,29 @@
         pointRadius: 1.5,
         isCurrency: false,
         yAxisID: 'y1'
+      },
+      'visitors_curr': {
+        label: 'Visitors Actual',
+        data: series.visitors?.current || [],
+        borderColor: '#14B8A6',
+        borderWidth: 2,
+        tension: 0.3,
+        fill: false,
+        pointRadius: 2,
+        isCurrency: false,
+        yAxisID: 'y1'
+      },
+      'visitors_prev': {
+        label: 'Visitors M-1',
+        data: series.visitors?.previous || [],
+        borderColor: '#5EEAD4',
+        borderDash: [4, 4],
+        borderWidth: 1.8,
+        tension: 0.3,
+        fill: false,
+        pointRadius: 1.5,
+        isCurrency: false,
+        yAxisID: 'y1'
       }
     };
 
@@ -4395,10 +4789,16 @@
     if (skuDonutInstance) skuDonutInstance.destroy();
     const skuCanvas = document.getElementById('skuDonutCanvas');
     if (skuCanvas && donutData.sku_share) {
-      const items = donutData.sku_share;
+      const items = (donutData.sku_share || []).filter(s => s.value > 0);
       const labels = items.map(s => s.name);
       const values = items.map(s => s.value);
-      const colors = items.map((_, i) => PALETTE[i % PALETTE.length]);
+      const SKU_PALETTE = [
+        '#6366F1', '#F59E0B', '#10B981', '#0EA5E9', '#8B5CF6',
+        '#EC4899', '#F97316', '#14B8A6', '#3B82F6', '#84CC16',
+        '#A855F7', '#E11D48', '#06B6D4', '#EAB308', '#D946EF',
+        '#22C55E', '#38BDF8', '#FB923C', '#64748B', '#0284C7'
+      ];
+      const colors = items.map((s, i) => s.name === 'Others' ? '#94A3B8' : SKU_PALETTE[i % SKU_PALETTE.length]);
       const total = values.reduce((a, b) => a + b, 0);
 
       const totalEl = document.getElementById('skuDonutTotal');
@@ -4525,46 +4925,62 @@
       const thY = options.thresholdY;
       if (thX === undefined || thY === undefined || thX === 0 || thY === 0) return;
 
-      const xPixel = Math.max(left, Math.min(right, x.getPixelForValue(thX)));
-      const yPixel = Math.max(top, Math.min(bottom, y.getPixelForValue(thY)));
+      const rawX = x.getPixelForValue(thX);
+      const rawY = y.getPixelForValue(thY);
 
       ctx.save();
+      // Clip to chartArea so zoom/pan doesn't leak into margins/axes
+      ctx.beginPath();
+      ctx.rect(left, top, right - left, bottom - top);
+      ctx.clip();
 
       const dark = isDarkMode();
 
-      // Subtle quadrant background tints
-      // Q1: Top-Left (Stars: High NMV, Low Disc)
-      ctx.fillStyle = dark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.04)';
-      ctx.fillRect(left, top, xPixel - left, yPixel - top);
+      // Subtle quadrant background tints based on visible viewport
+      // Q1: Top-Left (Stars: NMV > thY, Disc < thX)
+      if (rawX > left && rawY > top) {
+        ctx.fillStyle = dark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.04)';
+        ctx.fillRect(left, top, Math.min(right, rawX) - left, Math.min(bottom, rawY) - top);
+      }
 
-      // Q2: Top-Right (Promo Drivers: High NMV, High Disc)
-      ctx.fillStyle = dark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.04)';
-      ctx.fillRect(xPixel, top, right - xPixel, yPixel - top);
+      // Q2: Top-Right (Promo Drivers: NMV > thY, Disc > thX)
+      if (rawX < right && rawY > top) {
+        ctx.fillStyle = dark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.04)';
+        ctx.fillRect(Math.max(left, rawX), top, right - Math.max(left, rawX), Math.min(bottom, rawY) - top);
+      }
 
-      // Q3: Bottom-Left (Sleepers: Low NMV, Low Disc)
-      ctx.fillStyle = dark ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.04)';
-      ctx.fillRect(left, yPixel, xPixel - left, bottom - yPixel);
+      // Q3: Bottom-Left (Sleepers: NMV < thY, Disc < thX)
+      if (rawX > left && rawY < bottom) {
+        ctx.fillStyle = dark ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.04)';
+        ctx.fillRect(left, Math.max(top, rawY), Math.min(right, rawX) - left, bottom - Math.max(top, rawY));
+      }
 
-      // Q4: Bottom-Right (Inefficient: Low NMV, High Disc)
-      ctx.fillStyle = dark ? 'rgba(244, 63, 94, 0.08)' : 'rgba(244, 63, 94, 0.04)';
-      ctx.fillRect(xPixel, yPixel, right - xPixel, bottom - yPixel);
+      // Q4: Bottom-Right (Inefficient: NMV < thY, Disc > thX)
+      if (rawX < right && rawY < bottom) {
+        ctx.fillStyle = dark ? 'rgba(244, 63, 94, 0.08)' : 'rgba(244, 63, 94, 0.04)';
+        ctx.fillRect(Math.max(left, rawX), Math.max(top, rawY), right - Math.max(left, rawX), bottom - Math.max(top, rawY));
+      }
 
-      // Dashed crosshair lines
+      // Dashed crosshair lines (drawn only if threshold is within visible scale)
       ctx.lineWidth = 1.5;
       ctx.setLineDash([5, 5]);
       ctx.strokeStyle = dark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(100, 116, 139, 0.40)';
 
       // Vertical line (thX)
-      ctx.beginPath();
-      ctx.moveTo(xPixel, top);
-      ctx.lineTo(xPixel, bottom);
-      ctx.stroke();
+      if (rawX >= left && rawX <= right) {
+        ctx.beginPath();
+        ctx.moveTo(rawX, top);
+        ctx.lineTo(rawX, bottom);
+        ctx.stroke();
+      }
 
       // Horizontal line (thY)
-      ctx.beginPath();
-      ctx.moveTo(left, yPixel);
-      ctx.lineTo(right, yPixel);
-      ctx.stroke();
+      if (rawY >= top && rawY <= bottom) {
+        ctx.beginPath();
+        ctx.moveTo(left, rawY);
+        ctx.lineTo(right, rawY);
+        ctx.stroke();
+      }
 
       // Watermark labels in quadrants - Crisp High Contrast
       ctx.font = '700 12px "Plus Jakarta Sans", sans-serif';
@@ -4572,20 +4988,28 @@
       ctx.setLineDash([]);
 
       // Q1 watermark (Top Left)
-      ctx.textAlign = 'left';
-      ctx.fillText('Q1: Stars', left + 14, top + 22);
+      if (rawX > left + 35 && rawY > top + 25) {
+        ctx.textAlign = 'left';
+        ctx.fillText('Q1: Stars', left + 14, top + 22);
+      }
 
       // Q2 watermark (Top Right)
-      ctx.textAlign = 'right';
-      ctx.fillText('Q2: Promo Drivers', right - 14, top + 22);
+      if (rawX < right - 35 && rawY > top + 25) {
+        ctx.textAlign = 'right';
+        ctx.fillText('Q2: Promo Drivers', right - 14, top + 22);
+      }
 
       // Q3 watermark (Bottom Left)
-      ctx.textAlign = 'left';
-      ctx.fillText('Q3: Sleepers', left + 14, bottom - 14);
+      if (rawX > left + 35 && rawY < bottom - 20) {
+        ctx.textAlign = 'left';
+        ctx.fillText('Q3: Sleepers', left + 14, bottom - 14);
+      }
 
       // Q4 watermark (Bottom Right)
-      ctx.textAlign = 'right';
-      ctx.fillText('Q4: Inefficient', right - 14, bottom - 14);
+      if (rawX < right - 35 && rawY < bottom - 20) {
+        ctx.textAlign = 'right';
+        ctx.fillText('Q4: Inefficient', right - 14, bottom - 14);
+      }
 
       ctx.restore();
     }
@@ -4788,13 +5212,29 @@
     const platSuffix = currentScatterPlatform === 'All' ? '' : ` (${currentScatterPlatform})`;
     document.getElementById('scatterPointCount').textContent = `Showing ${items.length} SKUs${platSuffix}`;
 
-    buildScatterChart(dataObj);
+    buildScatterChart(dataObj, false);
   }
 
-  function buildScatterChart(dataObj) {
+  function buildScatterChart(dataObj, preserveView = true) {
     const canvas = document.getElementById('productScatterChart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+
+    // Save current zoom & pan bounds if preserveView is requested
+    let savedScales = null;
+    if (preserveView && scatterChartInstance && scatterChartInstance.scales) {
+      const xs = scatterChartInstance.scales.x;
+      const ys = scatterChartInstance.scales.y;
+      if (xs && ys && Number.isFinite(xs.min) && Number.isFinite(xs.max) && Number.isFinite(ys.min) && Number.isFinite(ys.max)) {
+        savedScales = {
+          xMin: xs.min,
+          xMax: xs.max,
+          yMin: ys.min,
+          yMax: ys.max,
+          isCustomZoomed: isScatterCustomZoomed
+        };
+      }
+    }
 
     if (scatterChartInstance) {
       scatterChartInstance.destroy();
@@ -4903,11 +5343,18 @@
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-          padding: { top: 16, right: 16, bottom: 8, left: 8 }
+          padding: { top: 20, right: 16, bottom: 8, left: 8 }
+        },
+        onHover: (event, chartElement) => {
+          if (isScatterDragging) return;
+          if (event.native && event.native.target) {
+            event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'grab';
+          }
         },
         plugins: {
           legend: {
             position: 'top',
+            align: 'start',
             labels: {
               boxWidth: 10,
               boxHeight: 10,
@@ -4940,10 +5387,39 @@
           quadrantPlugin: {
             thresholdX: thresholdX,
             thresholdY: thresholdY
+          },
+          zoom: {
+            pan: {
+              enabled: true,
+              mode: 'xy',
+              modifierKey: null,
+              onPanComplete: () => {
+                updateScatterZoomUi();
+              }
+            },
+            zoom: {
+              wheel: {
+                enabled: true,
+                speed: 0.08
+              },
+              pinch: {
+                enabled: true
+              },
+              mode: 'xy',
+              onZoomComplete: () => {
+                updateScatterZoomUi();
+              }
+            },
+            limits: {
+              x: { min: 0 },
+              y: { min: 0 }
+            }
           }
         },
         scales: {
           x: {
+            min: savedScales ? savedScales.xMin : undefined,
+            max: savedScales ? savedScales.xMax : undefined,
             title: {
               display: true,
               text: 'Total Discount (Seller + Platform) [Rp]',
@@ -4960,6 +5436,8 @@
             }
           },
           y: {
+            min: savedScales ? savedScales.yMin : undefined,
+            max: savedScales ? savedScales.yMax : undefined,
             title: {
               display: true,
               text: 'Net Merchandise Value (NMV) [Rp]',
@@ -4977,6 +5455,7 @@
           }
         },
         onClick: (evt, elements) => {
+          if (justFinishedScatterDrag) return;
           if (elements && elements.length > 0) {
             const el = elements[0];
             const raw = scatterChartInstance.data.datasets[el.datasetIndex].data[el.index].rawItem;
@@ -4985,6 +5464,436 @@
         }
       },
       plugins: [quadrantPlugin]
+    });
+
+    if (savedScales) {
+      isScatterCustomZoomed = savedScales.isCustomZoomed;
+      updateScatterZoomUi();
+    } else {
+      scatterChartInitialBounds = null;
+      isScatterCustomZoomed = false;
+      setTimeout(() => {
+        getScatterInitialBounds();
+        updateScatterZoomUi();
+      }, 60);
+    }
+
+    initScatterPanZoomGestures();
+  }
+
+  // Fast in-place highlight without destroying chart or resetting zoom/pan
+  function updateScatterPointHighlight() {
+    if (!scatterChartInstance) return;
+    const isDark = isDarkMode();
+    const q = (scatterSearchQuery || '').toLowerCase().trim();
+
+    scatterChartInstance.data.datasets.forEach(ds => {
+      const radii = [];
+      const hoverRadii = [];
+      const borderWidths = [];
+      const borderColors = [];
+
+      ds.data.forEach(pt => {
+        const it = pt.rawItem;
+        const isSelected = selectedScatterSkuCode && it.sku_code === selectedScatterSkuCode;
+        const isSearchMatch = !q || (it.sku_code && it.sku_code.toLowerCase().includes(q)) || (it.product_name && it.product_name.toLowerCase().includes(q));
+
+        let r = 6;
+        let bw = 1;
+        let bc = isDark ? 'rgba(255, 255, 255, 0.70)' : '#FFFFFF';
+
+        if (isSelected) {
+          r = 13;
+          bw = 3.5;
+          bc = isDark ? '#38BDF8' : '#0F172A';
+        } else if (q && isSearchMatch) {
+          r = 10;
+          bw = 2.5;
+          bc = isDark ? '#38BDF8' : '#0F172A';
+        } else if (q && !isSearchMatch) {
+          r = 3.5;
+        }
+
+        pt.isSelected = isSelected;
+        pt.isSearchMatch = isSearchMatch;
+        pt.pointRadius = r;
+        pt.pointHoverRadius = Math.max(r + 3, 10);
+        pt.pointBorderWidth = bw;
+        pt.pointBorderColor = bc;
+
+        radii.push(r);
+        hoverRadii.push(Math.max(r + 3, 10));
+        borderWidths.push(bw);
+        borderColors.push(bc);
+      });
+
+      ds.pointRadius = radii;
+      ds.pointHoverRadius = hoverRadii;
+      ds.pointBorderWidth = borderWidths;
+      ds.pointBorderColor = borderColors;
+    });
+
+    scatterChartInstance.update('none');
+  }
+
+  // State management for scatter pan and zoom gestures
+  let isScatterDragging = false;
+  let scatterDragStartX = 0;
+  let scatterDragStartY = 0;
+  let scatterLastX = 0;
+  let scatterLastY = 0;
+  let scatterDragDistance = 0;
+  let justFinishedScatterDrag = false;
+  let isScatterCustomZoomed = false;
+  let scatterChartInitialBounds = null;
+
+  function getScatterInitialBounds() {
+    if (!scatterChartInstance) return null;
+    const xs = scatterChartInstance.scales.x;
+    const ys = scatterChartInstance.scales.y;
+    if (xs && ys && Number.isFinite(xs.min) && Number.isFinite(xs.max) && Number.isFinite(ys.min) && Number.isFinite(ys.max)) {
+      if (!scatterChartInitialBounds) {
+        scatterChartInitialBounds = {
+          xMin: Math.max(0, xs.min),
+          xMax: xs.max,
+          yMin: Math.max(0, ys.min),
+          yMax: ys.max
+        };
+      }
+      return scatterChartInitialBounds;
+    }
+    return null;
+  }
+
+  function panScatterByPixels(dx, dy) {
+    if (!scatterChartInstance) return;
+    getScatterInitialBounds();
+
+    // 1. Try plugin pan first if active
+    if (typeof scatterChartInstance.pan === 'function') {
+      try {
+        scatterChartInstance.pan({ x: dx, y: dy }, undefined, 'none');
+        isScatterCustomZoomed = true;
+        updateScatterZoomUi();
+        return;
+      } catch (e) {
+        // Fallback to direct scale pan below
+      }
+    }
+
+    // 2. Direct scale pan engine (100% reliable fallback)
+    const xs = scatterChartInstance.scales.x;
+    const ys = scatterChartInstance.scales.y;
+    if (!xs || !ys) return;
+
+    const xPixelSpan = xs.right - xs.left;
+    const yPixelSpan = ys.bottom - ys.top;
+    if (xPixelSpan <= 0 || yPixelSpan <= 0) return;
+
+    const xValSpan = xs.max - xs.min;
+    const yValSpan = ys.max - ys.min;
+
+    const valDeltaX = (dx / xPixelSpan) * xValSpan;
+    const valDeltaY = (dy / yPixelSpan) * yValSpan;
+
+    let newXMin = xs.min - valDeltaX;
+    let newXMax = xs.max - valDeltaX;
+    let newYMin = ys.min + valDeltaY;
+    let newYMax = ys.max + valDeltaY;
+
+    // Minimum limit bounds: X min >= 0, Y min >= 0
+    if (newXMin < 0) {
+      newXMax += (0 - newXMin);
+      newXMin = 0;
+    }
+    if (newYMin < 0) {
+      newYMax += (0 - newYMin);
+      newYMin = 0;
+    }
+
+    scatterChartInstance.options.scales.x.min = newXMin;
+    scatterChartInstance.options.scales.x.max = newXMax;
+    scatterChartInstance.options.scales.y.min = newYMin;
+    scatterChartInstance.options.scales.y.max = newYMax;
+
+    scatterChartInstance.update('none');
+    isScatterCustomZoomed = true;
+    updateScatterZoomUi();
+  }
+
+  function zoomScatter(factor, focalPoint) {
+    if (!scatterChartInstance) return;
+    getScatterInitialBounds();
+
+    // 1. Try plugin zoom first if active
+    if (typeof scatterChartInstance.zoom === 'function') {
+      try {
+        if (focalPoint) {
+          scatterChartInstance.zoom({ x: factor, y: factor, focalPoint: focalPoint }, 'none');
+        } else {
+          scatterChartInstance.zoom(factor, 'none');
+        }
+        isScatterCustomZoomed = true;
+        updateScatterZoomUi();
+        return;
+      } catch (e) {
+        // Fallback to direct scale zoom below
+      }
+    }
+
+    // 2. Direct scale zoom engine (100% reliable fallback)
+    const xs = scatterChartInstance.scales.x;
+    const ys = scatterChartInstance.scales.y;
+    if (!xs || !ys) return;
+
+    const ca = scatterChartInstance.chartArea || {
+      left: xs.left,
+      right: xs.right,
+      top: ys.top,
+      bottom: ys.bottom
+    };
+
+    const fpX = focalPoint && Number.isFinite(focalPoint.x) ? focalPoint.x : (ca.left + ca.right) / 2;
+    const fpY = focalPoint && Number.isFinite(focalPoint.y) ? focalPoint.y : (ca.top + ca.bottom) / 2;
+
+    const focalValX = xs.getValueForPixel(fpX);
+    const focalValY = ys.getValueForPixel(fpY);
+    if (!Number.isFinite(focalValX) || !Number.isFinite(focalValY)) return;
+
+    const currentXSpan = xs.max - xs.min;
+    const currentYSpan = ys.max - ys.min;
+    if (currentXSpan <= 0 || currentYSpan <= 0) return;
+
+    const xRatio = Math.max(0, Math.min(1, (focalValX - xs.min) / currentXSpan));
+    const yRatio = Math.max(0, Math.min(1, (focalValY - ys.min) / currentYSpan));
+
+    const newXSpan = currentXSpan / factor;
+    const newYSpan = currentYSpan / factor;
+
+    // Minimum range threshold to prevent overzooming into microscopic space
+    const initBounds = getScatterInitialBounds();
+    if (initBounds) {
+      if (newXSpan < initBounds.xMax * 0.01 || newYSpan < initBounds.yMax * 0.01) {
+        if (factor > 1) return;
+      }
+    }
+
+    let newXMin = focalValX - (newXSpan * xRatio);
+    let newXMax = focalValX + (newXSpan * (1 - xRatio));
+    let newYMin = focalValY - (newYSpan * yRatio);
+    let newYMax = focalValY + (newYSpan * (1 - yRatio));
+
+    if (newXMin < 0) {
+      newXMax += (0 - newXMin);
+      newXMin = 0;
+    }
+    if (newYMin < 0) {
+      newYMax += (0 - newYMin);
+      newYMin = 0;
+    }
+
+    scatterChartInstance.options.scales.x.min = newXMin;
+    scatterChartInstance.options.scales.x.max = newXMax;
+    scatterChartInstance.options.scales.y.min = newYMin;
+    scatterChartInstance.options.scales.y.max = newYMax;
+
+    scatterChartInstance.update('none');
+    isScatterCustomZoomed = true;
+    updateScatterZoomUi();
+  }
+
+  function resetScatterZoom() {
+    if (!scatterChartInstance) return;
+
+    if (typeof scatterChartInstance.resetZoom === 'function') {
+      try {
+        scatterChartInstance.resetZoom('none');
+      } catch (e) {}
+    }
+
+    if (scatterChartInstance.options && scatterChartInstance.options.scales) {
+      if (scatterChartInitialBounds) {
+        scatterChartInstance.options.scales.x.min = scatterChartInitialBounds.xMin;
+        scatterChartInstance.options.scales.x.max = scatterChartInitialBounds.xMax;
+        scatterChartInstance.options.scales.y.min = scatterChartInitialBounds.yMin;
+        scatterChartInstance.options.scales.y.max = scatterChartInitialBounds.yMax;
+      } else {
+        delete scatterChartInstance.options.scales.x.min;
+        delete scatterChartInstance.options.scales.x.max;
+        delete scatterChartInstance.options.scales.y.min;
+        delete scatterChartInstance.options.scales.y.max;
+      }
+      scatterChartInstance.update('none');
+    }
+
+    isScatterCustomZoomed = false;
+    updateScatterZoomUi();
+  }
+
+  function updateScatterZoomUi() {
+    const resetBtn = document.getElementById('scatterZoomResetBtn');
+    if (!resetBtn || !scatterChartInstance) return;
+
+    let isZoomed = false;
+    if (typeof scatterChartInstance.isZoomedOrPanned === 'function') {
+      try {
+        isZoomed = scatterChartInstance.isZoomedOrPanned();
+      } catch (e) {}
+    }
+    if (!isZoomed && isScatterCustomZoomed) {
+      isZoomed = true;
+    }
+    if (!isZoomed && scatterChartInitialBounds && scatterChartInstance.scales.x && scatterChartInstance.scales.y) {
+      const xs = scatterChartInstance.scales.x;
+      const ys = scatterChartInstance.scales.y;
+      const diffX = Math.abs(xs.min - scatterChartInitialBounds.xMin) + Math.abs(xs.max - scatterChartInitialBounds.xMax);
+      const diffY = Math.abs(ys.min - scatterChartInitialBounds.yMin) + Math.abs(ys.max - scatterChartInitialBounds.yMax);
+      if (diffX > (scatterChartInitialBounds.xMax * 0.02) || diffY > (scatterChartInitialBounds.yMax * 0.02)) {
+        isZoomed = true;
+      }
+    }
+
+    if (isZoomed) {
+      resetBtn.classList.add('active');
+      resetBtn.style.color = '#3B82F6';
+      resetBtn.style.borderColor = '#3B82F6';
+    } else {
+      resetBtn.classList.remove('active');
+      resetBtn.style.color = '';
+      resetBtn.style.borderColor = '';
+    }
+  }
+
+  function initScatterPanZoomGestures() {
+    const canvas = document.getElementById('productScatterChart');
+    if (!canvas || canvas._scatterGesturesInitialized) return;
+    canvas._scatterGesturesInitialized = true;
+
+    canvas.style.touchAction = 'none';
+    canvas.addEventListener('dragstart', (e) => e.preventDefault());
+
+    // Mouse Drag Pan
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isScatterDragging = true;
+      scatterDragStartX = e.clientX;
+      scatterDragStartY = e.clientY;
+      scatterLastX = e.clientX;
+      scatterLastY = e.clientY;
+      scatterDragDistance = 0;
+      canvas.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isScatterDragging || !scatterChartInstance) return;
+
+      const dx = e.clientX - scatterLastX;
+      const dy = e.clientY - scatterLastY;
+      scatterLastX = e.clientX;
+      scatterLastY = e.clientY;
+      scatterDragDistance += Math.hypot(dx, dy);
+
+      if (Math.abs(dx) > 0 || Math.abs(dy) > 0) {
+        panScatterByPixels(dx, dy);
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (!isScatterDragging) return;
+      isScatterDragging = false;
+      const c = document.getElementById('productScatterChart');
+      if (c) c.style.cursor = 'grab';
+
+      if (scatterDragDistance > 4) {
+        justFinishedScatterDrag = true;
+        setTimeout(() => {
+          justFinishedScatterDrag = false;
+        }, 120);
+      }
+    });
+
+    // Mouse Wheel Zoom
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (!scatterChartInstance) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const focalPoint = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+
+      const factor = e.deltaY < 0 ? 1.14 : 0.88;
+      zoomScatter(factor, focalPoint);
+    }, { passive: false });
+
+    // Touch Support (Mobile & Tablet)
+    let touchStartDist = 0;
+    let touchStartFocal = null;
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        isScatterDragging = true;
+        scatterDragStartX = t.clientX;
+        scatterDragStartY = t.clientY;
+        scatterLastX = t.clientX;
+        scatterLastY = t.clientY;
+        scatterDragDistance = 0;
+      } else if (e.touches.length === 2) {
+        isScatterDragging = false;
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        touchStartDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        const rect = canvas.getBoundingClientRect();
+        touchStartFocal = {
+          x: ((t1.clientX + t2.clientX) / 2) - rect.left,
+          y: ((t1.clientY + t2.clientY) / 2) - rect.top
+        };
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!scatterChartInstance) return;
+
+      if (e.touches.length === 1 && isScatterDragging) {
+        const t = e.touches[0];
+        const dx = t.clientX - scatterLastX;
+        const dy = t.clientY - scatterLastY;
+        scatterLastX = t.clientX;
+        scatterLastY = t.clientY;
+        scatterDragDistance += Math.hypot(dx, dy);
+
+        if (Math.abs(dx) > 0 || Math.abs(dy) > 0) {
+          panScatterByPixels(dx, dy);
+        }
+      } else if (e.touches.length === 2 && touchStartDist > 0) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+        if (touchStartDist > 0 && currentDist > 0) {
+          const factor = currentDist / touchStartDist;
+          if (Math.abs(factor - 1) > 0.03) {
+            zoomScatter(factor > 1 ? 1.05 : 0.95, touchStartFocal);
+            touchStartDist = currentDist;
+          }
+        }
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      if (e.touches.length === 0) {
+        isScatterDragging = false;
+        touchStartDist = 0;
+        touchStartFocal = null;
+        if (scatterDragDistance > 6) {
+          justFinishedScatterDrag = true;
+          setTimeout(() => {
+            justFinishedScatterDrag = false;
+          }, 150);
+        }
+      }
     });
   }
 
@@ -5104,10 +6013,8 @@
 
     document.getElementById('scatterResetBtn').style.display = 'inline-flex';
 
-    // Re-render chart points to highlight selected point
-    if (scatterDataCalculated) {
-      buildScatterChart(scatterDataCalculated);
-    }
+    // Highlight selected point on chart without rebuilding or resetting zoom/pan
+    updateScatterPointHighlight();
   }
 
   function selectScatterSkuByCode(skuCode) {
@@ -5143,7 +6050,7 @@
     // Q1 (Stars): Top NMV descending (highest organic revenue)
     // Q2 (Promo Drivers): Top NMV descending (highest volume)
     // Q3 (Sleepers): Top NMV descending (potential promo candidates)
-    // Q4 (Inefficient): Top Total Discount descending (highest promo burn / most inefficient)
+    // Q4 (Inefficient): Top Total Discount descending (highest discount / lowest promo efficiency)
     const sorted = [...allItems];
     let sortLabel = '';
     let quadMeta = {
@@ -5187,7 +6094,7 @@
         title: 'Inefficient',
         icon: 'bi-exclamation-triangle-fill',
         badgeClass: 'badge-q4',
-        desc: 'Top produk paling boncos (promo tinggi, sales rendah)'
+        desc: 'Top produk efektivitas promo rendah (diskon tinggi, penjualan rendah)'
       };
     }
 
@@ -5254,9 +6161,7 @@
       emptyBox.style.display = 'flex';
       contentBox.style.display = 'none';
     }
-    if (scatterDataCalculated) {
-      buildScatterChart(scatterDataCalculated);
-    }
+    updateScatterPointHighlight();
   }
 
   function onScatterSearchInput() {
@@ -5284,9 +6189,7 @@
       }
     }
 
-    if (scatterDataCalculated) {
-      buildScatterChart(scatterDataCalculated);
-    }
+    updateScatterPointHighlight();
   }
 
   function filterScatterByQuadrant(quad) {
@@ -5312,7 +6215,7 @@
     }
 
     if (scatterDataCalculated) {
-      buildScatterChart(scatterDataCalculated);
+      buildScatterChart(scatterDataCalculated, true);
     }
   }
 
@@ -5330,8 +6233,10 @@
     clearScatterDetail();
     document.getElementById('scatterResetBtn').style.display = 'none';
 
+    resetScatterZoom();
+
     if (scatterDataCalculated) {
-      buildScatterChart(scatterDataCalculated);
+      buildScatterChart(scatterDataCalculated, false);
     }
   }
 

@@ -30,7 +30,7 @@ DATABASES = {
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 LOGIN_URL = '/admin/login/'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'brand_performance_v2'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -101,7 +101,7 @@ INTERNAL_IPS = [
     "localhost",
 ]
 WSGI_APPLICATION = 'dashboard_project.wsgi.application'
-LOGIN_REDIRECT_URL = 'brand_performance'
+LOGIN_REDIRECT_URL = 'brand_performance_v2'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

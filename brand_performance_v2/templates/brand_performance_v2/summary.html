@@ -1416,6 +1416,98 @@
   @keyframes bp2shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   .bp2 .reveal { animation: bp2fade .45s ease both; }
   @keyframes bp2fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ── Confidential / Demo Mode ── */
+  .bp2-btn-confidential {
+    border-color: color-mix(in srgb, var(--orange) 35%, var(--bp2-border));
+    font-weight: 600;
+    transition: all .2s ease;
+  }
+  .bp2-btn-confidential:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: color-mix(in srgb, var(--orange) 10%, var(--bp2-surface));
+  }
+  body.bp2-confidential-active .bp2-btn-confidential {
+    background: color-mix(in srgb, var(--orange) 18%, var(--bp2-surface));
+    border-color: var(--orange);
+    color: var(--orange);
+    font-weight: 700;
+    box-shadow: 0 0 14px color-mix(in srgb, var(--orange) 30%, transparent);
+  }
+  .bp2-confidential-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--orange) 12%, var(--bp2-surface));
+    border: 1px solid color-mix(in srgb, var(--orange) 35%, transparent);
+    color: var(--text-primary);
+    font-size: .78rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .06);
+    animation: fadeInSlide .25s ease-out;
+  }
+  .bp2-confidential-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .bp2-confidential-banner-content i {
+    font-size: 1.15rem;
+    color: var(--orange);
+  }
+  .bp2-confidential-banner-close {
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    color: var(--text-primary);
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: .72rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .15s ease;
+  }
+  .bp2-confidential-banner-close:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+  }
+
+  /* Frosted blur overlay for confidential mode */
+  body.bp2-confidential-active .mono,
+  body.bp2-confidential-active .bp2-kpi-value,
+  body.bp2-confidential-active .bp2-kpi-foot,
+  body.bp2-confidential-active .bp2-pulse-value,
+  body.bp2-confidential-active .bp2-pulse-row,
+  body.bp2-confidential-active .bp2-pulse-foot,
+  body.bp2-confidential-active .bento-hero-tile .bento-tile-value,
+  body.bp2-confidential-active .bento-sub-metric,
+  body.bp2-confidential-active .bento-mini-val,
+  body.bp2-confidential-active .bento-mini-sub,
+  body.bp2-confidential-active .bento-subsidy-labels,
+  body.bp2-confidential-active .bp2-chip,
+  body.bp2-confidential-active .chip,
+  body.bp2-confidential-active .bp2-share em,
+  body.bp2-confidential-active .bp2-table tbody td:not(.bp2-brandcell):not(.bp2-tag),
+  body.bp2-confidential-active .donut-center-val,
+  body.bp2-confidential-active .donut-legend-val,
+  body.bp2-confidential-active .bp2-legend-item em,
+  body.bp2-confidential-active .bp2-legend-item b,
+  body.bp2-confidential-active #donutTotal,
+  body.bp2-confidential-active #gaugeGmv,
+  body.bp2-confidential-active #gaugeNmv,
+  body.bp2-confidential-active #gaugeLeak,
+  body.bp2-confidential-active #gaugeRatio,
+  body.bp2-confidential-active #gaugeRatioCenter {
+    filter: blur(5px) !important;
+    user-select: none !important;
+  }
 </style>
 {% endblock %}
 
@@ -1506,9 +1598,24 @@
     </div>
 
     <div class="bp2-actions" data-html2canvas-ignore="true">
+      <button type="button" class="bp2-btn bp2-btn-confidential" id="btnToggleConfidential" onclick="toggleConfidentialMode()" title="Toggle Confidential Data Masking (Demo Mode)">
+        <i class="bi bi-eye-slash"></i>
+        <span id="txtConfidentialBtn">Hide Confidential Data</span>
+      </button>
       <button type="button" class="bp2-btn" id="btnExportExcel" onclick="exportToExcel()"><i class="bi bi-file-earmark-excel"></i> Export .xlsx</button>
       <button type="button" class="bp2-btn" id="btnExportPdf" onclick="exportToPDF()"><i class="bi bi-file-earmark-pdf"></i> Export PDF</button>
     </div>
+  </div>
+
+  <!-- ── Confidential Mode Notice Banner ── -->
+  <div id="confidentialNoticeBanner" class="bp2-confidential-banner" style="display: none;" data-html2canvas-ignore="true">
+    <div class="bp2-confidential-banner-content">
+      <i class="bi bi-shield-lock-fill"></i>
+      <span><b>Confidential / Demo Mode Active:</b> Semua angka nominal, kuantitas, persentase, dan sumbu chart disamarkan untuk keamanan presentasi ke calon klien.</span>
+    </div>
+    <button type="button" class="bp2-confidential-banner-close" onclick="toggleConfidentialMode()" title="Tampilkan kembali semua data">
+      <i class="bi bi-eye"></i> Tampilkan Data
+    </button>
   </div>
 
   <!-- ── Hero ── -->
@@ -1830,11 +1937,44 @@
   const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+  /* ── Confidential Mode State & Handlers ── */
+  function isConfidentialActive() {
+    return localStorage.getItem('bp2_confidential_mode') === 'true';
+  }
+
+  function syncConfidentialUI() {
+    const active = isConfidentialActive();
+    document.body.classList.toggle('bp2-confidential-active', active);
+    const btn = $('btnToggleConfidential');
+    const banner = $('confidentialNoticeBanner');
+    if (btn) {
+      if (active) {
+        btn.classList.add('active');
+        btn.innerHTML = `<i class="bi bi-eye-slash-fill" style="color:var(--orange);"></i> <span id="txtConfidentialBtn">Confidential Data Hidden</span>`;
+      } else {
+        btn.classList.remove('active');
+        btn.innerHTML = `<i class="bi bi-eye"></i> <span id="txtConfidentialBtn">Hide Confidential Data</span>`;
+      }
+    }
+    if (banner) {
+      banner.style.display = active ? 'flex' : 'none';
+    }
+  }
+
+  function toggleConfidentialMode() {
+    const next = !isConfidentialActive();
+    localStorage.setItem('bp2_confidential_mode', next ? 'true' : 'false');
+    syncConfidentialUI();
+    if (state.data) {
+      renderAll();
+    }
+  }
+
   // Numbers are formatted FULL (no humanized B, M, K, Jt, Rb suffixes)
-  const fmtCurr = (v) => 'Rp ' + Math.round(Number(v) || 0).toLocaleString('id-ID');
-  const fmtNum = (v) => Math.round(Number(v) || 0).toLocaleString('id-ID');
-  const fmtPct = (v) => (Number(v) || 0).toFixed(2) + '%';
-  const fmtDec = (v) => (Number(v) || 0).toFixed(2);
+  const fmtCurr = (v) => isConfidentialActive() ? 'Rp ••••••••' : ('Rp ' + Math.round(Number(v) || 0).toLocaleString('id-ID'));
+  const fmtNum = (v) => isConfidentialActive() ? '••••••' : Math.round(Number(v) || 0).toLocaleString('id-ID');
+  const fmtPct = (v) => isConfidentialActive() ? '•••%' : ((Number(v) || 0).toFixed(2) + '%');
+  const fmtDec = (v) => isConfidentialActive() ? '•••' : ((Number(v) || 0).toFixed(2));
   const FMT = { curr: fmtCurr, num: fmtNum, pct: fmtPct, dec: fmtDec };
 
   function isDarkMode() {
@@ -1862,6 +2002,7 @@
   function chip(val, opts = {}) {
     const { inverse = false, suffix = '%', sm = false } = opts;
     const size = sm ? ' sm' : '';
+    if (isConfidentialActive()) return `<span class="chip flat${size}">•••${suffix}</span>`;
     if (val === null || val === undefined || isNaN(val)) return `<span class="chip flat${size}">—</span>`;
     const n = Number(val);
     if (Math.abs(n) < 0.05) return `<span class="chip flat${size}">0.0${suffix}</span>`;
@@ -1962,10 +2103,10 @@
     setChip($('cardMtdGrowth'), c.mtd_growth_pct);
 
     const ach = Number(c.achievement_pct) || 0;
-    $('cardAchievement').textContent = ach.toFixed(1) + '%';
+    $('cardAchievement').textContent = isConfidentialActive() ? '•••%' : (ach.toFixed(1) + '%');
     $('achBar').style.width = Math.min(ach, 100) + '%';
     $('paceMarker').style.left = 'calc(100% - 1px)';
-    $('paceLabel').textContent = '100%';
+    $('paceLabel').textContent = isConfidentialActive() ? '•••%' : '100%';
     const vsBenchmark = ach - 100;
     $('achCard').style.setProperty('--k', vsBenchmark >= 0 ? 'var(--c-emerald)' : (vsBenchmark > -15 ? 'var(--c-amber)' : 'var(--c-rose)'));
     setChip($('paceChip'), vsBenchmark, { suffix: '%' });
@@ -1974,9 +2115,9 @@
     const fullTarget = c.full_month_target || (day ? (c.target_nmv / day * dim) : c.target_nmv);
     const cover = fullTarget ? c.runrate_nmv / fullTarget * 100 : 0;
     $('runrateVsTargetBar').style.width = Math.min(cover, 100) + '%';
-    $('runrateVsTargetPct').textContent = cover.toFixed(1) + '%';
+    $('runrateVsTargetPct').textContent = isConfidentialActive() ? '•••%' : (cover.toFixed(1) + '%');
     const gap = (c.runrate_nmv || 0) - (fullTarget || 0);
-    $('runrateGap').textContent = (gap >= 0 ? '+' : '−') + fmtCurr(Math.abs(gap));
+    $('runrateGap').textContent = isConfidentialActive() ? 'Rp ••••••••' : ((gap >= 0 ? '+' : '−') + fmtCurr(Math.abs(gap)));
     $('runrateGap').style.color = gap >= 0 ? 'var(--c-emerald)' : 'var(--c-rose)';
 
     // sparkline
@@ -2244,7 +2385,7 @@
               <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                 <span class="bp2-bento-pill">Target: <b class="mono">${fmtCurr(targetVal)}</b></span>
                 <span class="bp2-bento-pill">Ach: <b class="mono">${fmtPct(achRate)}</b></span>
-                <span class="bp2-bento-pill">Realization: <b class="mono">${realization.toFixed(1)}%</b></span>
+                <span class="bp2-bento-pill">Realization: <b class="mono">${isConfidentialActive() ? '•••%' : realization.toFixed(1) + '%'}</b></span>
               </div>
             </div>
 
@@ -2302,7 +2443,7 @@
                 </div>
                 <div class="bento-mini-val mono">${fmtNum(t.net_quantity)}</div>
                 <div class="bento-mini-sub">
-                  Gross: <b class="mono">${fmtNum(t.gross_quantity)}</b> • Basket (ABS): <b class="mono">${Number(t.abs || 0).toFixed(2)}</b>
+                  Gross: <b class="mono">${fmtNum(t.gross_quantity)}</b> • Basket (ABS): <b class="mono">${isConfidentialActive() ? '•••' : Number(t.abs || 0).toFixed(2)}</b>
                 </div>
               </div>
             </div>
@@ -2415,8 +2556,8 @@
               <div class="bento-sub-fill-seller" style="width:${sellerPct}%;"></div>
             </div>
             <div class="bento-subsidy-labels">
-              <span><i class="bi bi-circle-fill dot-plat"></i> Platform Covered: <b class="mono">${platPct.toFixed(1)}%</b> (${fmtCurr(totalPlat)})</span>
-              <span><i class="bi bi-circle-fill dot-seller"></i> Seller Funded: <b class="mono">${sellerPct.toFixed(1)}%</b> (${fmtCurr(totalSeller)})</span>
+              <span><i class="bi bi-circle-fill dot-plat"></i> Platform Covered: <b class="mono">${isConfidentialActive() ? '•••%' : platPct.toFixed(1) + '%'}</b> (${fmtCurr(totalPlat)})</span>
+              <span><i class="bi bi-circle-fill dot-seller"></i> Seller Funded: <b class="mono">${isConfidentialActive() ? '•••%' : sellerPct.toFixed(1) + '%'}</b> (${fmtCurr(totalSeller)})</span>
             </div>
           </div>
         </div>
@@ -2539,6 +2680,9 @@
           callbacks: {
             label: (c) => {
               const isM = c.dataset.label.includes('NMV') || c.dataset.label.includes('Target') || c.dataset.label.includes('GMV');
+              if (isConfidentialActive()) {
+                return ` ${c.dataset.label}: ${isM ? 'Rp ••••••••' : '••••••'}`;
+              }
               return ` ${c.dataset.label}: ${isM ? fmtCurr(c.raw) : fmtNum(c.raw)}`;
             },
           },
@@ -2557,7 +2701,7 @@
           ticks: {
             color: tick,
             font: { size: 11 },
-            callback: (v) => hasMoney ? fmtCurr(v) : fmtNum(v),
+            callback: (v) => isConfidentialActive() ? '' : (hasMoney ? fmtCurr(v) : fmtNum(v)),
           },
         },
       },
@@ -2571,7 +2715,7 @@
         ticks: {
           color: tick,
           font: { size: 11 },
-          callback: (v) => fmtNum(v),
+          callback: (v) => isConfidentialActive() ? '' : fmtNum(v),
         },
       };
     }
@@ -2595,7 +2739,7 @@
     $('donutTotal').textContent = fmtCurr(total);
     $('brandGroupLegend').innerHTML = labels.map((l, i) => `
       <div class="bp2-legend-item"><i style="background:${colors[i]}"></i><span title="${esc(l)}">${esc(l)}</span>
-      <em class="mono">${fmtCurr(values[i])}</em><b class="mono">${total ? (values[i] / total * 100).toFixed(1) : '0.0'}%</b></div>`).join('')
+      <em class="mono">${fmtCurr(values[i])}</em><b class="mono">${isConfidentialActive() ? '•••%' : (total ? (values[i] / total * 100).toFixed(1) : '0.0') + '%'}</b></div>`).join('')
       || '<div class="bp2-empty">No data</div>';
 
     destroyChart('donut');
@@ -2608,7 +2752,7 @@
           legend: { display: false },
           tooltip: {
             ...getChartTooltipConfig(),
-            callbacks: { label: (c) => ` ${c.label}: ${fmtCurr(c.raw)} (${total ? (c.raw / total * 100).toFixed(1) : 0}%)` }
+            callbacks: { label: (c) => isConfidentialActive() ? ` ${c.label}: Rp •••••••• (•••%)` : ` ${c.label}: ${fmtCurr(c.raw)} (${total ? (c.raw / total * 100).toFixed(1) : 0}%)` }
           },
         },
       },
@@ -2624,12 +2768,12 @@
     opts.indexAxis = 'y';
     opts.interaction = { mode: 'nearest', intersect: true };
     opts.scales.x.grid = { color: hexA('#94A3B8', .15) };
-    opts.scales.x.ticks.callback = (v) => fmtCurr(v);
+    opts.scales.x.ticks.callback = (v) => isConfidentialActive() ? '' : fmtCurr(v);
     opts.scales.y.grid = { display: false };
     opts.scales.y.ticks.font = { size: 12, weight: '600' };
     opts.plugins.tooltip = {
       ...getChartTooltipConfig(),
-      callbacks: { label: (c) => ` ${fmtCurr(c.raw)} · ${total ? (c.raw / total * 100).toFixed(1) : 0}%` }
+      callbacks: { label: (c) => isConfidentialActive() ? ` Rp •••••••• · •••%` : ` ${fmtCurr(c.raw)} · ${total ? (c.raw / total * 100).toFixed(1) : 0}%` }
     };
 
     destroyChart('platform');
@@ -2640,6 +2784,7 @@
       plugins: [{
         id: 'pctLabels',
         afterDatasetsDraw(chart) {
+          if (isConfidentialActive()) return;
           const { ctx } = chart; ctx.save();
           ctx.font = '700 11px "Plus Jakarta Sans", sans-serif';
           ctx.fillStyle = cssVar('--text-sub') || '#4B5563'; ctx.textBaseline = 'middle';
@@ -2657,7 +2802,7 @@
     const comp = state.data.charts.comparison || {};
     const gmv = comp.gmv || 0, nmv = comp.nmv || 0, leak = Math.max(gmv - nmv, 0);
     const ratio = gmv ? nmv / gmv * 100 : 0;
-    const ratioStr = ratio.toFixed(1) + '%';
+    const ratioStr = isConfidentialActive() ? '•••%' : (ratio.toFixed(1) + '%');
     if ($('gaugeRatio')) $('gaugeRatio').textContent = ratioStr;
     if ($('gaugeRatioCenter')) $('gaugeRatioCenter').textContent = ratioStr;
     if ($('gaugeGmv')) $('gaugeGmv').textContent = fmtCurr(gmv);
@@ -2674,7 +2819,7 @@
           legend: { display: false },
           tooltip: {
             ...getChartTooltipConfig(),
-            callbacks: { label: (c) => ` ${c.label}: ${fmtCurr(c.raw)}` }
+            callbacks: { label: (c) => isConfidentialActive() ? ` ${c.label}: Rp ••••••••` : ` ${c.label}: ${fmtCurr(c.raw)}` }
           }
         },
       },
@@ -2849,7 +2994,7 @@
         const ach = Number(r.metrics?.target_achievement?.mtd) || 0;
         const achColor = ach >= 100 ? 'var(--c-emerald)' : 'var(--orange)';
         metaHtml = `
-          <span class="mono" style="font-weight:800; color:${achColor}; font-size:.85rem;">${ach.toFixed(1)}%</span>
+          <span class="mono" style="font-weight:800; color:${achColor}; font-size:.85rem;">${isConfidentialActive() ? '•••%' : ach.toFixed(1) + '%'}</span>
           <span class="mono" style="font-size:.7rem; color:var(--text-muted); margin-left:4px;">(${fmtCurr(r.metrics?.nmv?.mtd)})</span>
         `;
       } else if (mode === 'growth') {
@@ -2888,7 +3033,7 @@
         col4Html = `
           <div class="bp2-share">
             <div><span style="width:${barW.toFixed(1)}%; background:${achColor};"></span></div>
-            <em class="mono" style="font-weight:700; color:${achColor}; width:46px;">${ach.toFixed(1)}%</em>
+            <em class="mono" style="font-weight:700; color:${achColor}; width:46px;">${isConfidentialActive() ? '•••%' : ach.toFixed(1) + '%'}</em>
           </div>
         `;
       } else if (mode === 'growth') {
@@ -2904,7 +3049,7 @@
         col4Html = `
           <div class="bp2-share">
             <div><span style="width:${Math.min((mtd / maxMtd * 100), 100).toFixed(1)}%"></span></div>
-            <em class="mono">${pct}%</em>
+            <em class="mono">${isConfidentialActive() ? '•••%' : pct + '%'}</em>
           </div>
         `;
       }
@@ -3368,9 +3513,10 @@
   }
 
   // expose for inline handlers
-  Object.assign(window, { loadDashboardData, resetFilters, exportToExcel, exportToPDF, openAnomalyModal, closeAnomalyModal, handleModalBackdropClick, filterToBrand });
+  Object.assign(window, { loadDashboardData, resetFilters, exportToExcel, exportToPDF, openAnomalyModal, closeAnomalyModal, handleModalBackdropClick, filterToBrand, toggleConfidentialMode });
 
   document.addEventListener('DOMContentLoaded', () => {
+    syncConfidentialUI();
     initMultiSelect('brand');
     initMultiSelect('platform');
     loadDashboardData();

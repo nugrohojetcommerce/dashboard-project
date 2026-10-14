@@ -1710,6 +1710,223 @@
   }
 
   /* ── 8. Product Efficiency Matrix (Scatter Plot & Quadrants) ── */
+  .scatter-mode-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 10px 20px;
+    background: color-mix(in srgb, var(--bp2-surface-2) 65%, var(--bp2-surface));
+    border-bottom: 1px solid var(--bp2-border);
+  }
+  .scatter-mode-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .scatter-mode-bar-label {
+    font-size: .74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .scatter-mode-segment {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px;
+    gap: 3px;
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: 9px;
+  }
+  .scatter-mode-segment .bp2-segment-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    font-size: .76rem;
+    font-weight: 600;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all .15s ease;
+    user-select: none;
+  }
+  .scatter-mode-segment .bp2-segment-btn:hover {
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--bp2-surface-2) 80%, transparent);
+  }
+  .scatter-mode-segment .bp2-segment-btn.active {
+    background: var(--c-indigo);
+    color: #FFFFFF;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(99, 102, 241, .25);
+  }
+  .scatter-mode-segment .bp2-segment-btn.active .scatter-info-trigger {
+    color: rgba(255, 255, 255, .85);
+  }
+  .scatter-mode-segment .bp2-segment-btn.active .scatter-info-trigger:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, .25);
+  }
+  .scatter-info-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    margin-left: 4px;
+    font-size: .76rem;
+    opacity: .80;
+    transition: all .15s ease;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0;
+  }
+  .scatter-info-trigger:hover {
+    opacity: 1;
+    transform: scale(1.15);
+    color: var(--orange);
+    background: color-mix(in srgb, var(--orange) 15%, transparent);
+  }
+
+  /* Popover info */
+  .scatter-mode-popover {
+    position: absolute;
+    z-index: 1000;
+    width: 400px;
+    max-width: calc(100vw - 32px);
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: 14px;
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.25), 0 4px 14px rgba(0, 0, 0, 0.08);
+    padding: 16px 18px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: bp2PopIn .18s cubic-bezier(.16, 1, .3, 1);
+  }
+  @keyframes bp2PopIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .scatter-popover-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--bp2-border);
+  }
+  .scatter-popover-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .scatter-popover-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(99, 102, 241, .12);
+    color: var(--c-indigo);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .scatter-popover-badge {
+    font-size: .62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--c-indigo);
+  }
+  .scatter-popover-title {
+    font-size: .88rem;
+    font-weight: 800;
+    margin: 1px 0 0;
+    color: var(--text-primary);
+    line-height: 1.25;
+  }
+  .scatter-popover-close {
+    background: transparent;
+    border: 0;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 4px;
+    border-radius: 6px;
+    line-height: 1;
+    transition: all .15s ease;
+  }
+  .scatter-popover-close:hover {
+    color: var(--text-primary);
+    background: var(--bp2-surface-2);
+  }
+  .scatter-popover-formula {
+    background: var(--bp2-surface-2);
+    border: 1px dashed var(--bp2-border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .70rem;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .scatter-popover-section {
+    margin-bottom: 10px;
+  }
+  .scatter-popover-sec-label {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .scatter-popover-p {
+    font-size: .75rem;
+    line-height: 1.45;
+    color: var(--text-primary);
+    margin: 0;
+  }
+  .scatter-popover-list {
+    margin: 4px 0 0;
+    padding-left: 16px;
+    font-size: .73rem;
+    line-height: 1.4;
+    color: var(--text-primary);
+  }
+  .scatter-popover-list li {
+    margin-bottom: 3px;
+  }
+  .scatter-popover-caution {
+    background: color-mix(in srgb, var(--c-amber) 10%, transparent);
+    border-left: 3px solid var(--c-amber);
+    border-radius: 4px;
+    padding: 7px 10px;
+    font-size: .71rem;
+    line-height: 1.4;
+    color: var(--text-primary);
+    margin-top: 10px;
+  }
+
   .scatter-summary-cards {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -2487,6 +2704,102 @@
     color: #94A3B8;
   }
 
+  /* ── Confidential / Demo Mode ── */
+  .bp2-btn-confidential {
+    border-color: color-mix(in srgb, var(--orange) 35%, var(--bp2-border));
+    font-weight: 600;
+    transition: all .2s ease;
+  }
+  .bp2-btn-confidential:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+    background: color-mix(in srgb, var(--orange) 10%, var(--bp2-surface));
+  }
+  body.bp2-confidential-active .bp2-btn-confidential {
+    background: color-mix(in srgb, var(--orange) 18%, var(--bp2-surface));
+    border-color: var(--orange);
+    color: var(--orange);
+    font-weight: 700;
+    box-shadow: 0 0 14px color-mix(in srgb, var(--orange) 30%, transparent);
+  }
+  .bp2-confidential-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--orange) 12%, var(--bp2-surface));
+    border: 1px solid color-mix(in srgb, var(--orange) 35%, transparent);
+    color: var(--text-primary);
+    font-size: .78rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .06);
+    animation: fadeInSlide .25s ease-out;
+  }
+  .bp2-confidential-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .bp2-confidential-banner-content i {
+    font-size: 1.15rem;
+    color: var(--orange);
+  }
+  .bp2-confidential-banner-close {
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    color: var(--text-primary);
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: .72rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .15s ease;
+  }
+  .bp2-confidential-banner-close:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+  }
+
+  /* Frosted blur overlay for confidential mode in analytics */
+  body.bp2-confidential-active .mono,
+  body.bp2-confidential-active .kpi-val,
+  body.bp2-confidential-active .kpi-sub-num,
+  body.bp2-confidential-active .chip,
+  body.bp2-confidential-active .pill,
+  body.bp2-confidential-active .bp2-tbl tbody td.num,
+  body.bp2-confidential-active .bp2-tbl tbody td.mono,
+  body.bp2-confidential-active .donut-val,
+  body.bp2-confidential-active .scatter-quad-metric,
+  body.bp2-confidential-active .scatter-quad-sub,
+  body.bp2-confidential-active .scatter-sku-metrics,
+  body.bp2-confidential-active .target-ach-pct,
+  body.bp2-confidential-active .target-ach-val,
+  body.bp2-confidential-active .txt-subsidy-pct,
+  body.bp2-confidential-active #kpiSubsidySplit b,
+  body.bp2-confidential-active #scatterStatSkuCount,
+  body.bp2-confidential-active #scatterStatAvgNmv,
+  body.bp2-confidential-active #scatterStatAvgDisc,
+  body.bp2-confidential-active #scatterStatTotalNmv,
+  body.bp2-confidential-active #scatterDetailModalNmv,
+  body.bp2-confidential-active #scatterDetailModalDisc,
+  body.bp2-confidential-active #scatterDetailModalQty,
+  body.bp2-confidential-active #scatterDetailModalRoi,
+  body.bp2-confidential-active #kpiRealizationRate,
+  body.bp2-confidential-active #kpiTargetAch,
+  body.bp2-confidential-active #kpiHeroAch,
+  body.bp2-confidential-active #skuDonutTotal,
+  body.bp2-confidential-active #groupDonutTotal,
+  body.bp2-confidential-active .bp2-legend-item em,
+  body.bp2-confidential-active .bp2-legend-item b {
+    filter: blur(5px) !important;
+    user-select: none !important;
+  }
 </style>
 {% endblock %}
 
@@ -2590,6 +2903,9 @@
 
     <!-- Export Actions -->
     <div class="bp2-actions" data-html2canvas-ignore="true">
+      <button type="button" class="bp2-btn bp2-btn-confidential" id="btnToggleConfidential" onclick="toggleConfidentialMode()" title="Toggle Confidential Data Masking (Demo Mode)">
+        <i class="bi bi-eye-slash"></i> <span id="txtConfidentialBtn">Hide Confidential Data</span>
+      </button>
       <button type="button" class="bp2-btn" onclick="exportFullAnalyticsExcel()" title="Export all tables to Excel">
         <i class="bi bi-file-earmark-excel"></i> Export Excel
       </button>
@@ -2597,6 +2913,17 @@
         <i class="bi bi-file-earmark-pdf"></i> Export PDF
       </button>
     </div>
+  </div>
+
+  <!-- ── Confidential Mode Notice Banner ── -->
+  <div id="confidentialNoticeBanner" class="bp2-confidential-banner" style="display: none;" data-html2canvas-ignore="true">
+    <div class="bp2-confidential-banner-content">
+      <i class="bi bi-shield-lock-fill"></i>
+      <span><b>Confidential / Demo Mode Active:</b> Semua angka nominal, kuantitas, persentase, dan sumbu chart disamarkan untuk keamanan presentasi ke calon klien.</span>
+    </div>
+    <button type="button" class="bp2-confidential-banner-close" onclick="toggleConfidentialMode()" title="Tampilkan kembali semua data">
+      <i class="bi bi-eye"></i> Tampilkan Data
+    </button>
   </div>
 
   <!-- ── Executive Hero ── -->
@@ -3050,10 +3377,10 @@
   <!-- =====================================================================
        8. PRODUCT EFFICIENCY & DISCOUNT MATRIX (4 QUADRANTS SCATTER PLOT)
        ===================================================================== -->
-  <div class="bp2-card" id="scatterMatrixCard">
+  <div class="bp2-card" id="scatterMatrixCard" style="position: relative;">
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
-        <h2 class="bp2-card-title">
+        <h2 class="bp2-card-title" id="scatterCardTitle">
           <span class="badge-num">8</span> Product Efficiency Matrix (NMV vs Total Discount)
         </h2>
         <p class="bp2-card-subtitle" id="scatterThresholdSubtitle">
@@ -3067,6 +3394,48 @@
       </div>
     </div>
 
+    <!-- Analysis Mode Switcher Bar -->
+    <div class="scatter-mode-bar">
+      <div class="scatter-mode-bar-left">
+        <span class="scatter-mode-bar-label"><i class="bi bi-sliders2"></i> Evaluasi Mode:</span>
+        <div class="bp2-segment scatter-mode-segment" id="scatterModeToggle" role="tablist">
+          <button type="button" class="bp2-segment-btn active" data-mode="nominal" onclick="setScatterMode('nominal')">
+            <i class="bi bi-cash-stack"></i> <span>NMV vs Discount (Rp)</span>
+            <span class="scatter-info-trigger" onclick="event.stopPropagation(); toggleScatterModeInfo('nominal', this);" onmouseenter="hoverScatterModeInfo('nominal', this);" onmouseleave="leaveScatterModeInfo();" title="Pelajari Mode Nominal Rp">
+              <i class="bi bi-question-circle-fill"></i>
+            </span>
+          </button>
+          <button type="button" class="bp2-segment-btn" data-mode="percentage" onclick="setScatterMode('percentage')">
+            <i class="bi bi-percent"></i> <span>NMV vs Discount %</span>
+            <span class="scatter-info-trigger" onclick="event.stopPropagation(); toggleScatterModeInfo('percentage', this);" onmouseenter="hoverScatterModeInfo('percentage', this);" onmouseleave="leaveScatterModeInfo();" title="Pelajari Mode Discount %">
+              <i class="bi bi-question-circle-fill"></i>
+            </span>
+          </button>
+          <button type="button" class="bp2-segment-btn" data-mode="multiplier" onclick="setScatterMode('multiplier')">
+            <i class="bi bi-lightning-charge-fill"></i> <span>Promo Multiplier (x)</span>
+            <span class="scatter-info-trigger" onclick="event.stopPropagation(); toggleScatterModeInfo('multiplier', this);" onmouseenter="hoverScatterModeInfo('multiplier', this);" onmouseleave="leaveScatterModeInfo();" title="Pelajari Mode Promo Multiplier">
+              <i class="bi bi-question-circle-fill"></i>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Info Popover for Analysis Modes -->
+    <div class="scatter-mode-popover" id="scatterModePopover" style="display:none;" tabindex="-1">
+      <div class="scatter-popover-header">
+        <div class="scatter-popover-title-row">
+          <div class="scatter-popover-icon" id="popoverIcon"><i class="bi bi-info-circle-fill"></i></div>
+          <div>
+            <div class="scatter-popover-badge" id="popoverBadge">Analysis Mode</div>
+            <h4 class="scatter-popover-title" id="popoverTitle">Mode Title</h4>
+          </div>
+        </div>
+        <button type="button" class="scatter-popover-close" onclick="closeScatterModeInfo()" aria-label="Tutup info">&times;</button>
+      </div>
+      <div id="popoverContent"></div>
+    </div>
+
     <!-- 4 Quadrant Summary Cards -->
     <div class="scatter-summary-cards">
       <div class="scatter-quad-card q1" id="cardQ1" onclick="filterScatterByQuadrant('Q1')" title="Klik untuk highlight dan lihat daftar Top SKU Stars">
@@ -3078,7 +3447,7 @@
           <span class="quad-val" id="q1Nmv">Rp 0</span>
           <span class="quad-share" id="q1Share">0%</span>
         </div>
-        <div class="quad-desc">High NMV • Low Discount (Organik & Sangat Efisien)</div>
+        <div class="quad-desc" id="q1Desc">High NMV • Low Discount (Organik & Sangat Efisien)</div>
       </div>
 
       <div class="scatter-quad-card q2" id="cardQ2" onclick="filterScatterByQuadrant('Q2')" title="Klik untuk highlight dan lihat daftar Top SKU Promo Drivers">
@@ -3090,7 +3459,7 @@
           <span class="quad-val" id="q2Nmv">Rp 0</span>
           <span class="quad-share" id="q2Share">0%</span>
         </div>
-        <div class="quad-desc">High NMV • High Discount (Volume Driver, Pantau Margin)</div>
+        <div class="quad-desc" id="q2Desc">High NMV • High Discount (Volume Driver, Pantau Margin)</div>
       </div>
 
       <div class="scatter-quad-card q3" id="cardQ3" onclick="filterScatterByQuadrant('Q3')" title="Klik untuk highlight dan lihat daftar Top SKU Sleepers">
@@ -3102,7 +3471,7 @@
           <span class="quad-val" id="q3Nmv">Rp 0</span>
           <span class="quad-share" id="q3Share">0%</span>
         </div>
-        <div class="quad-desc">Low NMV • Low Discount (Potensial Diberi Dorongan Promo)</div>
+        <div class="quad-desc" id="q3Desc">Low NMV • Low Discount (Potensial Diberi Dorongan Promo)</div>
       </div>
 
       <div class="scatter-quad-card q4" id="cardQ4" onclick="filterScatterByQuadrant('Q4')" title="Klik untuk highlight dan lihat daftar Top SKU Inefficient">
@@ -3114,7 +3483,7 @@
           <span class="quad-val" id="q4Nmv">Rp 0</span>
           <span class="quad-share" id="q4Share">0%</span>
         </div>
-        <div class="quad-desc">Low NMV • High Discount (Promo Kurang Efektif / Perlu Evaluasi)</div>
+        <div class="quad-desc" id="q4Desc">Low NMV • High Discount (Promo Kurang Efektif / Perlu Evaluasi)</div>
       </div>
     </div>
 
@@ -3468,11 +3837,46 @@
     };
   }
 
+  /* ── Confidential Mode State & Handlers ── */
+  function isConfidentialActive() {
+    return localStorage.getItem('bp2_confidential_mode') === 'true';
+  }
+
+  function syncConfidentialUI() {
+    const active = isConfidentialActive();
+    document.body.classList.toggle('bp2-confidential-active', active);
+    const btn = document.getElementById('btnToggleConfidential');
+    const banner = document.getElementById('confidentialNoticeBanner');
+    if (btn) {
+      if (active) {
+        btn.classList.add('active');
+        btn.innerHTML = `<i class="bi bi-eye-slash-fill" style="color:var(--orange);"></i> <span id="txtConfidentialBtn">Confidential Data Hidden</span>`;
+      } else {
+        btn.classList.remove('active');
+        btn.innerHTML = `<i class="bi bi-eye"></i> <span id="txtConfidentialBtn">Hide Confidential Data</span>`;
+      }
+    }
+    if (banner) {
+      banner.style.display = active ? 'flex' : 'none';
+    }
+  }
+
+  function toggleConfidentialMode() {
+    const next = !isConfidentialActive();
+    localStorage.setItem('bp2_confidential_mode', next ? 'true' : 'false');
+    syncConfidentialUI();
+    if (globalAnalyticsData) {
+      renderDashboard(globalAnalyticsData);
+    }
+  }
+
   function formatCurrency(val) {
+    if (isConfidentialActive()) return 'Rp ••••••••';
     if (val === null || val === undefined) return 'Rp 0';
     return idrFormatter.format(val).replace(/\s+/g, ' ');
   }
   function formatCompactCurrency(val) {
+    if (isConfidentialActive()) return '••••';
     if (val === null || val === undefined) return '0';
     const num = Number(val);
     if (num === 0) return '0';
@@ -3484,14 +3888,17 @@
     return sign + abs.toLocaleString('id-ID');
   }
   function formatNumber(val) {
+    if (isConfidentialActive()) return '••••••';
     if (val === null || val === undefined) return '0';
     return numFormatter.format(Math.round(val));
   }
   function formatDecimal(val) {
+    if (isConfidentialActive()) return '•••';
     if (val === null || val === undefined) return '0.00';
     return Number(val).toFixed(2);
   }
   function formatPercent(val) {
+    if (isConfidentialActive()) return '•••%';
     if (val === null || val === undefined) return '0.00%';
     return Number(val).toFixed(2) + '%';
   }
@@ -3544,7 +3951,10 @@
   }
 
   /* ── DOM Ready & Global Theme Change Listener ── */
+  window.toggleConfidentialMode = toggleConfidentialMode;
+
   document.addEventListener('DOMContentLoaded', () => {
+    syncConfidentialUI();
     setupMultiSelectDropdowns();
     syncActivePresetPill();
     loadAnalyticsData();
@@ -4142,6 +4552,11 @@
     function setChip(elId, growth) {
       const el = document.getElementById(elId);
       if (!el) return;
+      if (isConfidentialActive()) {
+        el.className = 'chip flat';
+        el.innerHTML = '•••%';
+        return;
+      }
       let chipClass = 'chip flat';
       let arrow = '';
       if (growth && growth.value > 0) {
@@ -4181,19 +4596,19 @@
         document.getElementById('kpiTargetNmv').textContent = formatCurrency(targetVal);
       }
       if (document.getElementById('kpiTargetAch')) {
-        document.getElementById('kpiTargetAch').textContent = targetAch.toFixed(1) + '%';
+        document.getElementById('kpiTargetAch').textContent = isConfidentialActive() ? '•••%' : targetAch.toFixed(1) + '%';
       }
       if (document.getElementById('kpiHeroTargetNmv')) {
         document.getElementById('kpiHeroTargetNmv').textContent = formatCurrency(targetVal);
       }
       if (document.getElementById('kpiHeroAch')) {
         const achEl = document.getElementById('kpiHeroAch');
-        achEl.textContent = targetAch.toFixed(1) + '%';
+        achEl.textContent = isConfidentialActive() ? '•••%' : targetAch.toFixed(1) + '%';
         achEl.style.color = targetAch >= 100 ? 'var(--c-emerald)' : (targetAch >= 80 ? 'var(--c-amber)' : 'var(--orange)');
       }
 
       const realization = gmvF.numCurr > 0 ? (nmvF.numCurr / gmvF.numCurr * 100) : 0;
-      document.getElementById('kpiRealizationRate').textContent = realization.toFixed(1) + '%';
+      document.getElementById('kpiRealizationRate').textContent = isConfidentialActive() ? '•••%' : realization.toFixed(1) + '%';
 
       document.getElementById('kpiValOrders').textContent = noF.curr;
       document.getElementById('kpiGrossOrders').textContent = goF.curr;
@@ -4265,9 +4680,11 @@
 
       document.getElementById('subsidyBarPlat').style.width = platPct.toFixed(1) + '%';
       document.getElementById('subsidyBarSeller').style.width = sellerPct.toFixed(1) + '%';
-      document.getElementById('txtSubsidyPlatPct').textContent = platPct.toFixed(1) + '%';
-      document.getElementById('txtSubsidySellerPct').textContent = sellerPct.toFixed(1) + '%';
-      document.getElementById('kpiSubsidySplit').innerHTML = `Subsidy: <b>${platPct.toFixed(0)}% Plat / ${sellerPct.toFixed(0)}% Seller</b>`;
+      document.getElementById('txtSubsidyPlatPct').textContent = isConfidentialActive() ? '•••%' : platPct.toFixed(1) + '%';
+      document.getElementById('txtSubsidySellerPct').textContent = isConfidentialActive() ? '•••%' : sellerPct.toFixed(1) + '%';
+      document.getElementById('kpiSubsidySplit').innerHTML = isConfidentialActive() ?
+        `Subsidy: <b>•••% Plat / •••% Seller</b>` :
+        `Subsidy: <b>${platPct.toFixed(0)}% Plat / ${sellerPct.toFixed(0)}% Seller</b>`;
     }
 
     // Also populate Table body for toggle mode
@@ -4291,7 +4708,7 @@
         if (m.achievement_pct !== null && m.achievement_pct !== undefined) {
           const achVal = Number(m.achievement_pct);
           const achClass = achVal >= 100 ? 'pill-up' : (achVal >= 80 ? 'pill-flat' : 'pill-down');
-          achStr = `<span class="pill ${achClass}">${achVal.toFixed(1)}%</span>`;
+          achStr = isConfidentialActive() ? `<span class="pill pill-flat">•••%</span>` : `<span class="pill ${achClass}">${achVal.toFixed(1)}%</span>`;
         }
 
         const tr = document.createElement('tr');
@@ -4302,7 +4719,7 @@
           <td class="num text-center">${achStr}</td>
           <td class="num mono text-muted">${prev}</td>
           <td class="num text-center">
-            <span class="pill ${pillClass}">${icon} ${growth.formatted}</span>
+            <span class="pill ${pillClass}">${icon} ${isConfidentialActive() ? '•••%' : growth.formatted}</span>
           </td>
         `;
         tbody.appendChild(tr);
@@ -4653,8 +5070,8 @@
             grid: { color: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(148, 163, 184, 0.15)' },
             ticks: {
               color: isDark ? '#94A3B8' : '#475569',
-              font: { family: 'JetBrains Mono', size: 10 },
               callback: function (val) {
+                if (isConfidentialActive()) return '';
                 if (val >= 1e9) return (val / 1e9).toFixed(1) + 'B';
                 if (val >= 1e6) return (val / 1e6).toFixed(0) + 'M';
                 if (val >= 1e3) return (val / 1e3).toFixed(0) + 'K';
@@ -4671,6 +5088,7 @@
               color: isDark ? '#94A3B8' : '#475569',
               font: { family: 'JetBrains Mono', size: 10 },
               callback: function (val) {
+                if (isConfidentialActive()) return '';
                 return formatNumber(val);
               }
             }
@@ -4707,15 +5125,15 @@
       div.className = 'target-item';
       div.innerHTML = `
       <div class="target-labels">
-        <span><b>${t.platform}</b> Share Target: ${t.target_share.toFixed(1)}%</span>
+        <span><b>${t.platform}</b> Share Target: ${isConfidentialActive() ? '•••%' : t.target_share.toFixed(1) + '%'}</span>
         <span>
-          <b class="mono" style="color:var(--text-primary);">${t.achieved_pct.toFixed(1)}% Achieved</b>
-          <span class="sub-label mono">(Actual Share: ${t.actual_share.toFixed(1)}%)</span>
+          <b class="mono" style="color:var(--text-primary);">${isConfidentialActive() ? '•••% Achieved' : t.achieved_pct.toFixed(1) + '% Achieved'}</b>
+          <span class="sub-label mono">(Actual Share: ${isConfidentialActive() ? '•••%' : t.actual_share.toFixed(1) + '%'})</span>
         </span>
       </div>
       <div class="progress-bar-bg">
         <div class="progress-bar-fill ${bgClass}" style="width: ${fillWidth}%;">
-          ${t.achieved_pct.toFixed(1)}%
+          ${isConfidentialActive() ? '•••%' : t.achieved_pct.toFixed(1) + '%'}
         </div>
       </div>
     `;
@@ -4750,7 +5168,7 @@
             <i style="background:${colors[i]}"></i>
             <span title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
             <em class="mono">${formatCurrency(p.value)}</em>
-            <b class="mono">${p.share_pct ?? (total ? (p.value / total * 100).toFixed(1) : '0.0')}%</b>
+            <b class="mono">${isConfidentialActive() ? '•••%' : (p.share_pct ?? (total ? (p.value / total * 100).toFixed(1) : '0.0')) + '%'}</b>
           </div>
         `).join('') || '<div class="text-muted" style="padding:10px;">No platform data</div>';
       }
@@ -4777,7 +5195,7 @@
             tooltip: {
               ...getChartTooltipConfig(),
               callbacks: {
-                label: (c) => ` ${c.label}: ${formatCurrency(c.raw)} (${total ? (c.raw / total * 100).toFixed(1) : 0}%)`
+                label: (c) => ` ${c.label}: ${formatCurrency(c.raw)} (${isConfidentialActive() ? '•••%' : (total ? (c.raw / total * 100).toFixed(1) : 0) + '%'})`
               }
             }
           }
@@ -4811,7 +5229,7 @@
             <i style="background:${colors[i]}"></i>
             <span title="${escapeHtml(s.full_name || s.product_name || s.name)}">${escapeHtml(s.name)}</span>
             <em class="mono">${formatCurrency(s.value)}</em>
-            <b class="mono">${s.share_pct ?? (total ? (s.value / total * 100).toFixed(1) : '0.0')}%</b>
+            <b class="mono">${isConfidentialActive() ? '•••%' : (s.share_pct ?? (total ? (s.value / total * 100).toFixed(1) : '0.0')) + '%'}</b>
           </div>
         `).join('') || '<div class="text-muted" style="padding:10px;">No SKU data</div>';
       }
@@ -4848,7 +5266,7 @@
                   const item = items[idx];
                   return (item && item.product_name && item.product_name !== '-') ? item.product_name : '';
                 },
-                label: (c) => ` NMV: ${formatCurrency(c.raw)} (${total ? (c.raw / total * 100).toFixed(1) : 0}%)`
+                label: (c) => ` NMV: ${formatCurrency(c.raw)} (${isConfidentialActive() ? '•••%' : (total ? (c.raw / total * 100).toFixed(1) : 0) + '%'})`
               }
             }
           }
@@ -4876,7 +5294,7 @@
             <i style="background:${colors[i]}"></i>
             <span title="${escapeHtml(g.name)}">${escapeHtml(g.name)}</span>
             <em class="mono">${formatCurrency(g.value)}</em>
-            <b class="mono">${g.share_pct ?? (total ? (g.value / total * 100).toFixed(1) : '0.0')}%</b>
+            <b class="mono">${isConfidentialActive() ? '•••%' : (g.share_pct ?? (total ? (g.value / total * 100).toFixed(1) : '0.0')) + '%'}</b>
           </div>
         `).join('') || '<div class="text-muted" style="padding:10px;">No group data</div>';
       }
@@ -4903,7 +5321,7 @@
             tooltip: {
               ...getChartTooltipConfig(),
               callbacks: {
-                label: (c) => ` ${c.label}: ${formatCurrency(c.raw)} (${total ? (c.raw / total * 100).toFixed(1) : 0}%)`
+                label: (c) => ` ${c.label}: ${formatCurrency(c.raw)} (${isConfidentialActive() ? '•••%' : (total ? (c.raw / total * 100).toFixed(1) : 0) + '%'})`
               }
             }
           }
@@ -4913,8 +5331,172 @@
   }
 
   /* =====================================================================
-     8. PRODUCT EFFICIENCY MATRIX (NMV VS TOTAL DISCOUNT 4-QUADRANT SCATTER)
+     8. PRODUCT EFFICIENCY MATRIX (MULTI-MODE SCATTER PLOT & QUADRANTS)
      ===================================================================== */
+  let currentScatterMode = 'nominal'; // 'nominal' | 'percentage' | 'multiplier'
+  let scatterInfoPinned = false;
+  let scatterInfoCurrentMode = null;
+
+  const SCATTER_MODE_INFO = {
+    nominal: {
+      badge: 'Mode 1: Skala Nominal (Rp)',
+      title: 'NMV vs Total Diskon (Rupiah)',
+      formula: 'Sumbu X = Total Diskon (Rp) • Sumbu Y = NMV (Rp)',
+      icon: 'bi-cash-stack',
+      purpose: 'Memantau skala perputaran uang riil (P&L Financial Exposure). Menjawab pertanyaan: "Ke SKU mana saja alokasi subsidi diskon terbesar mengalir?"',
+      advantages: [
+        'Langsung menunjukkan nominal Rupiah nyata dari kas & subsidi promo brand vs platform',
+        'Sangat cocok untuk tinjauan budgeting finansial dan audit P&L'
+      ],
+      caution: 'Catatan Bias: Produk mahal (RSP tinggi) atau produk yang terjual ribuan unit otomatis memiliki total diskon nominal yang besar. Gunakan Mode 2 atau 3 untuk evaluasi efisiensi promo murni.'
+    },
+    percentage: {
+      badge: 'Mode 2: Discount Depth (%) — Solusi Anti-Bias',
+      title: 'NMV vs Discount Depth (%)',
+      formula: 'Sumbu X = (Total Diskon / Total GMV) × 100% • Sumbu Y = NMV (Rp)',
+      icon: 'bi-percent',
+      purpose: 'Mengeliminasi bias harga produk (RSP) dan bias volume penjualan menggunakan metode Volume-Weighted Discount Rate.',
+      advantages: [
+        'Diskon 15% bernilai sama adilnya baik untuk produk Rp 20rb maupun Rp 2jt',
+        'Membedakan produk "Hero Organik" (laris tanpa diobral) vs "Candu Promo" (laris karena diskon dalam)',
+        'Sangat objektif untuk benchmarking portofolio SKU lintas kategori harga'
+      ],
+      caution: 'Sumbu X berada pada rentang 0% - 100%. Garis batas (median) membagi produk menjadi diskon konservatif vs diskon agresif.'
+    },
+    multiplier: {
+      badge: 'Mode 3: Promo Efficiency Multiplier (ROI)',
+      title: 'NMV vs Promo Multiplier (x)',
+      formula: 'Sumbu X = NMV / Total Diskon • Sumbu Y = NMV (Rp)',
+      icon: 'bi-lightning-charge-fill',
+      purpose: 'Mengukur daya ungkit (leverage) promo: Berapa Rupiah omzet penjualan (NMV) yang dihasilkan dari setiap Rp 1 subsidi diskon yang dibakar.',
+      advantages: [
+        'Angka tinggi (misal 12x vs 2x) = setiap Rp 1 diskon menghasilkan Rp 12 omzet penjualan',
+        'Membantu alokasi prioritas budget: dorong promo pada SKU dengan multiplier tinggi',
+        'Mendeteksi produk yang "membakar uang" tanpa hasil omzet memadai (multiplier < 2x)'
+      ],
+      caution: 'Produk yang tidak pernah didiskon (Diskon = 0) memiliki multiplier ∞ (Organik Murni) dan ditampilkan di batas kanan visual chart.'
+    }
+  };
+
+  function renderScatterModePopoverContent(mode) {
+    const info = SCATTER_MODE_INFO[mode] || SCATTER_MODE_INFO.nominal;
+    const badgeEl = document.getElementById('popoverBadge');
+    const titleEl = document.getElementById('popoverTitle');
+    const iconEl = document.getElementById('popoverIcon');
+    const contentEl = document.getElementById('popoverContent');
+    if (!contentEl) return;
+
+    if (badgeEl) badgeEl.textContent = info.badge;
+    if (titleEl) titleEl.textContent = info.title;
+    if (iconEl) iconEl.innerHTML = `<i class="bi ${info.icon}"></i>`;
+
+    const advHtml = info.advantages.map(a => `<li>${escapeHtml(a)}</li>`).join('');
+
+    contentEl.innerHTML = `
+      <div class="scatter-popover-formula">
+        <i class="bi bi-calculator"></i> <span>${escapeHtml(info.formula)}</span>
+      </div>
+      <div class="scatter-popover-section">
+        <div class="scatter-popover-sec-label"><i class="bi bi-bullseye"></i> Mengapa Menggunakan Mode Ini?</div>
+        <p class="scatter-popover-p">${escapeHtml(info.purpose)}</p>
+      </div>
+      <div class="scatter-popover-section">
+        <div class="scatter-popover-sec-label"><i class="bi bi-check-circle"></i> Keunggulan Analisis</div>
+        <ul class="scatter-popover-list">${advHtml}</ul>
+      </div>
+      <div class="scatter-popover-caution">
+        <i class="bi bi-info-circle-fill" style="margin-right:4px;"></i> ${escapeHtml(info.caution)}
+      </div>
+    `;
+  }
+
+  function positionScatterModePopover(triggerEl) {
+    const popover = document.getElementById('scatterModePopover');
+    const card = document.getElementById('scatterMatrixCard');
+    if (!popover || !card || !triggerEl) return;
+
+    const triggerRect = triggerEl.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+
+    let topPos = triggerRect.bottom - cardRect.top + 8;
+    let leftPos = triggerRect.left - cardRect.left - 50;
+
+    const maxLeft = cardRect.width - 420;
+    if (leftPos > maxLeft) leftPos = Math.max(10, maxLeft);
+    if (leftPos < 10) leftPos = 10;
+
+    popover.style.top = `${topPos}px`;
+    popover.style.left = `${leftPos}px`;
+  }
+
+  function hoverScatterModeInfo(mode, triggerEl) {
+    if (scatterInfoPinned) return;
+    scatterInfoCurrentMode = mode;
+    renderScatterModePopoverContent(mode);
+    positionScatterModePopover(triggerEl);
+    const popover = document.getElementById('scatterModePopover');
+    if (popover) popover.style.display = 'block';
+  }
+
+  function leaveScatterModeInfo() {
+    if (scatterInfoPinned) return;
+    const popover = document.getElementById('scatterModePopover');
+    if (popover) popover.style.display = 'none';
+  }
+
+  function toggleScatterModeInfo(mode, triggerEl) {
+    const popover = document.getElementById('scatterModePopover');
+    if (!popover) return;
+
+    if (scatterInfoPinned && scatterInfoCurrentMode === mode) {
+      closeScatterModeInfo();
+      return;
+    }
+
+    scatterInfoPinned = true;
+    scatterInfoCurrentMode = mode;
+    renderScatterModePopoverContent(mode);
+    positionScatterModePopover(triggerEl);
+    popover.style.display = 'block';
+  }
+
+  function closeScatterModeInfo() {
+    scatterInfoPinned = false;
+    scatterInfoCurrentMode = null;
+    const popover = document.getElementById('scatterModePopover');
+    if (popover) popover.style.display = 'none';
+  }
+
+  document.addEventListener('click', (e) => {
+    const popover = document.getElementById('scatterModePopover');
+    if (!popover || popover.style.display === 'none') return;
+    if (!popover.contains(e.target) && !e.target.closest('.scatter-info-trigger')) {
+      closeScatterModeInfo();
+    }
+  });
+
+  function setScatterMode(mode) {
+    if (currentScatterMode === mode) return;
+    currentScatterMode = mode;
+
+    const btns = document.querySelectorAll('#scatterModeToggle .bp2-segment-btn');
+    btns.forEach(b => {
+      if (b.getAttribute('data-mode') === mode) {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
+    });
+
+    closeScatterModeInfo();
+    resetScatterZoom();
+    renderScatterPlotMatrix();
+
+    if (selectedScatterQuadrant) {
+      renderQuadrantSkuList(selectedScatterQuadrant);
+    }
+  }
+
   const quadrantPlugin = {
     id: 'quadrantPlugin',
     beforeDraw(chart, args, options) {
@@ -4929,39 +5511,60 @@
       const rawY = y.getPixelForValue(thY);
 
       ctx.save();
-      // Clip to chartArea so zoom/pan doesn't leak into margins/axes
       ctx.beginPath();
       ctx.rect(left, top, right - left, bottom - top);
       ctx.clip();
 
       const dark = isDarkMode();
+      const isMult = !!options.isMultiplierMode;
 
-      // Subtle quadrant background tints based on visible viewport
-      // Q1: Top-Left (Stars: NMV > thY, Disc < thX)
-      if (rawX > left && rawY > top) {
-        ctx.fillStyle = dark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.04)';
-        ctx.fillRect(left, top, Math.min(right, rawX) - left, Math.min(bottom, rawY) - top);
+      if (!isMult) {
+        // Mode 1 & 2: Lower X is better (Left side is Stars/Sleepers)
+        // Q1: Top-Left (Stars: NMV > thY, Disc < thX)
+        if (rawX > left && rawY > top) {
+          ctx.fillStyle = dark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.04)';
+          ctx.fillRect(left, top, Math.min(right, rawX) - left, Math.min(bottom, rawY) - top);
+        }
+        // Q2: Top-Right (Promo Drivers: NMV > thY, Disc > thX)
+        if (rawX < right && rawY > top) {
+          ctx.fillStyle = dark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.04)';
+          ctx.fillRect(Math.max(left, rawX), top, right - Math.max(left, rawX), Math.min(bottom, rawY) - top);
+        }
+        // Q3: Bottom-Left (Sleepers: NMV < thY, Disc < thX)
+        if (rawX > left && rawY < bottom) {
+          ctx.fillStyle = dark ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.04)';
+          ctx.fillRect(left, Math.max(top, rawY), Math.min(right, rawX) - left, bottom - Math.max(top, rawY));
+        }
+        // Q4: Bottom-Right (Inefficient: NMV < thY, Disc > thX)
+        if (rawX < right && rawY < bottom) {
+          ctx.fillStyle = dark ? 'rgba(244, 63, 94, 0.08)' : 'rgba(244, 63, 94, 0.04)';
+          ctx.fillRect(Math.max(left, rawX), Math.max(top, rawY), right - Math.max(left, rawX), bottom - Math.max(top, rawY));
+        }
+      } else {
+        // Mode 3 (Multiplier): Higher X is better (Right side is Stars/Sleepers)
+        // Q1: Top-Right (Stars: NMV > thY, Multiplier >= thX)
+        if (rawX < right && rawY > top) {
+          ctx.fillStyle = dark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.04)';
+          ctx.fillRect(Math.max(left, rawX), top, right - Math.max(left, rawX), Math.min(bottom, rawY) - top);
+        }
+        // Q2: Top-Left (Promo Drivers: NMV > thY, Multiplier < thX)
+        if (rawX > left && rawY > top) {
+          ctx.fillStyle = dark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.04)';
+          ctx.fillRect(left, top, Math.min(right, rawX) - left, Math.min(bottom, rawY) - top);
+        }
+        // Q3: Bottom-Right (Sleepers: NMV < thY, Multiplier >= thX)
+        if (rawX < right && rawY < bottom) {
+          ctx.fillStyle = dark ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.04)';
+          ctx.fillRect(Math.max(left, rawX), Math.max(top, rawY), right - Math.max(left, rawX), bottom - Math.max(top, rawY));
+        }
+        // Q4: Bottom-Left (Inefficient: NMV < thY, Multiplier < thX)
+        if (rawX > left && rawY < bottom) {
+          ctx.fillStyle = dark ? 'rgba(244, 63, 94, 0.08)' : 'rgba(244, 63, 94, 0.04)';
+          ctx.fillRect(left, Math.max(top, rawY), Math.min(right, rawX) - left, bottom - Math.max(top, rawY));
+        }
       }
 
-      // Q2: Top-Right (Promo Drivers: NMV > thY, Disc > thX)
-      if (rawX < right && rawY > top) {
-        ctx.fillStyle = dark ? 'rgba(99, 102, 241, 0.08)' : 'rgba(99, 102, 241, 0.04)';
-        ctx.fillRect(Math.max(left, rawX), top, right - Math.max(left, rawX), Math.min(bottom, rawY) - top);
-      }
-
-      // Q3: Bottom-Left (Sleepers: NMV < thY, Disc < thX)
-      if (rawX > left && rawY < bottom) {
-        ctx.fillStyle = dark ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.04)';
-        ctx.fillRect(left, Math.max(top, rawY), Math.min(right, rawX) - left, bottom - Math.max(top, rawY));
-      }
-
-      // Q4: Bottom-Right (Inefficient: NMV < thY, Disc > thX)
-      if (rawX < right && rawY < bottom) {
-        ctx.fillStyle = dark ? 'rgba(244, 63, 94, 0.08)' : 'rgba(244, 63, 94, 0.04)';
-        ctx.fillRect(Math.max(left, rawX), Math.max(top, rawY), right - Math.max(left, rawX), bottom - Math.max(top, rawY));
-      }
-
-      // Dashed crosshair lines (drawn only if threshold is within visible scale)
+      // Dashed crosshair lines
       ctx.lineWidth = 1.5;
       ctx.setLineDash([5, 5]);
       ctx.strokeStyle = dark ? 'rgba(148, 163, 184, 0.45)' : 'rgba(100, 116, 139, 0.40)';
@@ -4982,33 +5585,54 @@
         ctx.stroke();
       }
 
-      // Watermark labels in quadrants - Crisp High Contrast
+      // Watermark labels
       ctx.font = '700 12px "Plus Jakarta Sans", sans-serif';
       ctx.fillStyle = dark ? 'rgba(226, 232, 240, 0.92)' : 'rgba(51, 65, 85, 0.85)';
       ctx.setLineDash([]);
 
-      // Q1 watermark (Top Left)
-      if (rawX > left + 35 && rawY > top + 25) {
-        ctx.textAlign = 'left';
-        ctx.fillText('Q1: Stars', left + 14, top + 22);
-      }
-
-      // Q2 watermark (Top Right)
-      if (rawX < right - 35 && rawY > top + 25) {
-        ctx.textAlign = 'right';
-        ctx.fillText('Q2: Promo Drivers', right - 14, top + 22);
-      }
-
-      // Q3 watermark (Bottom Left)
-      if (rawX > left + 35 && rawY < bottom - 20) {
-        ctx.textAlign = 'left';
-        ctx.fillText('Q3: Sleepers', left + 14, bottom - 14);
-      }
-
-      // Q4 watermark (Bottom Right)
-      if (rawX < right - 35 && rawY < bottom - 20) {
-        ctx.textAlign = 'right';
-        ctx.fillText('Q4: Inefficient', right - 14, bottom - 14);
+      if (!isMult) {
+        // Q1 watermark (Top Left)
+        if (rawX > left + 35 && rawY > top + 25) {
+          ctx.textAlign = 'left';
+          ctx.fillText('Q1: Stars', left + 14, top + 22);
+        }
+        // Q2 watermark (Top Right)
+        if (rawX < right - 35 && rawY > top + 25) {
+          ctx.textAlign = 'right';
+          ctx.fillText('Q2: Promo Drivers', right - 14, top + 22);
+        }
+        // Q3 watermark (Bottom Left)
+        if (rawX > left + 35 && rawY < bottom - 20) {
+          ctx.textAlign = 'left';
+          ctx.fillText('Q3: Sleepers', left + 14, bottom - 14);
+        }
+        // Q4 watermark (Bottom Right)
+        if (rawX < right - 35 && rawY < bottom - 20) {
+          ctx.textAlign = 'right';
+          ctx.fillText('Q4: Inefficient', right - 14, bottom - 14);
+        }
+      } else {
+        // Multiplier mode:
+        // Q1 watermark (Top Right)
+        if (rawX < right - 35 && rawY > top + 25) {
+          ctx.textAlign = 'right';
+          ctx.fillText('Q1: Stars (High Leverage)', right - 14, top + 22);
+        }
+        // Q2 watermark (Top Left)
+        if (rawX > left + 35 && rawY > top + 25) {
+          ctx.textAlign = 'left';
+          ctx.fillText('Q2: Promo Drivers (Low Leverage)', left + 14, top + 22);
+        }
+        // Q3 watermark (Bottom Right)
+        if (rawX < right - 35 && rawY < bottom - 20) {
+          ctx.textAlign = 'right';
+          ctx.fillText('Q3: Sleepers (Efficient Niche)', right - 14, bottom - 14);
+        }
+        // Q4 watermark (Bottom Left)
+        if (rawX > left + 35 && rawY < bottom - 20) {
+          ctx.textAlign = 'left';
+          ctx.fillText('Q4: Inefficient (High Burn)', left + 14, bottom - 14);
+        }
       }
 
       ctx.restore();
@@ -5101,11 +5725,24 @@
       const cr = go > 0 ? ((go - no) / go * 100) : 0;
       const aov = no > 0 ? (it.nmv / no) : 0;
       const asp = it.net_qty > 0 ? (it.nmv / it.net_qty) : 0;
+
+      // Calculate Discount Depth % (Weighted against GMV)
+      const discPct = it.gmv > 0 ? ((it.total_discount / it.gmv) * 100) :
+                     (it.nmv + it.total_discount > 0 ? (it.total_discount / (it.nmv + it.total_discount) * 100) : 0);
+      const cleanDiscPct = Math.min(100, Math.max(0, discPct));
+
+      // Calculate Promo Efficiency Multiplier (NMV / Total Discount)
+      const isOrganic = it.total_discount === 0 && it.nmv > 0;
+      const promoMult = it.total_discount > 0 ? (it.nmv / it.total_discount) : (isOrganic ? Infinity : 0);
+
       return {
         ...it,
         cr: cr,
         aov: aov,
         asp: asp,
+        discount_pct: cleanDiscPct,
+        promo_multiplier: promoMult,
+        is_organic: isOrganic
       };
     });
 
@@ -5117,46 +5754,132 @@
     }
 
     const nmvs = activeList.map(it => it.nmv).sort((a, b) => a - b);
-    const discs = activeList.map(it => it.total_discount).sort((a, b) => a - b);
-
     const getMedian = (arr) => {
+      if (arr.length === 0) return 0;
       const mid = Math.floor(arr.length / 2);
       return arr.length % 2 !== 0 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2;
     };
 
     let thresholdY = getMedian(nmvs);
-    let thresholdX = getMedian(discs);
-
     if (thresholdY <= 0) thresholdY = nmvs.reduce((a, b) => a + b, 0) / (nmvs.length || 1);
-    if (thresholdX <= 0) thresholdX = discs.reduce((a, b) => a + b, 0) / (discs.length || 1);
+
+    let thresholdX = 0;
+
+    if (currentScatterMode === 'multiplier') {
+      // Multiplier mode: sort multipliers
+      const multipliers = activeList.map(it => it.promo_multiplier).sort((a, b) => a - b);
+      let medMult = getMedian(multipliers);
+      if (!Number.isFinite(medMult) || medMult <= 0) {
+        const finiteMults = multipliers.filter(m => Number.isFinite(m) && m > 0);
+        medMult = finiteMults.length > 0 ? getMedian(finiteMults) : 10;
+      }
+      thresholdX = medMult;
+
+      // Calculate visual plotting cap for Multiplier so Infinity / extreme outliers don't break Chart.js
+      const finiteMults = activeList.map(it => it.promo_multiplier).filter(m => Number.isFinite(m) && m > 0).sort((a, b) => a - b);
+      const p95 = finiteMults.length > 0 ? finiteMults[Math.floor(finiteMults.length * 0.95)] : 25;
+      const maxPlotCap = Math.max(30, Math.round(p95 * 1.35));
+
+      activeList.forEach(it => {
+        it.promo_multiplier_plot = !Number.isFinite(it.promo_multiplier) ? maxPlotCap : Math.min(it.promo_multiplier, maxPlotCap);
+      });
+    } else if (currentScatterMode === 'percentage') {
+      // Percentage mode: median of discount_pct
+      const discPcts = activeList.map(it => it.discount_pct).sort((a, b) => a - b);
+      thresholdX = getMedian(discPcts);
+      if (thresholdX <= 0) thresholdX = discPcts.reduce((a, b) => a + b, 0) / (discPcts.length || 1);
+    } else {
+      // Nominal mode: median of total_discount
+      const discs = activeList.map(it => it.total_discount).sort((a, b) => a - b);
+      thresholdX = getMedian(discs);
+      if (thresholdX <= 0) thresholdX = discs.reduce((a, b) => a + b, 0) / (discs.length || 1);
+    }
 
     let totalNmv = 0;
     activeList.forEach(it => {
       totalNmv += it.nmv;
-      if (it.nmv >= thresholdY && it.total_discount < thresholdX) {
-        it.quadrant = 'Q1';
-        it.quadrantName = 'Stars';
-        it.quadrantIcon = 'bi-star-fill';
-        it.quadrantDesc = 'High NMV • Low Discount';
-        it.badgeClass = 'badge-q1';
-      } else if (it.nmv >= thresholdY && it.total_discount >= thresholdX) {
-        it.quadrant = 'Q2';
-        it.quadrantName = 'Promo Drivers';
-        it.quadrantIcon = 'bi-rocket-takeoff-fill';
-        it.quadrantDesc = 'High NMV • High Discount';
-        it.badgeClass = 'badge-q2';
-      } else if (it.nmv < thresholdY && it.total_discount < thresholdX) {
-        it.quadrant = 'Q3';
-        it.quadrantName = 'Sleepers';
-        it.quadrantIcon = 'bi-moon-stars-fill';
-        it.quadrantDesc = 'Low NMV • Low Discount';
-        it.badgeClass = 'badge-q3';
+
+      if (currentScatterMode === 'multiplier') {
+        // Multiplier mode: Higher X is better!
+        if (it.nmv >= thresholdY && it.promo_multiplier >= thresholdX) {
+          it.quadrant = 'Q1';
+          it.quadrantName = 'Stars';
+          it.quadrantIcon = 'bi-star-fill';
+          it.quadrantDesc = 'High NMV • High Multiplier (Daya Ungkit Tinggi)';
+          it.badgeClass = 'badge-q1';
+        } else if (it.nmv >= thresholdY && it.promo_multiplier < thresholdX) {
+          it.quadrant = 'Q2';
+          it.quadrantName = 'Promo Drivers';
+          it.quadrantIcon = 'bi-rocket-takeoff-fill';
+          it.quadrantDesc = 'High NMV • Low Multiplier (Volume Besar, Rasio Rendah)';
+          it.badgeClass = 'badge-q2';
+        } else if (it.nmv < thresholdY && it.promo_multiplier >= thresholdX) {
+          it.quadrant = 'Q3';
+          it.quadrantName = 'Sleepers';
+          it.quadrantIcon = 'bi-moon-stars-fill';
+          it.quadrantDesc = 'Low NMV • High Multiplier (Efisien, Perlu Skala)';
+          it.badgeClass = 'badge-q3';
+        } else {
+          it.quadrant = 'Q4';
+          it.quadrantName = 'Inefficient';
+          it.quadrantIcon = 'bi-exclamation-triangle-fill';
+          it.quadrantDesc = 'Low NMV • Low Multiplier (Boros Promo, ROI Rendah)';
+          it.badgeClass = 'badge-q4';
+        }
+      } else if (currentScatterMode === 'percentage') {
+        // Percentage mode: Lower X is better!
+        if (it.nmv >= thresholdY && it.discount_pct < thresholdX) {
+          it.quadrant = 'Q1';
+          it.quadrantName = 'Stars';
+          it.quadrantIcon = 'bi-star-fill';
+          it.quadrantDesc = 'High NMV • Low Discount % (Hero Organik)';
+          it.badgeClass = 'badge-q1';
+        } else if (it.nmv >= thresholdY && it.discount_pct >= thresholdX) {
+          it.quadrant = 'Q2';
+          it.quadrantName = 'Promo Drivers';
+          it.quadrantIcon = 'bi-rocket-takeoff-fill';
+          it.quadrantDesc = 'High NMV • High Discount % (Ketergantungan Promo)';
+          it.badgeClass = 'badge-q2';
+        } else if (it.nmv < thresholdY && it.discount_pct < thresholdX) {
+          it.quadrant = 'Q3';
+          it.quadrantName = 'Sleepers';
+          it.quadrantIcon = 'bi-moon-stars-fill';
+          it.quadrantDesc = 'Low NMV • Low Discount % (Penjualan Rendah, Diskon Rendah)';
+          it.badgeClass = 'badge-q3';
+        } else {
+          it.quadrant = 'Q4';
+          it.quadrantName = 'Inefficient';
+          it.quadrantIcon = 'bi-exclamation-triangle-fill';
+          it.quadrantDesc = 'Low NMV • High Discount % (Diskon Dalam, Tetap Rendah)';
+          it.badgeClass = 'badge-q4';
+        }
       } else {
-        it.quadrant = 'Q4';
-        it.quadrantName = 'Inefficient';
-        it.quadrantIcon = 'bi-exclamation-triangle-fill';
-        it.quadrantDesc = 'Low NMV • High Discount';
-        it.badgeClass = 'badge-q4';
+        // Nominal mode: Lower X is better!
+        if (it.nmv >= thresholdY && it.total_discount < thresholdX) {
+          it.quadrant = 'Q1';
+          it.quadrantName = 'Stars';
+          it.quadrantIcon = 'bi-star-fill';
+          it.quadrantDesc = 'High NMV • Low Discount (Organik & Sangat Efisien)';
+          it.badgeClass = 'badge-q1';
+        } else if (it.nmv >= thresholdY && it.total_discount >= thresholdX) {
+          it.quadrant = 'Q2';
+          it.quadrantName = 'Promo Drivers';
+          it.quadrantIcon = 'bi-rocket-takeoff-fill';
+          it.quadrantDesc = 'High NMV • High Discount (Volume Driver, Pantau Margin)';
+          it.badgeClass = 'badge-q2';
+        } else if (it.nmv < thresholdY && it.total_discount < thresholdX) {
+          it.quadrant = 'Q3';
+          it.quadrantName = 'Sleepers';
+          it.quadrantIcon = 'bi-moon-stars-fill';
+          it.quadrantDesc = 'Low NMV • Low Discount (Potensial Diberi Dorongan Promo)';
+          it.badgeClass = 'badge-q3';
+        } else {
+          it.quadrant = 'Q4';
+          it.quadrantName = 'Inefficient';
+          it.quadrantIcon = 'bi-exclamation-triangle-fill';
+          it.quadrantDesc = 'Low NMV • High Discount (Promo Kurang Efektif / Perlu Evaluasi)';
+          it.badgeClass = 'badge-q4';
+        }
       }
     });
 
@@ -5169,11 +5892,39 @@
     scatterDataCalculated = dataObj;
     const { items, thresholdX, thresholdY, totalNmv } = dataObj;
 
+    // Update Card Title and Subtitle dynamically based on mode
+    const titleEl = document.getElementById('scatterCardTitle');
+    const subEl = document.getElementById('scatterThresholdSubtitle');
+    if (titleEl) {
+      if (currentScatterMode === 'multiplier') {
+        titleEl.innerHTML = `<span class="badge-num">8</span> Product Efficiency Matrix (NMV vs Promo Efficiency Multiplier)`;
+      } else if (currentScatterMode === 'percentage') {
+        titleEl.innerHTML = `<span class="badge-num">8</span> Product Efficiency Matrix (NMV vs Discount Depth %)`;
+      } else {
+        titleEl.innerHTML = `<span class="badge-num">8</span> Product Efficiency Matrix (NMV vs Total Discount)`;
+      }
+    }
+    if (subEl) {
+      if (currentScatterMode === 'multiplier') {
+        subEl.textContent = '4-Quadrant matrix mengukur daya ungkit promo (Rupiah omzet penjualan per Rp 1 subsidi diskon)';
+      } else if (currentScatterMode === 'percentage') {
+        subEl.textContent = '4-Quadrant matrix mengeliminasi bias harga barang via Effective Discount Rate (% terhadap GMV)';
+      } else {
+        subEl.textContent = '4-Quadrant product portfolio matrix benchmarking Net Sales (NMV) vs Total Promo Diskon (Platform + Seller)';
+      }
+    }
+
     // Update threshold badges in header
     const thBadge = document.getElementById('scatterThresholdBadge');
     if (thBadge) {
       if (items.length > 0) {
-        thBadge.innerHTML = `<i class="bi bi-crosshair"></i> Median Benchmarks: NMV <b>${formatCompactCurrency(thresholdY)}</b> • Disc <b>${formatCompactCurrency(thresholdX)}</b>`;
+        if (currentScatterMode === 'multiplier') {
+          thBadge.innerHTML = `<i class="bi bi-crosshair"></i> Median Benchmarks: NMV <b>${formatCompactCurrency(thresholdY)}</b> • Multiplier <b>${isConfidentialActive() ? '•••' : thresholdX.toFixed(1) + 'x'}</b>`;
+        } else if (currentScatterMode === 'percentage') {
+          thBadge.innerHTML = `<i class="bi bi-crosshair"></i> Median Benchmarks: NMV <b>${formatCompactCurrency(thresholdY)}</b> • Disc Depth <b>${isConfidentialActive() ? '•••%' : thresholdX.toFixed(1) + '%'}</b>`;
+        } else {
+          thBadge.innerHTML = `<i class="bi bi-crosshair"></i> Median Benchmarks: NMV <b>${formatCompactCurrency(thresholdY)}</b> • Disc <b>${formatCompactCurrency(thresholdX)}</b>`;
+        }
       } else {
         thBadge.innerHTML = `<i class="bi bi-info-circle"></i> No products in timeframe`;
       }
@@ -5192,21 +5943,44 @@
     const q4NmvVal = sumNmv(q4List);
 
     // Update summary card UI
-    document.getElementById('q1Count').textContent = `${q1List.length} SKUs`;
+    document.getElementById('q1Count').textContent = isConfidentialActive() ? '••• SKUs' : `${q1List.length} SKUs`;
     document.getElementById('q1Nmv').textContent = formatCompactCurrency(q1NmvVal);
-    document.getElementById('q1Share').textContent = totalNmv > 0 ? `${((q1NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%';
+    document.getElementById('q1Share').textContent = isConfidentialActive() ? '•••%' : (totalNmv > 0 ? `${((q1NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%');
 
-    document.getElementById('q2Count').textContent = `${q2List.length} SKUs`;
+    document.getElementById('q2Count').textContent = isConfidentialActive() ? '••• SKUs' : `${q2List.length} SKUs`;
     document.getElementById('q2Nmv').textContent = formatCompactCurrency(q2NmvVal);
-    document.getElementById('q2Share').textContent = totalNmv > 0 ? `${((q2NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%';
+    document.getElementById('q2Share').textContent = isConfidentialActive() ? '•••%' : (totalNmv > 0 ? `${((q2NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%');
 
-    document.getElementById('q3Count').textContent = `${q3List.length} SKUs`;
+    document.getElementById('q3Count').textContent = isConfidentialActive() ? '••• SKUs' : `${q3List.length} SKUs`;
     document.getElementById('q3Nmv').textContent = formatCompactCurrency(q3NmvVal);
-    document.getElementById('q3Share').textContent = totalNmv > 0 ? `${((q3NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%';
+    document.getElementById('q3Share').textContent = isConfidentialActive() ? '•••%' : (totalNmv > 0 ? `${((q3NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%');
 
-    document.getElementById('q4Count').textContent = `${q4List.length} SKUs`;
+    document.getElementById('q4Count').textContent = isConfidentialActive() ? '••• SKUs' : `${q4List.length} SKUs`;
     document.getElementById('q4Nmv').textContent = formatCompactCurrency(q4NmvVal);
-    document.getElementById('q4Share').textContent = totalNmv > 0 ? `${((q4NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%';
+    document.getElementById('q4Share').textContent = isConfidentialActive() ? '•••%' : (totalNmv > 0 ? `${((q4NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%');
+
+    // Update dynamic card descriptions
+    const q1DescEl = document.getElementById('q1Desc');
+    const q2DescEl = document.getElementById('q2Desc');
+    const q3DescEl = document.getElementById('q3Desc');
+    const q4DescEl = document.getElementById('q4Desc');
+
+    if (currentScatterMode === 'multiplier') {
+      if (q1DescEl) q1DescEl.textContent = 'High NMV • High Multiplier (Daya Ungkit Tinggi)';
+      if (q2DescEl) q2DescEl.textContent = 'High NMV • Low Multiplier (Volume Besar, Rasio Rendah)';
+      if (q3DescEl) q3DescEl.textContent = 'Low NMV • High Multiplier (Efisien, Perlu Skala)';
+      if (q4DescEl) q4DescEl.textContent = 'Low NMV • Low Multiplier (Boros Promo, ROI Rendah)';
+    } else if (currentScatterMode === 'percentage') {
+      if (q1DescEl) q1DescEl.textContent = 'High NMV • Low Discount % (Hero Organik)';
+      if (q2DescEl) q2DescEl.textContent = 'High NMV • High Discount % (Ketergantungan Promo)';
+      if (q3DescEl) q3DescEl.textContent = 'Low NMV • Low Discount % (Penjualan Rendah, Diskon Rendah)';
+      if (q4DescEl) q4DescEl.textContent = 'Low NMV • High Discount % (Diskon Dalam, Tetap Rendah)';
+    } else {
+      if (q1DescEl) q1DescEl.textContent = 'High NMV • Low Discount (Organik & Sangat Efisien)';
+      if (q2DescEl) q2DescEl.textContent = 'High NMV • High Discount (Volume Driver, Pantau Margin)';
+      if (q3DescEl) q3DescEl.textContent = 'Low NMV • Low Discount (Potensial Diberi Dorongan Promo)';
+      if (q4DescEl) q4DescEl.textContent = 'Low NMV • High Discount (Promo Kurang Efektif / Perlu Evaluasi)';
+    }
 
     // Update count indicator
     const platSuffix = currentScatterPlatform === 'All' ? '' : ` (${currentScatterPlatform})`;
@@ -5268,8 +6042,15 @@
         r = 3.5;
       }
 
+      let pointX = it.total_discount;
+      if (currentScatterMode === 'multiplier') {
+        pointX = it.promo_multiplier_plot;
+      } else if (currentScatterMode === 'percentage') {
+        pointX = it.discount_pct;
+      }
+
       return {
-        x: it.total_discount,
+        x: pointX,
         y: it.nmv,
         rawItem: it,
         isSelected: isSelected,
@@ -5293,9 +6074,26 @@
       return selectedScatterQuadrant === quad ? 0.95 : (isDark ? 0.16 : 0.12);
     };
 
+    let labelQ1 = 'Stars (High NMV, Low Disc)';
+    let labelQ2 = 'Promo Drivers (High NMV, High Disc)';
+    let labelQ3 = 'Sleepers (Low NMV, Low Disc)';
+    let labelQ4 = 'Inefficient (Low NMV, High Disc)';
+
+    if (currentScatterMode === 'multiplier') {
+      labelQ1 = 'Stars (High NMV, High Multiplier)';
+      labelQ2 = 'Promo Drivers (High NMV, Low Multiplier)';
+      labelQ3 = 'Sleepers (Low NMV, High Multiplier)';
+      labelQ4 = 'Inefficient (Low NMV, Low Multiplier)';
+    } else if (currentScatterMode === 'percentage') {
+      labelQ1 = 'Stars (High NMV, Low Disc %)';
+      labelQ2 = 'Promo Drivers (High NMV, High Disc %)';
+      labelQ3 = 'Sleepers (Low NMV, Low Disc %)';
+      labelQ4 = 'Inefficient (Low NMV, High Disc %)';
+    }
+
     const datasets = [
       {
-        label: 'Stars (High NMV, Low Disc)',
+        label: labelQ1,
         data: q1Points,
         backgroundColor: isDark ? `rgba(52, 211, 153, ${getAlpha('Q1')})` : `rgba(16, 185, 129, ${getAlpha('Q1')})`,
         borderColor: isDark ? '#34D399' : '#059669',
@@ -5305,7 +6103,7 @@
         pointBorderColor: q1Points.map(p => p.pointBorderColor)
       },
       {
-        label: 'Promo Drivers (High NMV, High Disc)',
+        label: labelQ2,
         data: q2Points,
         backgroundColor: isDark ? `rgba(129, 140, 248, ${getAlpha('Q2')})` : `rgba(99, 102, 241, ${getAlpha('Q2')})`,
         borderColor: isDark ? '#818CF8' : '#4F46E5',
@@ -5315,7 +6113,7 @@
         pointBorderColor: q2Points.map(p => p.pointBorderColor)
       },
       {
-        label: 'Sleepers (Low NMV, Low Disc)',
+        label: labelQ3,
         data: q3Points,
         backgroundColor: isDark ? `rgba(251, 191, 36, ${getAlpha('Q3')})` : `rgba(245, 158, 11, ${getAlpha('Q3')})`,
         borderColor: isDark ? '#FBBF24' : '#D97706',
@@ -5325,7 +6123,7 @@
         pointBorderColor: q3Points.map(p => p.pointBorderColor)
       },
       {
-        label: 'Inefficient (Low NMV, High Disc)',
+        label: labelQ4,
         data: q4Points,
         backgroundColor: isDark ? `rgba(251, 113, 133, ${getAlpha('Q4')})` : `rgba(244, 63, 94, ${getAlpha('Q4')})`,
         borderColor: isDark ? '#FB7185' : '#E11D48',
@@ -5335,6 +6133,17 @@
         pointBorderColor: q4Points.map(p => p.pointBorderColor)
       }
     ];
+
+    let xTitleText = 'Total Discount (Seller + Platform) [Rp]';
+    let xTickCallback = (val) => formatCompactCurrency(val);
+
+    if (currentScatterMode === 'multiplier') {
+      xTitleText = 'Promo Efficiency Multiplier (NMV per Rp 1 Diskon)';
+      xTickCallback = (val) => `${val.toFixed(1)}x`;
+    } else if (currentScatterMode === 'percentage') {
+      xTitleText = 'Effective Discount Depth (% terhadap GMV)';
+      xTickCallback = (val) => `${val.toFixed(0)}%`;
+    }
 
     scatterChartInstance = new Chart(ctx, {
       type: 'scatter',
@@ -5373,20 +6182,26 @@
               label: (item) => {
                 const raw = item.raw.rawItem;
                 const prodShort = (raw.product_name || '-').length > 30 ? (raw.product_name.substring(0, 30) + '…') : raw.product_name;
-                return [
+                const multText = raw.is_organic ? '∞ (Organik / 0 Disc)' : `${raw.promo_multiplier.toFixed(1)}x`;
+
+                const lines = [
                   `Produk: ${prodShort}`,
                   `Kuadran: ${raw.quadrantName}`,
                   `NMV: ${formatCurrency(raw.nmv)}`,
                   `Total Disc: ${formatCurrency(raw.total_discount)}`,
+                  `Disc Depth: ${isConfidentialActive() ? '•••%' : (raw.discount_pct || 0).toFixed(1) + '%'}`,
+                  `Promo ROI: ${isConfidentialActive() ? '•••' : multText}`,
                   `Net Qty: ${formatNumber(raw.net_qty)} pcs`,
                   'Klik titik untuk melihat kartu rincian lengkap'
                 ];
+                return lines;
               }
             }
           },
           quadrantPlugin: {
             thresholdX: thresholdX,
-            thresholdY: thresholdY
+            thresholdY: thresholdY,
+            isMultiplierMode: currentScatterMode === 'multiplier'
           },
           zoom: {
             pan: {
@@ -5422,7 +6237,7 @@
             max: savedScales ? savedScales.xMax : undefined,
             title: {
               display: true,
-              text: 'Total Discount (Seller + Platform) [Rp]',
+              text: xTitleText,
               font: { family: 'Plus Jakarta Sans', size: 11, weight: '700' },
               color: isDark ? '#94A3B8' : '#475569'
             },
@@ -5432,7 +6247,7 @@
             ticks: {
               font: { family: 'JetBrains Mono', size: 10 },
               color: isDark ? '#94A3B8' : '#475569',
-              callback: (val) => formatCompactCurrency(val)
+              callback: (val) => isConfidentialActive() ? '' : xTickCallback(val)
             }
           },
           y: {
@@ -5450,7 +6265,7 @@
             ticks: {
               font: { family: 'JetBrains Mono', size: 10 },
               color: isDark ? '#94A3B8' : '#475569',
-              callback: (val) => formatCompactCurrency(val)
+              callback: (val) => isConfidentialActive() ? '' : formatCompactCurrency(val)
             }
           }
         },
@@ -5918,14 +6733,14 @@
     let splitBarHtml = '';
     if (totalDisc > 0) {
       splitBarHtml = `
-        <div class="bp2-split-bar-container" style="margin-top:4px;" title="Platform: ${platPct}% (${formatCurrency(platDisc)}) | Seller: ${sellerPct}% (${formatCurrency(sellerDisc)})">
+        <div class="bp2-split-bar-container" style="margin-top:4px;" title="Platform: ${isConfidentialActive() ? '•••%' : platPct + '%'} (${formatCurrency(platDisc)}) | Seller: ${isConfidentialActive() ? '•••%' : sellerPct + '%'} (${formatCurrency(sellerDisc)})">
           <div class="bp2-split-bar-track">
             <div class="bp2-split-bar-fill plat" style="width: ${platPct}%;"></div>
             <div class="bp2-split-bar-fill seller" style="width: ${sellerPct}%;"></div>
           </div>
           <div class="bp2-split-bar-text">
-            <span class="plat-txt">${platPct}% Platform (${formatCompactCurrency(platDisc)})</span>
-            <span class="seller-txt">${sellerPct}% Seller (${formatCompactCurrency(sellerDisc)})</span>
+            <span class="plat-txt">${isConfidentialActive() ? '•••% Platform' : platPct + '% Platform'} (${formatCompactCurrency(platDisc)})</span>
+            <span class="seller-txt">${isConfidentialActive() ? '•••% Seller' : sellerPct + '% Seller'} (${formatCompactCurrency(sellerDisc)})</span>
           </div>
         </div>
       `;
@@ -5983,7 +6798,11 @@
         </div>
         <div class="scatter-metric-item">
           <div class="scatter-metric-label">Disc / GMV Rate</div>
-          <div class="scatter-metric-value" style="color:#F59E0B;">${discGmvPct}%</div>
+          <div class="scatter-metric-value" style="color:#F59E0B;">${isConfidentialActive() ? '•••%' : discGmvPct + '%'}</div>
+        </div>
+        <div class="scatter-metric-item">
+          <div class="scatter-metric-label">Promo ROI Multiplier</div>
+          <div class="scatter-metric-value" style="color:#10B981;">${isConfidentialActive() ? '•••' : (item.is_organic ? '∞ (Organik)' : (Number.isFinite(item.promo_multiplier) ? item.promo_multiplier.toFixed(1) + 'x' : '0.0x'))}</div>
         </div>
         <div class="scatter-metric-item">
           <div class="scatter-metric-label">Net Quantity</div>
@@ -5995,7 +6814,7 @@
         </div>
         <div class="scatter-metric-item">
           <div class="scatter-metric-label">Cancel / Return (CR)</div>
-          <div class="scatter-metric-value" style="color:${item.cr > 15 ? '#F43F5E' : 'inherit'};">${item.cr.toFixed(1)}%</div>
+          <div class="scatter-metric-value" style="color:${item.cr > 15 ? '#F43F5E' : 'inherit'};">${isConfidentialActive() ? '•••%' : item.cr.toFixed(1) + '%'}</div>
         </div>
         <div class="scatter-metric-item">
           <div class="scatter-metric-label">Avg Selling Price</div>
@@ -6046,11 +6865,6 @@
       return;
     }
 
-    // Sort items based on quadrant nature:
-    // Q1 (Stars): Top NMV descending (highest organic revenue)
-    // Q2 (Promo Drivers): Top NMV descending (highest volume)
-    // Q3 (Sleepers): Top NMV descending (potential promo candidates)
-    // Q4 (Inefficient): Top Total Discount descending (highest discount / lowest promo efficiency)
     const sorted = [...allItems];
     let sortLabel = '';
     let quadMeta = {
@@ -6067,7 +6881,7 @@
         title: 'Stars',
         icon: 'bi-star-fill',
         badgeClass: 'badge-q1',
-        desc: 'Top performa organik & margin efisien'
+        desc: currentScatterMode === 'multiplier' ? 'Top performa omzet & leverage promo tinggi' : 'Top performa organik & margin efisien'
       };
     } else if (quad === 'Q2') {
       sorted.sort((a, b) => b.nmv - a.nmv);
@@ -6088,8 +6902,16 @@
         desc: 'Produk potensial dipacu dorongan promo'
       };
     } else if (quad === 'Q4') {
-      sorted.sort((a, b) => b.total_discount - a.total_discount);
-      sortLabel = 'Total Diskon Tertinggi';
+      if (currentScatterMode === 'multiplier') {
+        sorted.sort((a, b) => a.promo_multiplier - b.promo_multiplier);
+        sortLabel = 'Multiplier Terendah (Paling Inefisien)';
+      } else if (currentScatterMode === 'percentage') {
+        sorted.sort((a, b) => b.discount_pct - a.discount_pct);
+        sortLabel = 'Discount % Tertinggi';
+      } else {
+        sorted.sort((a, b) => b.total_discount - a.total_discount);
+        sortLabel = 'Total Diskon Tertinggi';
+      }
       quadMeta = {
         title: 'Inefficient',
         icon: 'bi-exclamation-triangle-fill',
@@ -6106,10 +6928,19 @@
     const itemsHtml = topItems.map((it, idx) => {
       const isSel = selectedScatterSkuCode === it.sku_code;
       const rankNum = idx + 1;
-      const m1Val = quad === 'Q4' ? formatCompactCurrency(it.total_discount) : formatCompactCurrency(it.nmv);
-      const m1Label = quad === 'Q4' ? 'Disc' : 'NMV';
-      const m2Val = quad === 'Q4' ? formatCompactCurrency(it.nmv) : formatCompactCurrency(it.total_discount);
-      const m2Label = quad === 'Q4' ? 'NMV' : 'Disc';
+      const m1Val = formatCompactCurrency(it.nmv);
+      const m1Label = 'NMV';
+
+      let m2Val = formatCompactCurrency(it.total_discount);
+      let m2Label = 'Disc';
+
+      if (currentScatterMode === 'percentage') {
+        m2Label = 'Disc Depth';
+        m2Val = isConfidentialActive() ? '•••%' : `${it.discount_pct.toFixed(1)}%`;
+      } else if (currentScatterMode === 'multiplier') {
+        m2Label = 'ROI';
+        m2Val = isConfidentialActive() ? '•••' : (it.is_organic ? '∞ (Org)' : `${it.promo_multiplier.toFixed(1)}x`);
+      }
 
       return `
         <div class="scatter-sku-item ${isSel ? 'active' : ''}" onclick="selectScatterSkuByCode('${escapeHtml(it.sku_code)}')" title="Klik untuk melihat kartu rincian lengkap">
@@ -6119,8 +6950,8 @@
             <div class="scatter-sku-name" title="${escapeHtml(it.product_name)}">${escapeHtml(it.product_name || '-')}</div>
           </div>
           <div class="scatter-sku-metrics">
-            <div class="scatter-sku-m1" title="${m1Label}: ${formatCurrency(quad === 'Q4' ? it.total_discount : it.nmv)}">${m1Val}</div>
-            <div class="scatter-sku-m2" title="${m2Label}: ${formatCurrency(quad === 'Q4' ? it.nmv : it.total_discount)}"><span style="opacity:0.75;">${m2Label}:</span> ${m2Val}</div>
+            <div class="scatter-sku-m1" title="${m1Label}: ${formatCurrency(it.nmv)}">${m1Val}</div>
+            <div class="scatter-sku-m2" title="${m2Label}: ${m2Val}"><span style="opacity:0.75;">${m2Label}:</span> ${m2Val}</div>
           </div>
         </div>
       `;
@@ -6381,14 +7212,14 @@
       let splitBarHtml = '';
       if (totalDisc > 0) {
         splitBarHtml = `
-          <div class="bp2-split-bar-container" title="Platform: ${platPct}% (${formatCurrency(platDisc)}) | Seller: ${sellerPct}% (${formatCurrency(sellerDisc)})">
+          <div class="bp2-split-bar-container" title="Platform: ${isConfidentialActive() ? '•••%' : platPct + '%'} (${formatCurrency(platDisc)}) | Seller: ${isConfidentialActive() ? '•••%' : sellerPct + '%'} (${formatCurrency(sellerDisc)})">
             <div class="bp2-split-bar-track">
               <div class="bp2-split-bar-fill plat" style="width: ${platPct}%;"></div>
               <div class="bp2-split-bar-fill seller" style="width: ${sellerPct}%;"></div>
             </div>
             <div class="bp2-split-bar-text">
-              <span class="plat-txt">${platPct}% P</span>
-              <span class="seller-txt">${sellerPct}% S</span>
+              <span class="plat-txt">${isConfidentialActive() ? '•••% P' : platPct + '% P'}</span>
+              <span class="seller-txt">${isConfidentialActive() ? '•••% S' : sellerPct + '% S'}</span>
             </div>
           </div>
         `;
@@ -6519,6 +7350,9 @@
   }
 
   function calcGrowthChip(curr, prev) {
+    if (isConfidentialActive()) {
+      return '<span class="chip flat sm">•••%</span>';
+    }
     const c = Number(curr) || 0;
     const p = Number(prev) || 0;
     if (p <= 0 && c <= 0) return '<span class="chip flat sm">0.0%</span>';
@@ -6750,9 +7584,11 @@
           const isLast = i === activeSlices.length - 1;
           const borderRt = !isLast ? 'border-right: 2px solid var(--bp2-border) !important;' : '';
 
-          const crPill = m.gross_orders > 0 ?
-            `<span class="pill sm ${m.cr > 15 ? 'pill-down' : 'pill-flat'}">${m.cr.toFixed(1)}%</span>` :
-            '0.0%';
+          const crPill = isConfidentialActive() ?
+            '<span class="pill sm pill-flat">•••%</span>' :
+            (m.gross_orders > 0 ?
+              `<span class="pill sm ${m.cr > 15 ? 'pill-down' : 'pill-flat'}">${m.cr.toFixed(1)}%</span>` :
+              '0.0%');
 
           rowHtml += `
             <td class="num mono">${formatNumber(m.net_qty)}</td>
@@ -6849,9 +7685,11 @@
         const go = Number(p.gross_orders) || 0;
         const no = Number(p.net_orders) || 0;
         const cr = go > 0 ? ((go - no) / go * 100) : 0;
-        const crPill = go > 0 ?
-          `<span class="pill sm ${cr > 15 ? 'pill-down' : 'pill-flat'}">${cr.toFixed(1)}%</span>` :
-          '0.0%';
+        const crPill = isConfidentialActive() ?
+          '<span class="pill sm pill-flat">•••%</span>' :
+          (go > 0 ?
+            `<span class="pill sm ${cr > 15 ? 'pill-down' : 'pill-flat'}">${cr.toFixed(1)}%</span>` :
+            '0.0%');
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -6923,7 +7761,7 @@
       <td class="num mono">${formatCurrency(r.nmv)}</td>
       <td class="num mono">${formatNumber(r.net_order)}</td>
       <td class="num mono">${formatNumber(r.net_quantity)}</td>
-      <td class="num mono">${r.abs.toFixed(2)}</td>
+      <td class="num mono">${formatDecimal(r.abs)}</td>
       <td class="num mono">${formatCurrency(r.aov)}</td>
       <td class="num mono">${formatCurrency(r.asp)}</td>
       <td class="num mono">${formatCurrency(r.gmv)}</td>
@@ -6931,8 +7769,8 @@
       <td class="num mono">${formatNumber(r.gross_quantity)}</td>
       <td class="num mono">${formatNumber(r.page_views)}</td>
       <td class="num mono">${formatNumber(r.visitors)}</td>
-      <td class="num mono">${r.cvr.toFixed(2)}%</td>
-      <td class="num mono">${r.cr.toFixed(2)}%</td>
+      <td class="num mono">${formatPercent(r.cvr)}</td>
+      <td class="num mono">${formatPercent(r.cr)}</td>
       <td class="num mono">${formatCurrency(r.voucher_paid_by_platform)}</td>
       <td class="num mono">${formatCurrency(r.voucher_paid_by_seller)}</td>
       <td class="num mono">${formatCurrency(r.discount_from_platform)}</td>

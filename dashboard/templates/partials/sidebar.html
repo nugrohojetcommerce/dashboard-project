@@ -1,28 +1,100 @@
+{% load static %}
 <style>
   /* ── SIDEBAR — theme-aware, matches app design tokens ── */
   .app-sidebar {
     background: var(--card-bg) !important;
     border-right: 1px solid var(--glass-border) !important;
     box-shadow: 6px 0 24px rgba(0, 0, 0, 0.03) !important;
-    /* transition: background .2s, border-color .2s; */
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+    position: relative;
   }
 
   .sidebar-brand {
-    padding: 18px 24px;
+    padding: 16px 20px;
     border-bottom: 1px solid var(--glass-border);
     display: flex;
     align-items: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 2;
+    user-select: none;
+    cursor: default;
   }
 
-  .brand-link .brand-text {
-    font-size: 1rem;
+  .sidebar-brand-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sidebar-brand-logo {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .sidebar-brand-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .sidebar-brand .brand-title {
+    font-size: 0.96rem;
     font-weight: 700;
     color: var(--text-primary) !important;
     letter-spacing: -.2px;
+    line-height: 1.25;
+  }
+
+  .sidebar-brand .brand-subtitle {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--text-muted) !important;
+    letter-spacing: .2px;
+    line-height: 1;
   }
 
   .sidebar-wrapper {
     padding: 0 12px;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Background Watermark Accent ── */
+  .sidebar-watermark {
+    position: absolute;
+    top: 50%;
+    left: -220px;
+    transform: translateY(-50%);
+    width: 440px;
+    height: 440px;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+    opacity: 0.14;
+    transition: opacity 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  [data-theme="dark"] .sidebar-watermark {
+    opacity: 0.16;
+  }
+
+  .sidebar-watermark-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 
   .app-sidebar .nav-link {
@@ -55,21 +127,111 @@
   }
 
   .app-sidebar .nav-icon {
-    font-size: 1.1rem;
-    width: 20px;
+    font-size: 1.15rem;
+    width: 22px;
+    min-width: 22px;
     text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
     color: inherit !important;
+    margin: 0 !important;
   }
 
   .app-sidebar .nav-link p {
     margin: 0;
     color: inherit;
+    line-height: 1.2;
+    white-space: nowrap;
   }
 
   .app-sidebar[data-bs-theme="dark"] {
     --bs-body-color: var(--text-primary);
     --bs-body-bg: var(--card-bg);
+  }
+
+  /* ── Sidebar profile widget at bottom ── */
+  .sidebar-profile-footer {
+    flex-shrink: 0;
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    position: relative;
+    z-index: 2;
+  }
+
+  .sidebar-profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.04));
+    border: 1px solid var(--glass-border);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    user-select: none;
+  }
+
+  .sidebar-profile-btn:hover {
+    background: var(--glass-hover);
+    border-color: var(--glass-border-h);
+    transform: translateY(-1px);
+  }
+
+  .sidebar-profile-btn:active {
+    transform: translateY(0);
+  }
+
+  .sidebar-profile-avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(255, 122, 0, 0.28);
+    flex-shrink: 0;
+  }
+
+  .sidebar-profile-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    line-height: 1.25;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .sidebar-profile-name {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .sidebar-profile-role {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  .sidebar-profile-arrow {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    transition: transform 0.18s ease, color 0.18s ease;
+    flex-shrink: 0;
+  }
+
+  .sidebar-profile-btn:hover .sidebar-profile-arrow {
+    color: var(--orange);
+    transform: translateX(2px);
   }
 
   /* ── Overlay Sidebar mode: prevents layout shift / framedrop on desktop ── */
@@ -136,34 +298,72 @@
 
 <aside class="app-sidebar shadow-sm">
 
+    <!-- Top Brand Header (Static / Unclickable) -->
     <div class="sidebar-brand">
-        <!-- <a href="/" class="brand-link text-decoration-none d-flex align-items-center">
-            <span class="brand-text">
-                BI Dashboard
-            </span>
-        </a> -->
-        <a href="{% url 'update_profile' %}" class="brand-link text-decoration-none d-flex align-items-center">
-          <span class="brand-text">Hello, {{ request.user.first_name }} {{ request.user.last_name }}</span>
-        </a>
+        <div class="sidebar-brand-inner">
+            <img src="{% static 'jetcommerce.svg' %}?v=2" alt="Jetcommerce" class="sidebar-brand-logo">
+            <div class="sidebar-brand-wrapper">
+                <span class="brand-title">Jetcommerce Dashboard</span>
+                <span class="brand-subtitle">by Business Intelligence</span>
+            </div>
+        </div>
     </div>
 
+    <!-- Navigation Menu Items -->
     <div class="sidebar-wrapper">
         <nav class="mt-3">
             <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">                
               <li class="nav-item">
                   <a href="/brand_performance_v2/" class="nav-link {% if '/brand_performance_v2/' in request.path %}active{% endif %}">
                       <i class="nav-icon bi bi-lightning-charge"></i>
-                      <p>Brand Performance v2</p>
+                      <p>Sales Dashboard</p>
                   </a>
               </li>
               <li class="nav-item">
                   <a href="/order_mart/" class="nav-link {% if request.path == '/order_mart/' %}active{% endif %}">
-                      <i class="bi bi-clipboard-data"></i>
+                      <i class="nav-icon bi bi-clipboard-data"></i>
                       <p>Periodic Reports</p>
                   </a>
               </li>
             </ul>
         </nav>
+    </div>
+
+    <!-- Jetcommerce circular background watermark accent -->
+    <div class="sidebar-watermark" aria-hidden="true">
+        <img src="{% static 'jetcommerce.svg' %}?v=2" alt="" class="sidebar-watermark-img">
+    </div>
+
+    <!-- User Profile Widget at Bottom -->
+    <div class="sidebar-profile-footer">
+        <div class="sidebar-profile-btn" id="sidebarProfileTrigger" role="button" tabindex="0" onclick="openProfileCard()" title="Account & Assigned Brands">
+            <div class="sidebar-profile-avatar" id="sidebarAvatarInitial">
+                {% if request.user.first_name and request.user.last_name %}
+                    {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+                {% elif request.user.first_name %}
+                    {{ request.user.first_name|slice:":2"|upper }}
+                {% else %}
+                    {{ request.user.username|slice:":2"|upper }}
+                {% endif %}
+            </div>
+            <div class="sidebar-profile-info">
+                <span class="sidebar-profile-name text-truncate" id="sidebarDisplayName">
+                    {% if request.user.first_name or request.user.last_name %}
+                        {{ request.user.first_name }} {{ request.user.last_name }}
+                    {% else %}
+                        {{ request.user.username }}
+                    {% endif %}
+                </span>
+                <span class="sidebar-profile-role text-truncate">
+                    {% if request.user.is_superuser %}
+                        Administrator
+                    {% else %}
+                        {{ request.user.brands.count }} Assigned Brand{{ request.user.brands.count|pluralize }}
+                    {% endif %}
+                </span>
+            </div>
+            <i class="bi bi-chevron-right sidebar-profile-arrow"></i>
+        </div>
     </div>
 
 </aside>

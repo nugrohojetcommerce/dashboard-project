@@ -1,0 +1,54 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 132.6 107.5" width="100%" height="100%">
+  <defs id="defs2">
+    <linearGradient id="gradient1" y2="0.49999899" x2="1.00081" y1="0.49999899" x1="-0.00059854198" gradientUnits="userSpaceOnUse">
+      <stop id="stop4" stop-opacity="1" stop-color="#ff9200" offset="1e-07" />
+      <stop id="stop6" stop-opacity="1" stop-color="#f36d00" offset="0.29" />
+      <stop id="stop8" stop-opacity="1" stop-color="#f4680b" offset="0.32" />
+      <stop id="stop10" stop-opacity="1" stop-color="#f83c72" offset="0.57" />
+      <stop id="stop12" stop-opacity="1" stop-color="#fc1cbe" offset="0.78" />
+      <stop id="stop14" stop-opacity="1" stop-color="#fe08ed" offset="0.93" />
+      <stop id="stop16" stop-opacity="1" stop-color="#ff00ff" offset="1" />
+    </linearGradient>
+    <linearGradient gradientUnits="userSpaceOnUse" x1="-0.00059854198" y1="0.49999899" x2="1.00081" y2="0.49999899" id="linearGradient966">
+      <stop style="stop-color:#ffb900;stop-opacity:1" offset="1e-07" stop-color="#ff9200" stop-opacity="1" id="stop952" />
+      <stop style="stop-color:#f38000;stop-opacity:1" offset="0.33755317" stop-color="#f36d00" stop-opacity="1" id="stop954" />
+      <stop offset="0.56728965" stop-color="#f83c72" stop-opacity="1" id="stop958" />
+      <stop offset="0.78" stop-color="#fc1cbe" stop-opacity="1" id="stop960" />
+      <stop offset="0.93" stop-color="#fe08ed" stop-opacity="1" id="stop962" />
+      <stop offset="1" stop-color="#ff00ff" stop-opacity="1" id="stop964" />
+    </linearGradient>
+    <linearGradient collect="always" id="linearGradient1736">
+      <stop style="stop-color:#ed6600;stop-opacity:1;" offset="0" id="stop1732" />
+      <stop style="stop-color:#f98200;stop-opacity:1" offset="1" id="stop1734" />
+    </linearGradient>
+    <linearGradient collect="always" id="linearGradient1728">
+      <stop style="stop-color:#ee0a3f;stop-opacity:1;" offset="0" id="stop1724" />
+      <stop style="stop-color:#ee0a3f;stop-opacity:0;" offset="1" id="stop1726" />
+    </linearGradient>
+    <linearGradient collect="always" href="#gradient1" id="linearGradient950" gradientUnits="userSpaceOnUse" x1="-0.00059854198" y1="0.49999899" x2="1.00081" y2="0.49999899" />
+    <linearGradient collect="always" href="#linearGradient966" id="linearGradient948" gradientUnits="userSpaceOnUse" x1="-0.00059854198" y1="0.49999899" x2="66.758224" y2="-0.017084641" />
+    <linearGradient collect="always" href="#linearGradient1728" id="linearGradient1730" x1="18.75388" y1="49.006153" x2="86.817642" y2="11.319839" gradientUnits="userSpaceOnUse" />
+    <linearGradient collect="always" href="#linearGradient1736" id="linearGradient1738" x1="41.793034" y1="39.348598" x2="75.037086" y2="12.568669" gradientUnits="userSpaceOnUse" />
+    <linearGradient collect="always" href="#linearGradient1728" id="linearGradient1306" gradientUnits="userSpaceOnUse" x1="18.75388" y1="49.006153" x2="86.817642" y2="11.319839" />
+    <linearGradient collect="always" href="#linearGradient1736" id="linearGradient1308" gradientUnits="userSpaceOnUse" x1="41.793034" y1="39.348598" x2="75.037086" y2="12.568669" />
+  </defs>
+  <g label="Layer 1" groupmode="layer" id="layer1" transform="translate(805.60654,100.39806)">
+    <g id="g975">
+      <g transform="translate(-482.6338,-315.5882)" id="layer1-5" label="Layer 1">
+        <g label="Layer 1" id="layer1-2" transform="matrix(0.43272125,0,0,0.43272125,12.094952,193.20654)">
+          <g transform="matrix(1.3719271,0,0,1.3719271,169.4857,-38.493576)" id="g942">
+            <g style="fill:url(#linearGradient950);fill-rule:evenodd;stroke:none;stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel" id="g71" transform="matrix(3.3097462,0,0,3.3097462,-688.02908,65.088537)">
+              <path connector-curvature="0" style="vector-effect:none;fill:url(#linearGradient948);fill-rule:nonzero" id="path69" d="M 33.7366,54.7161 C 33.2581,54.7194 32.7871,54.5969 32.3707,54.361 28.8059,52.2985 2.4039,35.7444 1.40683,35.239 0.648025,34.8849 0.129878,34.1595 0.0409756,33.3268 V 10.1073 C 0.0213409,9.24058 0.449817,8.42493 1.17463,7.94927 L 1.36585,7.84 C 3.92,6.25561 12.4702,1.03805 13.8224,0.286829 14.1327,0.102692 14.4861,0.00374668 14.8468,0 c 0.3382,0.00382664 0.6706,0.0881007 0.9698,0.245854 0,0 11.9649,7.799026 13.7951,8.495606 1.2842,0.59 2.6845,0.88406 4.0976,0.86049 1.6012,0.03347 3.1834,-0.35265 4.5892,-1.12 C 40.0878,7.53951 51.52,0.286829 51.6429,0.286829 51.9311,0.112743 52.2623,0.0228451 52.599,0.0273171 52.9601,0.0290843 53.3139,0.128172 53.6234,0.314146 55.1805,1.17463 65.7795,7.66244 66.2302,7.94927 66.9757,8.39902 67.4276,9.20946 67.4185,10.08 v 23.2195 c -0.0836,0.8347 -0.6034,1.5624 -1.3658,1.9122 -0.9971,0.5463 -27.3171,17.1005 -30.9503,19.122 -0.4136,0.2455 -0.8848,0.3774 -1.3658,0.3824" />
+            </g>
+            <g style="fill:url(#linearGradient1730);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel" id="g79" transform="matrix(3.3097462,0,0,3.3097462,-688.02908,65.088537)">
+              <path style="vector-effect:none;fill:url(#linearGradient1306);fill-opacity:1;fill-rule:nonzero" connector-curvature="0" id="path77" d="m 33.6,54.7162 0.1366,-1e-4 c 0.4785,0.0033 0.9495,-0.1192 1.3658,-0.3551 3.5649,-2.0625 29.9532,-18.6166 30.9503,-19.122 0.7624,-0.3498 1.2822,-1.0775 1.3658,-1.9122 V 10.1073 C 67.4229,9.71423 67.334,9.32571 67.159,8.97366 L 33.6,27.399 v 27.3172" />
+            </g>
+            <g transform="matrix(-3.2744849,0,0,3.2744849,-467.18522,65.934126)" id="g970" style="fill:url(#linearGradient1738);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel">
+              <path d="m 33.6,54.7162 0.1366,-1e-4 c 0.4785,0.0033 0.9495,-0.1192 1.3658,-0.3551 3.5649,-2.0625 29.9532,-18.6166 30.9503,-19.122 0.7624,-0.3498 1.2822,-1.0775 1.3658,-1.9122 V 10.1073 C 67.4229,9.71423 67.334,9.32571 67.159,8.97366 L 33.6,27.399 v 27.3172" id="path968" connector-curvature="0" style="vector-effect:none;fill:url(#linearGradient1308);fill-opacity:1;fill-rule:nonzero" />
+            </g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

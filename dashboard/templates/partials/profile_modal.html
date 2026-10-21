@@ -1,0 +1,758 @@
+{% load static %}
+<!-- ── PROFILE CARD MODAL OVERLAY ── -->
+<div id="profileCardBackdrop" class="profile-card-backdrop" aria-hidden="true">
+  <div id="profileCardModal" class="profile-card-modal shadow-lg" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+    
+    <!-- Top accent highlight line -->
+    <div class="profile-card-top-bar"></div>
+
+    <!-- Header -->
+    <div class="profile-card-header">
+      <div class="d-flex align-items-center gap-3">
+        <div class="profile-modal-avatar" id="profileModalAvatar">
+          {% if request.user.first_name and request.user.last_name %}
+            {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+          {% elif request.user.first_name %}
+            {{ request.user.first_name|slice:":2"|upper }}
+          {% else %}
+            {{ request.user.username|slice:":2"|upper }}
+          {% endif %}
+        </div>
+        <div class="profile-modal-user-meta">
+          <h4 class="profile-modal-name mb-0 text-truncate" id="profileModalFullName">
+            {% if request.user.first_name or request.user.last_name %}
+              {{ request.user.first_name }} {{ request.user.last_name }}
+            {% else %}
+              {{ request.user.username }}
+            {% endif %}
+          </h4>
+          <span class="profile-modal-username text-truncate" id="profileModalUsername">
+            @{{ request.user.username }}
+          </span>
+        </div>
+      </div>
+      <button type="button" class="profile-card-close-btn" onclick="closeProfileCard()" aria-label="Close modal">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Tab navigation -->
+    <div class="profile-card-tabs">
+      <button type="button" class="profile-tab-btn active" data-tab="brands" onclick="switchProfileTab('brands')">
+        <i class="bi bi-shield-check"></i>
+        <span>Brands</span>
+        <span class="profile-tab-badge" id="profileBrandsCountBadge">{{ request.user.brands.count }}</span>
+      </button>
+      <button type="button" class="profile-tab-btn" data-tab="profile" onclick="switchProfileTab('profile')">
+        <i class="bi bi-person"></i>
+        <span>Edit Profile</span>
+      </button>
+      <button type="button" class="profile-tab-btn" data-tab="password" onclick="switchProfileTab('password')">
+        <i class="bi bi-key"></i>
+        <span>Password</span>
+      </button>
+    </div>
+
+    <!-- Tab body -->
+    <div class="profile-card-body">
+
+      <!-- TAB 1: Assigned Brands -->
+      <div id="profileTabBrands" class="profile-tab-pane active">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div>
+            <h6 class="mb-0 fw-bold" style="color: var(--text-main); font-size: 0.88rem;">Assigned Brands</h6>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Brands currently authorized for your account</small>
+          </div>
+          {% if request.user.brands.all %}
+          <div class="brand-search-box">
+            <i class="bi bi-search brand-search-icon"></i>
+            <input type="text" id="brandSearchInput" class="brand-search-input" placeholder="Search brand..." oninput="filterAssignedBrands(this.value)">
+          </div>
+          {% endif %}
+        </div>
+
+        {% if request.user.brands.all %}
+          <div class="brand-list-wrapper" id="brandListWrapper">
+            <div class="brand-grid" id="brandGrid">
+              {% for brand in request.user.brands.all %}
+                <div class="brand-item-card" data-brand-name="{{ brand.name|lower }}">
+                  <span class="brand-item-dot"></span>
+                  <span class="brand-item-text text-truncate" title="{{ brand.name }}">{{ brand.name }}</span>
+                </div>
+              {% endfor %}
+            </div>
+            <div id="noBrandsMatchMessage" class="no-brands-empty d-none">
+              <i class="bi bi-search mb-1" style="font-size: 1.2rem;"></i>
+              <span>No matching brands found.</span>
+            </div>
+          </div>
+        {% else %}
+          <div class="no-brands-empty">
+            <i class="bi bi-shield-slash mb-2" style="font-size: 1.5rem; color: var(--text-muted);"></i>
+            <span>No brands have been assigned to your account yet.</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- TAB 2: Edit Profile -->
+      <div id="profileTabProfile" class="profile-tab-pane">
+        <div class="mb-3">
+          <h6 class="mb-0 fw-bold" style="color: var(--text-main); font-size: 0.88rem;">Account Details</h6>
+          <small style="color: var(--text-muted); font-size: 0.75rem;">Update your name and login username</small>
+        </div>
+
+        <div id="profileAlert" class="profile-card-alert d-none"></div>
+
+        <form id="profileEditForm" onsubmit="handleProfileSubmit(event)">
+          {% csrf_token %}
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="profile-form-label" for="profileFirstNameInput">First Name</label>
+              <input type="text" class="profile-form-input" id="profileFirstNameInput" name="first_name" value="{{ request.user.first_name }}" placeholder="First name">
+            </div>
+            <div class="col-6">
+              <label class="profile-form-label" for="profileLastNameInput">Last Name</label>
+              <input type="text" class="profile-form-input" id="profileLastNameInput" name="last_name" value="{{ request.user.last_name }}" placeholder="Last name">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="profile-form-label" for="profileUsernameInput">Username <span class="text-danger">*</span></label>
+            <input type="text" class="profile-form-input" id="profileUsernameInput" name="username" value="{{ request.user.username }}" placeholder="username" required>
+            <small style="color: var(--text-muted); font-size: 0.72rem; margin-top: 3px; display: block;">Used for logging in and assigned brand access</small>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-end gap-2 mt-4">
+            <button type="submit" class="btn btn-sm btn-primary profile-btn-primary" id="profileSaveBtn">
+              <span class="btn-text"><i class="bi bi-check2 me-1"></i> Save Changes</span>
+              <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- TAB 3: Change Password -->
+      <div id="profileTabPassword" class="profile-tab-pane">
+        <div class="mb-3">
+          <h6 class="mb-0 fw-bold" style="color: var(--text-main); font-size: 0.88rem;">Change Password</h6>
+          <small style="color: var(--text-muted); font-size: 0.75rem;">Ensure your account is using a strong password</small>
+        </div>
+
+        <div id="passwordAlert" class="profile-card-alert d-none"></div>
+
+        <form id="passwordChangeForm" onsubmit="handlePasswordSubmit(event)">
+          {% csrf_token %}
+          <div class="mb-2">
+            <label class="profile-form-label" for="oldPasswordInput">Current Password</label>
+            <input type="password" class="profile-form-input" id="oldPasswordInput" name="old_password" placeholder="Enter current password" required autocomplete="current-password">
+          </div>
+
+          <div class="mb-2">
+            <label class="profile-form-label" for="newPassword1Input">New Password</label>
+            <input type="password" class="profile-form-input" id="newPassword1Input" name="new_password1" placeholder="Enter new password" required autocomplete="new-password">
+          </div>
+
+          <div class="mb-3">
+            <label class="profile-form-label" for="newPassword2Input">Confirm New Password</label>
+            <input type="password" class="profile-form-input" id="newPassword2Input" name="new_password2" placeholder="Re-enter new password" required autocomplete="new-password">
+          </div>
+
+          <div class="d-flex align-items-center justify-content-end gap-2 mt-3">
+            <button type="submit" class="btn btn-sm btn-primary profile-btn-primary" id="passwordSaveBtn">
+              <span class="btn-text"><i class="bi bi-shield-lock me-1"></i> Update Password</span>
+              <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="profile-card-footer">
+      <form action="{% url 'logout' %}" method="post" class="m-0">
+        {% csrf_token %}
+        <button type="submit" class="profile-btn-logout" title="Sign out of your account">
+          <i class="bi bi-box-arrow-right"></i>
+          <span>Log Out</span>
+        </button>
+      </form>
+      <button type="button" class="profile-btn-close-footer" onclick="closeProfileCard()">
+        Close
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<style>
+/* ── PROFILE MODAL CARD STYLING ── */
+.profile-card-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2050;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-card-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.profile-card-modal {
+  width: 100%;
+  max-width: 520px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: scale(0.96) translateY(10px);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-card-backdrop.active .profile-card-modal {
+  transform: scale(1) translateY(0);
+}
+
+.profile-card-top-bar {
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(90deg, #FF7A00 0%, #FF9500 50%, #FF5500 100%);
+}
+
+.profile-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.profile-modal-avatar {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF7A00 0%, #FF9500 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(255, 122, 0, 0.32);
+}
+
+.profile-modal-user-meta {
+  overflow: hidden;
+  line-height: 1.25;
+}
+
+.profile-modal-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.2px;
+}
+
+.profile-modal-username {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.profile-card-close-btn {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-card-close-btn:hover {
+  background: var(--glass-hover);
+  color: var(--text-main);
+}
+
+/* Tabs */
+.profile-card-tabs {
+  display: flex;
+  padding: 8px 16px 0 16px;
+  border-bottom: 1px solid var(--glass-border);
+  gap: 6px;
+  background: var(--glass-bg, rgba(0, 0, 0, 0.02));
+}
+
+.profile-tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  padding: 8px 14px;
+  border-radius: 8px 8px 0 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.profile-tab-btn:hover {
+  color: var(--text-main);
+  background: var(--glass-hover);
+}
+
+.profile-tab-btn.active {
+  color: var(--orange);
+  background: var(--card-bg);
+  border-color: var(--glass-border);
+  border-bottom: 2px solid var(--orange);
+  font-weight: 600;
+}
+
+.profile-tab-badge {
+  background: var(--orange-dim, rgba(255, 122, 0, 0.15));
+  color: var(--orange);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+/* Body & Panes */
+.profile-card-body {
+  padding: 18px 20px;
+  min-height: 260px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.profile-tab-pane {
+  display: none;
+}
+
+.profile-tab-pane.active {
+  display: block;
+}
+
+/* Brand Grid */
+.brand-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.brand-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+.brand-search-input {
+  width: 140px;
+  background: var(--card-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 3px 10px 3px 26px;
+  font-size: 0.75rem;
+  color: var(--text-main);
+  transition: all 0.18s ease;
+}
+
+.brand-search-input:focus {
+  width: 180px;
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 2px var(--orange-dim);
+}
+
+.brand-list-wrapper {
+  margin-top: 10px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.brand-list-wrapper::-webkit-scrollbar {
+  width: 5px;
+}
+.brand-list-wrapper::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 10px;
+}
+
+.brand-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .brand-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.brand-item-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--glass-border);
+  transition: all 0.15s ease;
+}
+
+.brand-item-card:hover {
+  border-color: var(--glass-border-h);
+  background: var(--glass-hover);
+  transform: translateY(-1px);
+}
+
+.brand-item-dot {
+  width: 7px;
+  height: 7px;
+  min-width: 7px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 6px rgba(255, 122, 0, 0.5);
+}
+
+.brand-item-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.no-brands-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-align: center;
+  background: var(--glass-bg);
+  border: 1px dashed var(--glass-border);
+  border-radius: 10px;
+}
+
+/* Forms */
+.profile-form-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.profile-form-input {
+  width: 100%;
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  color: var(--text-main);
+  background: var(--card-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.profile-form-input:focus {
+  outline: none;
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px var(--orange-dim, rgba(255, 122, 0, 0.18));
+}
+
+.profile-btn-primary {
+  background: var(--orange) !important;
+  border-color: var(--orange) !important;
+  color: #fff !important;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.profile-btn-primary:hover {
+  background: var(--orange-dark, #e06900) !important;
+  border-color: var(--orange-dark, #e06900) !important;
+}
+
+.profile-card-alert {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+}
+
+.profile-card-alert.alert-success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.profile-card-alert.alert-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: #EF4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Footer */
+.profile-card-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--glass-bg, rgba(0, 0, 0, 0.02));
+}
+
+.profile-btn-logout {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #EF4444;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-btn-logout:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: #EF4444;
+}
+
+.profile-btn-close-footer {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  padding: 5px 14px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-btn-close-footer:hover {
+  background: var(--glass-hover);
+  color: var(--text-main);
+  border-color: var(--glass-border-h);
+}
+</style>
+
+<script>
+/* ── PROFILE CARD SCRIPT ── */
+function openProfileCard() {
+  const backdrop = document.getElementById('profileCardBackdrop');
+  if (!backdrop) return;
+  backdrop.classList.add('active');
+  backdrop.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProfileCard() {
+  const backdrop = document.getElementById('profileCardBackdrop');
+  if (!backdrop) return;
+  backdrop.classList.remove('active');
+  backdrop.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+function switchProfileTab(tabName) {
+  // Update tab buttons
+  document.querySelectorAll('.profile-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+  });
+  // Update tab panes
+  const tabBrands = document.getElementById('profileTabBrands');
+  const tabProfile = document.getElementById('profileTabProfile');
+  const tabPassword = document.getElementById('profileTabPassword');
+
+  if (tabBrands) tabBrands.classList.toggle('active', tabName === 'brands');
+  if (tabProfile) tabProfile.classList.toggle('active', tabName === 'profile');
+  if (tabPassword) tabPassword.classList.toggle('active', tabName === 'password');
+}
+
+function filterAssignedBrands(query) {
+  const q = (query || '').toLowerCase().trim();
+  const items = document.querySelectorAll('#brandGrid .brand-item-card');
+  const noMatch = document.getElementById('noBrandsMatchMessage');
+  let matchCount = 0;
+
+  items.forEach(item => {
+    const name = item.getAttribute('data-brand-name') || '';
+    if (!q || name.includes(q)) {
+      item.style.display = 'flex';
+      matchCount++;
+    } else {
+      item.style.display = 'none';
+    }
+  });
+
+  if (noMatch) {
+    noMatch.classList.toggle('d-none', matchCount > 0);
+  }
+}
+
+// Close on backdrop click (click outside card)
+document.addEventListener('click', function(e) {
+  const backdrop = document.getElementById('profileCardBackdrop');
+  if (backdrop && e.target === backdrop) {
+    closeProfileCard();
+  }
+});
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeProfileCard();
+  }
+});
+
+// AJAX Profile Update
+async function handleProfileSubmit(e) {
+  e.preventDefault();
+  const form = document.getElementById('profileEditForm');
+  const btn = document.getElementById('profileSaveBtn');
+  const alertEl = document.getElementById('profileAlert');
+  if (!form || !btn) return;
+
+  const btnText = btn.querySelector('.btn-text');
+  const spinner = btn.querySelector('.spinner-border');
+
+  btn.disabled = true;
+  if (btnText) btnText.classList.add('d-none');
+  if (spinner) spinner.classList.remove('d-none');
+  if (alertEl) alertEl.className = 'profile-card-alert d-none';
+
+  const formData = new FormData(form);
+  formData.append('ajax', '1');
+
+  try {
+    const res = await fetch("{% url 'update_profile' %}", {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const data = await res.json();
+
+    if (res.ok && data.status === 'success') {
+      if (alertEl) {
+        alertEl.className = 'profile-card-alert alert-success';
+        alertEl.innerHTML = `<i class="bi bi-check-circle me-1"></i> ${data.message || 'Profile updated successfully!'}`;
+      }
+      // Update sidebar & modal DOM live!
+      const sideName = document.getElementById('sidebarDisplayName');
+      const sideAvatar = document.getElementById('sidebarAvatarInitial');
+      const modalName = document.getElementById('profileModalFullName');
+      const modalUsername = document.getElementById('profileModalUsername');
+      const modalAvatar = document.getElementById('profileModalAvatar');
+
+      if (sideName && data.display_name) sideName.textContent = data.display_name;
+      if (sideAvatar && data.initials) sideAvatar.textContent = data.initials;
+      if (modalName && data.display_name) modalName.textContent = data.display_name;
+      if (modalUsername && data.username) modalUsername.textContent = '@' + data.username;
+      if (modalAvatar && data.initials) modalAvatar.textContent = data.initials;
+    } else {
+      if (alertEl) {
+        alertEl.className = 'profile-card-alert alert-danger';
+        alertEl.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i> ${data.message || 'Failed to update profile.'}`;
+      }
+    }
+  } catch (err) {
+    if (alertEl) {
+      alertEl.className = 'profile-card-alert alert-danger';
+      alertEl.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i> Connection error. Please try again.`;
+    }
+  } finally {
+    btn.disabled = false;
+    if (btnText) btnText.classList.remove('d-none');
+    if (spinner) spinner.classList.add('d-none');
+  }
+}
+
+// AJAX Password Change
+async function handlePasswordSubmit(e) {
+  e.preventDefault();
+  const form = document.getElementById('passwordChangeForm');
+  const btn = document.getElementById('passwordSaveBtn');
+  const alertEl = document.getElementById('passwordAlert');
+  if (!form || !btn) return;
+
+  const btnText = btn.querySelector('.btn-text');
+  const spinner = btn.querySelector('.spinner-border');
+
+  btn.disabled = true;
+  if (btnText) btnText.classList.add('d-none');
+  if (spinner) spinner.classList.remove('d-none');
+  if (alertEl) alertEl.className = 'profile-card-alert d-none';
+
+  const formData = new FormData(form);
+
+  try {
+    const res = await fetch("{% url 'change_password_api' %}", {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const data = await res.json();
+
+    if (res.ok && data.status === 'success') {
+      if (alertEl) {
+        alertEl.className = 'profile-card-alert alert-success';
+        alertEl.innerHTML = `<i class="bi bi-check-circle me-1"></i> ${data.message || 'Password changed successfully!'}`;
+      }
+      form.reset();
+    } else {
+      if (alertEl) {
+        alertEl.className = 'profile-card-alert alert-danger';
+        alertEl.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i> ${data.message || 'Failed to update password.'}`;
+      }
+    }
+  } catch (err) {
+    if (alertEl) {
+      alertEl.className = 'profile-card-alert alert-danger';
+      alertEl.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i> Connection error. Please try again.`;
+    }
+  } finally {
+    btn.disabled = false;
+    if (btnText) btnText.classList.remove('d-none');
+    if (spinner) spinner.classList.add('d-none');
+  }
+}
+</script>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load humanize static %}
 
 {% block title %}Brand Performance v2 — Analytics{% endblock %}
 
@@ -25,6 +25,7 @@
     --c-amber: #F59E0B;
     --c-rose: #F43F5E;
     --c-emerald: #10B981;
+    --emerald: #10B981;
     --c-slate: #94A3B8;
     --bp2-radius: 16px;
     --bp2-radius-sm: 10px;
@@ -248,7 +249,7 @@
   }
 
   .bp2-dropdown-wrap.open {
-    z-index: 1050;
+    z-index: 99999 !important;
   }
 
   .bp2-dropdown-wrap.open .bp2-dropdown-trigger {
@@ -297,7 +298,7 @@
     border-radius: 12px;
     box-shadow: 0 12px 32px -8px rgba(16, 24, 40, .24);
     padding: 8px;
-    z-index: 1000;
+    z-index: 99999 !important;
     display: none;
   }
 
@@ -877,6 +878,183 @@
     }
   }
 
+  /* =====================================================================
+     FULL-PAGE LOADING OVERLAY (.bp2-loading-overlay)
+     ===================================================================== */
+  body.bp2-loading-locked {
+    overflow: hidden !important;
+  }
+
+  body.bp2-loading-locked .app-main,
+  body.sidebar-collapse .app-main {
+    filter: none !important;
+  }
+
+  .bp2-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.32s ease;
+  }
+
+  .bp2-loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+  }
+
+  .bp2-loading-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(248, 249, 250, 0.82);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  [data-theme="dark"] .bp2-loading-backdrop {
+    background: rgba(10, 14, 20, 0.84);
+  }
+
+  .bp2-loading-card {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 38px 28px;
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--bp2-border, rgba(0, 0, 0, 0.08));
+    border-radius: 24px;
+    box-shadow: 0 20px 48px -12px rgba(16, 24, 40, 0.16), 0 0 0 1px color-mix(in srgb, var(--text-muted) 10%, transparent);
+    text-align: center;
+    max-width: 90vw;
+    width: 330px;
+    animation: bp2LoadingCardPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  [data-theme="dark"] .bp2-loading-card {
+    background: #121826;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 24px 56px -12px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  @keyframes bp2LoadingCardPop {
+    0% {
+      opacity: 0;
+      transform: scale(0.92) translateY(10px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .bp2-mascot-box {
+    width: 148px;
+    height: 148px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .bp2-mascot-animation {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .bp2-loading-text-wrap {
+    margin-top: 14px;
+  }
+
+  .bp2-loading-text {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.96rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text-primary, #1f2937);
+    display: inline-block;
+    user-select: none;
+  }
+
+  .bp2-loading-dot {
+    display: inline-block;
+    animation: bp2DotPulse 1.4s infinite ease-in-out both;
+  }
+
+  .bp2-loading-dot.d1 {
+    animation-delay: 0s;
+  }
+
+  .bp2-loading-dot.d2 {
+    animation-delay: 0.22s;
+  }
+
+  .bp2-loading-dot.d3 {
+    animation-delay: 0.44s;
+  }
+
+  @keyframes bp2DotPulse {
+
+    0%,
+    80%,
+    100% {
+      opacity: 0.25;
+      transform: scale(0.85);
+    }
+
+    40% {
+      opacity: 1;
+      transform: scale(1.15);
+    }
+  }
+
+  .bp2-loading-bar-wrap {
+    width: 130px;
+    height: 3px;
+    background: color-mix(in srgb, var(--orange, #FF7A00) 18%, transparent);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 14px;
+    position: relative;
+  }
+
+  .bp2-loading-bar-indeterminate {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 45%;
+    background: linear-gradient(90deg, var(--orange, #FF7A00), var(--orange-bright, #D96500));
+    border-radius: 99px;
+    animation: bp2LoadingBarSlide 1.3s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  @keyframes bp2LoadingBarSlide {
+    0% {
+      left: -45%;
+    }
+
+    100% {
+      left: 100%;
+    }
+  }
+
   .placeholder-tag {
     display: inline-flex;
     align-items: center;
@@ -975,10 +1153,12 @@
       transform: scale(0.95);
       box-shadow: 0 0 0 0 color-mix(in srgb, var(--orange) 60%, transparent);
     }
+
     70% {
       transform: scale(1);
       box-shadow: 0 0 0 6px transparent;
     }
+
     100% {
       transform: scale(0.95);
       box-shadow: 0 0 0 0 transparent;
@@ -990,6 +1170,7 @@
       opacity: 0;
       transform: translateY(6px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -1006,19 +1187,24 @@
     box-shadow: var(--bp2-shadow);
     overflow: hidden;
   }
+
   .bp2-bento-body {
     padding: 16px 20px 20px;
     display: flex;
     flex-direction: column;
     gap: 14px;
   }
+
   .bp2-bento-row-top {
     display: grid;
     grid-template-columns: 1.18fr 0.82fr;
     gap: 14px;
   }
+
   @media (max-width: 1024px) {
-    .bp2-bento-row-top { grid-template-columns: 1fr; }
+    .bp2-bento-row-top {
+      grid-template-columns: 1fr;
+    }
   }
 
   .bp2-bento-segment {
@@ -1030,6 +1216,7 @@
     flex-direction: column;
     gap: 12px;
   }
+
   .bp2-bento-seg-header {
     display: flex;
     justify-content: space-between;
@@ -1040,7 +1227,12 @@
     color: var(--text-muted);
     text-transform: uppercase;
   }
-  .bp2-bento-seg-header i { font-size: .85rem; color: var(--orange); }
+
+  .bp2-bento-seg-header i {
+    font-size: .85rem;
+    color: var(--orange);
+  }
+
   .bp2-bento-pill {
     font-size: .68rem;
     font-weight: 600;
@@ -1052,7 +1244,10 @@
     text-transform: none;
     letter-spacing: 0;
   }
-  .bp2-bento-pill b { color: var(--text-primary); }
+
+  .bp2-bento-pill b {
+    color: var(--text-primary);
+  }
 
   /* Revenue Block Layout */
   .bento-rev-top {
@@ -1060,13 +1255,19 @@
     grid-template-columns: 1.1fr 0.9fr;
     gap: 12px;
   }
+
   .bento-rev-bottom {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
+
   @media (max-width: 640px) {
-    .bento-rev-top, .bento-rev-bottom { grid-template-columns: 1fr; }
+
+    .bento-rev-top,
+    .bento-rev-bottom {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* Micro Cards */
@@ -1080,20 +1281,24 @@
     justify-content: space-between;
     transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
   }
+
   .bento-hero-tile.primary-nmv {
     border-color: color-mix(in srgb, var(--orange) 35%, var(--bp2-border));
     background: linear-gradient(135deg, color-mix(in srgb, var(--orange-dim) 40%, var(--bp2-surface)), var(--bp2-surface));
   }
+
   .bento-hero-tile:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 16px -4px rgba(16, 24, 40, .10);
   }
+
   .bento-tile-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 6px;
   }
+
   .bento-tile-label {
     font-size: .72rem;
     font-weight: 700;
@@ -1101,6 +1306,7 @@
     text-transform: uppercase;
     letter-spacing: .03em;
   }
+
   .bento-tile-value {
     font-size: 1.35rem;
     font-weight: 800;
@@ -1109,10 +1315,12 @@
     margin-bottom: 4px;
     color: var(--text-primary);
   }
+
   .bento-tile-value.lg {
     font-size: 1.55rem;
     color: var(--orange);
   }
+
   .bento-tile-foot {
     display: flex;
     justify-content: space-between;
@@ -1120,6 +1328,7 @@
     font-size: .7rem;
     color: var(--text-muted);
   }
+
   .bento-sub-metric {
     font-size: .68rem;
     color: var(--text-muted);
@@ -1129,7 +1338,10 @@
     display: flex;
     justify-content: space-between;
   }
-  .bento-sub-metric b { color: var(--text-primary); }
+
+  .bento-sub-metric b {
+    color: var(--text-primary);
+  }
 
   /* Compact Micro Tile (Orders, Qty) */
   .bento-mini-tile {
@@ -1142,13 +1354,23 @@
     gap: 3px;
     transition: transform .18s;
   }
-  .bento-mini-tile:hover { transform: translateY(-1px); }
+
+  .bento-mini-tile:hover {
+    transform: translateY(-1px);
+  }
+
   .bento-mini-head {
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
-  .bento-mini-label { font-size: .68rem; font-weight: 700; color: var(--text-muted); }
+
+  .bento-mini-label {
+    font-size: .68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
   .bento-mini-val {
     font-size: 1.05rem;
     font-weight: 800;
@@ -1157,8 +1379,15 @@
     align-items: baseline;
     gap: 6px;
   }
-  .bento-mini-sub { font-size: .66rem; color: var(--text-muted); }
-  .bento-mini-sub b { color: var(--text-primary); }
+
+  .bento-mini-sub {
+    font-size: .66rem;
+    color: var(--text-muted);
+  }
+
+  .bento-mini-sub b {
+    color: var(--text-primary);
+  }
 
   /* Economics 2x2 Grid */
   .bento-econ-grid {
@@ -1166,6 +1395,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
+
   .bento-econ-tile {
     background: var(--bp2-surface);
     border: 1px solid var(--bp2-border);
@@ -1177,7 +1407,10 @@
     gap: 4px;
     transition: transform .18s;
   }
-  .bento-econ-tile:hover { transform: translateY(-1px); }
+
+  .bento-econ-tile:hover {
+    transform: translateY(-1px);
+  }
 
   /* Promo 4-col Strip */
   .bento-promo-strip {
@@ -1185,12 +1418,19 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
   }
+
   @media (max-width: 900px) {
-    .bento-promo-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .bento-promo-strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
+
   @media (max-width: 480px) {
-    .bento-promo-strip { grid-template-columns: 1fr; }
+    .bento-promo-strip {
+      grid-template-columns: 1fr;
+    }
   }
+
   .bento-promo-tile {
     background: var(--bp2-surface);
     border: 1px solid var(--bp2-border);
@@ -1201,7 +1441,10 @@
     gap: 4px;
     transition: transform .18s;
   }
-  .bento-promo-tile:hover { transform: translateY(-1px); }
+
+  .bento-promo-tile:hover {
+    transform: translateY(-1px);
+  }
 
   /* Subsidy Progress Bar */
   .bento-subsidy-bar-wrap {
@@ -1210,6 +1453,7 @@
     gap: 4px;
     margin-top: 2px;
   }
+
   .bento-subsidy-bar {
     height: 6px;
     border-radius: 999px;
@@ -1218,16 +1462,19 @@
     display: flex;
     border: 1px solid var(--bp2-border);
   }
+
   .bento-sub-fill-plat {
     background: #8B5CF6;
     height: 100%;
     transition: width .5s ease;
   }
+
   .bento-sub-fill-seller {
     background: #F59E0B;
     height: 100%;
     transition: width .5s ease;
   }
+
   .bento-subsidy-labels {
     display: flex;
     justify-content: space-between;
@@ -1235,8 +1482,14 @@
     color: var(--text-muted);
     font-weight: 600;
   }
-  .bento-subsidy-labels .dot-plat { color: #8B5CF6; }
-  .bento-subsidy-labels .dot-seller { color: #F59E0B; }
+
+  .bento-subsidy-labels .dot-plat {
+    color: #8B5CF6;
+  }
+
+  .bento-subsidy-labels .dot-seller {
+    color: #F59E0B;
+  }
 
   /* Chips */
   .chip {
@@ -1250,11 +1503,31 @@
     white-space: nowrap;
     line-height: 1.3;
   }
-  .chip.up   { color: #047857; background: #D1FAE5; }
-  .chip.down { color: #BE123C; background: #FFE4E6; }
-  .chip.flat { color: var(--text-muted); background: color-mix(in srgb, var(--text-muted) 12%, transparent); }
-  [data-theme="dark"] .chip.up   { color: #34D399; background: rgba(52, 211, 153, .12); }
-  [data-theme="dark"] .chip.down { color: #FB7185; background: rgba(251, 113, 133, .12); }
+
+  .chip.up {
+    color: #047857;
+    background: #D1FAE5;
+  }
+
+  .chip.down {
+    color: #BE123C;
+    background: #FFE4E6;
+  }
+
+  .chip.flat {
+    color: var(--text-muted);
+    background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  }
+
+  [data-theme="dark"] .chip.up {
+    color: #34D399;
+    background: rgba(52, 211, 153, .12);
+  }
+
+  [data-theme="dark"] .chip.down {
+    color: #FB7185;
+    background: rgba(251, 113, 133, .12);
+  }
 
   /* =====================================================================
      THEME-AWARE SCROLLBAR STYLES (Light & Dark Mode)
@@ -1274,7 +1547,8 @@
     color-scheme: dark;
   }
 
-  .bp2, .bp2 * {
+  .bp2,
+  .bp2 * {
     scrollbar-width: thin;
     scrollbar-color: var(--bp2-scroll-thumb) var(--bp2-scroll-track);
   }
@@ -1344,6 +1618,15 @@
     place-items: center;
     pointer-events: none;
     text-align: center;
+    z-index: 2;
+    transition: opacity .18s ease;
+  }
+
+  .bp2-chart-body.sm:hover .bp2-donut-center,
+  .bp2-chart-body:hover .bp2-donut-center,
+  .bp2-donut-wrap:hover .bp2-donut-center {
+    opacity: 0.15;
+    pointer-events: none;
   }
 
   .bp2-donut-center small {
@@ -1432,6 +1715,7 @@
     min-width: 140px;
     width: 100%;
   }
+
   .bp2-split-bar-track {
     height: 7px;
     display: flex;
@@ -1439,14 +1723,17 @@
     overflow: hidden;
     background: var(--bp2-border);
   }
+
   .bp2-split-bar-fill.plat {
     background: #0EA5E9;
     height: 100%;
   }
+
   .bp2-split-bar-fill.seller {
     background: #F59E0B;
     height: 100%;
   }
+
   .bp2-split-bar-text {
     display: flex;
     justify-content: space-between;
@@ -1454,12 +1741,15 @@
     font-weight: 600;
     font-family: 'JetBrains Mono', monospace;
   }
+
   .bp2-split-bar-text .plat-txt {
     color: #0EA5E9;
   }
+
   .bp2-split-bar-text .seller-txt {
     color: #F59E0B;
   }
+
   .bp2-split-bar-text .none-txt {
     color: var(--text-muted);
   }
@@ -1494,11 +1784,11 @@
   }
 
   /* ── Platform Badges ── */
-  /* ── Platform Badges (No Dot) ── */
   .bp2-plat-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 5px;
     padding: 2.5px 8px;
     border-radius: 6px;
     font-size: .72rem;
@@ -1506,6 +1796,36 @@
     line-height: 1.25;
     white-space: nowrap;
     letter-spacing: .01em;
+  }
+
+  .platform-logo-icon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    flex-shrink: 0;
+    vertical-align: middle;
+    display: inline-block;
+  }
+
+  .platform-logo-fallback {
+    font-size: 13px;
+    opacity: .75;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+
+  .bp2-segment button .platform-logo-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 5px;
+    vertical-align: -2px;
+  }
+
+  .bp2-dropdown-option .platform-logo-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    flex-shrink: 0;
   }
 
   .badge-platform-shopee {
@@ -1525,6 +1845,7 @@
     background: rgba(20, 184, 166, 0.12);
     border: 1px solid rgba(20, 184, 166, 0.25);
   }
+
   [data-theme="dark"] .badge-platform-tiktok,
   [data-bs-theme="dark"] .badge-platform-tiktok,
   body.dark-mode .badge-platform-tiktok {
@@ -1538,6 +1859,7 @@
     background: rgba(79, 70, 229, 0.12);
     border: 1px solid rgba(79, 70, 229, 0.25);
   }
+
   [data-theme="dark"] .badge-platform-lazada,
   [data-bs-theme="dark"] .badge-platform-lazada,
   body.dark-mode .badge-platform-lazada {
@@ -1551,6 +1873,7 @@
     background: rgba(0, 149, 218, 0.12);
     border: 1px solid rgba(0, 149, 218, 0.25);
   }
+
   [data-theme="dark"] .badge-platform-blibli,
   [data-bs-theme="dark"] .badge-platform-blibli,
   body.dark-mode .badge-platform-blibli {
@@ -1564,6 +1887,7 @@
     background: rgba(227, 30, 82, 0.12);
     border: 1px solid rgba(227, 30, 82, 0.25);
   }
+
   [data-theme="dark"] .badge-platform-bukalapak,
   [data-bs-theme="dark"] .badge-platform-bukalapak,
   body.dark-mode .badge-platform-bukalapak {
@@ -1596,6 +1920,7 @@
     color: #6366F1;
     border: 1px solid rgba(99, 102, 241, 0.3);
   }
+
   [data-theme="dark"] .badge-p1,
   [data-bs-theme="dark"] .badge-p1,
   body.dark-mode .badge-p1 {
@@ -1609,6 +1934,7 @@
     color: #D97706;
     border: 1px solid rgba(245, 158, 11, 0.3);
   }
+
   [data-theme="dark"] .badge-p2,
   [data-bs-theme="dark"] .badge-p2,
   body.dark-mode .badge-p2 {
@@ -1622,6 +1948,7 @@
     color: #059669;
     border: 1px solid rgba(16, 185, 129, 0.3);
   }
+
   [data-theme="dark"] .badge-total,
   [data-bs-theme="dark"] .badge-total,
   body.dark-mode .badge-total {
@@ -1633,9 +1960,11 @@
   .th-period-p1 {
     background: color-mix(in srgb, #6366F1 8%, var(--bp2-surface-2)) !important;
   }
+
   .th-period-p2 {
     background: color-mix(in srgb, #F59E0B 8%, var(--bp2-surface-2)) !important;
   }
+
   .th-period-total {
     background: color-mix(in srgb, #10B981 8%, var(--bp2-surface-2)) !important;
   }
@@ -1647,6 +1976,7 @@
   .col-p1 {
     background: color-mix(in srgb, #6366F1 2.5%, transparent);
   }
+
   .col-p2 {
     background: color-mix(in srgb, #F59E0B 2.5%, transparent);
   }
@@ -1683,7 +2013,8 @@
   /* Tier 2 (Sub-headers: Net Qty, NMV, GMV, Plat Disc, Seller Disc) */
   #productPerformanceTable thead tr:nth-child(2) th {
     position: sticky !important;
-    top: 38px !important; /* Stays locked directly under Tier 1 */
+    top: 38px !important;
+    /* Stays locked directly under Tier 1 */
     z-index: 20 !important;
     height: 36px !important;
     box-sizing: border-box !important;
@@ -1695,9 +2026,11 @@
   #productPerformanceTable thead tr:first-child th.th-period-p1 {
     background: color-mix(in srgb, #6366F1 12%, var(--bp2-surface-2)) !important;
   }
+
   #productPerformanceTable thead tr:first-child th.th-period-p2 {
     background: color-mix(in srgb, #F59E0B 12%, var(--bp2-surface-2)) !important;
   }
+
   #productPerformanceTable thead tr:first-child th.th-period-total {
     background: color-mix(in srgb, #10B981 12%, var(--bp2-surface-2)) !important;
   }
@@ -1705,6 +2038,7 @@
   #productPerformanceTable thead tr:nth-child(2) th.col-p1 {
     background: color-mix(in srgb, #6366F1 7%, var(--bp2-surface-2)) !important;
   }
+
   #productPerformanceTable thead tr:nth-child(2) th.col-p2 {
     background: color-mix(in srgb, #F59E0B 7%, var(--bp2-surface-2)) !important;
   }
@@ -1720,12 +2054,14 @@
     background: color-mix(in srgb, var(--bp2-surface-2) 65%, var(--bp2-surface));
     border-bottom: 1px solid var(--bp2-border);
   }
+
   .scatter-mode-bar-left {
     display: flex;
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
   }
+
   .scatter-mode-bar-label {
     font-size: .74rem;
     font-weight: 700;
@@ -1736,6 +2072,7 @@
     align-items: center;
     gap: 5px;
   }
+
   .scatter-mode-segment {
     display: inline-flex;
     align-items: center;
@@ -1745,6 +2082,7 @@
     border: 1px solid var(--bp2-border);
     border-radius: 9px;
   }
+
   .scatter-mode-segment .bp2-segment-btn {
     display: inline-flex;
     align-items: center;
@@ -1760,23 +2098,28 @@
     transition: all .15s ease;
     user-select: none;
   }
+
   .scatter-mode-segment .bp2-segment-btn:hover {
     color: var(--text-primary);
     background: color-mix(in srgb, var(--bp2-surface-2) 80%, transparent);
   }
+
   .scatter-mode-segment .bp2-segment-btn.active {
     background: var(--c-indigo);
     color: #FFFFFF;
     font-weight: 700;
     box-shadow: 0 2px 6px rgba(99, 102, 241, .25);
   }
+
   .scatter-mode-segment .bp2-segment-btn.active .scatter-info-trigger {
     color: rgba(255, 255, 255, .85);
   }
+
   .scatter-mode-segment .bp2-segment-btn.active .scatter-info-trigger:hover {
     color: #FFFFFF;
     background: rgba(255, 255, 255, .25);
   }
+
   .scatter-info-trigger {
     display: inline-flex;
     align-items: center;
@@ -1792,6 +2135,7 @@
     color: var(--text-muted);
     padding: 0;
   }
+
   .scatter-info-trigger:hover {
     opacity: 1;
     transform: scale(1.15);
@@ -1799,10 +2143,15 @@
     background: color-mix(in srgb, var(--orange) 15%, transparent);
   }
 
+  #scatterMatrixCard {
+    position: relative;
+    overflow: visible !important;
+  }
+
   /* Popover info */
   .scatter-mode-popover {
     position: absolute;
-    z-index: 1000;
+    z-index: 999999 !important;
     width: 400px;
     max-width: calc(100vw - 32px);
     background: var(--bp2-surface);
@@ -1814,10 +2163,19 @@
     -webkit-backdrop-filter: blur(12px);
     animation: bp2PopIn .18s cubic-bezier(.16, 1, .3, 1);
   }
+
   @keyframes bp2PopIn {
-    from { opacity: 0; transform: translateY(-6px) scale(0.97); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+      opacity: 0;
+      transform: translateY(-6px) scale(0.97);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
+
   .scatter-popover-header {
     display: flex;
     align-items: flex-start;
@@ -1827,11 +2185,13 @@
     padding-bottom: 10px;
     border-bottom: 1px solid var(--bp2-border);
   }
+
   .scatter-popover-title-row {
     display: flex;
     align-items: center;
     gap: 10px;
   }
+
   .scatter-popover-icon {
     width: 32px;
     height: 32px;
@@ -1844,6 +2204,7 @@
     font-size: 1.1rem;
     flex-shrink: 0;
   }
+
   .scatter-popover-badge {
     font-size: .62rem;
     font-weight: 700;
@@ -1851,6 +2212,7 @@
     letter-spacing: .05em;
     color: var(--c-indigo);
   }
+
   .scatter-popover-title {
     font-size: .88rem;
     font-weight: 800;
@@ -1858,6 +2220,7 @@
     color: var(--text-primary);
     line-height: 1.25;
   }
+
   .scatter-popover-close {
     background: transparent;
     border: 0;
@@ -1869,10 +2232,12 @@
     line-height: 1;
     transition: all .15s ease;
   }
+
   .scatter-popover-close:hover {
     color: var(--text-primary);
     background: var(--bp2-surface-2);
   }
+
   .scatter-popover-formula {
     background: var(--bp2-surface-2);
     border: 1px dashed var(--bp2-border);
@@ -1886,9 +2251,11 @@
     align-items: center;
     gap: 6px;
   }
+
   .scatter-popover-section {
     margin-bottom: 10px;
   }
+
   .scatter-popover-sec-label {
     font-size: .68rem;
     font-weight: 700;
@@ -1900,12 +2267,14 @@
     align-items: center;
     gap: 4px;
   }
+
   .scatter-popover-p {
     font-size: .75rem;
     line-height: 1.45;
     color: var(--text-primary);
     margin: 0;
   }
+
   .scatter-popover-list {
     margin: 4px 0 0;
     padding-left: 16px;
@@ -1913,9 +2282,11 @@
     line-height: 1.4;
     color: var(--text-primary);
   }
+
   .scatter-popover-list li {
     margin-bottom: 3px;
   }
+
   .scatter-popover-caution {
     background: color-mix(in srgb, var(--c-amber) 10%, transparent);
     border-left: 3px solid var(--c-amber);
@@ -1935,11 +2306,13 @@
     background: var(--bp2-surface);
     border-bottom: 1px solid var(--bp2-border);
   }
+
   @media (max-width: 992px) {
     .scatter-summary-cards {
       grid-template-columns: repeat(2, 1fr);
     }
   }
+
   @media (max-width: 576px) {
     .scatter-summary-cards {
       grid-template-columns: 1fr;
@@ -1959,10 +2332,12 @@
     position: relative;
     overflow: hidden;
   }
+
   .scatter-quad-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 14px rgba(16, 24, 40, .08);
   }
+
   .scatter-quad-card.active {
     box-shadow: 0 0 0 2px var(--card-border-active, #6366F1);
   }
@@ -1972,7 +2347,9 @@
   .scatter-quad-card.q1 {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, var(--bp2-surface-2) 65%);
   }
-  .scatter-quad-card.q1:hover, .scatter-quad-card.q1.active {
+
+  .scatter-quad-card.q1:hover,
+  .scatter-quad-card.q1.active {
     --card-border-active: #059669;
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, var(--bp2-surface) 75%);
     border-color: rgba(5, 150, 105, 0.45);
@@ -1982,7 +2359,9 @@
   .scatter-quad-card.q2 {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, var(--bp2-surface-2) 65%);
   }
-  .scatter-quad-card.q2:hover, .scatter-quad-card.q2.active {
+
+  .scatter-quad-card.q2:hover,
+  .scatter-quad-card.q2.active {
     --card-border-active: #4F46E5;
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, var(--bp2-surface) 75%);
     border-color: rgba(79, 70, 229, 0.45);
@@ -1992,7 +2371,9 @@
   .scatter-quad-card.q3 {
     background: linear-gradient(135deg, rgba(245, 158, 11, 0.06) 0%, var(--bp2-surface-2) 65%);
   }
-  .scatter-quad-card.q3:hover, .scatter-quad-card.q3.active {
+
+  .scatter-quad-card.q3:hover,
+  .scatter-quad-card.q3.active {
     --card-border-active: #D97706;
     background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, var(--bp2-surface) 75%);
     border-color: rgba(217, 119, 6, 0.45);
@@ -2002,7 +2383,9 @@
   .scatter-quad-card.q4 {
     background: linear-gradient(135deg, rgba(244, 63, 94, 0.06) 0%, var(--bp2-surface-2) 65%);
   }
-  .scatter-quad-card.q4:hover, .scatter-quad-card.q4.active {
+
+  .scatter-quad-card.q4:hover,
+  .scatter-quad-card.q4.active {
     --card-border-active: #E11D48;
     background: linear-gradient(135deg, rgba(244, 63, 94, 0.12) 0%, var(--bp2-surface) 75%);
     border-color: rgba(225, 29, 72, 0.45);
@@ -2014,6 +2397,7 @@
     justify-content: space-between;
     align-items: center;
   }
+
   .quad-title {
     font-size: .88rem;
     font-weight: 800;
@@ -2023,10 +2407,22 @@
     align-items: center;
     gap: 6px;
   }
-  .scatter-quad-card.q1 .quad-title { color: #059669; }
-  .scatter-quad-card.q2 .quad-title { color: #4F46E5; }
-  .scatter-quad-card.q3 .quad-title { color: #D97706; }
-  .scatter-quad-card.q4 .quad-title { color: #E11D48; }
+
+  .scatter-quad-card.q1 .quad-title {
+    color: #059669;
+  }
+
+  .scatter-quad-card.q2 .quad-title {
+    color: #4F46E5;
+  }
+
+  .scatter-quad-card.q3 .quad-title {
+    color: #D97706;
+  }
+
+  .scatter-quad-card.q4 .quad-title {
+    color: #E11D48;
+  }
 
   .quad-count-badge {
     font-size: .72rem;
@@ -2035,10 +2431,22 @@
     border-radius: 999px;
     background: color-mix(in srgb, currentColor 12%, transparent);
   }
-  .scatter-quad-card.q1 .quad-count-badge { color: #059669; }
-  .scatter-quad-card.q2 .quad-count-badge { color: #4F46E5; }
-  .scatter-quad-card.q3 .quad-count-badge { color: #D97706; }
-  .scatter-quad-card.q4 .quad-count-badge { color: #E11D48; }
+
+  .scatter-quad-card.q1 .quad-count-badge {
+    color: #059669;
+  }
+
+  .scatter-quad-card.q2 .quad-count-badge {
+    color: #4F46E5;
+  }
+
+  .scatter-quad-card.q3 .quad-count-badge {
+    color: #D97706;
+  }
+
+  .scatter-quad-card.q4 .quad-count-badge {
+    color: #E11D48;
+  }
 
   .quad-val-row {
     display: flex;
@@ -2046,17 +2454,20 @@
     align-items: baseline;
     margin-top: 4px;
   }
+
   .quad-val {
     font-size: 1.12rem;
     font-weight: 800;
     color: var(--text-primary);
     font-family: 'JetBrains Mono', monospace;
   }
+
   .quad-share {
     font-size: .72rem;
     font-weight: 700;
     color: var(--text-muted);
   }
+
   .quad-desc {
     font-size: .71rem;
     color: var(--text-muted);
@@ -2070,6 +2481,7 @@
     position: relative;
     min-height: 640px;
   }
+
   @media (max-width: 992px) {
     .scatter-body-layout {
       flex-direction: column;
@@ -2084,6 +2496,7 @@
     position: relative;
     height: 640px;
   }
+
   @media (max-width: 992px) {
     .scatter-chart-wrap {
       height: 480px;
@@ -2101,6 +2514,7 @@
     z-index: 15;
     pointer-events: auto;
   }
+
   .scatter-zoom-hint {
     display: inline-flex;
     align-items: center;
@@ -2115,11 +2529,13 @@
     pointer-events: none;
     opacity: .88;
   }
+
   @media (max-width: 768px) {
     .scatter-zoom-hint {
       display: none;
     }
   }
+
   .scatter-zoom-btn-group {
     display: inline-flex;
     align-items: center;
@@ -2129,6 +2545,7 @@
     padding: 2px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   }
+
   .scatter-zoom-btn {
     width: 28px;
     height: 28px;
@@ -2144,20 +2561,24 @@
     transition: all .15s ease;
     padding: 0;
   }
+
   .scatter-zoom-btn:hover {
     background: var(--bp2-surface-2);
     color: var(--c-indigo);
   }
+
   .scatter-zoom-btn.active {
     color: var(--c-indigo);
     background: rgba(99, 102, 241, 0.12);
   }
+
   #productScatterChart {
     cursor: grab;
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
   }
+
   #productScatterChart:active {
     cursor: grabbing;
   }
@@ -2175,6 +2596,7 @@
     overflow-y: auto;
     transition: all .2s ease;
   }
+
   @media (max-width: 992px) {
     .scatter-detail-panel {
       width: 100%;
@@ -2197,10 +2619,12 @@
     gap: 12px;
     padding: 24px 16px;
   }
+
   .scatter-detail-empty i {
     font-size: 2.2rem;
     opacity: .4;
   }
+
   .scatter-detail-empty p {
     font-size: .78rem;
     line-height: 1.45;
@@ -2219,6 +2643,7 @@
     align-items: flex-start;
     gap: 10px;
   }
+
   .scatter-detail-sku {
     font-size: .88rem;
     font-weight: 800;
@@ -2226,6 +2651,7 @@
     margin: 0;
     font-family: 'JetBrains Mono', monospace;
   }
+
   .scatter-detail-prod {
     font-size: .78rem;
     color: var(--text-muted);
@@ -2243,22 +2669,44 @@
     font-weight: 700;
     white-space: nowrap;
   }
-  .badge-q1 { background: rgba(5, 150, 105, 0.12); color: #059669; border: 1px solid rgba(5, 150, 105, 0.25); }
-  .badge-q2 { background: rgba(79, 70, 229, 0.12); color: #4F46E5; border: 1px solid rgba(79, 70, 229, 0.25); }
-  .badge-q3 { background: rgba(217, 119, 6, 0.12); color: #D97706; border: 1px solid rgba(217, 119, 6, 0.25); }
-  .badge-q4 { background: rgba(225, 29, 72, 0.12); color: #E11D48; border: 1px solid rgba(225, 29, 72, 0.25); }
+
+  .badge-q1 {
+    background: rgba(5, 150, 105, 0.12);
+    color: #059669;
+    border: 1px solid rgba(5, 150, 105, 0.25);
+  }
+
+  .badge-q2 {
+    background: rgba(79, 70, 229, 0.12);
+    color: #4F46E5;
+    border: 1px solid rgba(79, 70, 229, 0.25);
+  }
+
+  .badge-q3 {
+    background: rgba(217, 119, 6, 0.12);
+    color: #D97706;
+    border: 1px solid rgba(217, 119, 6, 0.25);
+  }
+
+  .badge-q4 {
+    background: rgba(225, 29, 72, 0.12);
+    color: #E11D48;
+    border: 1px solid rgba(225, 29, 72, 0.25);
+  }
 
   .scatter-detail-metrics-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
+
   .scatter-metric-item {
     background: var(--bp2-surface);
     border: 1px solid var(--bp2-border);
     border-radius: 8px;
     padding: 10px 12px;
   }
+
   .scatter-metric-label {
     font-size: .68rem;
     font-weight: 700;
@@ -2267,6 +2715,7 @@
     color: var(--text-muted);
     margin-bottom: 3px;
   }
+
   .scatter-metric-value {
     font-size: .88rem;
     font-weight: 800;
@@ -2284,6 +2733,7 @@
     border-radius: 6px;
     transition: all .15s ease;
   }
+
   .scatter-close-btn:hover {
     color: var(--text-primary);
     background: var(--bp2-surface-2);
@@ -2295,6 +2745,7 @@
     flex-direction: column;
     gap: 12px;
   }
+
   .scatter-sku-list-header {
     display: flex;
     justify-content: space-between;
@@ -2303,6 +2754,7 @@
     padding-bottom: 10px;
     border-bottom: 1px solid var(--bp2-border);
   }
+
   .scatter-sku-list-title {
     font-size: .88rem;
     font-weight: 800;
@@ -2312,17 +2764,20 @@
     align-items: center;
     gap: 6px;
   }
+
   .scatter-sku-list-sub {
     font-size: .72rem;
     color: var(--text-muted);
     margin: 3px 0 0 0;
     line-height: 1.35;
   }
+
   .scatter-sku-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
+
   .scatter-sku-item {
     background: var(--bp2-surface);
     border: 1px solid var(--bp2-border);
@@ -2334,15 +2789,18 @@
     cursor: pointer;
     transition: all .15s ease;
   }
+
   .scatter-sku-item:hover {
     border-color: var(--bp2-primary, #6366F1);
     background: var(--bp2-surface-2);
     transform: translateX(2px);
   }
+
   .scatter-sku-item.active {
     border-color: var(--bp2-primary, #6366F1);
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
   }
+
   .scatter-sku-rank {
     width: 24px;
     height: 24px;
@@ -2357,22 +2815,27 @@
     flex-shrink: 0;
     font-family: 'JetBrains Mono', monospace;
   }
+
   .scatter-sku-item:nth-child(1) .scatter-sku-rank {
     background: rgba(217, 119, 6, 0.15);
     color: #D97706;
   }
+
   .scatter-sku-item:nth-child(2) .scatter-sku-rank {
     background: rgba(100, 116, 139, 0.15);
     color: #334155;
   }
+
   .scatter-sku-item:nth-child(3) .scatter-sku-rank {
     background: rgba(180, 83, 9, 0.12);
     color: #B45309;
   }
+
   .scatter-sku-info {
     flex: 1;
     min-width: 0;
   }
+
   .scatter-sku-code {
     font-size: .80rem;
     font-weight: 700;
@@ -2382,6 +2845,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+
   .scatter-sku-name {
     font-size: .72rem;
     color: var(--text-muted);
@@ -2390,16 +2854,19 @@
     text-overflow: ellipsis;
     margin-top: 2px;
   }
+
   .scatter-sku-metrics {
     text-align: right;
     flex-shrink: 0;
   }
+
   .scatter-sku-m1 {
     font-size: .80rem;
     font-weight: 800;
     color: var(--text-primary);
     font-family: 'JetBrains Mono', monospace;
   }
+
   .scatter-sku-m2 {
     font-size: .68rem;
     color: var(--text-muted);
@@ -2423,6 +2890,7 @@
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.14) 0%, #121826 70%);
     border-color: rgba(16, 185, 129, 0.28);
   }
+
   [data-theme="dark"] .scatter-quad-card.q1:hover,
   [data-theme="dark"] .scatter-quad-card.q1.active,
   [data-bs-theme="dark"] .scatter-quad-card.q1:hover,
@@ -2441,6 +2909,7 @@
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.14) 0%, #121826 70%);
     border-color: rgba(99, 102, 241, 0.28);
   }
+
   [data-theme="dark"] .scatter-quad-card.q2:hover,
   [data-theme="dark"] .scatter-quad-card.q2.active,
   [data-bs-theme="dark"] .scatter-quad-card.q2:hover,
@@ -2459,6 +2928,7 @@
     background: linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, #121826 70%);
     border-color: rgba(245, 158, 11, 0.28);
   }
+
   [data-theme="dark"] .scatter-quad-card.q3:hover,
   [data-theme="dark"] .scatter-quad-card.q3.active,
   [data-bs-theme="dark"] .scatter-quad-card.q3:hover,
@@ -2477,6 +2947,7 @@
     background: linear-gradient(135deg, rgba(244, 63, 94, 0.14) 0%, #121826 70%);
     border-color: rgba(244, 63, 94, 0.28);
   }
+
   [data-theme="dark"] .scatter-quad-card.q4:hover,
   [data-theme="dark"] .scatter-quad-card.q4.active,
   [data-bs-theme="dark"] .scatter-quad-card.q4:hover,
@@ -2490,36 +2961,67 @@
   }
 
   [data-theme="dark"] .scatter-quad-card.q1 .quad-title,
-  [data-theme="dark"] .scatter-quad-card.q1 .quad-count-badge { color: #34D399; }
+  [data-theme="dark"] .scatter-quad-card.q1 .quad-count-badge {
+    color: #34D399;
+  }
+
   [data-theme="dark"] .scatter-quad-card.q2 .quad-title,
-  [data-theme="dark"] .scatter-quad-card.q2 .quad-count-badge { color: #818CF8; }
+  [data-theme="dark"] .scatter-quad-card.q2 .quad-count-badge {
+    color: #818CF8;
+  }
+
   [data-theme="dark"] .scatter-quad-card.q3 .quad-title,
-  [data-theme="dark"] .scatter-quad-card.q3 .quad-count-badge { color: #FBBF24; }
+  [data-theme="dark"] .scatter-quad-card.q3 .quad-count-badge {
+    color: #FBBF24;
+  }
+
   [data-theme="dark"] .scatter-quad-card.q4 .quad-title,
-  [data-theme="dark"] .scatter-quad-card.q4 .quad-count-badge { color: #FB7185; }
+  [data-theme="dark"] .scatter-quad-card.q4 .quad-count-badge {
+    color: #FB7185;
+  }
 
   [data-theme="dark"] .quad-desc,
   [data-bs-theme="dark"] .quad-desc,
   body.dark-mode .quad-desc {
     color: #94A3B8;
   }
+
   [data-theme="dark"] .quad-share,
   [data-bs-theme="dark"] .quad-share,
   body.dark-mode .quad-share {
     color: #CBD5E1;
   }
 
-  [data-theme="dark"] .badge-q1, [data-bs-theme="dark"] .badge-q1, body.dark-mode .badge-q1 {
-    background: rgba(52, 211, 153, 0.16); color: #34D399; border-color: rgba(52, 211, 153, 0.35);
+  [data-theme="dark"] .badge-q1,
+  [data-bs-theme="dark"] .badge-q1,
+  body.dark-mode .badge-q1 {
+    background: rgba(52, 211, 153, 0.16);
+    color: #34D399;
+    border-color: rgba(52, 211, 153, 0.35);
   }
-  [data-theme="dark"] .badge-q2, [data-bs-theme="dark"] .badge-q2, body.dark-mode .badge-q2 {
-    background: rgba(129, 140, 248, 0.16); color: #818CF8; border-color: rgba(129, 140, 248, 0.35);
+
+  [data-theme="dark"] .badge-q2,
+  [data-bs-theme="dark"] .badge-q2,
+  body.dark-mode .badge-q2 {
+    background: rgba(129, 140, 248, 0.16);
+    color: #818CF8;
+    border-color: rgba(129, 140, 248, 0.35);
   }
-  [data-theme="dark"] .badge-q3, [data-bs-theme="dark"] .badge-q3, body.dark-mode .badge-q3 {
-    background: rgba(251, 191, 36, 0.16); color: #FBBF24; border-color: rgba(251, 191, 36, 0.35);
+
+  [data-theme="dark"] .badge-q3,
+  [data-bs-theme="dark"] .badge-q3,
+  body.dark-mode .badge-q3 {
+    background: rgba(251, 191, 36, 0.16);
+    color: #FBBF24;
+    border-color: rgba(251, 191, 36, 0.35);
   }
-  [data-theme="dark"] .badge-q4, [data-bs-theme="dark"] .badge-q4, body.dark-mode .badge-q4 {
-    background: rgba(251, 113, 133, 0.16); color: #FB7185; border-color: rgba(251, 113, 133, 0.35);
+
+  [data-theme="dark"] .badge-q4,
+  [data-bs-theme="dark"] .badge-q4,
+  body.dark-mode .badge-q4 {
+    background: rgba(251, 113, 133, 0.16);
+    color: #FB7185;
+    border-color: rgba(251, 113, 133, 0.35);
   }
 
   [data-theme="dark"] .scatter-detail-panel,
@@ -2528,73 +3030,86 @@
     background: #0E131F;
     border-left: 1px solid rgba(255, 255, 255, 0.08);
   }
+
   [data-theme="dark"] .scatter-metric-item,
   [data-bs-theme="dark"] .scatter-metric-item,
   body.dark-mode .scatter-metric-item {
     background: #151D2E;
     border-color: rgba(255, 255, 255, 0.08);
   }
+
   [data-theme="dark"] .scatter-metric-label,
   [data-bs-theme="dark"] .scatter-metric-label,
   body.dark-mode .scatter-metric-label {
     color: #94A3B8;
   }
+
   [data-theme="dark"] .scatter-sku-item,
   [data-bs-theme="dark"] .scatter-sku-item,
   body.dark-mode .scatter-sku-item {
     background: #151D2E;
     border-color: rgba(255, 255, 255, 0.08);
   }
+
   [data-theme="dark"] .scatter-sku-item:hover,
   [data-bs-theme="dark"] .scatter-sku-item:hover,
   body.dark-mode .scatter-sku-item:hover {
     background: #1E293B;
     border-color: #818CF8;
   }
+
   [data-theme="dark"] .scatter-sku-name,
   [data-bs-theme="dark"] .scatter-sku-name,
   body.dark-mode .scatter-sku-name {
     color: #94A3B8;
   }
+
   [data-theme="dark"] .scatter-sku-m2,
   [data-bs-theme="dark"] .scatter-sku-m2,
   body.dark-mode .scatter-sku-m2 {
     color: #94A3B8;
   }
+
   [data-theme="dark"] .scatter-sku-rank,
   [data-bs-theme="dark"] .scatter-sku-rank,
   body.dark-mode .scatter-sku-rank {
     background: #1E293B;
     color: #CBD5E1;
   }
+
   [data-theme="dark"] .scatter-sku-item:nth-child(1) .scatter-sku-rank,
   [data-bs-theme="dark"] .scatter-sku-item:nth-child(1) .scatter-sku-rank,
   body.dark-mode .scatter-sku-item:nth-child(1) .scatter-sku-rank {
     background: rgba(251, 191, 36, 0.22);
     color: #FCD34D;
   }
+
   [data-theme="dark"] .scatter-sku-item:nth-child(2) .scatter-sku-rank,
   [data-bs-theme="dark"] .scatter-sku-item:nth-child(2) .scatter-sku-rank,
   body.dark-mode .scatter-sku-item:nth-child(2) .scatter-sku-rank {
     background: rgba(226, 232, 240, 0.22);
     color: #F8FAFC;
   }
+
   [data-theme="dark"] .scatter-sku-item:nth-child(3) .scatter-sku-rank,
   [data-bs-theme="dark"] .scatter-sku-item:nth-child(3) .scatter-sku-rank,
   body.dark-mode .scatter-sku-item:nth-child(3) .scatter-sku-rank {
     background: rgba(245, 158, 11, 0.22);
     color: #FDBA74;
   }
+
   [data-theme="dark"] .scatter-detail-empty,
   [data-bs-theme="dark"] .scatter-detail-empty,
   body.dark-mode .scatter-detail-empty {
     color: #94A3B8;
   }
+
   [data-theme="dark"] .scatter-close-btn,
   [data-bs-theme="dark"] .scatter-close-btn,
   body.dark-mode .scatter-close-btn {
     color: #94A3B8;
   }
+
   [data-theme="dark"] .scatter-close-btn:hover,
   [data-bs-theme="dark"] .scatter-close-btn:hover,
   body.dark-mode .scatter-close-btn:hover {
@@ -2609,18 +3124,21 @@
     background-color: rgba(16, 185, 129, 0.16);
     color: #34D399;
   }
+
   [data-theme="dark"] .pill-down,
   [data-bs-theme="dark"] .pill-down,
   body.dark-mode .pill-down {
     background-color: rgba(244, 63, 94, 0.16);
     color: #FB7185;
   }
+
   [data-theme="dark"] .pill-flat,
   [data-bs-theme="dark"] .pill-flat,
   body.dark-mode .pill-flat {
     background-color: #1E293B;
     color: #CBD5E1;
   }
+
   [data-theme="dark"] .pill-flat b,
   [data-bs-theme="dark"] .pill-flat b,
   body.dark-mode .pill-flat b {
@@ -2645,12 +3163,14 @@
     color: #CBD5E1;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
+
   [data-theme="dark"] table.bp2-tbl td,
   [data-bs-theme="dark"] table.bp2-tbl td,
   body.dark-mode table.bp2-tbl td {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     color: #E7ECF6;
   }
+
   [data-theme="dark"] table.bp2-tbl tr:hover td,
   [data-bs-theme="dark"] table.bp2-tbl tr:hover td,
   body.dark-mode table.bp2-tbl tr:hover td {
@@ -2662,11 +3182,13 @@
   body.dark-mode .bp2-split-bar-text .plat-txt {
     color: #38BDF8;
   }
+
   [data-theme="dark"] .bp2-split-bar-text .seller-txt,
   [data-bs-theme="dark"] .bp2-split-bar-text .seller-txt,
   body.dark-mode .bp2-split-bar-text .seller-txt {
     color: #FBBF24;
   }
+
   .table-search input::placeholder {
     color: var(--text-muted);
     opacity: 0.85;
@@ -2679,23 +3201,27 @@
     border-color: rgba(255, 255, 255, 0.12);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   }
+
   [data-theme="dark"] .scatter-zoom-btn,
   [data-bs-theme="dark"] .scatter-zoom-btn,
   body.dark-mode .scatter-zoom-btn {
     color: #E2E8F0;
   }
+
   [data-theme="dark"] .scatter-zoom-btn:hover,
   [data-bs-theme="dark"] .scatter-zoom-btn:hover,
   body.dark-mode .scatter-zoom-btn:hover {
     background: #1E293B;
     color: #38BDF8;
   }
+
   [data-theme="dark"] .scatter-zoom-btn.active,
   [data-bs-theme="dark"] .scatter-zoom-btn.active,
   body.dark-mode .scatter-zoom-btn.active {
     color: #38BDF8;
     background: rgba(56, 189, 248, 0.18);
   }
+
   [data-theme="dark"] .scatter-zoom-hint,
   [data-bs-theme="dark"] .scatter-zoom-hint,
   body.dark-mode .scatter-zoom-hint {
@@ -2710,11 +3236,13 @@
     font-weight: 600;
     transition: all .2s ease;
   }
+
   .bp2-btn-confidential:hover {
     border-color: var(--orange);
     color: var(--orange);
     background: color-mix(in srgb, var(--orange) 10%, var(--bp2-surface));
   }
+
   body.bp2-confidential-active .bp2-btn-confidential {
     background: color-mix(in srgb, var(--orange) 18%, var(--bp2-surface));
     border-color: var(--orange);
@@ -2722,6 +3250,7 @@
     font-weight: 700;
     box-shadow: 0 0 14px color-mix(in srgb, var(--orange) 30%, transparent);
   }
+
   .bp2-confidential-banner {
     display: flex;
     align-items: center;
@@ -2737,15 +3266,18 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, .06);
     animation: fadeInSlide .25s ease-out;
   }
+
   .bp2-confidential-banner-content {
     display: flex;
     align-items: center;
     gap: 10px;
   }
+
   .bp2-confidential-banner-content i {
     font-size: 1.15rem;
     color: var(--orange);
   }
+
   .bp2-confidential-banner-close {
     background: var(--bp2-surface);
     border: 1px solid var(--bp2-border);
@@ -2761,6 +3293,7 @@
     gap: 6px;
     transition: all .15s ease;
   }
+
   .bp2-confidential-banner-close:hover {
     border-color: var(--orange);
     color: var(--orange);
@@ -2800,111 +3333,813 @@
     filter: blur(5px) !important;
     user-select: none !important;
   }
+
+  /* ── Header Title Bar & Topbar Grouping ── */
+  .bp2-header-title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 14px 0;
+  }
+
+  .bp2-page-main-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .bp2-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .bp2-btn-icon-only {
+    width: 36px;
+    height: 34px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+  }
+
+  /* ── Full-width Dimension Toggle (Brand vs Brand Group) ── */
+  .bp2-dimension-bar {
+    width: 100%;
+    margin: 0 0 20px 0;
+  }
+
+  .bp2-dimension-toggle {
+    display: flex;
+    width: 100%;
+    background: var(--bp2-surface-2);
+    border: 1px solid var(--bp2-border);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 6px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+  }
+
+  .bp2-dim-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    padding: 10px 20px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .18s ease;
+  }
+
+  .bp2-dim-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .bp2-dim-btn.active {
+    background: var(--bp2-surface);
+    color: var(--orange);
+    border-color: var(--bp2-border);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
+  }
+
+  .bp2-dim-btn i {
+    font-size: 1rem;
+  }
+
+  .d-none {
+    display: none !important;
+  }
+
+  /* =====================================================================
+     11. CANCELLATION & ORDER LEAKAGE FORENSICS STYLES
+     ===================================================================== */
+  .cancel-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin: 20px 20px 22px 20px;
+  }
+
+  @media (max-width: 1200px) {
+    .cancel-kpi-grid {
+      grid-template-columns: repeat(3, 1fr);
+      margin: 16px 16px 18px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .cancel-kpi-grid {
+      grid-template-columns: repeat(2, 1fr);
+      margin: 14px 14px 16px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .cancel-kpi-grid {
+      grid-template-columns: 1fr;
+      margin: 12px 12px 14px;
+    }
+  }
+
+  .cancel-kpi-card {
+    background: var(--bp2-surface-2);
+    border: 1px solid var(--bp2-border);
+    border-radius: var(--bp2-radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+
+  .cancel-kpi-card:hover {
+    border-color: color-mix(in srgb, var(--rose) 40%, var(--bp2-border));
+    transform: translateY(-2px);
+    box-shadow: var(--bp2-shadow);
+  }
+
+  .cancel-kpi-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .cancel-kpi-card-title {
+    font-size: .73rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--text-muted);
+  }
+
+  .cancel-kpi-card-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .9rem;
+  }
+
+  .cancel-kpi-card-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+  }
+
+  .cancel-kpi-card-sub {
+    font-size: .72rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .cancel-charts-row {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 16px;
+    margin: 0 20px 24px 20px;
+  }
+
+  @media (max-width: 992px) {
+    .cancel-charts-row {
+      grid-template-columns: 1fr;
+      margin: 0 16px 20px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .cancel-charts-row {
+      margin: 0 14px 16px;
+    }
+  }
+
+  .cancel-chart-panel {
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: var(--bp2-radius);
+    box-shadow: var(--bp2-shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .cancel-chart-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--bp2-border);
+    background: color-mix(in srgb, var(--bp2-surface-2) 60%, var(--bp2-surface));
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .cancel-chart-panel-title {
+    font-size: .88rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cancel-chart-panel-sub {
+    font-size: .74rem;
+    color: var(--text-muted);
+    margin: 2px 0 0;
+  }
+
+  /* Platform Vulnerability Section */
+  .cancel-vuln-section {
+    margin: 0 20px 24px 20px;
+  }
+
+  @media (max-width: 992px) {
+    .cancel-vuln-section {
+      margin: 0 16px 20px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .cancel-vuln-section {
+      margin: 0 14px 16px;
+    }
+  }
+
+  /* Platform Vulnerability Row */
+  .cancel-vuln-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .cancel-vuln-card {
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: 12px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cancel-vuln-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cancel-vuln-name {
+    font-size: .88rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .cancel-vuln-stat {
+    display: flex;
+    justify-content: space-between;
+    font-size: .75rem;
+    border-bottom: 1px dashed var(--bp2-border);
+    padding-bottom: 4px;
+  }
+
+  /* Recovery Simulator Box */
+  .cancel-recovery-box {
+    margin: 20px;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(16, 185, 129, 0.08) 100%);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 14px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 768px) {
+    .cancel-recovery-box {
+      margin: 14px;
+      padding: 14px 16px;
+    }
+  }
+
+  .cancel-recovery-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    max-width: 650px;
+  }
+
+  .cancel-recovery-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.18);
+    color: var(--rose);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .cancel-recovery-title {
+    font-size: .92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+  }
+
+  .cancel-recovery-desc {
+    font-size: .78rem;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+
+  .cancel-recovery-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .cancel-sim-slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 260px;
+    max-width: 100%;
+    padding: 4px 0;
+  }
+
+  .cancel-sim-slider-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .cancel-sim-slider-title {
+    font-size: .70rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--text-muted);
+  }
+
+  .cancel-sim-slider-badge {
+    font-size: .78rem;
+    font-weight: 800;
+    color: #FFFFFF !important;
+    background: #10B981 !important;
+    padding: 3px 10px;
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.45);
+    letter-spacing: .02em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cancel-sim-slider-wrap {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+  }
+
+  .cancel-sim-range-input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #CBD5E1;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    outline: none;
+    cursor: pointer;
+    margin: 4px 0;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+  }
+
+  [data-theme="dark"] .cancel-sim-range-input,
+  [data-bs-theme="dark"] .cancel-sim-range-input,
+  body.dark-mode .cancel-sim-range-input {
+    background: #334155;
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .cancel-sim-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #10B981;
+    border: 3px solid #FFFFFF;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.4);
+    cursor: grab;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+
+  [data-theme="dark"] .cancel-sim-range-input::-webkit-slider-thumb,
+  [data-bs-theme="dark"] .cancel-sim-range-input::-webkit-slider-thumb,
+  body.dark-mode .cancel-sim-range-input::-webkit-slider-thumb {
+    border-color: #0F172A;
+  }
+
+  .cancel-sim-range-input:active::-webkit-slider-thumb {
+    cursor: grabbing;
+    transform: scale(1.18);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.35);
+  }
+
+  .cancel-sim-range-input::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #10B981;
+    border: 3px solid #FFFFFF;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.4);
+    cursor: grab;
+    transition: transform .15s ease;
+  }
+
+  [data-theme="dark"] .cancel-sim-range-input::-moz-range-thumb,
+  [data-bs-theme="dark"] .cancel-sim-range-input::-moz-range-thumb,
+  body.dark-mode .cancel-sim-range-input::-moz-range-thumb {
+    border-color: #0F172A;
+  }
+
+  .cancel-sim-range-input:active::-moz-range-thumb {
+    cursor: grabbing;
+    transform: scale(1.18);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.35);
+  }
+
+  .cancel-sim-slider-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: .66rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0 2px;
+  }
+
+  .cancel-recovery-amount {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--emerald);
+  }
+
+  /* Tag badges in table */
+  .badge-fc-seller {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+
+  .badge-fc-buyer {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+
+  .badge-fc-logistics {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  .badge-fc-system {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+  }
+
+  /* Elevated hover for interactive tiles and cards */
+  .bp2-card.hoverable:hover,
+  .bento-hero-tile:hover,
+  .bento-mini-tile:hover,
+  .bento-econ-tile:hover,
+  .bento-promo-tile:hover,
+  .scatter-quad-card:hover,
+  .bp2-pod:hover {
+    position: relative;
+    z-index: 5;
+  }
+
+  /* Global Chart Tooltip (Fixed HTML popover with highest z-index) */
+  .bp2-global-chart-tooltip {
+    position: fixed;
+    z-index: 99999999 !important;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    background: var(--card-bg, #FFFFFF);
+    color: var(--text-primary, #0F172A);
+    border: 1px solid var(--bp2-border, rgba(203, 213, 225, 0.9));
+    border-radius: 10px;
+    padding: 10px 14px;
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.22), 0 4px 14px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 11px;
+    line-height: 1.45;
+    max-width: 360px;
+    transform: translate(-50%, 0);
+    transition: opacity .12s ease;
+  }
+
+  [data-theme="dark"] .bp2-global-chart-tooltip,
+  [data-bs-theme="dark"] .bp2-global-chart-tooltip,
+  body.dark-mode .bp2-global-chart-tooltip {
+    background: rgba(15, 23, 42, 0.96) !important;
+    color: #F8FAFC !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.7), 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  }
+
+  .bp2-chart-tt-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-primary, #0F172A);
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--bp2-border, rgba(203, 213, 225, 0.6));
+    padding-bottom: 4px;
+    letter-spacing: -.01em;
+  }
+
+  [data-theme="dark"] .bp2-chart-tt-title,
+  [data-bs-theme="dark"] .bp2-chart-tt-title,
+  body.dark-mode .bp2-chart-tt-title {
+    color: #F8FAFC !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+
+  .bp2-chart-tt-sub {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted, #64748B);
+    margin-top: 2px;
+  }
+
+  [data-theme="dark"] .bp2-chart-tt-sub,
+  [data-bs-theme="dark"] .bp2-chart-tt-sub,
+  body.dark-mode .bp2-chart-tt-sub {
+    color: #94A3B8 !important;
+  }
+
+  .bp2-chart-tt-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .bp2-chart-tt-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-sub, #334155);
+  }
+
+  [data-theme="dark"] .bp2-chart-tt-row,
+  [data-bs-theme="dark"] .bp2-chart-tt-row,
+  body.dark-mode .bp2-chart-tt-row {
+    color: #CBD5E1 !important;
+  }
+
+  .bp2-chart-tt-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+  }
+
+  .bp2-chart-tt-text {
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .bp2-chart-tt-footer {
+    font-size: 10px;
+    color: var(--text-muted, #94A3B8);
+    margin-top: 6px;
+    border-top: 1px solid var(--bp2-border, rgba(203, 213, 225, 0.4));
+    padding-top: 4px;
+    font-style: italic;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Early enforcement: ensure sidebar is collapsed & hidden by default on Brand Performance v2 -->
+<script>
+  (function() {
+    try { localStorage.setItem('lte.sidebar.state', 'sidebar-collapse'); } catch (e) {}
+    if (document.body) {
+      document.body.classList.add('sidebar-collapse', 'sidebar-mini');
+      document.body.classList.remove('sidebar-open');
+    }
+  })();
+</script>
+
+<!-- Full-Page Mascot Loading Overlay -->
+<div id="bp2LoadingOverlay" class="bp2-loading-overlay active" data-html2canvas-ignore="true" aria-live="polite"
+  aria-label="Loading analytics data">
+  <div class="bp2-loading-backdrop"></div>
+  <div class="bp2-loading-card">
+    <div class="bp2-mascot-box">
+      <img src="{% static 'mascot/mascot-loading.svg' %}" alt="Loading mascot" class="bp2-mascot-animation" />
+    </div>
+    <div class="bp2-loading-text-wrap">
+      <span class="bp2-loading-text">Jeco is Preparing Your Data <span class="bp2-loading-dot d1">.</span> <span
+          class="bp2-loading-dot d2">.</span> <span class="bp2-loading-dot d3">.</span></span>
+    </div>
+    <div class="bp2-loading-bar-wrap">
+      <div class="bp2-loading-bar-indeterminate"></div>
+    </div>
+  </div>
+</div>
+
 <div class="bp2 is-loading" id="analyticsDashboard">
 
   <!-- ── Top bar: Navigation tabs, periodic date filters & actions ── -->
   <div class="bp2-topbar">
-    <nav class="bp2-segment" aria-label="Page sections">
-      <a href="{% url 'brand_performance_v2' %}"><i class="bi bi-grid-1x2-fill"></i> Summary</a>
-      <a href="{% url 'brand_performance_v2_analytics' %}" class="active"><i class="bi bi-graph-up-arrow"></i>
-        Analytics</a>
-    </nav>
+    <div class="bp2-topbar-left">
+      <nav class="bp2-segment" aria-label="Page sections">
+        <a href="{% url 'brand_performance_v2' %}?dimension={{ dimension }}"><i class="bi bi-grid-1x2-fill"></i>
+          Summary</a>
+        <a href="{% url 'brand_performance_v2_analytics' %}?dimension={{ dimension }}" class="active"><i
+            class="bi bi-graph-up-arrow"></i> Analytics</a>
+      </nav>
 
-    <!-- Topbar Filters -->
-    <div class="bp2-topbar-filters" data-html2canvas-ignore="true">
-      <!-- Date Range: Start & End -->
-      <div class="bp2-filter-pill" title="Start Date">
-        <i class="bi bi-calendar-event"></i>
-        <input type="date" id="startDateFilter" value="{{ start_date }}" min="{{ min_date }}" max="{{ latest_date }}"
-          onchange="onDateFilterChange()">
-      </div>
-      <span style="font-size: .75rem; color: var(--text-muted); font-weight:700;">–</span>
-      <div class="bp2-filter-pill" title="End Date">
-        <i class="bi bi-calendar-check"></i>
-        <input type="date" id="endDateFilter" value="{{ end_date }}" min="{{ min_date }}" max="{{ latest_date }}"
-          onchange="onDateFilterChange()">
-      </div>
+      <!-- Topbar Filters (placed directly next to tabs on the left) -->
+      <div class="bp2-topbar-filters" data-html2canvas-ignore="true">
+        <!-- Date Range: Start & End -->
+        <div class="bp2-filter-pill" title="Start Date">
+          <i class="bi bi-calendar-event"></i>
+          <input type="date" id="startDateFilter" value="{{ start_date }}" min="{{ min_date }}" max="{{ latest_date }}"
+            onchange="onDateFilterChange()">
+        </div>
+        <span style="font-size: .75rem; color: var(--text-muted); font-weight:700;">–</span>
+        <div class="bp2-filter-pill" title="End Date">
+          <i class="bi bi-calendar-check"></i>
+          <input type="date" id="endDateFilter" value="{{ end_date }}" min="{{ min_date }}" max="{{ latest_date }}"
+            onchange="onDateFilterChange()">
+        </div>
 
-      <!-- Quick Preset Range Pills -->
-      <div class="bp2-preset-pills" id="timeframePresetPills">
-        <button type="button" class="bp2-preset-pill" data-preset="7d" onclick="setPresetRange(7, this)">7D</button>
-        <button type="button" class="bp2-preset-pill" data-preset="14d" onclick="setPresetRange(14, this)">14D</button>
-        <button type="button" class="bp2-preset-pill active" data-preset="30d" id="preset30D" onclick="setPresetRange(30, this)">30D</button>
-        <button type="button" class="bp2-preset-pill" data-preset="mtd" onclick="setPresetThisMonth(this)">MTD</button>
-        <button type="button" class="bp2-preset-pill" data-preset="last_month" onclick="setPresetLastMonth(this)">Last M</button>
-      </div>
+        <!-- Quick Preset Range Pills -->
+        <div class="bp2-preset-pills" id="timeframePresetPills">
+          <button type="button" class="bp2-preset-pill" data-preset="7d" onclick="setPresetRange(7, this)">7D</button>
+          <button type="button" class="bp2-preset-pill" data-preset="14d"
+            onclick="setPresetRange(14, this)">14D</button>
+          <button type="button" class="bp2-preset-pill" data-preset="30d" id="preset30D"
+            onclick="setPresetRange(30, this)">30D</button>
+          <button type="button" class="bp2-preset-pill active" data-preset="mtd"
+            onclick="setPresetThisMonth(this)">MTD</button>
+          <button type="button" class="bp2-preset-pill" data-preset="last_month" onclick="setPresetLastMonth(this)">Last
+            M</button>
+        </div>
 
-      <!-- Single-select: Brand -->
-      <div class="bp2-dropdown-wrap" id="brandDropdownWrap">
-        <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="brandDropdownTrigger"
-          aria-haspopup="true" aria-expanded="false" title="Filter brand">
-          <i class="bi bi-tag"></i>
-          <span class="bp2-dropdown-label" id="brandDropdownLabel">{{ selected_brand }}</span>
-          <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
-        </button>
-        <div class="bp2-dropdown-menu" id="brandDropdownMenu">
-          <div class="bp2-dropdown-search">
-            <i class="bi bi-search"></i>
-            <input type="text" id="brandSearchInput" placeholder="Search brand…" autocomplete="off">
-          </div>
-          <div class="bp2-dropdown-options" id="brandOptionsList">
-            {% for b in brands %}
-            <div class="bp2-dropdown-item {% if b == selected_brand %}active{% endif %}" data-value="{{ b }}" onclick="selectSingleBrand('{{ b|escapejs }}')">
-              <span class="bp2-option-text">{{ b }}</span>
-              <i class="bi bi-check-lg bp2-single-check {% if b != selected_brand %}d-none{% endif %}"></i>
+        <!-- Single-select: Brand Group -->
+        <div class="bp2-dropdown-wrap {% if dimension == 'brand' %}d-none{% endif %}" id="brandGroupDropdownWrap">
+          <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="brandGroupDropdownTrigger"
+            aria-haspopup="true" aria-expanded="false" title="Filter brand group">
+            <i class="bi bi-collection"></i>
+            <span class="bp2-dropdown-label" id="brandGroupDropdownLabel">{{ selected_brand_group }}</span>
+            <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+          </button>
+          <div class="bp2-dropdown-menu" id="brandGroupDropdownMenu">
+            <div class="bp2-dropdown-search">
+              <i class="bi bi-search"></i>
+              <input type="text" id="brandGroupSearchInput" placeholder="Search brand group…" autocomplete="off">
             </div>
-            {% endfor %}
+            <div class="bp2-dropdown-options" id="brandGroupOptionsList">
+              {% for bg in brand_groups %}
+              <div class="bp2-dropdown-item {% if bg == selected_brand_group %}active{% endif %}" data-value="{{ bg }}"
+                onclick="selectSingleBrandGroup('{{ bg|escapejs }}')">
+                <span class="bp2-option-text">{{ bg }}</span>
+                <i class="bi bi-check-lg bp2-single-check {% if bg != selected_brand_group %}d-none{% endif %}"></i>
+              </div>
+              {% endfor %}
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Custom Multi-select: Platform -->
-      <div class="bp2-dropdown-wrap" id="platformDropdownWrap">
-        <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="platformDropdownTrigger"
-          aria-haspopup="true" aria-expanded="false" title="Filter platforms">
-          <i class="bi bi-shop"></i>
-          <span class="bp2-dropdown-label" id="platformDropdownLabel">All platforms</span>
-          <span class="bp2-dropdown-badge" id="platformDropdownBadge" style="display:none">0</span>
-          <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+        <!-- Single-select: Brand -->
+        <div class="bp2-dropdown-wrap {% if dimension == 'brand_group' %}d-none{% endif %}" id="brandDropdownWrap">
+          <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="brandDropdownTrigger"
+            aria-haspopup="true" aria-expanded="false" title="Filter brand">
+            <i class="bi bi-tag"></i>
+            <span class="bp2-dropdown-label" id="brandDropdownLabel">{{ selected_brand }}</span>
+            <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+          </button>
+          <div class="bp2-dropdown-menu" id="brandDropdownMenu">
+            <div class="bp2-dropdown-search">
+              <i class="bi bi-search"></i>
+              <input type="text" id="brandSearchInput" placeholder="Search brand…" autocomplete="off">
+            </div>
+            <div class="bp2-dropdown-options" id="brandOptionsList">
+              {% for b in brands %}
+              <div class="bp2-dropdown-item {% if b == selected_brand %}active{% endif %}" data-value="{{ b }}"
+                onclick="selectSingleBrand('{{ b|escapejs }}')">
+                <span class="bp2-option-text">{{ b }}</span>
+                <i class="bi bi-check-lg bp2-single-check {% if b != selected_brand %}d-none{% endif %}"></i>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Multi-select: Platform -->
+        <div class="bp2-dropdown-wrap" id="platformDropdownWrap">
+          <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="platformDropdownTrigger"
+            aria-haspopup="true" aria-expanded="false" title="Filter platforms">
+            <i class="bi bi-shop"></i>
+            <span class="bp2-dropdown-label" id="platformDropdownLabel">All platforms</span>
+            <span class="bp2-dropdown-badge" id="platformDropdownBadge" style="display:none">0</span>
+            <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+          </button>
+          <div class="bp2-dropdown-menu" id="platformDropdownMenu">
+            <div class="bp2-dropdown-search">
+              <i class="bi bi-search"></i>
+              <input type="text" id="platformSearchInput" placeholder="Search platforms…" autocomplete="off">
+            </div>
+            <div class="bp2-dropdown-actions">
+              <button type="button" class="bp2-dropdown-action-btn" id="platformSelectAll">Select all</button>
+              <button type="button" class="bp2-dropdown-action-btn" id="platformClearAll">Clear</button>
+            </div>
+            <div class="bp2-dropdown-options" id="platformOptionsList">
+              {% for p in platforms %}
+              <label class="bp2-dropdown-option" data-value="{{ p }}">
+                <input type="checkbox" value="{{ p }}" {% if p == selected_platform %}checked{% endif %}>
+                <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
+                {% if 'shopee' in p|lower %}
+                <img src="{% static 'logos/shopee.svg' %}" class="platform-logo-icon" alt="Shopee">
+                {% elif 'tokopedia' in p|lower or 'toped' in p|lower %}
+                <img src="{% static 'logos/tokopedia.svg' %}" class="platform-logo-icon" alt="Tokopedia">
+                {% elif 'tiktok' in p|lower %}
+                <img src="{% static 'logos/tiktok_shop.svg' %}" class="platform-logo-icon" alt="TikTok Shop">
+                {% elif 'lazada' in p|lower %}
+                <img src="{% static 'logos/lazada.svg' %}" class="platform-logo-icon" alt="Lazada">
+                {% else %}
+                <i class="bi bi-shop platform-logo-fallback"></i>
+                {% endif %}
+                <span class="bp2-option-text">{{ p }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <div class="bp2-dropdown-footer">
+              <button type="button" class="bp2-dropdown-apply-btn" id="platformApplyBtn">Apply</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reset Filter Button -->
+        <button type="button" class="bp2-filter-reset" title="Reset all filters" onclick="resetFilters()">
+          <i class="bi bi-arrow-counterclockwise"></i>
         </button>
-        <div class="bp2-dropdown-menu" id="platformDropdownMenu">
-          <div class="bp2-dropdown-search">
-            <i class="bi bi-search"></i>
-            <input type="text" id="platformSearchInput" placeholder="Search platforms…" autocomplete="off">
-          </div>
-          <div class="bp2-dropdown-actions">
-            <button type="button" class="bp2-dropdown-action-btn" id="platformSelectAll">Select all</button>
-            <button type="button" class="bp2-dropdown-action-btn" id="platformClearAll">Clear</button>
-          </div>
-          <div class="bp2-dropdown-options" id="platformOptionsList">
-            {% for p in platforms %}
-            <label class="bp2-dropdown-option" data-value="{{ p }}">
-              <input type="checkbox" value="{{ p }}" {% if p == selected_platform %}checked{% endif %}>
-              <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
-              <span class="bp2-option-text">{{ p }}</span>
-            </label>
-            {% endfor %}
-          </div>
-          <div class="bp2-dropdown-footer">
-            <button type="button" class="bp2-dropdown-apply-btn" id="platformApplyBtn">Apply</button>
-          </div>
-        </div>
       </div>
-
-      <!-- Reset Filter Button -->
-      <button type="button" class="bp2-filter-reset" title="Reset all filters" onclick="resetFilters()">
-        <i class="bi bi-arrow-counterclockwise"></i>
-      </button>
     </div>
 
     <!-- Export Actions -->
     <div class="bp2-actions" data-html2canvas-ignore="true">
-      <button type="button" class="bp2-btn bp2-btn-confidential" id="btnToggleConfidential" onclick="toggleConfidentialMode()" title="Toggle Confidential Data Masking (Demo Mode)">
-        <i class="bi bi-eye-slash"></i> <span id="txtConfidentialBtn">Hide Confidential Data</span>
+      <button type="button" class="bp2-btn bp2-btn-confidential bp2-btn-icon-only" id="btnToggleConfidential"
+        onclick="toggleConfidentialMode()" title="Toggle Confidential Data Masking (Demo Mode)">
+        <i class="bi bi-eye"></i>
       </button>
       <button type="button" class="bp2-btn" onclick="exportFullAnalyticsExcel()" title="Export all tables to Excel">
         <i class="bi bi-file-earmark-excel"></i> Export Excel
@@ -2915,28 +4150,19 @@
     </div>
   </div>
 
-  <!-- ── Confidential Mode Notice Banner ── -->
-  <div id="confidentialNoticeBanner" class="bp2-confidential-banner" style="display: none;" data-html2canvas-ignore="true">
-    <div class="bp2-confidential-banner-content">
-      <i class="bi bi-shield-lock-fill"></i>
-      <span><b>Confidential / Demo Mode Active:</b> Semua angka nominal, kuantitas, persentase, dan sumbu chart disamarkan untuk keamanan presentasi ke calon klien.</span>
-    </div>
-    <button type="button" class="bp2-confidential-banner-close" onclick="toggleConfidentialMode()" title="Tampilkan kembali semua data">
-      <i class="bi bi-eye"></i> Tampilkan Data
-    </button>
-  </div>
-
-  <!-- ── Executive Hero ── -->
-  <div class="bp2-hero">
-    <div>
-      <div class="bp2-eyebrow"><span class="pulse"></span> BRAND PERFORMANCE V2 • PERIODIC DRILL-DOWN</div>
-      <h1>Performance & SKU Analytics</h1>
-      <p>Comprehensive periodic metrics, monthly platform drill-down, price analytics & order-mart raw exports</p>
-    </div>
-    <div class="bp2-asof">
-      <i class="bi bi-calendar-range"></i>
-      <span>Selected Period: <b id="heroPeriodLabel">{{ start_date }} – {{ end_date }}</b> vs <span
-          id="heroPrevPeriodLabel" class="mono text-muted">M-1</span></span>
+  <!-- ── Full-width Dimension Toggle (Brand vs Brand Group) ── -->
+  <div class="bp2-dimension-bar" data-html2canvas-ignore="true">
+    <div class="bp2-dimension-toggle" role="group" aria-label="Analysis Dimension">
+      <button type="button" class="bp2-dim-btn {% if dimension == 'brand' %}active{% endif %}" id="btnDimBrand"
+        onclick="switchDimension('brand')">
+        <i class="bi bi-tag-fill"></i>
+        <span>Brand Level Analytics</span>
+      </button>
+      <button type="button" class="bp2-dim-btn {% if dimension == 'brand_group' %}active{% endif %}"
+        id="btnDimBrandGroup" onclick="switchDimension('brand_group')">
+        <i class="bi bi-collection-fill"></i>
+        <span>Brand Group Level Analytics</span>
+      </button>
     </div>
   </div>
 
@@ -2947,9 +4173,11 @@
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title">
-          <span class="badge-num">1</span> Comprehensive Metrics Performance & Growth vs Month-1 (M-1)
+          <span class="badge-num">1</span> Comprehensive Metrics Performance & Growth vs <span
+            id="bentoHeaderVs">Month-1 (M-1)</span>
         </h2>
-        <p class="bp2-card-subtitle">Executive performance pulse comparing selected timeframe with preceding period of identical duration</p>
+        <p class="bp2-card-subtitle">Executive performance pulse comparing selected timeframe with preceding period of
+          identical duration</p>
       </div>
       <div class="bp2-card-actions">
         <!-- View Toggle: Executive Hub vs Full Table -->
@@ -2983,25 +4211,30 @@
             <!-- NMV Hero Card -->
             <div class="bento-hero-tile primary-nmv">
               <div class="bento-tile-head">
-                <span class="bento-tile-label"><i class="bi bi-cash-stack" style="color:var(--orange);"></i> Total NMV</span>
+                <span class="bento-tile-label"><i class="bi bi-cash-stack" style="color:var(--orange);"></i> Total
+                  NMV</span>
                 <span id="badgeNmvGrowth" class="chip flat">—</span>
               </div>
               <div class="bento-tile-value lg mono" id="kpiValNmv">Rp 0</div>
-              <div class="bento-sub-metric" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between;">
-                <div><span>Target:</span> <b class="mono" id="kpiHeroTargetNmv">Rp 0</b> (<span id="kpiHeroAch" style="color:var(--c-emerald); font-weight:700;">0%</span>)</div>
-                <div><span>Previous M-1:</span> <b class="mono" id="kpiPrevNmv">Rp 0</b></div>
+              <div class="bento-sub-metric"
+                style="display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between;">
+                <div><span>Target:</span> <b class="mono" id="kpiHeroTargetNmv">Rp 0</b> (<span id="kpiHeroAch"
+                    style="color:var(--c-emerald); font-weight:700;">0%</span>)</div>
+                <div><span class="bp2-bento-comp-lbl">Previous M-1:</span> <b class="mono" id="kpiPrevNmv">Rp 0</b>
+                </div>
               </div>
             </div>
 
             <!-- GMV Hero Card -->
             <div class="bento-hero-tile">
               <div class="bento-tile-head">
-                <span class="bento-tile-label"><i class="bi bi-wallet2" style="color:var(--c-indigo);"></i> Total GMV</span>
+                <span class="bento-tile-label"><i class="bi bi-wallet2" style="color:var(--c-indigo);"></i> Total
+                  GMV</span>
                 <span id="badgeGmvGrowth" class="chip flat">—</span>
               </div>
               <div class="bento-tile-value mono" id="kpiValGmv">Rp 0</div>
               <div class="bento-sub-metric">
-                <span>Previous M-1:</span>
+                <span class="bp2-bento-comp-lbl">Previous M-1:</span>
                 <b class="mono" id="kpiPrevGmv">Rp 0</b>
               </div>
             </div>
@@ -3011,7 +4244,8 @@
           <div class="bento-rev-bottom">
             <div class="bento-mini-tile">
               <div class="bento-mini-head">
-                <span class="bento-mini-label"><i class="bi bi-bag-check" style="color:var(--c-emerald);"></i> Net Orders</span>
+                <span class="bento-mini-label"><i class="bi bi-bag-check" style="color:var(--c-emerald);"></i> Net
+                  Orders</span>
                 <span id="badgeOrdersGrowth" class="chip flat">—</span>
               </div>
               <div class="bento-mini-val mono" id="kpiValOrders">0</div>
@@ -3022,7 +4256,8 @@
 
             <div class="bento-mini-tile">
               <div class="bento-mini-head">
-                <span class="bento-mini-label"><i class="bi bi-box-seam" style="color:var(--c-sky);"></i> Net Quantity</span>
+                <span class="bento-mini-label"><i class="bi bi-box-seam" style="color:var(--c-sky);"></i> Net
+                  Quantity</span>
                 <span id="badgeQtyGrowth" class="chip flat">—</span>
               </div>
               <div class="bento-mini-val mono" id="kpiValQty">0</div>
@@ -3044,12 +4279,13 @@
             <!-- AOV -->
             <div class="bento-econ-tile">
               <div class="bento-mini-head">
-                <span class="bento-mini-label"><i class="bi bi-cart-check" style="color:var(--c-violet);"></i> AOV</span>
+                <span class="bento-mini-label"><i class="bi bi-cart-check" style="color:var(--c-violet);"></i>
+                  AOV</span>
                 <span id="badgeAovGrowth" class="chip flat">—</span>
               </div>
               <div class="bento-mini-val mono" id="kpiValAov">Rp 0</div>
               <div class="bento-mini-sub">
-                M-1: <b class="mono" id="kpiPrevAov">Rp 0</b>
+                <span class="bp2-bento-comp-lbl">M-1:</span> <b class="mono" id="kpiPrevAov">Rp 0</b>
               </div>
             </div>
 
@@ -3061,7 +4297,7 @@
               </div>
               <div class="bento-mini-val mono" id="kpiValAsp">Rp 0</div>
               <div class="bento-mini-sub">
-                M-1: <b class="mono" id="kpiPrevAsp">Rp 0</b>
+                <span class="bp2-bento-comp-lbl">M-1:</span> <b class="mono" id="kpiPrevAsp">Rp 0</b>
               </div>
             </div>
 
@@ -3103,36 +4339,39 @@
           <!-- Platform Voucher -->
           <div class="bento-promo-tile">
             <div class="bento-mini-head">
-              <span class="bento-mini-label" style="color:#8B5CF6;"><i class="bi bi-ticket-perforated"></i> Platform Voucher</span>
+              <span class="bento-mini-label" style="color:#8B5CF6;"><i class="bi bi-ticket-perforated"></i> Platform
+                Voucher</span>
               <span id="badgePlatVouchGrowth" class="chip flat">—</span>
             </div>
             <div class="bento-mini-val mono" id="kpiValPlatVouch">Rp 0</div>
             <div class="bento-mini-sub">
-              M-1: <b class="mono" id="kpiPrevPlatVouch">Rp 0</b>
+              <span class="bp2-bento-comp-lbl">M-1:</span> <b class="mono" id="kpiPrevPlatVouch">Rp 0</b>
             </div>
           </div>
 
           <!-- Seller Voucher -->
           <div class="bento-promo-tile">
             <div class="bento-mini-head">
-              <span class="bento-mini-label" style="color:#EC4899;"><i class="bi bi-ticket-detailed"></i> Seller Voucher</span>
+              <span class="bento-mini-label" style="color:#EC4899;"><i class="bi bi-ticket-detailed"></i> Seller
+                Voucher</span>
               <span id="badgeSellerVouchGrowth" class="chip flat">—</span>
             </div>
             <div class="bento-mini-val mono" id="kpiValSellerVouch">Rp 0</div>
             <div class="bento-mini-sub">
-              M-1: <b class="mono" id="kpiPrevSellerVouch">Rp 0</b>
+              <span class="bp2-bento-comp-lbl">M-1:</span> <b class="mono" id="kpiPrevSellerVouch">Rp 0</b>
             </div>
           </div>
 
           <!-- Platform Discount -->
           <div class="bento-promo-tile">
             <div class="bento-mini-head">
-              <span class="bento-mini-label" style="color:#0EA5E9;"><i class="bi bi-percent"></i> Platform Discount</span>
+              <span class="bento-mini-label" style="color:#0EA5E9;"><i class="bi bi-percent"></i> Platform
+                Discount</span>
               <span id="badgePlatDiscGrowth" class="chip flat">—</span>
             </div>
             <div class="bento-mini-val mono" id="kpiValPlatDisc">Rp 0</div>
             <div class="bento-mini-sub">
-              M-1: <b class="mono" id="kpiPrevPlatDisc">Rp 0</b>
+              <span class="bp2-bento-comp-lbl">M-1:</span> <b class="mono" id="kpiPrevPlatDisc">Rp 0</b>
             </div>
           </div>
 
@@ -3144,7 +4383,7 @@
             </div>
             <div class="bento-mini-val mono" id="kpiValSellerDisc">Rp 0</div>
             <div class="bento-mini-sub">
-              M-1: <b class="mono" id="kpiPrevSellerDisc">Rp 0</b>
+              <span class="bp2-bento-comp-lbl">M-1:</span> <b class="mono" id="kpiPrevSellerDisc">Rp 0</b>
             </div>
           </div>
         </div>
@@ -3156,8 +4395,10 @@
             <div class="bento-sub-fill-seller" id="subsidyBarSeller" style="width: 50%;"></div>
           </div>
           <div class="bento-subsidy-labels">
-            <span><i class="bi bi-circle-fill dot-plat"></i> Platform Covered: <b class="mono" id="txtSubsidyPlatPct">50.0%</b></span>
-            <span><i class="bi bi-circle-fill dot-seller"></i> Seller Funded: <b class="mono" id="txtSubsidySellerPct">50.0%</b></span>
+            <span><i class="bi bi-circle-fill dot-plat"></i> Platform Covered: <b class="mono"
+                id="txtSubsidyPlatPct">50.0%</b></span>
+            <span><i class="bi bi-circle-fill dot-seller"></i> Seller Funded: <b class="mono"
+                id="txtSubsidySellerPct">50.0%</b></span>
           </div>
         </div>
       </div>
@@ -3233,7 +4474,7 @@
       <div class="bp2-card-header">
         <div class="bp2-card-title-group">
           <h2 class="bp2-card-title">
-            <span class="badge-num">3</span> Daily Trend (Selected vs M-1)
+            <span class="badge-num">3</span> Daily Trend (Selected vs <span id="trendChartVs">M-1</span>)
           </h2>
           <p class="bp2-card-subtitle">Day-over-day progression comparison across periods</p>
         </div>
@@ -3248,17 +4489,33 @@
             </button>
             <div class="bp2-dropdown-menu" id="trendLineDropdownMenu" style="min-width: 230px;">
               <div class="bp2-dropdown-options" id="trendLineOptionsList">
-                <label class="bp2-dropdown-option"><input type="checkbox" value="nmv_curr" checked><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>NMV (Actual)</span></label>
-                <label class="bp2-dropdown-option"><input type="checkbox" value="nmv_target" checked><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>NMV (Target)</span></label>
-                <label class="bp2-dropdown-option"><input type="checkbox" value="nmv_prev"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>NMV (M-1)</span></label>
-                <label class="bp2-dropdown-option"><input type="checkbox" value="gmv_curr"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>GMV (Actual)</span></label>
-                <label class="bp2-dropdown-option"><input type="checkbox" value="gmv_prev"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>GMV (M-1)</span></label>
-                <label class="bp2-dropdown-option"><input type="checkbox" value="orders_curr"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Net Order (Actual)</span></label>
-                <label class="bp2-dropdown-option"><input type="checkbox" value="orders_prev"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Net Order (M-1)</span></label>
-                <label class="bp2-dropdown-option"><input type="checkbox" value="views_curr"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Pageviews (Actual)</span></label>
-                <label class="bp2-dropdown-option"><input type="checkbox" value="views_prev"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Pageviews (M-1)</span></label>
-                <label class="bp2-dropdown-option"><input type="checkbox" value="visitors_curr"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Visitors (Actual)</span></label>
-                <label class="bp2-dropdown-option"><input type="checkbox" value="visitors_prev"><span class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Visitors (M-1)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="nmv_curr" checked><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span>NMV (Actual)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="nmv_target" checked><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span>NMV (Target)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="nmv_prev"><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span class="trend-comp-opt"
+                    data-metric="NMV">NMV (M-1)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="gmv_curr"><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span>GMV (Actual)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="gmv_prev"><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span class="trend-comp-opt"
+                    data-metric="GMV">GMV (M-1)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="orders_curr"><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Net Order (Actual)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="orders_prev"><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span class="trend-comp-opt"
+                    data-metric="Net Order">Net Order (M-1)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="views_curr"><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Pageviews (Actual)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="views_prev"><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span class="trend-comp-opt"
+                    data-metric="Pageviews">Pageviews (M-1)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="visitors_curr"><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span>Visitors (Actual)</span></label>
+                <label class="bp2-dropdown-option"><input type="checkbox" value="visitors_prev"><span
+                    class="bp2-custom-check"><i class="bi bi-check"></i></span><span class="trend-comp-opt"
+                    data-metric="Visitors">Visitors (M-1)</span></label>
               </div>
             </div>
           </div>
@@ -3401,19 +4658,28 @@
         <div class="bp2-segment scatter-mode-segment" id="scatterModeToggle" role="tablist">
           <button type="button" class="bp2-segment-btn active" data-mode="nominal" onclick="setScatterMode('nominal')">
             <i class="bi bi-cash-stack"></i> <span>NMV vs Discount (Rp)</span>
-            <span class="scatter-info-trigger" onclick="event.stopPropagation(); toggleScatterModeInfo('nominal', this);" onmouseenter="hoverScatterModeInfo('nominal', this);" onmouseleave="leaveScatterModeInfo();" title="Pelajari Mode Nominal Rp">
+            <span class="scatter-info-trigger"
+              onclick="event.stopPropagation(); toggleScatterModeInfo('nominal', this);"
+              onmouseenter="hoverScatterModeInfo('nominal', this);" onmouseleave="leaveScatterModeInfo();"
+              title="Pelajari Mode Nominal Rp">
               <i class="bi bi-question-circle-fill"></i>
             </span>
           </button>
           <button type="button" class="bp2-segment-btn" data-mode="percentage" onclick="setScatterMode('percentage')">
             <i class="bi bi-percent"></i> <span>NMV vs Discount %</span>
-            <span class="scatter-info-trigger" onclick="event.stopPropagation(); toggleScatterModeInfo('percentage', this);" onmouseenter="hoverScatterModeInfo('percentage', this);" onmouseleave="leaveScatterModeInfo();" title="Pelajari Mode Discount %">
+            <span class="scatter-info-trigger"
+              onclick="event.stopPropagation(); toggleScatterModeInfo('percentage', this);"
+              onmouseenter="hoverScatterModeInfo('percentage', this);" onmouseleave="leaveScatterModeInfo();"
+              title="Pelajari Mode Discount %">
               <i class="bi bi-question-circle-fill"></i>
             </span>
           </button>
           <button type="button" class="bp2-segment-btn" data-mode="multiplier" onclick="setScatterMode('multiplier')">
             <i class="bi bi-lightning-charge-fill"></i> <span>Promo Multiplier (x)</span>
-            <span class="scatter-info-trigger" onclick="event.stopPropagation(); toggleScatterModeInfo('multiplier', this);" onmouseenter="hoverScatterModeInfo('multiplier', this);" onmouseleave="leaveScatterModeInfo();" title="Pelajari Mode Promo Multiplier">
+            <span class="scatter-info-trigger"
+              onclick="event.stopPropagation(); toggleScatterModeInfo('multiplier', this);"
+              onmouseenter="hoverScatterModeInfo('multiplier', this);" onmouseleave="leaveScatterModeInfo();"
+              title="Pelajari Mode Promo Multiplier">
               <i class="bi bi-question-circle-fill"></i>
             </span>
           </button>
@@ -3431,14 +4697,16 @@
             <h4 class="scatter-popover-title" id="popoverTitle">Mode Title</h4>
           </div>
         </div>
-        <button type="button" class="scatter-popover-close" onclick="closeScatterModeInfo()" aria-label="Tutup info">&times;</button>
+        <button type="button" class="scatter-popover-close" onclick="closeScatterModeInfo()"
+          aria-label="Tutup info">&times;</button>
       </div>
       <div id="popoverContent"></div>
     </div>
 
     <!-- 4 Quadrant Summary Cards -->
     <div class="scatter-summary-cards">
-      <div class="scatter-quad-card q1" id="cardQ1" onclick="filterScatterByQuadrant('Q1')" title="Klik untuk highlight dan lihat daftar Top SKU Stars">
+      <div class="scatter-quad-card q1" id="cardQ1" onclick="filterScatterByQuadrant('Q1')"
+        title="Klik untuk highlight dan lihat daftar Top SKU Stars">
         <div class="quad-header">
           <span class="quad-title">Q1: Stars</span>
           <span class="quad-count-badge" id="q1Count">0 SKUs</span>
@@ -3450,7 +4718,8 @@
         <div class="quad-desc" id="q1Desc">High NMV • Low Discount (Organik & Sangat Efisien)</div>
       </div>
 
-      <div class="scatter-quad-card q2" id="cardQ2" onclick="filterScatterByQuadrant('Q2')" title="Klik untuk highlight dan lihat daftar Top SKU Promo Drivers">
+      <div class="scatter-quad-card q2" id="cardQ2" onclick="filterScatterByQuadrant('Q2')"
+        title="Klik untuk highlight dan lihat daftar Top SKU Promo Drivers">
         <div class="quad-header">
           <span class="quad-title">Q2: Promo Drivers</span>
           <span class="quad-count-badge" id="q2Count">0 SKUs</span>
@@ -3462,7 +4731,8 @@
         <div class="quad-desc" id="q2Desc">High NMV • High Discount (Volume Driver, Pantau Margin)</div>
       </div>
 
-      <div class="scatter-quad-card q3" id="cardQ3" onclick="filterScatterByQuadrant('Q3')" title="Klik untuk highlight dan lihat daftar Top SKU Sleepers">
+      <div class="scatter-quad-card q3" id="cardQ3" onclick="filterScatterByQuadrant('Q3')"
+        title="Klik untuk highlight dan lihat daftar Top SKU Sleepers">
         <div class="quad-header">
           <span class="quad-title">Q3: Sleepers</span>
           <span class="quad-count-badge" id="q3Count">0 SKUs</span>
@@ -3474,7 +4744,8 @@
         <div class="quad-desc" id="q3Desc">Low NMV • Low Discount (Potensial Diberi Dorongan Promo)</div>
       </div>
 
-      <div class="scatter-quad-card q4" id="cardQ4" onclick="filterScatterByQuadrant('Q4')" title="Klik untuk highlight dan lihat daftar Top SKU Inefficient">
+      <div class="scatter-quad-card q4" id="cardQ4" onclick="filterScatterByQuadrant('Q4')"
+        title="Klik untuk highlight dan lihat daftar Top SKU Inefficient">
         <div class="quad-header">
           <span class="quad-title">Q4: Inefficient</span>
           <span class="quad-count-badge" id="q4Count">0 SKUs</span>
@@ -3496,14 +4767,17 @@
             oninput="onScatterSearchInput()">
         </div>
         <div style="display:inline-flex; align-items:center; gap:6px;">
-          <span style="font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);"><i class="bi bi-shop"></i> Platform:</span>
+          <span
+            style="font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);"><i
+              class="bi bi-shop"></i> Platform:</span>
           <div class="bp2-segment" id="scatterPlatformToggle" aria-label="Platform filter">
             <!-- Dynamically populated via JS -->
           </div>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
-        <button type="button" class="bp2-btn sm" id="scatterResetBtn" onclick="resetScatterFilters()" style="display:none;">
+        <button type="button" class="bp2-btn sm" id="scatterResetBtn" onclick="resetScatterFilters()"
+          style="display:none;">
           <i class="bi bi-arrow-counterclockwise"></i> Reset View
         </button>
         <div class="table-info-count" id="scatterPointCount">Showing 0 SKUs</div>
@@ -3525,7 +4799,8 @@
             <button type="button" class="scatter-zoom-btn" onclick="zoomScatter(0.8)" title="Zoom Out (-)">
               <i class="bi bi-zoom-out"></i>
             </button>
-            <button type="button" class="scatter-zoom-btn" id="scatterZoomResetBtn" onclick="resetScatterZoom()" title="Reset Zoom & Pan">
+            <button type="button" class="scatter-zoom-btn" id="scatterZoomResetBtn" onclick="resetScatterZoom()"
+              title="Reset Zoom & Pan">
               <i class="bi bi-arrows-angle-contract"></i>
             </button>
           </div>
@@ -3537,7 +4812,8 @@
       <div class="scatter-detail-panel" id="scatterDetailPanel">
         <div class="scatter-detail-empty" id="scatterDetailEmpty">
           <i class="bi bi-cursor"></i>
-          <p>Klik salah satu kartu kuadran di atas untuk melihat Top SKU, atau klik titik produk pada chart untuk rincian performa.</p>
+          <p>Klik salah satu kartu kuadran di atas untuk melihat Top SKU, atau klik titik produk pada chart untuk
+            rincian performa.</p>
         </div>
         <div class="scatter-detail-card-content" id="scatterDetailContent" style="display:none;">
           <!-- Dynamically filled via JS -->
@@ -3572,7 +4848,9 @@
             oninput="filterPriceTable()">
         </div>
         <div style="display:inline-flex; align-items:center; gap:6px;">
-          <span style="font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);"><i class="bi bi-shop"></i> Platform:</span>
+          <span
+            style="font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);"><i
+              class="bi bi-shop"></i> Platform:</span>
           <div class="bp2-segment" id="pricePlatformToggle" aria-label="Platform filter">
             <!-- Dynamically populated via JS -->
           </div>
@@ -3616,7 +4894,8 @@
         <h2 class="bp2-card-title">
           <span class="badge-num">10</span> Product Performance Monthly Breakdown
         </h2>
-        <p class="bp2-card-subtitle">Pivoted period metrics per SKU and product with clear color-coded period indicators</p>
+        <p class="bp2-card-subtitle">Pivoted period metrics per SKU and product with clear color-coded period indicators
+        </p>
       </div>
       <div class="bp2-card-actions">
         <!-- View Toggle: Monthly Breakdown vs Total Period -->
@@ -3641,14 +4920,17 @@
             oninput="filterProdTable()">
         </div>
         <div style="display:inline-flex; align-items:center; gap:6px;">
-          <span style="font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);"><i class="bi bi-shop"></i> Platform:</span>
+          <span
+            style="font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);"><i
+              class="bi bi-shop"></i> Platform:</span>
           <div class="bp2-segment" id="prodPlatformToggle" aria-label="Platform filter">
             <!-- Dynamically populated via JS -->
           </div>
         </div>
         <!-- Month Multi-Select Dropdown -->
         <div class="bp2-dropdown-wrap" id="monthDropdownWrap" style="display:none;">
-          <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="monthDropdownTrigger" aria-haspopup="true" aria-expanded="false" title="Filter months">
+          <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="monthDropdownTrigger"
+            aria-haspopup="true" aria-expanded="false" title="Filter months">
             <i class="bi bi-calendar-range"></i>
             <span class="bp2-dropdown-label" id="monthDropdownLabel">All months</span>
             <span class="bp2-dropdown-badge" id="monthDropdownBadge" style="display:none">0</span>
@@ -3683,13 +4965,248 @@
   </div>
 
   <!-- =====================================================================
-       11. RAW DATA EXPORT: DAILY ALL METRICS LEVEL (FROM ORDER MART SUMMARY)
+       11. CANCELLATION & ORDER LEAKAGE FORENSICS
+       ===================================================================== -->
+  <div class="bp2-card" id="cancellationForensicsCard">
+    <div class="bp2-card-header">
+      <div class="bp2-card-title-group">
+        <h2 class="bp2-card-title">
+          <span class="badge-num">11</span> Cancellation & Order Leakage Forensics
+        </h2>
+        <p class="bp2-card-subtitle">
+          Root-cause diagnostic, daily leakage trajectory, platform vulnerability & mitigation action matrix
+        </p>
+      </div>
+      <div class="bp2-card-actions">
+        <button type="button" class="bp2-btn" onclick="exportCancelDiagnosticCSV()">
+          <i class="bi bi-download"></i> CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. Cancellation Scorecard KPIs (5 cards) -->
+    <div class="cancel-kpi-grid">
+      <!-- KPI 1: Total Lost GMV -->
+      <div class="cancel-kpi-card">
+        <div class="cancel-kpi-card-head">
+          <span class="cancel-kpi-card-title">Total Lost GMV</span>
+          <span class="cancel-kpi-card-icon" style="background: rgba(239, 68, 68, 0.12); color: #ef4444;"><i
+              class="bi bi-x-circle-fill"></i></span>
+        </div>
+        <div class="cancel-kpi-card-val mono text-rose" id="aCancelLostGmv">—</div>
+        <div class="cancel-kpi-card-sub">
+          <span class="bp2-bento-comp-lbl">vs Comp:</span>
+          <span class="chip" id="aCancelLostGmvDelta">—</span>
+        </div>
+      </div>
+
+      <!-- KPI 2: Cancelled Orders -->
+      <div class="cancel-kpi-card">
+        <div class="cancel-kpi-card-head">
+          <span class="cancel-kpi-card-title">Cancelled Orders</span>
+          <span class="cancel-kpi-card-icon" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;"><i
+              class="bi bi-bag-x-fill"></i></span>
+        </div>
+        <div class="cancel-kpi-card-val mono" id="aCancelLostOrders">—</div>
+        <div class="cancel-kpi-card-sub">
+          <span>Cancelled Units:</span>
+          <strong class="mono" id="aCancelLostQty">—</strong>
+        </div>
+      </div>
+
+      <!-- KPI 3: Avoidable Loss (Seller) -->
+      <div class="cancel-kpi-card"
+        style="border-color: rgba(239, 68, 68, 0.3); background: linear-gradient(180deg, var(--bp2-surface) 0%, rgba(239, 68, 68, 0.04) 100%);">
+        <div class="cancel-kpi-card-head">
+          <span class="cancel-kpi-card-title" style="color: #ef4444;">Avoidable Loss (Seller)</span>
+          <span class="cancel-kpi-card-icon" style="background: rgba(239, 68, 68, 0.18); color: #ef4444;"><i
+              class="bi bi-exclamation-triangle-fill"></i></span>
+        </div>
+        <div class="cancel-kpi-card-val mono text-rose" id="aCancelSellerLoss">—</div>
+        <div class="cancel-kpi-card-sub">
+          <span id="aCancelSellerShare">0.0% of Loss</span>
+          <span class="badge-fc-seller"
+            style="font-size: .65rem; padding: 1px 6px; border-radius: 4px; font-weight: 700;">Actionable</span>
+        </div>
+      </div>
+
+      <!-- KPI 4: Logistics / Courier Failures -->
+      <div class="cancel-kpi-card">
+        <div class="cancel-kpi-card-head">
+          <span class="cancel-kpi-card-title">Logistics Failure</span>
+          <span class="cancel-kpi-card-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;"><i
+              class="bi bi-truck"></i></span>
+        </div>
+        <div class="cancel-kpi-card-val mono" id="aCancelLogisticsLoss">—</div>
+        <div class="cancel-kpi-card-sub">
+          <span id="aCancelLogisticsShare">0.0% of Loss</span>
+          <span class="mono text-muted" id="aCancelLogisticsOrders">(0 ord)</span>
+        </div>
+      </div>
+
+      <!-- KPI 5: Order Cancellation Rate -->
+      <div class="cancel-kpi-card">
+        <div class="cancel-kpi-card-head">
+          <span class="cancel-kpi-card-title">Cancellation Rate</span>
+          <span class="cancel-kpi-card-icon" style="background: rgba(139, 92, 246, 0.12); color: #8b5cf6;"><i
+              class="bi bi-percent"></i></span>
+        </div>
+        <div class="cancel-kpi-card-val mono" id="aCancelRateOrders">—</div>
+        <div class="cancel-kpi-card-sub">
+          <span>GMV Loss Ratio:</span>
+          <strong class="mono text-muted" id="aCancelRateGmv">—</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Charts Split (Daily Trend & Top Reasons Pareto) -->
+    <div class="cancel-charts-row">
+      <!-- Left: Daily Cancellation Trend Chart -->
+      <div class="cancel-chart-panel">
+        <div class="cancel-chart-panel-head">
+          <div class="bp2-card-title-group">
+            <h3 class="cancel-chart-panel-title">
+              <i class="bi bi-graph-down text-rose"></i> Daily Cancellation Trajectory
+            </h3>
+            <p class="cancel-chart-panel-sub">Day-by-day Lost GMV progression by responsibility</p>
+          </div>
+          <div class="bp2-card-actions">
+            <div class="bp2-segment" id="cancelTrendMetricToggle" aria-label="Cancel trend metric">
+              <button type="button" class="active" data-metric="gmv" onclick="switchCancelTrendMetric('gmv')">Lost
+                GMV</button>
+              <button type="button" data-metric="orders" onclick="switchCancelTrendMetric('orders')">Orders</button>
+            </div>
+          </div>
+        </div>
+        <div class="chart-box">
+          <canvas id="cancelTrendChartCanvas"></canvas>
+        </div>
+      </div>
+
+      <!-- Right: Top 10 Cancellation Reasons Pareto -->
+      <div class="cancel-chart-panel">
+        <div class="cancel-chart-panel-head">
+          <div class="bp2-card-title-group">
+            <h3 class="cancel-chart-panel-title">
+              <i class="bi bi-bar-chart-steps" style="color: #6366F1;"></i> Top Cancellation Reasons (Pareto)
+            </h3>
+            <p class="cancel-chart-panel-sub">Ranked by nominal lost value across period</p>
+          </div>
+          <div class="bp2-card-actions">
+            <span class="pill sm pill-flat" style="font-size: .72rem; font-weight: 700;">Top 10</span>
+          </div>
+        </div>
+        <div class="chart-box">
+          <canvas id="cancelParetoChartCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Platform Vulnerability Cards -->
+    <div class="cancel-vuln-section">
+      <h3 style="font-size: .88rem; font-weight: 700; color: var(--text-primary); margin: 0 0 10px;">Platform
+        Vulnerability Matrix</h3>
+      <div class="cancel-vuln-grid" id="cancelPlatformVulnGrid">
+        <!-- Populated via JS -->
+      </div>
+    </div>
+
+    <!-- 4. Interactive Cancellation Diagnostic & Mitigation Table -->
+    <div style="margin-top: 18px;">
+      <div class="table-toolbar" style="padding: 12px 0 10px;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="table-search">
+            <i class="bi bi-search"></i>
+            <input type="text" id="cancelDiagSearchInput" placeholder="Filter by reason or platform…"
+              oninput="filterCancelDiagTable()">
+          </div>
+          <div style="display: inline-flex; align-items: center; gap: 6px;">
+            <span
+              style="font-size: .74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted);">
+              <i class="bi bi-funnel"></i> Category:
+            </span>
+            <div class="bp2-segment" id="cancelFaultFilter" aria-label="Fault category filter">
+              <button type="button" class="active" data-cat="all" onclick="filterCancelByFault('all')">All</button>
+              <button type="button" data-cat="seller" onclick="filterCancelByFault('seller')">Seller</button>
+              <button type="button" data-cat="buyer" onclick="filterCancelByFault('buyer')">Buyer</button>
+              <button type="button" data-cat="logistics" onclick="filterCancelByFault('logistics')">Logistics</button>
+              <button type="button" data-cat="system" onclick="filterCancelByFault('system')">System</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-info-count" id="cancelDiagCount">Showing 0 reasons</div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="bp2-tbl" id="cancelDiagnosticTable">
+          <thead>
+            <tr>
+              <th style="width: 40px; text-align: center;">#</th>
+              <th style="width: 130px;">Fault Category</th>
+              <th style="min-width: 220px;">Standardized Reason</th>
+              <th style="width: 100px;">Platform</th>
+              <th style="text-align: right; width: 95px;">Lost Orders</th>
+              <th style="text-align: right; width: 95px;">Lost Units</th>
+              <th style="text-align: right; width: 140px;">Lost GMV (IDR)</th>
+              <th style="text-align: right; width: 110px;">Avg Order Value</th>
+              <th style="width: 130px; text-align: right;">% of Loss</th>
+              <th style="min-width: 280px;">Mitigation Action Recommendation</th>
+            </tr>
+          </thead>
+          <tbody id="cancelDiagnosticTableBody">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5. Avoidable Revenue Recovery Simulator Box -->
+    <div class="cancel-recovery-box">
+      <div class="cancel-recovery-left">
+        <div class="cancel-recovery-icon"><i class="bi bi-lightbulb-fill"></i></div>
+        <div>
+          <div class="cancel-recovery-title">Avoidable Revenue Recovery Simulator</div>
+          <div class="cancel-recovery-desc">
+            Simulasi potensi omset bersih yang dapat diselamatkan jika brand berhasil memangkas kelalaian internal
+            seller (Late Shipment & Out of Stock) melalui perbaikan SLA gudang dan sinkronisasi stok fisik.
+          </div>
+        </div>
+      </div>
+      <div class="cancel-recovery-right">
+        <div class="cancel-sim-slider-container">
+          <div class="cancel-sim-slider-header">
+            <span class="cancel-sim-slider-title">Reduction Target</span>
+            <span class="cancel-sim-slider-badge mono" id="aCancelSimPctBadge">50% Cut</span>
+          </div>
+          <div class="cancel-sim-slider-wrap">
+            <input type="range" id="aCancelSimSlider" min="0" max="100" value="50" step="1"
+              class="cancel-sim-range-input" oninput="updateRecoverySim(this.value)">
+          </div>
+          <div class="cancel-sim-slider-scale">
+            <span>0%</span>
+            <span>25%</span>
+            <span>50%</span>
+            <span>75%</span>
+            <span>100%</span>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: .72rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">
+            Potential Recovered Revenue</div>
+          <div class="cancel-recovery-amount mono" id="aCancelSimVal">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       12. RAW DATA EXPORT: DAILY ALL METRICS LEVEL (FROM ORDER MART SUMMARY)
        ===================================================================== -->
   <div class="bp2-card">
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title">
-          <span class="badge-num">11</span> Raw Data Export: Daily All Metrics Level
+          <span class="badge-num">12</span> Raw Data Export: Daily All Metrics Level
         </h2>
         <p class="bp2-card-subtitle">Granular daily order-mart facts with performance ratios (CVR, CR, ABS, AOV, ASP)
         </p>
@@ -3775,8 +5292,10 @@
   let globalAnalyticsData = null;
   let currentProductMode = 'monthly'; // 'monthly' or 'total'
 
-  // Filter states
+  // Dimension & Filter states
+  let currentDimension = '{{ dimension|default:"brand" }}';
   let selectedBrand = '{{ selected_brand }}';
+  let selectedBrandGroup = '{{ selected_brand_group }}';
   let selectedPlatforms = [];
 
   // Raw table pagination state
@@ -3815,13 +5334,109 @@
 
   function isDarkMode() {
     return document.documentElement.getAttribute('data-theme') === 'dark' ||
-           document.documentElement.getAttribute('data-bs-theme') === 'dark' ||
-           document.body.classList.contains('dark-mode');
+      document.documentElement.getAttribute('data-bs-theme') === 'dark' ||
+      document.body.classList.contains('dark-mode');
   }
+
+  function renderBp2ExternalTooltip(context) {
+    const { chart, tooltip } = context;
+    let tooltipEl = document.getElementById('bp2GlobalChartTooltip');
+    if (!tooltipEl) {
+      tooltipEl = document.createElement('div');
+      tooltipEl.id = 'bp2GlobalChartTooltip';
+      tooltipEl.className = 'bp2-global-chart-tooltip';
+      document.body.appendChild(tooltipEl);
+    }
+
+    if (!tooltip || tooltip.opacity === 0) {
+      tooltipEl.style.opacity = '0';
+      tooltipEl.style.visibility = 'hidden';
+      return;
+    }
+
+    const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    let innerHtml = '';
+    if (tooltip.title && tooltip.title.length) {
+      innerHtml += `<div class="bp2-chart-tt-title">${tooltip.title.map(t => esc(t)).join('<br>')}`;
+      if (tooltip.beforeBody && tooltip.beforeBody.length) {
+        innerHtml += `<div class="bp2-chart-tt-sub">${tooltip.beforeBody.map(s => esc(s)).join('<br>')}</div>`;
+      }
+      innerHtml += '</div>';
+    } else if (tooltip.beforeBody && tooltip.beforeBody.length) {
+      innerHtml += `<div class="bp2-chart-tt-title"><div class="bp2-chart-tt-sub">${tooltip.beforeBody.map(s => esc(s)).join('<br>')}</div></div>`;
+    }
+
+    if (tooltip.body && tooltip.body.length) {
+      innerHtml += '<div class="bp2-chart-tt-body">';
+      tooltip.body.forEach((bodyItem, i) => {
+        const colors = tooltip.labelColors && tooltip.labelColors[i] ? tooltip.labelColors[i] : {};
+        const color = colors.backgroundColor || 'var(--orange, #FF7A00)';
+        const lines = bodyItem.lines || [];
+        lines.forEach((line, lineIdx) => {
+          const isClickHint = line.toLowerCase().includes('klik') || line.toLowerCase().includes('click');
+          if (isClickHint) {
+            innerHtml += `<div class="bp2-chart-tt-footer">${esc(line)}</div>`;
+          } else {
+            innerHtml += `
+              <div class="bp2-chart-tt-row">
+                ${lineIdx === 0 ? `<span class="bp2-chart-tt-dot" style="background:${color}; border-color:${colors.borderColor || color};"></span>` : `<span style="width:8px; height:8px; display:inline-block; flex-shrink:0;"></span>`}
+                <span class="bp2-chart-tt-text">${esc(line)}</span>
+              </div>
+            `;
+          }
+        });
+      });
+      innerHtml += '</div>';
+    }
+
+    if (tooltip.afterBody && tooltip.afterBody.length) {
+      innerHtml += `<div class="bp2-chart-tt-footer">${tooltip.afterBody.map(s => esc(s)).join('<br>')}</div>`;
+    }
+
+    if (tooltip.footer && tooltip.footer.length) {
+      innerHtml += `<div class="bp2-chart-tt-footer">${tooltip.footer.map(f => esc(f)).join('<br>')}</div>`;
+    }
+
+    tooltipEl.innerHTML = innerHtml;
+
+    const canvasRect = chart.canvas.getBoundingClientRect();
+    const ttWidth = tooltipEl.offsetWidth || 180;
+    const ttHeight = tooltipEl.offsetHeight || 60;
+
+    let left = canvasRect.left + tooltip.caretX;
+    let top = canvasRect.top + tooltip.caretY - ttHeight - 12;
+
+    // Viewport bounds checking
+    if (left + ttWidth / 2 > window.innerWidth - 12) {
+      left = window.innerWidth - ttWidth / 2 - 12;
+    }
+    if (left - ttWidth / 2 < 12) {
+      left = ttWidth / 2 + 12;
+    }
+
+    // If top is clipped above window, flip below the caret
+    if (top < 12) {
+      top = canvasRect.top + tooltip.caretY + 14;
+    }
+
+    tooltipEl.style.left = `${left}px`;
+    tooltipEl.style.top = `${top}px`;
+    tooltipEl.style.opacity = '1';
+    tooltipEl.style.visibility = 'visible';
+  }
+
+  // Dismiss floating chart tooltip on page scroll
+  window.addEventListener('scroll', () => {
+    const el = document.getElementById('bp2GlobalChartTooltip');
+    if (el) { el.style.opacity = '0'; el.style.visibility = 'hidden'; }
+  }, { passive: true });
 
   function getChartTooltipConfig() {
     const dark = isDarkMode();
     return {
+      enabled: false,
+      external: renderBp2ExternalTooltip,
       backgroundColor: dark ? 'rgba(15, 23, 42, 0.96)' : '#FFFFFF',
       titleColor: dark ? '#F8FAFC' : '#0F172A',
       bodyColor: dark ? '#CBD5E1' : '#334155',
@@ -3837,6 +5452,41 @@
     };
   }
 
+  /* ── Dimension Switcher: Brand vs Brand Group ── */
+  function switchDimension(dim) {
+    if (currentDimension === dim) return;
+    currentDimension = dim;
+
+    const btnBrand = document.getElementById('btnDimBrand');
+    const btnBrandGroup = document.getElementById('btnDimBrandGroup');
+    if (btnBrand) btnBrand.classList.toggle('active', dim === 'brand');
+    if (btnBrandGroup) btnBrandGroup.classList.toggle('active', dim === 'brand_group');
+
+    const brandWrap = document.getElementById('brandDropdownWrap');
+    const bgWrap = document.getElementById('brandGroupDropdownWrap');
+    if (brandWrap) {
+      brandWrap.classList.toggle('d-none', dim === 'brand_group');
+      brandWrap.style.display = '';
+    }
+    if (bgWrap) {
+      bgWrap.classList.toggle('d-none', dim === 'brand');
+      bgWrap.style.display = '';
+    }
+
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('dimension', dim);
+    window.history.replaceState({}, '', currentUrl.toString());
+
+    const summaryLink = document.querySelector('.bp2-segment a[href*="brand_performance_v2"]');
+    if (summaryLink) {
+      const sUrl = new URL(summaryLink.href, window.location.origin);
+      sUrl.searchParams.set('dimension', dim);
+      summaryLink.href = sUrl.pathname + sUrl.search;
+    }
+
+    loadAnalyticsData();
+  }
+
   /* ── Confidential Mode State & Handlers ── */
   function isConfidentialActive() {
     return localStorage.getItem('bp2_confidential_mode') === 'true';
@@ -3846,18 +5496,16 @@
     const active = isConfidentialActive();
     document.body.classList.toggle('bp2-confidential-active', active);
     const btn = document.getElementById('btnToggleConfidential');
-    const banner = document.getElementById('confidentialNoticeBanner');
     if (btn) {
       if (active) {
         btn.classList.add('active');
-        btn.innerHTML = `<i class="bi bi-eye-slash-fill" style="color:var(--orange);"></i> <span id="txtConfidentialBtn">Confidential Data Hidden</span>`;
+        btn.innerHTML = `<i class="bi bi-eye-slash-fill" style="color:var(--orange);"></i>`;
+        btn.setAttribute('title', 'Confidential Data Hidden (Click to show)');
       } else {
         btn.classList.remove('active');
-        btn.innerHTML = `<i class="bi bi-eye"></i> <span id="txtConfidentialBtn">Hide Confidential Data</span>`;
+        btn.innerHTML = `<i class="bi bi-eye"></i>`;
+        btn.setAttribute('title', 'Hide Confidential Data (Demo Mode)');
       }
-    }
-    if (banner) {
-      banner.style.display = active ? 'flex' : 'none';
     }
   }
 
@@ -3903,6 +5551,31 @@
     return Number(val).toFixed(2) + '%';
   }
 
+  function setChip(elOrId, growth) {
+    const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
+    if (!el) return;
+    if (isConfidentialActive()) {
+      el.className = 'chip flat';
+      el.innerHTML = '•••%';
+      return;
+    }
+    let chipClass = 'chip flat';
+    let arrow = '';
+    const val = (growth && typeof growth === 'object') ? growth.value : Number(growth);
+    const fmt = (growth && typeof growth === 'object' && growth.formatted)
+      ? growth.formatted
+      : (growth !== null && growth !== undefined ? `${val > 0 ? '+' : ''}${val.toFixed(2)}%` : '0.00%');
+    if (val > 0) {
+      chipClass = 'chip up';
+      arrow = '<i class="bi bi-arrow-up-short"></i>';
+    } else if (val < 0) {
+      chipClass = 'chip down';
+      arrow = '<i class="bi bi-arrow-down-short"></i>';
+    }
+    el.className = chipClass;
+    el.innerHTML = `${arrow} ${fmt}`;
+  }
+
   function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
@@ -3927,6 +5600,27 @@
     return PALETTE[i % PALETTE.length];
   }
 
+  function getPlatformLogoUrl(platform) {
+    if (!platform) return null;
+    const pl = String(platform).trim().toLowerCase();
+    if (pl.includes('shopee')) return '/static/logos/shopee.svg';
+    if (pl.includes('tokopedia') || pl.includes('toped')) return '/static/logos/tokopedia.svg';
+    if (pl.includes('tiktok')) return '/static/logos/tiktok_shop.svg';
+    if (pl.includes('lazada')) return '/static/logos/lazada.svg';
+    return null;
+  }
+
+  function renderPlatformIcon(platform, size = 14) {
+    const url = getPlatformLogoUrl(platform);
+    if (!url) {
+      if (platform === 'All' || !platform) {
+        return `<i class="bi bi-grid-fill platform-logo-fallback" style="font-size:${size - 1}px;"></i>`;
+      }
+      return `<i class="bi bi-shop platform-logo-fallback" style="font-size:${size - 1}px;"></i>`;
+    }
+    return `<img src="${url}" alt="${escapeHtml(platform)}" class="platform-logo-icon" style="width:${size}px; height:${size}px;">`;
+  }
+
   function renderPlatformBadge(platform) {
     if (!platform || platform === '-') return '-';
     const p = String(platform).trim();
@@ -3947,13 +5641,18 @@
       badgeClass = 'badge-platform-bukalapak';
     }
 
-    return `<span class="bp2-plat-badge ${badgeClass}">${escapeHtml(p)}</span>`;
+    const iconHtml = renderPlatformIcon(p, 13);
+    return `<span class="bp2-plat-badge ${badgeClass}">${iconHtml}<span>${escapeHtml(p)}</span></span>`;
   }
 
   /* ── DOM Ready & Global Theme Change Listener ── */
   window.toggleConfidentialMode = toggleConfidentialMode;
+  window.switchDimension = switchDimension;
 
   document.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('sidebar-collapse', 'sidebar-mini');
+    document.body.classList.remove('sidebar-open');
+    try { localStorage.setItem('lte.sidebar.state', 'sidebar-collapse'); } catch (e) {}
     syncConfidentialUI();
     setupMultiSelectDropdowns();
     syncActivePresetPill();
@@ -3970,7 +5669,66 @@
     if (scatterDataCalculated) {
       buildScatterChart(scatterDataCalculated);
     }
+    if (cancelAnalyticsData) {
+      renderCancelTrendChart();
+      renderCancelParetoChart();
+    }
   });
+
+  function selectSingleBrandGroup(bg) {
+    selectedBrandGroup = bg;
+    const labelEl = document.getElementById('brandGroupDropdownLabel');
+    if (labelEl) labelEl.textContent = bg;
+
+    document.querySelectorAll('#brandGroupOptionsList .bp2-dropdown-item').forEach(el => {
+      const isMatch = el.getAttribute('data-value') === bg;
+      el.classList.toggle('active', isMatch);
+      const icon = el.querySelector('.bp2-single-check');
+      if (icon) icon.classList.toggle('d-none', !isMatch);
+    });
+
+    const wrap = document.getElementById('brandGroupDropdownWrap');
+    if (wrap) wrap.classList.remove('open');
+
+    loadAnalyticsData();
+  }
+
+  function setupBrandGroupSingleSelect() {
+    const wrap = document.getElementById('brandGroupDropdownWrap');
+    const trigger = document.getElementById('brandGroupDropdownTrigger');
+    const menu = document.getElementById('brandGroupDropdownMenu');
+    const searchInput = document.getElementById('brandGroupSearchInput');
+
+    if (!wrap || !trigger) return;
+
+    if (menu) {
+      menu.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = wrap.classList.contains('open');
+      document.querySelectorAll('.bp2-dropdown-wrap').forEach(w => w.classList.remove('open'));
+      if (!isOpen) {
+        wrap.classList.add('open');
+        if (searchInput) {
+          searchInput.value = '';
+          document.querySelectorAll('#brandGroupOptionsList .bp2-dropdown-item').forEach(el => el.style.display = 'flex');
+          setTimeout(() => searchInput.focus(), 50);
+        }
+      }
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        document.querySelectorAll('#brandGroupOptionsList .bp2-dropdown-item').forEach(el => {
+          const val = (el.getAttribute('data-value') || '').toLowerCase();
+          el.style.display = val.includes(q) ? 'flex' : 'none';
+        });
+      });
+    }
+  }
 
   function selectSingleBrand(brand) {
     selectedBrand = brand;
@@ -4027,10 +5785,14 @@
     }
   }
 
+  window.selectSingleBrand = selectSingleBrand;
+  window.selectSingleBrandGroup = selectSingleBrandGroup;
+
   /* =====================================================================
      DROPDOWN MULTI-SELECT HANDLERS
      ===================================================================== */
   function setupMultiSelectDropdowns() {
+    setupBrandGroupSingleSelect();
     setupBrandSingleSelect();
 
     setupDropdown(
@@ -4057,7 +5819,7 @@
 
     // Close menus on outside click
     document.addEventListener('click', (e) => {
-      ['brandDropdownWrap', 'platformDropdownWrap', 'monthDropdownWrap', 'trendLineDropdownWrap'].forEach(id => {
+      ['brandGroupDropdownWrap', 'brandDropdownWrap', 'platformDropdownWrap', 'monthDropdownWrap', 'trendLineDropdownWrap'].forEach(id => {
         const wrap = document.getElementById(id);
         if (wrap && !wrap.contains(e.target)) {
           wrap.classList.remove('open');
@@ -4115,18 +5877,19 @@
     if (count === 0) {
       labelEl.textContent = 'Select lines';
     } else {
+      const compType = globalAnalyticsData?.comp_type || 'M-1';
       const labelsMap = {
         'nmv_curr': 'NMV',
         'nmv_target': 'Target',
-        'nmv_prev': 'NMV (M-1)',
+        'nmv_prev': `NMV (${compType})`,
         'gmv_curr': 'GMV',
-        'gmv_prev': 'GMV (M-1)',
+        'gmv_prev': `GMV (${compType})`,
         'orders_curr': 'Net Order',
-        'orders_prev': 'Order (M-1)',
+        'orders_prev': `Order (${compType})`,
         'views_curr': 'Views',
-        'views_prev': 'Views (M-1)',
+        'views_prev': `Views (${compType})`,
         'visitors_curr': 'Visitors',
-        'visitors_prev': 'Visitors (M-1)'
+        'visitors_prev': `Visitors (${compType})`
       };
       const names = [...selectedTrendLines].map(k => labelsMap[k] || k);
       if (names.length <= 2) {
@@ -4226,7 +5989,11 @@
         labelEl.textContent = defaultLabel;
         badgeEl.style.display = 'none';
       } else if (checked.length === 1) {
-        labelEl.textContent = checked[0];
+        if (wrapId.includes('platform')) {
+          labelEl.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px;">${renderPlatformIcon(checked[0], 14)} <span>${escapeHtml(checked[0])}</span></span>`;
+        } else {
+          labelEl.textContent = checked[0];
+        }
         badgeEl.style.display = 'none';
       } else {
         const itemWord = wrapId.includes('month') ? 'months' : 'selected';
@@ -4322,14 +6089,14 @@
 
     document.querySelectorAll('.bp2-preset-pill').forEach(b => b.classList.remove('active'));
 
-    if (s === r7.start && e === r7.end) {
+    if (s === rMtd.start && e === rMtd.end) {
+      setActivePresetPill('mtd');
+    } else if (s === r7.start && e === r7.end) {
       setActivePresetPill('7d');
     } else if (s === r14.start && e === r14.end) {
       setActivePresetPill('14d');
     } else if (s === r30.start && e === r30.end) {
       setActivePresetPill('30d');
-    } else if (s === rMtd.start && e === rMtd.end) {
-      setActivePresetPill('mtd');
     } else if (s === rLastM.start && e === rLastM.end) {
       setActivePresetPill('last_month');
     }
@@ -4411,6 +6178,16 @@
       if (icon) icon.classList.toggle('d-none', !isMatch);
     });
 
+    selectedBrandGroup = '{{ selected_brand_group }}';
+    const bgLabelEl = document.getElementById('brandGroupDropdownLabel');
+    if (bgLabelEl) bgLabelEl.textContent = selectedBrandGroup;
+    document.querySelectorAll('#brandGroupOptionsList .bp2-dropdown-item').forEach(el => {
+      const isMatch = el.getAttribute('data-value') === selectedBrandGroup;
+      el.classList.toggle('active', isMatch);
+      const icon = el.querySelector('.bp2-single-check');
+      if (icon) icon.classList.toggle('d-none', !isMatch);
+    });
+
     document.querySelectorAll('#platformOptionsList input').forEach(cb => cb.checked = false);
     document.getElementById('platformDropdownLabel').textContent = 'All platforms';
     document.getElementById('platformDropdownBadge').style.display = 'none';
@@ -4420,12 +6197,65 @@
     loadAnalyticsData();
   }
 
+  /* ================================================================
+     Loading Overlay Controller (with minimum 2-second display rule)
+     ================================================================ */
+  const bp2Loading = (() => {
+    const MIN_DURATION = 2000; // 2 seconds minimum
+    let startTime = Date.now();
+    let requestId = 0;
+    let timerId = null;
+
+    function getOverlay() {
+      return document.getElementById('bp2LoadingOverlay');
+    }
+
+    function start() {
+      startTime = Date.now();
+      requestId++;
+      if (timerId) {
+        clearTimeout(timerId);
+        timerId = null;
+      }
+      const el = getOverlay();
+      if (el) {
+        el.classList.add('active');
+      }
+      document.body.classList.add('bp2-loading-locked');
+      return requestId;
+    }
+
+    function stop(reqId) {
+      if (reqId !== undefined && reqId !== requestId) {
+        return;
+      }
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, MIN_DURATION - elapsed);
+      const currentReq = requestId;
+
+      if (timerId) clearTimeout(timerId);
+
+      timerId = setTimeout(() => {
+        if (currentReq === requestId) {
+          const el = getOverlay();
+          if (el) {
+            el.classList.remove('active');
+          }
+          document.body.classList.remove('bp2-loading-locked');
+        }
+      }, remaining);
+    }
+
+    return { start, stop };
+  })();
+
   /* =====================================================================
      DATA FETCH & DASHBOARD HYDRATION
      ===================================================================== */
   let abortController = null;
 
   async function loadAnalyticsData() {
+    const reqId = bp2Loading.start();
     const rootEl = document.getElementById('analyticsDashboard');
     rootEl.classList.add('is-loading');
 
@@ -4441,8 +6271,19 @@
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);
 
-    if (selectedBrand) {
-      params.append('brand', selectedBrand);
+    const activePresetBtn = document.querySelector('.bp2-preset-pill.active');
+    const activePreset = activePresetBtn ? activePresetBtn.getAttribute('data-preset') : '';
+    if (activePreset) params.append('preset', activePreset);
+
+    params.append('dimension', currentDimension);
+    if (currentDimension === 'brand_group') {
+      if (selectedBrandGroup) {
+        params.append('brand_group', selectedBrandGroup);
+      }
+    } else {
+      if (selectedBrand) {
+        params.append('brand', selectedBrand);
+      }
     }
     if (selectedPlatforms && selectedPlatforms.length > 0) {
       selectedPlatforms.forEach(p => params.append('platform', p));
@@ -4462,15 +6303,43 @@
       console.error('Failed to load analytics data:', err);
     } finally {
       rootEl.classList.remove('is-loading');
+      bp2Loading.stop(reqId);
     }
   }
 
   function renderDashboard(data) {
     // Update Hero & Column headers
-    document.getElementById('heroPeriodLabel').textContent = data.period_label;
-    document.getElementById('heroPrevPeriodLabel').textContent = data.prev_period_label;
-    document.getElementById('colCurrPeriodLabel').textContent = `${data.start_date} – ${data.end_date}`;
-    document.getElementById('colPrevPeriodLabel').textContent = `${data.prev_start_date} – ${data.prev_end_date}`;
+    const compType = data.comp_type || 'M-1';
+    const heroPeriod = document.getElementById('heroPeriodLabel');
+    if (heroPeriod) heroPeriod.textContent = data.period_label;
+    const heroPrev = document.getElementById('heroPrevPeriodLabel');
+    if (heroPrev) heroPrev.textContent = data.prev_period_label;
+    const colCurr = document.getElementById('colCurrPeriodLabel');
+    if (colCurr) colCurr.textContent = `${data.start_date} – ${data.end_date}`;
+    const colPrev = document.getElementById('colPrevPeriodLabel');
+    if (colPrev) colPrev.textContent = `${data.prev_start_date} – ${data.prev_end_date}`;
+
+    // Update dynamic comparison labels across the page
+    const bentoHeaderVs = document.getElementById('bentoHeaderVs');
+    if (bentoHeaderVs) {
+      if (compType === 'M-1') bentoHeaderVs.textContent = 'Month-1 (M-1)';
+      else bentoHeaderVs.textContent = `Preceding Period (${compType})`;
+    }
+    const colPrevPeriodLabelEl = document.getElementById('colPrevPeriodLabel');
+    if (colPrevPeriodLabelEl) colPrevPeriodLabelEl.textContent = compType;
+
+    document.querySelectorAll('.bp2-bento-comp-lbl').forEach(el => {
+      el.textContent = `${compType}:`;
+    });
+
+    const trendChartVs = document.getElementById('trendChartVs');
+    if (trendChartVs) trendChartVs.textContent = compType;
+
+    document.querySelectorAll('.trend-comp-opt').forEach(el => {
+      const metric = el.getAttribute('data-metric');
+      if (metric) el.textContent = `${metric} (${compType})`;
+    });
+    updateTrendLineDropdownTrigger();
 
     // 1. Comprehensive Metrics Table
     renderComprehensiveMetrics(data.comprehensive_metrics);
@@ -4504,7 +6373,10 @@
     initMonthDropdown();
     renderProductPerformanceTable();
 
-    // 11. Raw Data Export: Daily All Metrics Level Table
+    // 11. Cancellation & Order Leakage Forensics
+    renderCancellationForensics(data.cancellation_analytics);
+
+    // 12. Raw Data Export: Daily All Metrics Level Table
     rawDailyFullList = data.raw_daily_metrics || [];
     rawDailyFiltered = [...rawDailyFullList];
     rawDailyCurrentPage = 1;
@@ -4547,27 +6419,6 @@
         prev = formatPercent(m.previous_value);
       }
       return { curr, prev, numCurr: Number(m.current_value || 0), growth: m.growth || { formatted: '0.00%', value: 0 } };
-    }
-
-    function setChip(elId, growth) {
-      const el = document.getElementById(elId);
-      if (!el) return;
-      if (isConfidentialActive()) {
-        el.className = 'chip flat';
-        el.innerHTML = '•••%';
-        return;
-      }
-      let chipClass = 'chip flat';
-      let arrow = '';
-      if (growth && growth.value > 0) {
-        chipClass = 'chip up';
-        arrow = '<i class="bi bi-arrow-up-short"></i>';
-      } else if (growth && growth.value < 0) {
-        chipClass = 'chip down';
-        arrow = '<i class="bi bi-arrow-down-short"></i>';
-      }
-      el.className = chipClass;
-      el.innerHTML = `${arrow} ${growth ? growth.formatted : '0.00%'}`;
     }
 
     // 1. Revenue & Volume
@@ -4866,6 +6717,7 @@
     gradientNmv.addColorStop(0, 'rgba(99, 102, 241, 0.28)');
     gradientNmv.addColorStop(1, 'rgba(99, 102, 241, 0.00)');
 
+    const compType = globalAnalyticsData?.comp_type || 'M-1';
     const lineDefinitions = {
       'nmv_curr': {
         label: `NMV Actual (${globalAnalyticsData.period_label})`,
@@ -4892,7 +6744,7 @@
         yAxisID: 'y'
       },
       'nmv_prev': {
-        label: `NMV M-1 (${globalAnalyticsData.prev_period_label})`,
+        label: `NMV ${compType} (${globalAnalyticsData.prev_period_label})`,
         data: series.nmv?.previous || [],
         borderColor: '#94A3B8',
         borderDash: [5, 5],
@@ -4915,7 +6767,7 @@
         yAxisID: 'y'
       },
       'gmv_prev': {
-        label: 'GMV M-1',
+        label: `GMV ${compType}`,
         data: series.gmv?.previous || [],
         borderColor: '#7DD3FC',
         borderDash: [4, 4],
@@ -4938,7 +6790,7 @@
         yAxisID: 'y1'
       },
       'orders_prev': {
-        label: 'Net Orders M-1',
+        label: `Net Orders ${compType}`,
         data: series.net_order?.previous || [],
         borderColor: '#FCD34D',
         borderDash: [4, 4],
@@ -4961,7 +6813,7 @@
         yAxisID: 'y1'
       },
       'views_prev': {
-        label: 'Pageviews M-1',
+        label: `Pageviews ${compType}`,
         data: series.pageviews?.previous || [],
         borderColor: '#F472B6',
         borderDash: [4, 4],
@@ -4984,7 +6836,7 @@
         yAxisID: 'y1'
       },
       'visitors_prev': {
-        label: 'Visitors M-1',
+        label: `Visitors ${compType}`,
         data: series.visitors?.previous || [],
         borderColor: '#5EEAD4',
         borderDash: [4, 4],
@@ -5041,6 +6893,15 @@
             mode: 'index',
             intersect: false,
             callbacks: {
+              title: function (items) {
+                if (!items || !items.length) return '';
+                const idx = items[0].dataIndex;
+                const dayInfo = trendData.days && trendData.days[idx];
+                if (dayInfo && dayInfo.prev_label && dayInfo.prev_label !== '—') {
+                  return `${dayInfo.curr_label} (vs ${dayInfo.prev_label})`;
+                }
+                return items[0].label || '';
+              },
               label: function (context) {
                 let label = context.dataset.label || '';
                 if (label) label += ': ';
@@ -5123,9 +6984,10 @@
 
       const div = document.createElement('div');
       div.className = 'target-item';
+      const platIcon = renderPlatformIcon(t.platform, 15);
       div.innerHTML = `
       <div class="target-labels">
-        <span><b>${t.platform}</b> Share Target: ${isConfidentialActive() ? '•••%' : t.target_share.toFixed(1) + '%'}</span>
+        <span style="display:inline-flex; align-items:center; gap:6px;">${platIcon} <b>${escapeHtml(t.platform)}</b> Share Target: ${isConfidentialActive() ? '•••%' : t.target_share.toFixed(1) + '%'}</span>
         <span>
           <b class="mono" style="color:var(--text-primary);">${isConfidentialActive() ? '•••% Achieved' : t.achieved_pct.toFixed(1) + '% Achieved'}</b>
           <span class="sub-label mono">(Actual Share: ${isConfidentialActive() ? '•••%' : t.actual_share.toFixed(1) + '%'})</span>
@@ -5166,7 +7028,10 @@
         legendEl.innerHTML = items.map((p, i) => `
           <div class="bp2-legend-item">
             <i style="background:${colors[i]}"></i>
-            <span title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</span>
+            <span title="${escapeHtml(p.name)}" style="display:inline-flex; align-items:center; gap:5px;">
+              ${renderPlatformIcon(p.name, 13)}
+              <span>${escapeHtml(p.name)}</span>
+            </span>
             <em class="mono">${formatCurrency(p.value)}</em>
             <b class="mono">${isConfidentialActive() ? '•••%' : (p.share_pct ?? (total ? (p.value / total * 100).toFixed(1) : '0.0')) + '%'}</b>
           </div>
@@ -5656,8 +7521,8 @@
     }
 
     box.innerHTML = plats.map(p => `
-      <button type="button" class="${currentScatterPlatform === p ? 'active' : ''}" onclick="setScatterPlatformFilter('${escapeHtml(p)}')">
-        ${escapeHtml(p === 'All' ? 'All platforms' : p)}
+      <button type="button" class="${currentScatterPlatform === p ? 'active' : ''}" onclick="setScatterPlatformFilter('${escapeHtml(p)}')" style="display:inline-flex; align-items:center; gap:6px;">
+        ${renderPlatformIcon(p, 13)} <span>${escapeHtml(p === 'All' ? 'All platforms' : p)}</span>
       </button>
     `).join('');
   }
@@ -5728,7 +7593,7 @@
 
       // Calculate Discount Depth % (Weighted against GMV)
       const discPct = it.gmv > 0 ? ((it.total_discount / it.gmv) * 100) :
-                     (it.nmv + it.total_discount > 0 ? (it.total_discount / (it.nmv + it.total_discount) * 100) : 0);
+        (it.nmv + it.total_discount > 0 ? (it.total_discount / (it.nmv + it.total_discount) * 100) : 0);
       const cleanDiscPct = Math.min(100, Math.max(0, discPct));
 
       // Calculate Promo Efficiency Multiplier (NMV / Total Discount)
@@ -6523,7 +8388,7 @@
     if (typeof scatterChartInstance.resetZoom === 'function') {
       try {
         scatterChartInstance.resetZoom('none');
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (scatterChartInstance.options && scatterChartInstance.options.scales) {
@@ -6553,7 +8418,7 @@
     if (typeof scatterChartInstance.isZoomedOrPanned === 'function') {
       try {
         isZoomed = scatterChartInstance.isZoomedOrPanned();
-      } catch (e) {}
+      } catch (e) { }
     }
     if (!isZoomed && isScatterCustomZoomed) {
       isZoomed = true;
@@ -6756,8 +8621,8 @@
     let backBtnHtml = '';
     if (selectedScatterQuadrant) {
       const qMetaName = selectedScatterQuadrant === 'Q1' ? 'Stars' :
-                        selectedScatterQuadrant === 'Q2' ? 'Promo Drivers' :
-                        selectedScatterQuadrant === 'Q3' ? 'Sleepers' : 'Inefficient';
+        selectedScatterQuadrant === 'Q2' ? 'Promo Drivers' :
+          selectedScatterQuadrant === 'Q3' ? 'Sleepers' : 'Inefficient';
       backBtnHtml = `
         <button type="button" class="bp2-btn sm" onclick="renderQuadrantSkuList('${selectedScatterQuadrant}')" style="font-size:.74rem; padding:5px 10px; margin-bottom:10px; width:100%; justify-content:center; gap:6px;">
           <i class="bi bi-arrow-left"></i> Kembali ke Top SKUs ${qMetaName}
@@ -6777,7 +8642,7 @@
           <div style="display:flex; align-items:center; gap:6px; margin-top:6px; font-size:.73rem; color:var(--text-muted);">
             <span><i class="bi bi-tag"></i> <b>${escapeHtml(item.brand)}</b></span>
             <span>•</span>
-            <span><i class="bi bi-shop"></i> <b>${escapeHtml(item.platform)}</b></span>
+            <span style="display:inline-flex; align-items:center; gap:5px;">${renderPlatformIcon(item.platform, 13)} <b>${escapeHtml(item.platform)}</b></span>
           </div>
         </div>
         <button type="button" class="scatter-close-btn" onclick="clearScatterDetail()" title="Tutup detail">&times;</button>
@@ -6946,7 +8811,10 @@
         <div class="scatter-sku-item ${isSel ? 'active' : ''}" onclick="selectScatterSkuByCode('${escapeHtml(it.sku_code)}')" title="Klik untuk melihat kartu rincian lengkap">
           <div class="scatter-sku-rank">${rankNum}</div>
           <div class="scatter-sku-info">
-            <div class="scatter-sku-code">${escapeHtml(it.sku_code)}</div>
+            <div class="scatter-sku-code" style="display:inline-flex; align-items:center; gap:4px;">
+              ${it.platform && it.platform !== 'All' ? renderPlatformIcon(it.platform, 12) : ''}
+              <span>${escapeHtml(it.sku_code)}</span>
+            </div>
             <div class="scatter-sku-name" title="${escapeHtml(it.product_name)}">${escapeHtml(it.product_name || '-')}</div>
           </div>
           <div class="scatter-sku-metrics">
@@ -7090,8 +8958,8 @@
     }
 
     box.innerHTML = plats.map(p => `
-      <button type="button" class="${currentPricePlatform === p ? 'active' : ''}" onclick="setPricePlatformFilter('${escapeHtml(p)}')">
-        ${escapeHtml(p === 'All' ? 'All platforms' : p)}
+      <button type="button" class="${currentPricePlatform === p ? 'active' : ''}" onclick="setPricePlatformFilter('${escapeHtml(p)}')" style="display:inline-flex; align-items:center; gap:6px;">
+        ${renderPlatformIcon(p, 13)} <span>${escapeHtml(p === 'All' ? 'All platforms' : p)}</span>
       </button>
     `).join('');
   }
@@ -7283,8 +9151,8 @@
     }
 
     box.innerHTML = plats.map(p => `
-      <button type="button" class="${currentProdPlatform === p ? 'active' : ''}" onclick="setProdPlatformFilter('${escapeHtml(p)}')">
-        ${escapeHtml(p === 'All' ? 'All platforms' : p)}
+      <button type="button" class="${currentProdPlatform === p ? 'active' : ''}" onclick="setProdPlatformFilter('${escapeHtml(p)}')" style="display:inline-flex; align-items:center; gap:6px;">
+        ${renderPlatformIcon(p, 13)} <span>${escapeHtml(p === 'All' ? 'All platforms' : p)}</span>
       </button>
     `).join('');
   }
@@ -7715,7 +9583,526 @@
   }
 
   /* =====================================================================
-     10. RAW DATA EXPORT: DAILY ALL METRICS LEVEL TABLE & PAGINATION
+     11. CANCELLATION & ORDER LEAKAGE FORENSICS LOGIC
+     ===================================================================== */
+  let cancelAnalyticsData = null;
+  let cancelTrendChart = null;
+  let cancelParetoChart = null;
+  let cancelTrendCurrentMetric = 'gmv'; // 'gmv' or 'orders'
+  let cancelDiagTableFull = [];
+  let cancelDiagTableFiltered = [];
+  let cancelDiagCurrentFault = 'all';
+
+  function getCancelFaultColor(name) {
+    const l = (name || '').toLowerCase();
+    if (l.includes('seller')) return '#ef4444';
+    if (l.includes('buyer')) return '#3b82f6';
+    if (l.includes('logistics')) return '#f59e0b';
+    if (l.includes('system')) return '#8b5cf6';
+    return '#64748b';
+  }
+
+  function getCancelFaultBadgeClass(name) {
+    const l = (name || '').toLowerCase();
+    if (l.includes('seller')) return 'badge-fc-seller';
+    if (l.includes('buyer')) return 'badge-fc-buyer';
+    if (l.includes('logistics')) return 'badge-fc-logistics';
+    if (l.includes('system')) return 'badge-fc-system';
+    return '';
+  }
+
+  function renderCancellationForensics(data) {
+    cancelAnalyticsData = data;
+    if (!data || !data.kpis) return;
+    const k = data.kpis;
+
+    // 1. KPIs
+    const elLostGmv = document.getElementById('aCancelLostGmv');
+    if (elLostGmv) elLostGmv.textContent = formatCurrency(k.lost_gmv);
+
+    setChip('aCancelLostGmvDelta', k.lost_gmv_mom);
+
+    const elLostOrders = document.getElementById('aCancelLostOrders');
+    if (elLostOrders) elLostOrders.textContent = `${formatNumber(k.lost_orders)} orders`;
+
+    const elLostQty = document.getElementById('aCancelLostQty');
+    if (elLostQty) elLostQty.textContent = `${formatNumber(k.lost_qty)} units`;
+
+    const elSellerLoss = document.getElementById('aCancelSellerLoss');
+    if (elSellerLoss) elSellerLoss.textContent = formatCurrency(k.seller_fault_gmv);
+
+    const elSellerShare = document.getElementById('aCancelSellerShare');
+    if (elSellerShare) {
+      elSellerShare.textContent = isConfidentialActive() ? '•••% of Loss' : `${k.seller_fault_share_pct}% of Loss`;
+    }
+
+    const elLogisticsLoss = document.getElementById('aCancelLogisticsLoss');
+    if (elLogisticsLoss) elLogisticsLoss.textContent = formatCurrency(k.logistics_fault_gmv);
+
+    const elLogisticsShare = document.getElementById('aCancelLogisticsShare');
+    if (elLogisticsShare) {
+      elLogisticsShare.textContent = isConfidentialActive() ? '•••% of Loss' : `${k.logistics_fault_share_pct}% of Loss`;
+    }
+
+    const elLogisticsOrders = document.getElementById('aCancelLogisticsOrders');
+    if (elLogisticsOrders) {
+      elLogisticsOrders.textContent = `(${formatNumber(k.logistics_fault_orders)} ord)`;
+    }
+
+    const elRateOrders = document.getElementById('aCancelRateOrders');
+    if (elRateOrders) {
+      const ro = Number(k.cancel_rate_orders) || 0;
+      elRateOrders.textContent = isConfidentialActive() ? '•••%' : `${ro.toFixed(2)}%`;
+    }
+
+    const elRateGmv = document.getElementById('aCancelRateGmv');
+    if (elRateGmv) {
+      const rg = Number(k.cancel_rate_gmv) || 0;
+      elRateGmv.textContent = isConfidentialActive() ? '•••%' : `${rg.toFixed(2)}%`;
+    }
+
+    // 2. Charts
+    renderCancelTrendChart();
+    renderCancelParetoChart();
+
+    // 3. Platform Vulnerability Cards
+    renderCancelPlatformVuln(data.platform_vulnerability || []);
+
+    // 4. Diagnostic Table
+    cancelDiagTableFull = data.diagnostic_table || [];
+    cancelDiagCurrentFault = 'all';
+    document.querySelectorAll('#cancelFaultFilter button').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-cat') === 'all');
+    });
+    const searchInput = document.getElementById('cancelDiagSearchInput');
+    if (searchInput) searchInput.value = '';
+    filterCancelDiagTable();
+
+    // 5. Recovery Simulator initial calculation
+    updateRecoverySim(50);
+  }
+
+  function switchCancelTrendMetric(metric) {
+    cancelTrendCurrentMetric = metric;
+    document.querySelectorAll('#cancelTrendMetricToggle button').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-metric') === metric);
+    });
+    renderCancelTrendChart();
+  }
+
+  function renderCancelTrendChart() {
+    const canvas = document.getElementById('cancelTrendChartCanvas');
+    if (!canvas || !cancelAnalyticsData) return;
+
+    if (cancelTrendChart) {
+      cancelTrendChart.destroy();
+      cancelTrendChart = null;
+    }
+
+    const trend = cancelAnalyticsData.trend_chart || [];
+    if (trend.length === 0) return;
+
+    const labels = trend.map(t => t.date_label || t.date);
+    const isGmv = (cancelTrendCurrentMetric === 'gmv');
+    const isDark = isDarkMode();
+
+    const legendColor = isDark ? '#E2E8F0' : '#334155';
+    const tickColor = isDark ? '#94A3B8' : '#475569';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(148, 163, 184, 0.15)';
+
+    const ctx = canvas.getContext('2d');
+    const gradLost = ctx.createLinearGradient(0, 0, 0, 300);
+    gradLost.addColorStop(0, 'rgba(239, 68, 68, 0.22)');
+    gradLost.addColorStop(1, 'rgba(239, 68, 68, 0.00)');
+
+    const gradOrders = ctx.createLinearGradient(0, 0, 0, 300);
+    gradOrders.addColorStop(0, 'rgba(245, 158, 11, 0.24)');
+    gradOrders.addColorStop(1, 'rgba(245, 158, 11, 0.00)');
+
+    let datasets = [];
+    if (isGmv) {
+      datasets = [
+        {
+          label: 'Total Lost GMV',
+          data: trend.map(t => t.lost_gmv),
+          borderColor: '#EF4444',
+          backgroundColor: gradLost,
+          borderWidth: 2.5,
+          tension: 0.35,
+          fill: true,
+          pointRadius: trend.length > 20 ? 1.5 : 3,
+          pointHoverRadius: 5,
+        },
+        {
+          label: 'Buyer Fault',
+          data: trend.map(t => t.buyer_gmv),
+          borderColor: '#3B82F6',
+          borderWidth: 1.8,
+          borderDash: [4, 4],
+          tension: 0.35,
+          fill: false,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+        },
+        {
+          label: 'Seller Fault (Avoidable)',
+          data: trend.map(t => t.seller_gmv),
+          borderColor: '#F43F5E',
+          borderWidth: 1.8,
+          tension: 0.35,
+          fill: false,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+        },
+        {
+          label: 'Logistics Failure',
+          data: trend.map(t => t.logistics_gmv),
+          borderColor: '#F59E0B',
+          borderWidth: 1.8,
+          tension: 0.35,
+          fill: false,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+        }
+      ];
+    } else {
+      datasets = [
+        {
+          label: 'Lost Orders',
+          data: trend.map(t => t.lost_orders),
+          borderColor: '#F59E0B',
+          backgroundColor: gradOrders,
+          borderWidth: 2.5,
+          tension: 0.35,
+          fill: true,
+          pointRadius: trend.length > 20 ? 1.5 : 3,
+          pointHoverRadius: 5,
+        }
+      ];
+    }
+
+    cancelTrendChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              boxWidth: 10,
+              boxHeight: 10,
+              usePointStyle: true,
+              font: { size: 11, weight: '600', family: "'Plus Jakarta Sans', sans-serif" },
+              color: legendColor,
+              padding: 12
+            }
+          },
+          tooltip: {
+            ...getChartTooltipConfig(),
+            callbacks: {
+              label: (ctx) => {
+                const val = ctx.raw;
+                if (isGmv) {
+                  return isConfidentialActive() ? ` ${ctx.dataset.label}: Rp ••••••••` : ` ${ctx.dataset.label}: ${formatCurrency(val)}`;
+                } else {
+                  return isConfidentialActive() ? ` ${ctx.dataset.label}: •••••• ord` : ` ${ctx.dataset.label}: ${formatNumber(val)} orders`;
+                }
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { family: "'Plus Jakarta Sans', sans-serif", size: 10 },
+              color: tickColor,
+              maxRotation: 45,
+            }
+          },
+          y: {
+            grid: { color: gridColor },
+            ticks: {
+              font: { family: "'JetBrains Mono', monospace", size: 10 },
+              color: tickColor,
+              callback: (v) => {
+                if (isConfidentialActive()) return '';
+                return isGmv ? formatCompactCurrency(v) : formatNumber(v);
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function renderCancelParetoChart() {
+    const canvas = document.getElementById('cancelParetoChartCanvas');
+    if (!canvas || !cancelAnalyticsData) return;
+
+    if (cancelParetoChart) {
+      cancelParetoChart.destroy();
+      cancelParetoChart = null;
+    }
+
+    const pareto = cancelAnalyticsData.top_reasons_pareto || [];
+    if (pareto.length === 0) return;
+
+    const isDark = isDarkMode();
+    const tickColor = isDark ? '#94A3B8' : '#475569';
+    const labelColor = isDark ? '#F1F5F9' : '#0F172A';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(148, 163, 184, 0.15)';
+
+    const labels = pareto.map(r => {
+      const s = r.std_reason || 'Unknown';
+      return s.length > 25 ? s.substring(0, 23) + '…' : s;
+    });
+    const values = pareto.map(r => r.lost_gmv);
+    const colors = pareto.map(r => getCancelFaultColor(r.fault_category));
+
+    cancelParetoChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Lost GMV',
+          data: values,
+          backgroundColor: colors,
+          borderRadius: 6,
+          borderSkipped: false,
+          maxBarThickness: 24,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            ...getChartTooltipConfig(),
+            callbacks: {
+              title: (items) => {
+                const idx = items[0].dataIndex;
+                return pareto[idx]?.std_reason || '';
+              },
+              label: (ctx) => {
+                const idx = ctx.dataIndex;
+                const r = pareto[idx];
+                const pct = r?.share_pct || 0;
+                return isConfidentialActive()
+                  ? ` Lost GMV: Rp •••••••• (•••%) | Category: ${r?.fault_category}`
+                  : ` Lost GMV: ${formatCurrency(ctx.raw)} (${pct}%) | ${formatNumber(r?.lost_orders)} orders`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: gridColor },
+            ticks: {
+              font: { family: "'JetBrains Mono', monospace", size: 10 },
+              color: tickColor,
+              callback: (v) => isConfidentialActive() ? '' : formatCompactCurrency(v),
+            }
+          },
+          y: {
+            grid: { display: false },
+            ticks: {
+              font: { family: "'Plus Jakarta Sans', sans-serif", size: 10.5, weight: '600' },
+              color: labelColor,
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function renderCancelPlatformVuln(platforms) {
+    const container = document.getElementById('cancelPlatformVulnGrid');
+    if (!container) return;
+
+    if (!platforms || platforms.length === 0) {
+      container.innerHTML = '<div style="font-size: .78rem; color: var(--text-muted); padding: 8px;">No platform cancellation records.</div>';
+      return;
+    }
+
+    container.innerHTML = platforms.map(p => {
+      const gmvStr = formatCurrency(p.lost_gmv);
+      const ordStr = `${formatNumber(p.lost_orders)} ord`;
+      const sPct = isConfidentialActive() ? '•••%' : `${p.seller_pct}%`;
+      const lPct = isConfidentialActive() ? '•••%' : `${p.logistics_pct}%`;
+      return `
+        <div class="cancel-vuln-card">
+          <div class="cancel-vuln-card-head">
+            <span class="cancel-vuln-name">${renderPlatformBadge(p.platform)}</span>
+            <strong class="mono text-rose" style="font-size: .84rem;">${gmvStr}</strong>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div class="cancel-vuln-stat">
+              <span class="text-muted">Lost Orders:</span>
+              <strong class="mono">${ordStr}</strong>
+            </div>
+            <div class="cancel-vuln-stat">
+              <span style="color: #ef4444;"><i class="bi bi-shop"></i> Seller-Fault:</span>
+              <strong class="mono text-rose">${sPct}</strong>
+            </div>
+            <div class="cancel-vuln-stat">
+              <span style="color: #f59e0b;"><i class="bi bi-truck"></i> Courier / Delivery:</span>
+              <strong class="mono" style="color: #f59e0b;">${lPct}</strong>
+            </div>
+          </div>
+          <div style="font-size: .7rem; color: var(--text-muted); line-height: 1.35; margin-top: 2px;">
+            <strong>Top Issue:</strong> <span style="color: var(--text-primary);">${p.top_reason}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function filterCancelByFault(cat) {
+    cancelDiagCurrentFault = cat;
+    document.querySelectorAll('#cancelFaultFilter button').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-cat') === cat);
+    });
+    filterCancelDiagTable();
+  }
+
+  function filterCancelDiagTable() {
+    const q = (document.getElementById('cancelDiagSearchInput')?.value || '').toLowerCase().trim();
+    cancelDiagTableFiltered = cancelDiagTableFull.filter(r => {
+      const fc = (r.fault_category || '').toLowerCase();
+      const sr = (r.std_reason || '').toLowerCase();
+      const pf = (r.platform || '').toLowerCase();
+      const matchCat = (cancelDiagCurrentFault === 'all') || fc.includes(cancelDiagCurrentFault);
+      const matchQuery = !q || sr.includes(q) || pf.includes(q) || fc.includes(q);
+      return matchCat && matchQuery;
+    });
+
+    renderCancelDiagTableBody();
+  }
+
+  function renderCancelDiagTableBody() {
+    const tbody = document.getElementById('cancelDiagnosticTableBody');
+    if (!tbody) return;
+
+    const total = cancelDiagTableFiltered.length;
+    const countEl = document.getElementById('cancelDiagCount');
+    if (countEl) countEl.textContent = `Showing ${total} items`;
+
+    if (total === 0) {
+      tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="padding: 24px; color: var(--text-muted);">No cancellation diagnostic records match your filter.</td></tr>';
+      return;
+    }
+
+    const maxLostGmv = cancelDiagTableFull.length > 0 ? (cancelDiagTableFull[0].lost_gmv || 1) : 1;
+
+    tbody.innerHTML = cancelDiagTableFiltered.map((r, idx) => {
+      const badgeCls = getCancelFaultBadgeClass(r.fault_category);
+      const color = getCancelFaultColor(r.fault_category);
+      const share = isConfidentialActive() ? '•••%' : `${r.share_pct}%`;
+      const barW = Math.max(4, Math.round((r.lost_gmv / maxLostGmv) * 100));
+
+      return `
+        <tr>
+          <td class="text-center text-muted" style="font-size: .75rem;">${idx + 1}</td>
+          <td>
+            <span class="${badgeCls}" style="display: inline-flex; align-items: center; gap: 4px; font-size: .68rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;">
+              ${r.fault_category}
+            </span>
+          </td>
+          <td>
+            <strong style="color: var(--text-primary); font-size: .8rem;">${r.std_reason}</strong>
+          </td>
+          <td>${renderPlatformBadge(r.platform)}</td>
+          <td class="num mono">${formatNumber(r.lost_orders)}</td>
+          <td class="num mono text-muted">${formatNumber(r.lost_qty)}</td>
+          <td class="num mono text-rose font-weight-bold"><b>${formatCurrency(r.lost_gmv)}</b></td>
+          <td class="num mono text-muted">${formatCurrency(r.aov)}</td>
+          <td class="num mono">
+            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
+              <span style="font-size: .75rem; font-weight: 600;">${share}</span>
+              <div style="width: 38px; height: 4px; background: var(--bp2-border); border-radius: 999px; overflow: hidden;">
+                <div style="width: ${barW}%; height: 100%; background: ${color};"></div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <span class="bp2-chip" style="font-size: .65rem; width: fit-content; font-weight: 700;">${r.action_type}</span>
+              <span style="font-size: .75rem; color: var(--text-primary); line-height: 1.35;">${r.action}</span>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function updateRecoverySim(pct) {
+    pct = Number(pct);
+    if (isNaN(pct)) pct = 50;
+    pct = Math.max(0, Math.min(100, Math.round(pct)));
+
+    const slider = document.getElementById('aCancelSimSlider');
+    if (slider && Number(slider.value) !== pct) {
+      slider.value = pct;
+    }
+    if (slider) {
+      const isDark = typeof isDarkMode === 'function' ? isDarkMode() : false;
+      const trackBase = isDark ? '#334155' : '#CBD5E1';
+      slider.style.background = `linear-gradient(to right, #10B981 ${pct}%, ${trackBase} ${pct}%)`;
+    }
+
+    const badge = document.getElementById('aCancelSimPctBadge');
+    if (badge) {
+      badge.textContent = `${pct}% Cut`;
+    }
+
+    if (!cancelAnalyticsData || !cancelAnalyticsData.kpis) return;
+    const sellerLoss = cancelAnalyticsData.kpis.seller_fault_gmv || 0;
+    const recovered = Math.round(sellerLoss * (pct / 100));
+
+    const simValEl = document.getElementById('aCancelSimVal');
+    if (simValEl) simValEl.textContent = formatCurrency(recovered);
+  }
+
+  function exportCancelDiagnosticCSV() {
+    if (!cancelDiagTableFiltered || cancelDiagTableFiltered.length === 0) {
+      alert('No cancellation data to export.');
+      return;
+    }
+
+    const headers = ['#', 'Fault Category', 'Standardized Reason', 'Platform', 'Lost Orders', 'Lost Units', 'Lost GMV', 'Avg Order Value', 'Loss Share %', 'Action Type', 'Action Recommendation'];
+    const rows = cancelDiagTableFiltered.map((r, i) => [
+      i + 1,
+      `"${(r.fault_category || '').replace(/"/g, '""')}"`,
+      `"${(r.std_reason || '').replace(/"/g, '""')}"`,
+      `"${(r.platform || '').replace(/"/g, '""')}"`,
+      r.lost_orders || 0,
+      r.lost_qty || 0,
+      r.lost_gmv || 0,
+      r.aov || 0,
+      r.share_pct || 0,
+      `"${(r.action_type || '').replace(/"/g, '""')}"`,
+      `"${(r.action || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Cancellation_Diagnostic_Forensics_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  /* =====================================================================
+     12. RAW DATA EXPORT: DAILY ALL METRICS LEVEL TABLE & PAGINATION
      ===================================================================== */
   function filterRawDailyTable() {
     const q = document.getElementById('rawSearchInput').value.toLowerCase().trim();
@@ -7999,7 +10386,7 @@
         'Current Value': m.current_value,
         'Target': m.target ? m.target : '-',
         'Achievement (%)': (m.achievement_pct !== null && m.achievement_pct !== undefined) ? `${m.achievement_pct}%` : '-',
-        'Previous Value (M-1)': m.previous_value,
+        [`Previous Value (${globalAnalyticsData.comp_type || 'M-1'})`]: m.previous_value,
         'Growth (%)': m.growth.formatted
       }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Comprehensive_Metrics');

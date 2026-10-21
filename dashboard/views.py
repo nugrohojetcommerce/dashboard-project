@@ -15,6 +15,8 @@ from dashboard.models import (
 import time
 from dashboard.services.dashboard_performance import get_cards
 from django.contrib import messages
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 from .forms import UserProfileForm
 
 from .services.dashboard_performance import (
@@ -399,14 +401,72 @@ def insight_dashboard_api(
 @never_cache
 @login_required
 def update_profile(request):
+    is_ajax = request.headers.get("x-requested-with") == "XMLHttpRequest" or request.POST.get("ajax") == "1"
     if request.method == "POST":
         form = UserProfileForm(request.POST, instance=request.user)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            if is_ajax:
+                first = user.first_name or ""
+                last = user.last_name or ""
+                display_name = f"{first} {last}".strip() or user.username
+                if first and last:
+                    initials = f"{first[:1]}{last[:1]}".upper()
+                elif first:
+                    initials = first[:2].upper()
+                else:
+                    initials = user.username[:2].upper()
+
+                return JsonResponse({
+                    "status": "success",
+                    "message": "Profile updated successfully!",
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "username": user.username,
+                    "email": user.email,
+                    "display_name": display_name,
+                    "initials": initials,
+                })
             messages.success(request, "Your profile was successfully updated!")
-            return redirect("/profile")  # Redirect back to home/dashboard
+            return redirect("/profile")
+        else:
+            if is_ajax:
+                err_messages = []
+                for field, errs in form.errors.items():
+                    for err in errs:
+                        err_messages.append(f"{field.replace('_', ' ').capitalize()}: {err}")
+                return JsonResponse({
+                    "status": "error",
+                    "message": " ".join(err_messages) or "Failed to update profile. Please check your input.",
+                    "errors": form.errors
+                }, status=400)
     else:
         form = UserProfileForm(instance=request.user)
     assigned_brands = request.user.brands.all()
     context = {"form": form, "assigned_brands": assigned_brands}
     return render(request, "profile.html", context)
+
+
+@never_cache
+@login_required
+def change_password_api(request):
+    if request.method == "POST":
+        form = PasswordChangeForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            return JsonResponse({
+                "status": "success",
+                "message": "Password changed successfully!"
+            })
+        else:
+            err_messages = []
+            for field, errs in form.errors.items():
+                for err in errs:
+                    err_messages.append(str(err))
+            return JsonResponse({
+                "status": "error",
+                "message": " ".join(err_messages) or "Failed to change password. Please check your input.",
+                "errors": form.errors
+            }, status=400)
+    return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)

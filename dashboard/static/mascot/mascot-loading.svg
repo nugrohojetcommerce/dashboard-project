@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="-20 -40 405 500" width="100%" height="100%" xml:space="preserve">
+  <defs>
+    <!-- Soft Glow Filter for Chest Ring -->
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Shadow Blur -->
+    <filter id="shadowBlur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" />
+    </filter>
+
+    <!-- Helmet 3D Spherical Radial Gradient -->
+    <radialGradient id="helmetGrad" cx="36%" cy="26%" r="74%">
+      <stop offset="0%" stop-color="#FFA057"/>
+      <stop offset="30%" stop-color="#F57624"/>
+      <stop offset="68%" stop-color="#E85813"/>
+      <stop offset="100%" stop-color="#BF3E04"/>
+    </radialGradient>
+
+    <!-- Torso 3D Radial Gradient -->
+    <radialGradient id="torsoGrad" cx="42%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="#FF9B54"/>
+      <stop offset="38%" stop-color="#F47220"/>
+      <stop offset="72%" stop-color="#E25410"/>
+      <stop offset="100%" stop-color="#B83904"/>
+    </radialGradient>
+
+    <!-- Earmuff Left Linear Gradient -->
+    <linearGradient id="earmuffLGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#D64805"/>
+      <stop offset="45%" stop-color="#F57624"/>
+      <stop offset="100%" stop-color="#FFA057"/>
+    </linearGradient>
+
+    <!-- Earmuff Right Linear Gradient -->
+    <linearGradient id="earmuffRGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFA057"/>
+      <stop offset="55%" stop-color="#F57624"/>
+      <stop offset="100%" stop-color="#D64805"/>
+    </linearGradient>
+
+    <!-- Visor Faceplate Screen Gradient -->
+    <linearGradient id="screenGrad" x1="25%" y1="15%" x2="75%" y2="85%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="32%" stop-color="#F6FAFD"/>
+      <stop offset="68%" stop-color="#E5F1F9"/>
+      <stop offset="100%" stop-color="#CEE4F4"/>
+    </linearGradient>
+
+    <!-- Navy Visor Collar Ring Gradient -->
+    <linearGradient id="navyCollarGrad" x1="30%" y1="10%" x2="70%" y2="90%">
+      <stop offset="0%" stop-color="#366196"/>
+      <stop offset="50%" stop-color="#24456D"/>
+      <stop offset="100%" stop-color="#162D4A"/>
+    </linearGradient>
+
+    <!-- Peach Bezel Rim Gradient -->
+    <linearGradient id="peachBezelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFBEA3"/>
+      <stop offset="40%" stop-color="#F78C5E"/>
+      <stop offset="100%" stop-color="#EB6931"/>
+    </linearGradient>
+
+    <!-- Metallic Hose Tube Gradient -->
+    <linearGradient id="metalHoseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="30%" stop-color="#CBD5E1"/>
+      <stop offset="65%" stop-color="#94A3B8"/>
+      <stop offset="100%" stop-color="#64748B"/>
+    </linearGradient>
+
+    <!-- Navy Glove Gradient -->
+    <linearGradient id="navyGloveGrad" x1="20%" y1="15%" x2="80%" y2="85%">
+      <stop offset="0%" stop-color="#3A6498"/>
+      <stop offset="50%" stop-color="#264771"/>
+      <stop offset="100%" stop-color="#183150"/>
+    </linearGradient>
+
+    <!-- Boot Upper Gradient -->
+    <radialGradient id="bootGrad" cx="35%" cy="25%" r="75%">
+      <stop offset="0%" stop-color="#FFA057"/>
+      <stop offset="45%" stop-color="#F5701E"/>
+      <stop offset="85%" stop-color="#DF4E09"/>
+      <stop offset="100%" stop-color="#B83904"/>
+    </radialGradient>
+
+    <!-- Boot Sole Gradient -->
+    <linearGradient id="bootSoleGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="50%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+
+    <style><![CDATA[
+      /* ========================================================
+         KEYFRAME ANIMATIONS (DISNEY SQUASH, STRETCH, and WAVE)
+         ======================================================== */
+      
+      /* 1. Master Character Bouncy Jump (Squash and Stretch Physics) */
+      @keyframes mascotJump {
+        0%, 100% {
+          transform: translateY(0px) scale(1, 1);
+          animation-timing-function: cubic-bezier(0.45, 0, 0.7, 1); /* Anticipation ease-in */
+        }
+        8% {
+          /* Crouch / squash before jumping */
+          transform: translateY(8px) scale(1.07, 0.93);
+          animation-timing-function: cubic-bezier(0.15, 0.9, 0.3, 1.2); /* Explosive takeoff */
+        }
+        25% {
+          /* Stretch upward during ascent */
+          transform: translateY(-22px) scale(0.95, 1.06);
+          animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1);
+        }
+        42% {
+          /* Apex / float at highest point */
+          transform: translateY(-28px) scale(1.02, 0.98);
+          animation-timing-function: cubic-bezier(0.65, 0, 0.85, 0.8); /* Gravity acceleration down */
+        }
+        60% {
+          /* Stretch downward during fall */
+          transform: translateY(-8px) scale(0.96, 1.05);
+          animation-timing-function: cubic-bezier(0.7, 0, 0.9, 1);
+        }
+        70% {
+          /* Impact touchdown squash! */
+          transform: translateY(6px) scale(1.11, 0.89);
+          animation-timing-function: cubic-bezier(0.25, 1.4, 0.5, 1); /* Elastic spring rebound */
+        }
+        82% {
+          /* Overshoot rebound */
+          transform: translateY(-4px) scale(0.98, 1.02);
+          animation-timing-function: ease-in-out;
+        }
+        92% {
+          /* Settle back */
+          transform: translateY(1px) scale(1.01, 0.99);
+        }
+      }
+
+      /* 2. Secondary Action: Head bob / lag (Adds natural fleshy flex) */
+      @keyframes headBob {
+        0%, 100% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        10% {
+          transform: translateY(2px) rotate(0.8deg);
+        }
+        28% {
+          transform: translateY(-3px) rotate(-1deg);
+        }
+        44% {
+          transform: translateY(-1px) rotate(0.5deg);
+        }
+        72% {
+          transform: translateY(3px) rotate(-1deg);
+        }
+        84% {
+          transform: translateY(-1.5px) rotate(0.4deg);
+        }
+      }
+
+      /* 3. Waving Right Arm: Friendly natural wave oscillation */
+      @keyframes waveArm {
+        0%, 100% {
+          transform: rotate(0deg);
+          animation-timing-function: ease-in-out;
+        }
+        15% {
+          transform: rotate(-16deg);
+          animation-timing-function: ease-in-out;
+        }
+        32% {
+          transform: rotate(18deg);
+          animation-timing-function: ease-in-out;
+        }
+        50% {
+          transform: rotate(-14deg);
+          animation-timing-function: ease-in-out;
+        }
+        68% {
+          transform: rotate(16deg);
+          animation-timing-function: ease-in-out;
+        }
+        85% {
+          transform: rotate(-6deg);
+          animation-timing-function: ease-in-out;
+        }
+      }
+
+      /* 4. Left Arm Passive Pendulum (Reacts to jump inertia) */
+      @keyframes swayLeftArm {
+        0%, 100% {
+          transform: rotate(0deg);
+        }
+        12% {
+          transform: rotate(-4deg);
+        }
+        35% {
+          transform: rotate(10deg);
+        }
+        55% {
+          transform: rotate(3deg);
+        }
+        72% {
+          transform: rotate(-6deg);
+        }
+        86% {
+          transform: rotate(2deg);
+        }
+      }
+
+      /* 5. Legs / Boots slight knee-tuck in mid-air */
+      @keyframes legsTuck {
+        0%, 100% {
+          transform: translateY(0px) scale(1, 1);
+        }
+        10% {
+          transform: translateY(2px) scale(1.04, 0.95);
+        }
+        38% {
+          transform: translateY(-5px) scale(0.96, 1.04);
+        }
+        70% {
+          transform: translateY(3px) scale(1.06, 0.94);
+        }
+        85% {
+          transform: translateY(-1px) scale(0.99, 1.01);
+        }
+      }
+
+      /* 6. Chest Ring Continuous Reactor Spin */
+      @keyframes spinRing {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* 7. Ground Shadow Dynamics (Expands when near, shrinks/fades when high) */
+      @keyframes shadowPulse {
+        0%, 100% {
+          transform: scale(1, 1);
+          opacity: 0.28;
+        }
+        8% {
+          /* Squash impact / crouch: shadow grows bigger and darker */
+          transform: scale(1.15, 1.1);
+          opacity: 0.36;
+        }
+        42% {
+          /* High in the air: shadow shrinks and becomes faint */
+          transform: scale(0.68, 0.65);
+          opacity: 0.12;
+        }
+        70% {
+          /* Landing impact: maximum spread and dark */
+          transform: scale(1.22, 1.15);
+          opacity: 0.40;
+        }
+        84% {
+          /* Rebound */
+          transform: scale(0.94, 0.95);
+          opacity: 0.24;
+        }
+      }
+
+      /* ========================================================
+         APPLY ANIMATIONS TO SVG GROUPS
+         ======================================================== */
+      .anim-body-jump {
+        animation: mascotJump 1.45s infinite;
+        transform-origin: 162px 435px; /* Pivot on ground under feet */
+      }
+      .anim-head-bob {
+        animation: headBob 1.45s infinite;
+        transform-origin: 162px 260px; /* Pivot on neck / chin */
+      }
+      .anim-right-arm-wave {
+        animation: waveArm 1.45s infinite;
+        transform-origin: 245px 260px; /* Pivot on right shoulder joint! */
+      }
+      .anim-left-arm-sway {
+        animation: swayLeftArm 1.45s infinite;
+        transform-origin: 82px 272px; /* Pivot on left shoulder joint! */
+      }
+      .anim-legs-tuck {
+        animation: legsTuck 1.45s infinite;
+        transform-origin: 162px 370px;
+      }
+      .anim-spin-ring {
+        animation: spinRing 2s linear infinite;
+        transform-origin: 162px 303px; /* Pivot on center of chest ring! */
+      }
+      .anim-ground-shadow {
+        animation: shadowPulse 1.45s infinite;
+        transform-origin: 162px 442px; /* Pivot on ground center */
+      }
+    ]]></style>
+  </defs>
+
+  <!-- ======================================================== -->
+  <!-- GROUND SHADOW (GIVES 3D PERSPECTIVE and JUMP DEPTH)        -->
+  <!-- ======================================================== -->
+  <g id="ground-shadow" class="anim-ground-shadow">
+    <ellipse cx="162" cy="442" rx="72" ry="11" fill="#0F172A" filter="url(#shadowBlur)" />
+  </g>
+
+  <!-- ======================================================== -->
+  <!-- MAIN CHARACTER ROOT (WITH BOUNCY JUMP SQUASH and STRETCH)  -->
+  <!-- ======================================================== -->
+  <g id="mascot-character" class="anim-body-jump">
+
+    <!-- 1. BACK ELEMENTS: EARMUFFS (HEADPHONES) -->
+    <g id="earmuffs" class="anim-head-bob">
+      <!-- Left Earmuff -->
+      <g id="earmuff-left">
+        <path d="M 18 126 L 36 126 C 41 126 43 130 43 136 L 43 186 C 43 192 41 196 36 196 L 18 196 C 7 196 1 185 1 174 L 1 148 C 1 137 7 126 18 126 Z"
+              fill="url(#earmuffLGrad)"/>
+        <path d="M 28 138 C 21 150 21 172 28 184" fill="none" stroke="#B83904" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+      </g>
+
+      <!-- Right Earmuff -->
+      <g id="earmuff-right">
+        <path d="M 283 128 L 305 128 C 316 128 323 139 323 150 L 323 176 C 323 187 316 198 305 198 L 283 198 C 278 198 276 194 276 188 L 276 138 C 276 132 278 128 283 128 Z"
+              fill="url(#earmuffRGrad)"/>
+        <path d="M 295 140 C 302 152 302 174 295 186" fill="none" stroke="#B83904" stroke-width="2.5" stroke-linecap="round" opacity="0.6"/>
+      </g>
+    </g>
+
+    <!-- 2. LEGS and BOOTS (WITH KNEE FLEX and REBOUND) -->
+    <g id="legs-and-boots" class="anim-legs-tuck">
+      <!-- Left Leg Hose -->
+      <path d="M 122 368 L 122 396 L 134 396 L 134 368 Z"
+            fill="url(#metalHoseGrad)"/>
+      <path d="M 122 377 L 134 377" stroke="#475569" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M 122 387 L 134 387" stroke="#475569" stroke-width="2.2" stroke-linecap="round"/>
+
+      <!-- Right Leg Hose -->
+      <path d="M 191 368 L 191 396 L 204 396 L 204 368 Z"
+            fill="url(#metalHoseGrad)"/>
+      <path d="M 191 377 L 204 377" stroke="#475569" stroke-width="2.2" stroke-linecap="round"/>
+      <path d="M 191 387 L 204 387" stroke="#475569" stroke-width="2.2" stroke-linecap="round"/>
+
+      <!-- Left Ankle Cuff -->
+      <rect x="116" y="394" width="24" height="6.5" rx="3.2" fill="#334155"/>
+      <!-- Right Ankle Cuff -->
+      <rect x="186" y="394" width="24" height="6.5" rx="3.2" fill="#334155"/>
+
+      <!-- Left Boot -->
+      <g id="left-boot">
+        <path d="M 86 429 C 86 425 94 423 114 423 C 132 423 139 425 139 429 L 138 436 C 137 438 125 440 111 440 C 96 440 86 438 86 436 Z"
+              fill="url(#bootSoleGrad)"/>
+        <path d="M 116 396 L 108 410 C 103 413 96 418 89 423 C 87 426 92 429 106 429 C 124 429 137 427 138 422 C 139 417 138 409 135 396 Z"
+              fill="url(#bootGrad)"/>
+        <path d="M 94 423 C 95 420 101 419 108 419 C 114 419 117 421 117 423 C 117 425 112 427 106 427 C 99 427 94 425 94 423 Z"
+              fill="#FFAA6B" opacity="0.9"/>
+        <circle cx="134" cy="413" r="3.6" fill="#1E293B"/>
+        <circle cx="133" cy="412" r="1.5" fill="#FFFFFF"/>
+      </g>
+
+      <!-- Right Boot -->
+      <g id="right-boot">
+        <path d="M 186 429 C 186 425 193 423 213 423 C 232 423 239 425 239 429 L 238 436 C 237 438 226 440 211 440 C 196 440 186 438 186 436 Z"
+              fill="url(#bootSoleGrad)"/>
+        <path d="M 189 396 C 186 409 185 417 186 422 C 187 427 200 429 218 429 C 232 429 237 426 235 423 C 229 418 222 413 217 410 L 209 396 Z"
+              fill="url(#bootGrad)"/>
+        <path d="M 211 423 C 211 421 215 419 222 419 C 228 419 233 420 233 423 C 233 425 228 427 222 427 C 215 427 211 425 211 423 Z"
+              fill="#FFAA6B" opacity="0.9"/>
+        <circle cx="192" cy="413" r="3.6" fill="#1E293B"/>
+        <circle cx="191" cy="412" r="1.5" fill="#FFFFFF"/>
+      </g>
+    </g>
+
+    <!-- 3. ARMS: METALLIC HOSES + BLUE MITTENS -->
+    <!-- Left Arm with subtle inertia sway -->
+    <g id="left-arm" class="anim-left-arm-sway">
+      <path d="M 76 270 C 58 280 40 296 32 316 C 26 332 28 348 42 360 L 53 352 C 42 342 40 328 46 317 C 52 304 66 290 82 281 Z"
+            fill="url(#metalHoseGrad)"/>
+      <path d="M 68 274 L 78 285" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M 56 286 L 68 296" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M 46 299 L 58 308" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M 37 314 L 50 321" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M 33 331 L 47 336" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M 35 346 L 49 347" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+
+      <!-- Left Glove -->
+      <ellipse cx="46" cy="358" rx="9.5" ry="5.5" fill="#1C3556" transform="rotate(-26 46 358)"/>
+      <path d="M 40 360 C 32 366 25 375 27 386 C 29 394 38 396 48 395 C 60 393 73 387 73 378 C 73 370 66 366 59 362 C 54 359 50 357 46 358"
+            fill="url(#navyGloveGrad)"/>
+      <path d="M 32 370 C 23 374 22 382 28 388 C 34 391 39 387 38 380"
+            fill="url(#navyGloveGrad)"/>
+      <path d="M 44 381 C 48 385 54 385 58 382" fill="none" stroke="#162D4A" stroke-width="2.2" stroke-linecap="round"/>
+    </g>
+
+    <!-- Right Arm with ENERGETIC FRIENDLY WAVING! -->
+    <g id="right-arm" class="anim-right-arm-wave">
+      <path d="M 238 266 C 256 264 275 255 289 242 C 303 228 312 211 318 194 L 308 188 C 302 203 294 218 281 230 C 269 241 254 249 238 251 Z"
+            fill="url(#metalHoseGrad)"/>
+      <path d="M 248 251 L 248 266" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M 264 244 L 268 258" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M 280 234 L 287 247" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M 293 220 L 303 230" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M 304 204 L 315 212" stroke="#475569" stroke-width="2.4" stroke-linecap="round"/>
+
+      <!-- Right Glove (Waving Hand) -->
+      <ellipse cx="313" cy="191" rx="10.5" ry="6" fill="#1C3556" transform="rotate(35 313 191)"/>
+      <path d="M 314 187 C 316 177 321 169 328 167 C 336 164 345 169 349 179 C 353 187 354 193 359 194 C 364 195 366 203 361 211 C 355 221 345 228 333 230 C 323 232 313 225 308 216 C 304 209 308 201 314 195"
+            fill="url(#navyGloveGrad)"/>
+      <path d="M 314 192 C 304 190 297 182 303 175 C 309 168 317 172 321 180"
+            fill="url(#navyGloveGrad)"/>
+      <path d="M 326 190 C 332 194 336 203 333 211" fill="none" stroke="#162D4A" stroke-width="2.5" stroke-linecap="round"/>
+    </g>
+
+    <!-- 4. TORSO (ORANGE POD) -->
+    <g id="torso">
+      <path d="M 88 250 C 85 278 88 304 98 326 C 108 348 120 366 142 371 C 154 374 170 374 184 371 C 206 366 218 348 228 326 C 238 304 241 278 238 250 C 208 256 118 256 88 250 Z"
+            fill="url(#torsoGrad)"/>
+
+      <!-- Shoulders Joints -->
+      <circle cx="82" cy="272" r="16" fill="#24456D"/>
+      <circle cx="242" cy="264" r="16" fill="#24456D"/>
+
+      <!-- White Glowing C-Ring Spinning Loading Reactor -->
+      <g id="chest-c-ring" class="anim-spin-ring" filter="url(#softGlow)">
+        <path d="M 178 317 A 21 21 0 1 0 158 324"
+              fill="none" stroke="#FFFFFF" stroke-width="6.2" stroke-linecap="round"/>
+        <path d="M 178 317 A 21 21 0 1 0 158 324"
+              fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    <!-- 5. HELMET and VISOR and FACE (HEAD BOB ACTION) -->
+    <g id="head" class="anim-head-bob">
+      <!-- Big Orange Outer Helmet Shell -->
+      <path d="M 23 150 C 18 70 82 2 162 2 C 242 2 306 70 301 150 C 298 202 284 246 244 263 C 204 280 120 280 80 263 C 40 246 26 202 23 150 Z"
+            fill="url(#helmetGrad)"/>
+
+      <!-- Top Glossy White Reflection Curve -->
+      <path d="M 238 34 C 263 52 278 82 281 112 C 275 86 259 61 236 44 C 232 41 234 36 238 34 Z"
+            fill="#FFFFFF" opacity="0.6"/>
+
+      <!-- Navy Blue Visor Outer Collar / Ring -->
+      <path d="M 44 148 C 40 84 92 31 161 31 C 230 31 282 84 278 148 C 275 198 230 252 161 252 C 92 252 47 198 44 148 Z"
+            fill="url(#navyCollarGrad)"/>
+
+      <!-- Warm Peach Inner Visor Bezel / Rim -->
+      <path d="M 54 149 C 50 92 96 45 161 45 C 226 45 272 92 268 149 C 265 194 225 242 161 242 C 97 242 57 194 54 149 Z"
+          fill="url(#peachBezelGrad)"/>
+
+      <!-- Visor Faceplate Screen Glass -->
+      <path d="M 60 149 C 57 97 100 54 161 54 C 222 54 265 97 262 149 C 259 190 221 234 161 234 C 101 234 63 190 60 149 Z"
+            fill="url(#screenGrad)"/>
+
+      <!-- Glass Surface Specular Reflection Highlight -->
+      <path d="M 152 61 C 196 61 236 90 248 132 C 242 99 209 73 166 69 C 156 68 148 62 152 61 Z"
+            fill="#FFFFFF" opacity="0.75"/>
+      <ellipse cx="236" cy="118" rx="15" ry="34" fill="#FFFFFF" opacity="0.22" transform="rotate(26 236 118)"/>
+
+      <!-- Face Eyes (Lineless) -->
+      <g id="left-eye">
+        <ellipse cx="106" cy="132" rx="12.5" ry="16.5" fill="#181111"/>
+        <circle cx="103" cy="125" r="4.5" fill="#FFFFFF"/>
+      </g>
+      <g id="right-eye">
+        <ellipse cx="209" cy="133" rx="12.5" ry="16.5" fill="#181111"/>
+        <circle cx="206" cy="126" r="4.5" fill="#FFFFFF"/>
+      </g>
+
+      <!-- Happy Smiling Open Mouth (WITH CRISP BOLD OUTLINE) -->
+      <g id="mouth">
+        <path d="M 125 159 C 143 165 177 165 195 159 C 201 178 193 205 160 205 C 127 205 119 178 125 159 Z"
+              fill="#8B261D" stroke="#181111" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M 127 162 C 145 167 175 167 193 162 C 196 174 191 190 180 195 C 170 183 150 183 140 195 C 129 190 124 174 127 162 Z"
+              fill="#5E1812"/>
+        <path d="M 132 188 C 138 178 152 178 160 185 C 168 178 182 178 188 188 C 183 199 173 204 160 204 C 147 204 137 199 132 188 Z"
+              fill="#F27970" stroke="#181111" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M 160 186 L 160 199" fill="none" stroke="#C44840" stroke-width="2.2" stroke-linecap="round"/>
+      </g>
+    </g>
+  </g>
+</svg>

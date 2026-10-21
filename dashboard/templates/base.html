@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/svg+xml" href="{% static 'jetcommerce.svg' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'jetcommerce.svg' %}?v=2">
 
     <title>
         {% block title %}
@@ -630,7 +630,7 @@
     {% endblock %}
 </head>
 
-<body class="layout-fixed sidebar-expand-lg sidebar-collapse">
+<body class="layout-fixed sidebar-expand-lg sidebar-collapse sidebar-mini">
 
 <div class="app-wrapper">
 
@@ -758,7 +758,10 @@
       if (!opts.skipChartRefresh) refreshAllCharts();
       const icon = document.getElementById('themeToggleIcon');
       const label = document.getElementById('themeToggleLabel');
-      if (icon) icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+      if (icon) {
+        icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+        icon.style.color = theme === 'dark' ? '#F59E0B' : '#64748B';
+      }
       if (label) label.textContent = theme === 'dark' ? 'Light Mode' : 'Dark Mode';
     },
     toggle: function () {
@@ -777,6 +780,7 @@
 {% block extra_js %}
 {% endblock %}
 
+{% include "partials/profile_modal.html" %}
 
 </body>
 </html>

@@ -5,10 +5,11 @@ from datetime import date, datetime, timedelta
 from typing import Any
 import time
 
+from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Min, Q, Sum
 from dashboard.models import User
-from .models import OrderMartSummary, ProductMartSummary
-from .services import apply_brand_access_filter, get_user_brands, get_filter_options
+from .models import OrderMartSummary, ProductMartSummary, CancelMartSummary
+from .services import apply_brand_access_filter, get_user_brands, get_filter_options, calc_growth
 
 
 def parse_date(date_str: str | None, default: date) -> date:
@@ -29,7 +30,7 @@ def get_analytics_filter_options(user: User) -> dict[str, Any]:
 
     min_date = date(2025, 1, 1)
     default_end_date = latest_date
-    default_start_date = max(min_date, latest_date - timedelta(days=29))
+    default_start_date = max(min_date, latest_date.replace(day=1))
 
     return {
         "brand_groups": summary_opts.get("brand_groups", []),
@@ -40,6 +41,56 @@ def get_analytics_filter_options(user: User) -> dict[str, Any]:
         "default_start_date": default_start_date.isoformat(),
         "default_end_date": default_end_date.isoformat(),
     }
+
+
+def get_analytics_comparison_dates(
+    start_d: date,
+    end_d: date,
+    preset: str | None = None,
+) -> tuple[date, date, str, str]:
+    """
+    Calculate comparison period:
+    - If timeframe is 1 month or under (<= 31 days, or monthly presets):
+      Always Month-on-Month (M-1) comparison using relativedelta(months=1).
+      e.g. 1-7 Dec -> 1-7 Nov (M-1), 1-15 Oct -> 1-15 Sep (M-1), 7D/14D/30D/MTD -> M-1.
+    - If timeframe is custom selected date > 1 month (e.g. 35 days, 120 days):
+      Compare with preceding period of the exact same selected range length.
+      e.g. 35 days -> preceding 35 days (P-35D), 120 days -> preceding 120 days (P-120D).
+    """
+    num_days = (end_d - start_d).days + 1
+    preset_lower = (preset or "").strip().lower()
+
+    # Rule 1: Timeframe 1 month or under (<= 31 days or monthly preset)
+    if num_days <= 31 or preset_lower in ("mtd", "this_month", "last_month", "prev_month", "7d", "14d", "30d", "1d"):
+        _, max_curr_day = calendar.monthrange(start_d.year, start_d.month)
+        is_full_month = (start_d.day == 1 and start_d.month == end_d.month and start_d.year == end_d.year and end_d.day == max_curr_day)
+        is_mtd = (start_d.day == 1 and start_d.month == end_d.month and start_d.year == end_d.year)
+
+        prev_start_d = start_d - relativedelta(months=1)
+        prev_end_d = end_d - relativedelta(months=1)
+
+        if is_full_month:
+            prev_start_d = prev_start_d.replace(day=1)
+            _, max_prev_day = calendar.monthrange(prev_start_d.year, prev_start_d.month)
+            prev_end_d = prev_start_d.replace(day=max_prev_day)
+        elif is_mtd:
+            prev_start_d = prev_start_d.replace(day=1)
+            _, max_prev_day = calendar.monthrange(prev_start_d.year, prev_start_d.month)
+            prev_end_d = prev_start_d.replace(day=min(end_d.day, max_prev_day))
+
+        comp_type = "M-1"
+        if prev_start_d == prev_end_d:
+            comp_label = f"M-1 ({prev_start_d.strftime('%d %b %Y')})"
+        else:
+            comp_label = f"M-1 ({prev_start_d.strftime('%d %b %Y')} – {prev_end_d.strftime('%d %b %Y')})"
+        return prev_start_d, prev_end_d, comp_type, comp_label
+
+    # Rule 2: Custom selected date range > 1 month (e.g. 35 days, 120 days)
+    prev_end_d = start_d - timedelta(days=1)
+    prev_start_d = start_d - timedelta(days=num_days)
+    comp_type = f"P-{num_days}D"
+    comp_label = f"Prev {num_days}D ({prev_start_d.strftime('%d %b %Y')} – {prev_end_d.strftime('%d %b %Y')})"
+    return prev_start_d, prev_end_d, comp_type, comp_label
 
 
 def split_date_range_by_month(start_d: date, end_d: date) -> list[dict[str, Any]]:
@@ -97,10 +148,362 @@ def calc_growth(curr: float | int | None, prev: float | int | None) -> dict[str,
     }
 
 
+def get_cancel_action_meta(std_reason: str | None, fault_category: str | None) -> dict[str, str]:
+    r = (std_reason or "").lower()
+    fc = (fault_category or "").lower()
+    if "payment" in r or "unpaid" in r:
+        return {
+            "type": "Marketing & CRM",
+            "tag_class": "badge-info",
+            "action": "Kirim reminder broadcast chat otomatis 2 jam sebelum batas kadaluarsa pembayaran.",
+        }
+    elif "modify" in r or "voucher" in r or "variant" in r:
+        return {
+            "type": "Catalog & Promo",
+            "tag_class": "badge-primary",
+            "action": "Evaluasi kejelasan variasi SKU & sediakan voucher toko langsung di PDP agar buyer tidak re-order.",
+        }
+    elif "change of mind" in r or "no longer needed" in r:
+        return {
+            "type": "Fulfillment Speed",
+            "tag_class": "badge-secondary",
+            "action": "Percepat SLA verifikasi dan cetak resi agar pesanan segera masuk status 'Diproses'.",
+        }
+    elif "address" in r:
+        return {
+            "type": "Customer Service",
+            "tag_class": "badge-info",
+            "action": "Sediakan auto-reply CS panduan ubah alamat resmi sebelum paket di-handover ke ekspedisi.",
+        }
+    elif "better price" in r or "shipping cost" in r:
+        return {
+            "type": "Pricing & Promo",
+            "tag_class": "badge-warning",
+            "action": "Audit selisih harga kompetitor dan manfaatkan program gratis ongkir ekstra / subsidi voucher platform.",
+        }
+    elif "late shipment" in r or "timeout" in r:
+        return {
+            "type": "Warehouse Operations",
+            "tag_class": "badge-danger",
+            "action": "CRITICAL: Tambah shift packing saat event dan mintakan penjemputan armada tambahan ke pihak 3PL.",
+        }
+    elif "stock" in r or "inventory" in r:
+        return {
+            "type": "Inventory Sync",
+            "tag_class": "badge-danger",
+            "action": "CRITICAL: Sinkronisasi harian stok fisik gudang vs alokasi marketplace; aktifkan safety buffer 5%.",
+        }
+    elif "failed delivery" in r or "courier" in r:
+        return {
+            "type": "Logistics & Ekspedisi",
+            "tag_class": "badge-warning",
+            "action": "Eskalasi tiket investigasi ke ekspedisi dan evaluasi pembatasan metode COD di zona rawan retur.",
+        }
+    elif "rejected at doorstep" in r or "recipient" in r:
+        return {
+            "type": "Risk & COD Control",
+            "tag_class": "badge-warning",
+            "action": "Lakukan verifikasi WhatsApp otomatis untuk pesanan COD bernilai tinggi sebelum kirim.",
+        }
+    elif "defective" in r or "wrong" in r or "missing" in r:
+        return {
+            "type": "Quality Control",
+            "tag_class": "badge-danger",
+            "action": "Pasang double-check barcode scan pada meja packing sebelum paket disegel.",
+        }
+    elif "system" in r or "policy" in r:
+        return {
+            "type": "Platform Care",
+            "tag_class": "badge-purple",
+            "action": "Periksa health compliance toko dan laporkan issue limit/kuota ke Merchant Care platform.",
+        }
+    else:
+        return {
+            "type": "Monitoring",
+            "tag_class": "badge-secondary",
+            "action": "Review sampel order secara berkala untuk identifikasi pola keluhan pembeli.",
+        }
+
+
+def get_cancel_analytics_data(
+    user: User,
+    start_d: date,
+    end_d: date,
+    prev_start_d: date,
+    prev_end_d: date,
+    dimension: str = "brand",
+    selected_brand_group: str | None = None,
+    selected_brands: list[str] | None = None,
+    selected_platforms: list[str] | None = None,
+    gross_orders_curr: float = 0,
+    gross_gmv_curr: float = 0,
+    gross_orders_prev: float = 0,
+    gross_gmv_prev: float = 0,
+) -> dict[str, Any]:
+    """Calculates comprehensive periodic cancellation forensics, daily trends, pareto reasons, and mitigation matrix."""
+    base_qs = CancelMartSummary.objects.all()
+
+    # User brand permissions
+    if not user.is_superuser:
+        user_brands = get_user_brands(user)
+        if user_brands:
+            base_qs = base_qs.filter(brand__in=user_brands)
+        else:
+            return {
+                "kpis": {
+                    "lost_gmv": 0, "prev_lost_gmv": 0, "lost_gmv_mom": None,
+                    "lost_orders": 0, "prev_lost_orders": 0, "lost_orders_mom": None,
+                    "lost_qty": 0, "cancel_rate_orders": 0.0, "cancel_rate_gmv": 0.0,
+                    "seller_fault_gmv": 0, "seller_fault_orders": 0, "seller_fault_share_pct": 0.0,
+                    "buyer_fault_gmv": 0, "buyer_fault_orders": 0, "buyer_fault_share_pct": 0.0,
+                    "logistics_fault_gmv": 0, "logistics_fault_orders": 0, "logistics_fault_share_pct": 0.0,
+                    "system_fault_gmv": 0, "system_fault_orders": 0, "system_fault_share_pct": 0.0,
+                },
+                "trend_chart": [],
+                "top_reasons_pareto": [],
+                "platform_vulnerability": [],
+                "diagnostic_table": [],
+                "recovery_simulation": {"seller_lost_gmv": 0, "recovery_30": 0, "recovery_50": 0, "recovery_70": 0},
+            }
+
+    # Dimension / brand / brand_group filter
+    if dimension == "brand_group":
+        if selected_brand_group and selected_brand_group != "All":
+            if isinstance(selected_brand_group, (list, tuple, set)):
+                bg_list = [bg for bg in selected_brand_group if bg and bg != "All"]
+                if bg_list:
+                    base_qs = base_qs.filter(brand_group__in=bg_list)
+            elif "," in selected_brand_group:
+                bg_list = [bg.strip() for bg in selected_brand_group.split(",") if bg.strip() and bg.strip() != "All"]
+                if bg_list:
+                    base_qs = base_qs.filter(brand_group__in=bg_list)
+            else:
+                base_qs = base_qs.filter(brand_group=selected_brand_group)
+    else:
+        if selected_brands and "all" not in [b.lower() for b in selected_brands]:
+            base_qs = base_qs.filter(brand__in=selected_brands)
+
+    # Platform filter
+    if selected_platforms and "all" not in [p.lower() for p in selected_platforms]:
+        base_qs = base_qs.filter(platform__in=selected_platforms)
+
+    curr_qs = base_qs.filter(date__range=(start_d, end_d))
+    prev_qs = base_qs.filter(date__range=(prev_start_d, prev_end_d))
+
+    curr_agg = curr_qs.aggregate(
+        total_lost_gmv=Sum("gmv"),
+        total_lost_orders=Sum("gross_order"),
+        total_lost_qty=Sum("gross_quantity"),
+        seller_lost_gmv=Sum("gmv", filter=Q(fault_category__icontains="Seller")),
+        seller_lost_orders=Sum("gross_order", filter=Q(fault_category__icontains="Seller")),
+        buyer_lost_gmv=Sum("gmv", filter=Q(fault_category__icontains="Buyer")),
+        buyer_lost_orders=Sum("gross_order", filter=Q(fault_category__icontains="Buyer")),
+        logistics_lost_gmv=Sum("gmv", filter=Q(fault_category__icontains="Logistics")),
+        logistics_lost_orders=Sum("gross_order", filter=Q(fault_category__icontains="Logistics")),
+        system_lost_gmv=Sum("gmv", filter=Q(fault_category__icontains="System")),
+        system_lost_orders=Sum("gross_order", filter=Q(fault_category__icontains="System")),
+    )
+
+    prev_agg = prev_qs.aggregate(
+        total_lost_gmv=Sum("gmv"),
+        total_lost_orders=Sum("gross_order"),
+        seller_lost_gmv=Sum("gmv", filter=Q(fault_category__icontains="Seller")),
+    )
+
+    lost_gmv = float(curr_agg["total_lost_gmv"] or 0)
+    lost_orders = float(curr_agg["total_lost_orders"] or 0)
+    lost_qty = float(curr_agg["total_lost_qty"] or 0)
+
+    prev_lost_gmv = float(prev_agg["total_lost_gmv"] or 0)
+    prev_lost_orders = float(prev_agg["total_lost_orders"] or 0)
+
+    seller_lost_gmv = float(curr_agg["seller_lost_gmv"] or 0)
+    seller_lost_orders = float(curr_agg["seller_lost_orders"] or 0)
+    buyer_lost_gmv = float(curr_agg["buyer_lost_gmv"] or 0)
+    buyer_lost_orders = float(curr_agg["buyer_lost_orders"] or 0)
+    logistics_lost_gmv = float(curr_agg["logistics_lost_gmv"] or 0)
+    logistics_lost_orders = float(curr_agg["logistics_lost_orders"] or 0)
+    system_lost_gmv = float(curr_agg["system_lost_gmv"] or 0)
+    system_lost_orders = float(curr_agg["system_lost_orders"] or 0)
+
+    cancel_rate_orders = round(lost_orders / gross_orders_curr * 100, 2) if gross_orders_curr > 0 else 0.0
+    cancel_rate_gmv = round(lost_gmv / gross_gmv_curr * 100, 2) if gross_gmv_curr > 0 else 0.0
+
+    # Daily trend progression
+    daily_qs = (
+        curr_qs.values("date")
+        .annotate(
+            lost_gmv=Sum("gmv"),
+            lost_orders=Sum("gross_order"),
+            seller_gmv=Sum("gmv", filter=Q(fault_category__icontains="Seller")),
+            buyer_gmv=Sum("gmv", filter=Q(fault_category__icontains="Buyer")),
+            logistics_gmv=Sum("gmv", filter=Q(fault_category__icontains="Logistics")),
+            system_gmv=Sum("gmv", filter=Q(fault_category__icontains="System")),
+        )
+        .order_by("date")
+    )
+
+    daily_map = {row["date"]: row for row in daily_qs if row["date"]}
+    trend_chart = []
+    curr_iter = start_d
+    while curr_iter <= end_d:
+        row = daily_map.get(curr_iter)
+        trend_chart.append({
+            "date": curr_iter.isoformat(),
+            "date_label": curr_iter.strftime("%d %b"),
+            "lost_gmv": float(row["lost_gmv"] or 0) if row else 0.0,
+            "lost_orders": int(row["lost_orders"] or 0) if row else 0,
+            "seller_gmv": float(row["seller_gmv"] or 0) if row else 0.0,
+            "buyer_gmv": float(row["buyer_gmv"] or 0) if row else 0.0,
+            "logistics_gmv": float(row["logistics_gmv"] or 0) if row else 0.0,
+            "system_gmv": float(row["system_gmv"] or 0) if row else 0.0,
+        })
+        curr_iter += timedelta(days=1)
+
+    # Top reasons Pareto (Top 10)
+    reason_qs = (
+        curr_qs.values("std_reason", "fault_category")
+        .annotate(
+            lost_gmv=Sum("gmv"),
+            lost_orders=Sum("gross_order"),
+            lost_qty=Sum("gross_quantity"),
+        )
+        .order_by("-lost_gmv")[:10]
+    )
+    top_reasons_pareto = []
+    for r in reason_qs:
+        r_gmv = float(r["lost_gmv"] or 0)
+        r_ord = int(r["lost_orders"] or 0)
+        r_qty = int(r["lost_qty"] or 0)
+        r_share = round(r_gmv / lost_gmv * 100, 1) if lost_gmv > 0 else 0.0
+        act = get_cancel_action_meta(r["std_reason"], r["fault_category"])
+        top_reasons_pareto.append({
+            "std_reason": r["std_reason"] or "Others / Unmapped",
+            "fault_category": r["fault_category"] or "Unknown",
+            "lost_gmv": r_gmv,
+            "lost_orders": r_ord,
+            "lost_qty": r_qty,
+            "share_pct": r_share,
+            "action_type": act["type"],
+            "action": act["action"],
+            "tag_class": act["tag_class"],
+        })
+
+    # Platform vulnerability comparison
+    plat_qs = (
+        curr_qs.values("platform")
+        .annotate(
+            lost_gmv=Sum("gmv"),
+            lost_orders=Sum("gross_order"),
+            seller_loss=Sum("gmv", filter=Q(fault_category__icontains="Seller")),
+            buyer_loss=Sum("gmv", filter=Q(fault_category__icontains="Buyer")),
+            logistics_loss=Sum("gmv", filter=Q(fault_category__icontains="Logistics")),
+        )
+        .order_by("-lost_gmv")
+    )
+    platform_vulnerability = []
+    for p in plat_qs:
+        p_name = p["platform"] or "Unknown"
+        p_gmv = float(p["lost_gmv"] or 0)
+        p_ord = int(p["lost_orders"] or 0)
+        p_seller = float(p["seller_loss"] or 0)
+        p_buyer = float(p["buyer_loss"] or 0)
+        p_log = float(p["logistics_loss"] or 0)
+
+        top_r = (
+            curr_qs.filter(platform=p_name)
+            .values("std_reason")
+            .annotate(gmv=Sum("gmv"))
+            .order_by("-gmv")
+            .first()
+        )
+        platform_vulnerability.append({
+            "platform": p_name,
+            "lost_gmv": p_gmv,
+            "lost_orders": p_ord,
+            "seller_loss": p_seller,
+            "buyer_loss": p_buyer,
+            "logistics_loss": p_log,
+            "seller_pct": round(p_seller / p_gmv * 100, 1) if p_gmv > 0 else 0.0,
+            "logistics_pct": round(p_log / p_gmv * 100, 1) if p_gmv > 0 else 0.0,
+            "top_reason": top_r["std_reason"] if top_r else "-",
+        })
+
+    # Diagnostic Table
+    table_qs = (
+        curr_qs.values("fault_category", "std_reason", "platform")
+        .annotate(
+            lost_gmv=Sum("gmv"),
+            lost_orders=Sum("gross_order"),
+            lost_qty=Sum("gross_quantity"),
+        )
+        .order_by("-lost_gmv")[:150]
+    )
+    diagnostic_table = []
+    for row in table_qs:
+        r_gmv = float(row["lost_gmv"] or 0)
+        r_ord = int(row["lost_orders"] or 0)
+        r_qty = int(row["lost_qty"] or 0)
+        aov = round(r_gmv / r_ord) if r_ord > 0 else 0
+        share = round(r_gmv / lost_gmv * 100, 2) if lost_gmv > 0 else 0.0
+        act = get_cancel_action_meta(row["std_reason"], row["fault_category"])
+        diagnostic_table.append({
+            "fault_category": row["fault_category"] or "Unknown",
+            "std_reason": row["std_reason"] or "Others / Unmapped",
+            "platform": row["platform"] or "All",
+            "lost_orders": r_ord,
+            "lost_qty": r_qty,
+            "lost_gmv": r_gmv,
+            "aov": aov,
+            "share_pct": share,
+            "action_type": act["type"],
+            "action": act["action"],
+            "tag_class": act["tag_class"],
+        })
+
+    return {
+        "kpis": {
+            "lost_gmv": lost_gmv,
+            "prev_lost_gmv": prev_lost_gmv,
+            "lost_gmv_mom": calc_growth(lost_gmv, prev_lost_gmv),
+            "lost_orders": lost_orders,
+            "prev_lost_orders": prev_lost_orders,
+            "lost_orders_mom": calc_growth(lost_orders, prev_lost_orders),
+            "lost_qty": lost_qty,
+            "cancel_rate_orders": cancel_rate_orders,
+            "cancel_rate_gmv": cancel_rate_gmv,
+            "seller_fault_gmv": seller_lost_gmv,
+            "seller_fault_orders": seller_lost_orders,
+            "seller_fault_share_pct": round(seller_lost_gmv / lost_gmv * 100, 1) if lost_gmv > 0 else 0.0,
+            "buyer_fault_gmv": buyer_lost_gmv,
+            "buyer_fault_orders": buyer_lost_orders,
+            "buyer_fault_share_pct": round(buyer_lost_gmv / lost_gmv * 100, 1) if lost_gmv > 0 else 0.0,
+            "logistics_fault_gmv": logistics_lost_gmv,
+            "logistics_fault_orders": logistics_lost_orders,
+            "logistics_fault_share_pct": round(logistics_lost_gmv / lost_gmv * 100, 1) if lost_gmv > 0 else 0.0,
+            "system_fault_gmv": system_lost_gmv,
+            "system_fault_orders": system_lost_orders,
+            "system_fault_share_pct": round(system_lost_gmv / lost_gmv * 100, 1) if lost_gmv > 0 else 0.0,
+        },
+        "trend_chart": trend_chart,
+        "top_reasons_pareto": top_reasons_pareto,
+        "platform_vulnerability": platform_vulnerability,
+        "diagnostic_table": diagnostic_table,
+        "recovery_simulation": {
+            "seller_lost_gmv": seller_lost_gmv,
+            "recovery_30": round(seller_lost_gmv * 0.3),
+            "recovery_50": round(seller_lost_gmv * 0.5),
+            "recovery_70": round(seller_lost_gmv * 0.7),
+        },
+    }
+
+
 def get_analytics_performance_data(
     user: User,
     start_date_str: str | None,
     end_date_str: str | None,
+    preset: str | None = None,
+    dimension: str = "brand",
     selected_brand_group: str | None = None,
     selected_brands: list[str] | None = None,
     selected_platforms: list[str] | None = None,
@@ -108,7 +511,12 @@ def get_analytics_performance_data(
     """
     Main computational service for the Executive Analytics Dashboard.
     Uses periodic date range filtering on OrderMartSummary and ProductMartSummary.
+    Supports dimension="brand" (single-brand drill-down) or dimension="brand_group" (consolidated brand group).
     """
+    if dimension not in ("brand", "brand_group"):
+        dimension = "brand"
+    is_bg = (dimension == "brand_group")
+
     filter_opts = get_analytics_filter_options(user)
     def_start = date.fromisoformat(filter_opts["default_start_date"])
     def_end = date.fromisoformat(filter_opts["default_end_date"])
@@ -118,36 +526,48 @@ def get_analytics_performance_data(
     if start_d > end_d:
         start_d, end_d = end_d, start_d
 
-    # Calculate M-1 (Previous Period) of exact same length
+    # Calculate comparison dates (M-1, H-7, H-1, etc.)
+    prev_start_d, prev_end_d, comp_type, comp_label = get_analytics_comparison_dates(
+        start_d, end_d, preset=preset
+    )
     num_days = (end_d - start_d).days + 1
-    prev_end_d = start_d - timedelta(days=1)
-    prev_start_d = start_d - timedelta(days=num_days)
 
-    # Base Querysets with Brand Access & Date Range (Current + Compare Period)
+    # Base Querysets with Brand Access & Date Range covering both current and comparison periods
+    min_date_bound = min(prev_start_d, start_d)
+    max_date_bound = max(prev_end_d, end_d)
     base_order_qs = apply_brand_access_filter(
-        OrderMartSummary.objects.filter(create_order_date_time_date__range=(prev_start_d, end_d)),
+        OrderMartSummary.objects.filter(create_order_date_time_date__range=(min_date_bound, max_date_bound)),
         user,
     )
     base_prod_qs = apply_brand_access_filter(
-        ProductMartSummary.objects.filter(date__range=(prev_start_d, end_d)),
+        ProductMartSummary.objects.filter(date__range=(min_date_bound, max_date_bound)),
         user,
     )
 
-    # Apply Optional Filters
-    if selected_brand_group and selected_brand_group.lower() != "all":
-        base_order_qs = base_order_qs.filter(brand_group__iexact=selected_brand_group)
-        base_prod_qs = base_prod_qs.filter(brand_group__iexact=selected_brand_group)
+    # Apply Dimension Filtering
+    if is_bg:
+        avail_groups = filter_opts.get("brand_groups") or []
+        if not selected_brand_group or selected_brand_group.lower() == "all":
+            selected_brand_group = "finetoday" if "finetoday" in avail_groups else (avail_groups[0] if avail_groups else None)
 
-    if not selected_brands:
-        avail_brands = filter_opts.get("brands") or []
-        if avail_brands:
-            selected_brands = [avail_brands[0]]
+        if selected_brand_group:
+            base_order_qs = base_order_qs.filter(brand_group__iexact=selected_brand_group)
+            base_prod_qs = base_prod_qs.filter(brand_group__iexact=selected_brand_group)
+    else:
+        if not selected_brands:
+            avail_brands = filter_opts.get("brands") or []
+            if avail_brands:
+                selected_brands = ["Senka"] if "Senka" in avail_brands else [avail_brands[0]]
 
-    if selected_brands:
-        clean_brands = [b for b in selected_brands if b and b.lower() != "all"]
-        if clean_brands:
-            base_order_qs = base_order_qs.filter(brand__in=clean_brands)
-            base_prod_qs = base_prod_qs.filter(brand__in=clean_brands)
+        if selected_brands:
+            clean_brands = [b for b in selected_brands if b and b.lower() != "all"]
+            if clean_brands:
+                base_order_qs = base_order_qs.filter(brand__in=clean_brands)
+                base_prod_qs = base_prod_qs.filter(brand__in=clean_brands)
+
+        if selected_brand_group and selected_brand_group.lower() != "all":
+            base_order_qs = base_order_qs.filter(brand_group__iexact=selected_brand_group)
+            base_prod_qs = base_prod_qs.filter(brand_group__iexact=selected_brand_group)
 
     if selected_platforms:
         clean_plats = [p for p in selected_platforms if p and p.lower() != "all"]
@@ -423,12 +843,20 @@ def get_analytics_performance_data(
     curr_visitors_series = []
     prev_visitors_series = []
 
-    for i in range(num_days):
+    curr_days_count = (end_d - start_d).days + 1
+    for i in range(curr_days_count):
         c_date = start_d + timedelta(days=i)
         p_date = prev_start_d + timedelta(days=i)
 
         c_data = curr_daily_map.get(c_date, {})
-        p_data = prev_daily_map.get(p_date, {})
+        if p_date <= prev_end_d:
+            p_data = prev_daily_map.get(p_date, {})
+            p_label = p_date.strftime("%d %b %Y")
+            p_iso = p_date.isoformat()
+        else:
+            p_data = {}
+            p_label = "—"
+            p_iso = ""
 
         c_nmv = float(c_data.get("nmv") or 0)
         p_nmv = float(p_data.get("nmv") or 0)
@@ -447,9 +875,9 @@ def get_analytics_performance_data(
         trend_days.append({
             "day_index": i + 1,
             "curr_date": c_date.isoformat(),
-            "prev_date": p_date.isoformat(),
+            "prev_date": p_iso,
             "curr_label": c_date.strftime("%d %b %Y"),
-            "prev_label": p_date.strftime("%d %b %Y"),
+            "prev_label": p_label,
         })
 
         curr_nmv_series.append(c_nmv)
@@ -799,14 +1227,34 @@ def get_analytics_performance_data(
             "discount_from_seller": sd,
         })
 
+    cancel_analytics = get_cancel_analytics_data(
+        user=user,
+        start_d=start_d,
+        end_d=end_d,
+        prev_start_d=prev_start_d,
+        prev_end_d=prev_end_d,
+        dimension=dimension,
+        selected_brand_group=selected_brand_group,
+        selected_brands=selected_brands,
+        selected_platforms=selected_platforms,
+        gross_orders_curr=curr_metrics.get("gross_orders", 0),
+        gross_gmv_curr=curr_metrics.get("gmv", 0),
+        gross_orders_prev=prev_metrics.get("gross_orders", 0),
+        gross_gmv_prev=prev_metrics.get("gmv", 0),
+    )
+
     # Return full package
     return {
+        "dimension": dimension,
+        "selected_brand_group": selected_brand_group,
+        "selected_brand": selected_brands[0] if (selected_brands and len(selected_brands) > 0) else None,
         "start_date": start_d.isoformat(),
         "end_date": end_d.isoformat(),
         "prev_start_date": prev_start_d.isoformat(),
         "prev_end_date": prev_end_d.isoformat(),
         "period_label": f"{start_d.strftime('%d %b %Y')} – {end_d.strftime('%d %b %Y')}",
-        "prev_period_label": f"M-1 ({prev_start_d.strftime('%d %b %Y')} – {prev_end_d.strftime('%d %b %Y')})",
+        "prev_period_label": comp_label,
+        "comp_type": comp_type,
         "num_days": num_days,
         "target": curr_target_val,
         "target_achievement": round((curr_metrics["nmv"] / curr_target_val * 100), 1) if curr_target_val > 0 else 0.0,
@@ -826,4 +1274,5 @@ def get_analytics_performance_data(
             "total_period_label": total_period_label,
         },
         "raw_daily_metrics": daily_raw_rows,
+        "cancellation_analytics": cancel_analytics,
     }

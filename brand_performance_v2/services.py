@@ -11,7 +11,7 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, Sum
 
 from dashboard.models import User, UserBrand
-from .models import OrderMartSummary
+from .models import OrderMartSummary, CancelMartSummary
 
 
 @lru_cache(maxsize=256)
@@ -160,14 +160,208 @@ def calc_derived_metrics(d: dict[str, float]) -> dict[str, float]:
     }
 
 
+def get_cancel_summary_data(
+    user: User,
+    today: date,
+    dimension: str = "brand",
+    selected_brand_group: str | list[str] | None = None,
+    selected_brand: str | list[str] | None = None,
+    selected_platform: str | list[str] | None = None,
+    gross_orders_mtd: float = 0,
+    gross_gmv_mtd: float = 0,
+) -> dict[str, Any]:
+    """Calculates high-impact cancellation summary metrics & responsibility split for summary page."""
+    start_of_month = today.replace(day=1)
+    prev_month_start = (today - relativedelta(months=1)).replace(day=1)
+    _, max_prev_day = calendar.monthrange(prev_month_start.year, prev_month_start.month)
+    prev_month_end = prev_month_start.replace(day=min(today.day, max_prev_day))
+
+    base_qs = CancelMartSummary.objects.all()
+
+    # User brand permissions
+    if not user.is_superuser:
+        user_brands = get_user_brands(user)
+        if user_brands:
+            base_qs = base_qs.filter(brand__in=user_brands)
+        else:
+            return {
+                "kpis": {
+                    "lost_gmv": 0, "lost_gmv_mom": None,
+                    "lost_orders": 0, "lost_orders_mom": None,
+                    "lost_qty": 0, "cancel_rate_orders": 0.0, "cancel_rate_gmv": 0.0,
+                    "seller_lost_gmv": 0, "seller_lost_gmv_mom": None, "seller_lost_orders": 0,
+                    "avoidable_loss_pct": 0.0, "buyer_lost_gmv": 0, "buyer_lost_orders": 0,
+                    "logistics_lost_gmv": 0, "logistics_lost_orders": 0,
+                    "system_lost_gmv": 0, "system_lost_orders": 0,
+                },
+                "responsibility_breakdown": [],
+                "top_reasons": [],
+                "recovery_simulation": {"seller_lost_gmv": 0, "recovery_30": 0, "recovery_50": 0},
+            }
+
+    # Filter dimension / brand / brand_group
+    if dimension == "brand_group":
+        if selected_brand_group and selected_brand_group != "All":
+            if isinstance(selected_brand_group, (list, tuple, set)):
+                bg_list = [bg for bg in selected_brand_group if bg and bg != "All"]
+                if bg_list:
+                    base_qs = base_qs.filter(brand_group__in=bg_list)
+            elif "," in selected_brand_group:
+                bg_list = [bg.strip() for bg in selected_brand_group.split(",") if bg.strip() and bg.strip() != "All"]
+                if bg_list:
+                    base_qs = base_qs.filter(brand_group__in=bg_list)
+            else:
+                base_qs = base_qs.filter(brand_group=selected_brand_group)
+    else:
+        if selected_brand and selected_brand != "All":
+            if isinstance(selected_brand, (list, tuple, set)):
+                b_list = [b for b in selected_brand if b and b != "All"]
+                if b_list:
+                    base_qs = base_qs.filter(brand__in=b_list)
+            elif "," in selected_brand:
+                b_list = [b.strip() for b in selected_brand.split(",") if b.strip() and b.strip() != "All"]
+                if b_list:
+                    base_qs = base_qs.filter(brand__in=b_list)
+            else:
+                base_qs = base_qs.filter(brand=selected_brand)
+
+    # Filter platform
+    if selected_platform and selected_platform != "All":
+        if isinstance(selected_platform, (list, tuple, set)):
+            p_list = [p for p in selected_platform if p and p != "All"]
+            if p_list:
+                base_qs = base_qs.filter(platform__in=p_list)
+        elif "," in selected_platform:
+            p_list = [p.strip() for p in selected_platform.split(",") if p.strip() and p.strip() != "All"]
+            if p_list:
+                base_qs = base_qs.filter(platform__in=p_list)
+        else:
+            base_qs = base_qs.filter(platform=selected_platform)
+
+    curr_qs = base_qs.filter(date__range=(start_of_month, today))
+    prev_qs = base_qs.filter(date__range=(prev_month_start, prev_month_end))
+
+    curr_agg = curr_qs.aggregate(
+        total_lost_gmv=Sum("gmv"),
+        total_lost_orders=Sum("gross_order"),
+        total_lost_qty=Sum("gross_quantity"),
+        seller_lost_gmv=Sum("gmv", filter=Q(fault_category__icontains="Seller")),
+        seller_lost_orders=Sum("gross_order", filter=Q(fault_category__icontains="Seller")),
+        buyer_lost_gmv=Sum("gmv", filter=Q(fault_category__icontains="Buyer")),
+        buyer_lost_orders=Sum("gross_order", filter=Q(fault_category__icontains="Buyer")),
+        logistics_lost_gmv=Sum("gmv", filter=Q(fault_category__icontains="Logistics")),
+        logistics_lost_orders=Sum("gross_order", filter=Q(fault_category__icontains="Logistics")),
+        system_lost_gmv=Sum("gmv", filter=Q(fault_category__icontains="System")),
+        system_lost_orders=Sum("gross_order", filter=Q(fault_category__icontains="System")),
+    )
+
+    prev_agg = prev_qs.aggregate(
+        total_lost_gmv=Sum("gmv"),
+        total_lost_orders=Sum("gross_order"),
+        seller_lost_gmv=Sum("gmv", filter=Q(fault_category__icontains="Seller")),
+    )
+
+    lost_gmv = float(curr_agg["total_lost_gmv"] or 0)
+    lost_orders = float(curr_agg["total_lost_orders"] or 0)
+    lost_qty = float(curr_agg["total_lost_qty"] or 0)
+
+    seller_lost_gmv = float(curr_agg["seller_lost_gmv"] or 0)
+    seller_lost_orders = float(curr_agg["seller_lost_orders"] or 0)
+    buyer_lost_gmv = float(curr_agg["buyer_lost_gmv"] or 0)
+    buyer_lost_orders = float(curr_agg["buyer_lost_orders"] or 0)
+    logistics_lost_gmv = float(curr_agg["logistics_lost_gmv"] or 0)
+    logistics_lost_orders = float(curr_agg["logistics_lost_orders"] or 0)
+    system_lost_gmv = float(curr_agg["system_lost_gmv"] or 0)
+    system_lost_orders = float(curr_agg["system_lost_orders"] or 0)
+
+    prev_lost_gmv = float(prev_agg["total_lost_gmv"] or 0)
+    prev_lost_orders = float(prev_agg["total_lost_orders"] or 0)
+    prev_seller_lost_gmv = float(prev_agg["seller_lost_gmv"] or 0)
+
+    cancel_rate_orders = round(lost_orders / gross_orders_mtd * 100, 2) if gross_orders_mtd > 0 else 0.0
+    cancel_rate_gmv = round(lost_gmv / gross_gmv_mtd * 100, 2) if gross_gmv_mtd > 0 else 0.0
+
+    cat_rows = (
+        curr_qs.values("fault_category")
+        .annotate(lost_gmv=Sum("gmv"), lost_orders=Sum("gross_order"))
+        .order_by("-lost_gmv")
+    )
+    responsibility_breakdown = []
+    for c in cat_rows:
+        c_gmv = float(c["lost_gmv"] or 0)
+        c_ord = float(c["lost_orders"] or 0)
+        c_name = c["fault_category"] or "Unknown"
+        share = round(c_gmv / lost_gmv * 100, 1) if lost_gmv > 0 else 0.0
+        responsibility_breakdown.append({
+            "category": c_name,
+            "lost_gmv": c_gmv,
+            "lost_orders": c_ord,
+            "share_pct": share,
+        })
+
+    reason_rows = (
+        curr_qs.values("std_reason", "fault_category")
+        .annotate(lost_gmv=Sum("gmv"), lost_orders=Sum("gross_order"), lost_qty=Sum("gross_quantity"))
+        .order_by("-lost_gmv")[:5]
+    )
+    top_reasons = []
+    for r in reason_rows:
+        r_gmv = float(r["lost_gmv"] or 0)
+        r_ord = float(r["lost_orders"] or 0)
+        r_qty = float(r["lost_qty"] or 0)
+        share = round(r_gmv / lost_gmv * 100, 1) if lost_gmv > 0 else 0.0
+        top_reasons.append({
+            "std_reason": r["std_reason"] or "Others / Unmapped",
+            "fault_category": r["fault_category"] or "Unknown",
+            "lost_gmv": r_gmv,
+            "lost_orders": r_ord,
+            "lost_qty": r_qty,
+            "share_pct": share,
+        })
+
+    return {
+        "kpis": {
+            "lost_gmv": lost_gmv,
+            "lost_gmv_mom": calc_growth(lost_gmv, prev_lost_gmv),
+            "lost_orders": lost_orders,
+            "lost_orders_mom": calc_growth(lost_orders, prev_lost_orders),
+            "lost_qty": lost_qty,
+            "cancel_rate_orders": cancel_rate_orders,
+            "cancel_rate_gmv": cancel_rate_gmv,
+            "seller_lost_gmv": seller_lost_gmv,
+            "seller_lost_gmv_mom": calc_growth(seller_lost_gmv, prev_seller_lost_gmv),
+            "seller_lost_orders": seller_lost_orders,
+            "avoidable_loss_pct": round(seller_lost_gmv / lost_gmv * 100, 1) if lost_gmv > 0 else 0.0,
+            "buyer_lost_gmv": buyer_lost_gmv,
+            "buyer_lost_orders": buyer_lost_orders,
+            "logistics_lost_gmv": logistics_lost_gmv,
+            "logistics_lost_orders": logistics_lost_orders,
+            "system_lost_gmv": system_lost_gmv,
+            "system_lost_orders": system_lost_orders,
+        },
+        "responsibility_breakdown": responsibility_breakdown,
+        "top_reasons": top_reasons,
+        "recovery_simulation": {
+            "seller_lost_gmv": seller_lost_gmv,
+            "recovery_30": round(seller_lost_gmv * 0.3),
+            "recovery_50": round(seller_lost_gmv * 0.5),
+        },
+    }
+
+
 def get_summary_performance_data(
     user: User,
     as_of_date_str: str | None = None,
     selected_brand_group: str | list[str] | None = None,
     selected_brand: str | list[str] | None = None,
     selected_platform: str | list[str] | None = None,
+    dimension: str = "brand",
 ) -> dict[str, Any]:
     """Core calculation engine for Brand Performance v2 Summary matrix."""
+    if dimension not in ("brand", "brand_group"):
+        dimension = "brand"
+    is_bg = (dimension == "brand_group")
+
     base_qs = apply_brand_access_filter(OrderMartSummary.objects.all(), user)
 
     # 1. Determine "Today" (anchor date: completed date defaults to H-1)
@@ -205,9 +399,18 @@ def get_summary_performance_data(
     )
 
     if selected_brand_group and selected_brand_group != "All":
-        filtered_qs = filtered_qs.filter(brand_group=selected_brand_group)
+        if isinstance(selected_brand_group, (list, tuple, set)):
+            bg_list = [bg for bg in selected_brand_group if bg and bg != "All"]
+            if bg_list:
+                filtered_qs = filtered_qs.filter(brand_group__in=bg_list)
+        elif "," in selected_brand_group:
+            bg_list = [bg.strip() for bg in selected_brand_group.split(",") if bg.strip() and bg.strip() != "All"]
+            if bg_list:
+                filtered_qs = filtered_qs.filter(brand_group__in=bg_list)
+        else:
+            filtered_qs = filtered_qs.filter(brand_group=selected_brand_group)
 
-    if selected_brand:
+    if not is_bg and selected_brand:
         if isinstance(selected_brand, (list, tuple, set)):
             b_list = [b for b in selected_brand if b and b != "All"]
             if b_list:
@@ -333,10 +536,19 @@ def get_summary_performance_data(
         b_group = r["brand_group"] or "Other"
         brand_name = r["brand"]
         plat = r["platform"] or "Other"
-        row_key = (b_group, brand_name, plat)
-        all_key = (b_group, brand_name)
 
-        brand_perf_map[brand_name]["brand_group"] = b_group
+        if is_bg:
+            row_key = (b_group, plat)
+            all_key = b_group
+            entity_name = b_group
+            entity_group = b_group
+        else:
+            row_key = (b_group, brand_name, plat)
+            all_key = (b_group, brand_name)
+            entity_name = brand_name
+            entity_group = b_group
+
+        brand_perf_map[entity_name]["brand_group"] = entity_group
 
         is_today = (row_date == today)
         is_prev_day = (row_date == prev_day)
@@ -362,36 +574,36 @@ def get_summary_performance_data(
             if is_today:
                 row_grouped[row_key]["today"][m] += val
                 all_brand_grouped[all_key]["today"][m] += val
-                brand_perf_map[brand_name]["today"][m] += val
+                brand_perf_map[entity_name]["today"][m] += val
                 global_kpi["today"][m] += val
 
             if is_prev_day:
                 row_grouped[row_key]["prev_day"][m] += val
                 all_brand_grouped[all_key]["prev_day"][m] += val
-                brand_perf_map[brand_name]["prev_day"][m] += val
+                brand_perf_map[entity_name]["prev_day"][m] += val
                 global_kpi["prev_day"][m] += val
 
             if is_7d:
                 row_grouped[row_key]["prev_7d"][m] += val
                 all_brand_grouped[all_key]["prev_7d"][m] += val
-                brand_perf_map[brand_name]["prev_7d"][m] += val
+                brand_perf_map[entity_name]["prev_7d"][m] += val
                 global_kpi["prev_7d"][m] += val
 
             if is_prev_m_day:
                 row_grouped[row_key]["prev_month_day"][m] += val
                 all_brand_grouped[all_key]["prev_month_day"][m] += val
-                brand_perf_map[brand_name]["prev_month_day"][m] += val
+                brand_perf_map[entity_name]["prev_month_day"][m] += val
 
             if is_mtd:
                 row_grouped[row_key]["mtd"][m] += val
                 all_brand_grouped[all_key]["mtd"][m] += val
-                brand_perf_map[brand_name]["mtd"][m] += val
+                brand_perf_map[entity_name]["mtd"][m] += val
                 global_kpi["mtd"][m] += val
 
             if is_prev_mtd:
                 row_grouped[row_key]["prev_mtd"][m] += val
                 all_brand_grouped[all_key]["prev_mtd"][m] += val
-                brand_perf_map[brand_name]["prev_mtd"][m] += val
+                brand_perf_map[entity_name]["prev_mtd"][m] += val
                 global_kpi["prev_mtd"][m] += val
 
     # Normalize 7-day sum to daily average (/ 7)
@@ -586,13 +798,8 @@ def get_summary_performance_data(
     def diff_pt(curr, base):
         return round(curr - base, 2) if base is not None else None
 
-    # Compute 7-day daily average for volumetric metrics
-    p7_daily_avg = {}
-    for k, v in p7_der.items():
-        if k in ("target", "nmv", "gmv", "net_order", "gross_order", "net_quantity", "gross_quantity", "page_views", "visitors", "voucher_paid_by_platform", "voucher_paid_by_seller", "discount_from_platform", "discount_from_seller"):
-            p7_daily_avg[k] = (v / 7.0) if v else 0.0
-        else:
-            p7_daily_avg[k] = v
+    # p7_der is already based on global_kpi["prev_7d"] normalized to 7-day daily average (/ 7.0)
+    p7_daily_avg = p7_der
 
     today_pulse_hub = {
         "today": t_der,
@@ -734,10 +941,16 @@ def get_summary_performance_data(
     # b. Platform Contribution
     plat_nmv_map = defaultdict(float)
 
-    for (b_group, b_name, plat), periods in row_grouped.items():
-        brand_nmv_map[b_name] += periods["mtd"]["total_nmv"]
-        bg_nmv_map[b_group] += periods["mtd"]["total_nmv"]
-        plat_nmv_map[plat] += periods["mtd"]["total_nmv"]
+    if is_bg:
+        for (b_group, plat), periods in row_grouped.items():
+            bg_nmv_map[b_group] += periods["mtd"]["total_nmv"]
+            plat_nmv_map[plat] += periods["mtd"]["total_nmv"]
+        brand_nmv_map = bg_nmv_map
+    else:
+        for (b_group, b_name, plat), periods in row_grouped.items():
+            brand_nmv_map[b_name] += periods["mtd"]["total_nmv"]
+            bg_nmv_map[b_group] += periods["mtd"]["total_nmv"]
+            plat_nmv_map[plat] += periods["mtd"]["total_nmv"]
 
     # c. Daily Trend Line Chart (Day 1..current_day_num)
     daily_trend_list = []
@@ -799,23 +1012,38 @@ def get_summary_performance_data(
             }
         }
 
-    all_rows = [
-        build_metric_row(bg, b_name, periods)
-        for (bg, b_name), periods in sorted(all_brand_grouped.items(), key=lambda x: (x[0][0], x[0][1]))
-    ]
-
-    unique_platforms = sorted(list({key[2] for key in row_grouped.keys()}))
-
-    pivot_by_platform: dict[str, list[dict[str, Any]]] = {
-        "All": all_rows,
-    }
-    for p in unique_platforms:
-        p_rows = [
-            build_metric_row(bg, b_name, periods)
-            for (bg, b_name, plat), periods in sorted(row_grouped.items(), key=lambda x: (x[0][0], x[0][1]))
-            if plat == p
+    if is_bg:
+        all_rows = [
+            build_metric_row(bg, bg, periods)
+            for bg, periods in sorted(all_brand_grouped.items(), key=lambda x: str(x[0]))
         ]
-        pivot_by_platform[p] = p_rows
+        unique_platforms = sorted(list({key[1] for key in row_grouped.keys()}))
+        pivot_by_platform: dict[str, list[dict[str, Any]]] = {
+            "All": all_rows,
+        }
+        for p in unique_platforms:
+            p_rows = [
+                build_metric_row(bg, bg, periods)
+                for (bg, plat), periods in sorted(row_grouped.items(), key=lambda x: str(x[0][0]))
+                if plat == p
+            ]
+            pivot_by_platform[p] = p_rows
+    else:
+        all_rows = [
+            build_metric_row(bg, b_name, periods)
+            for (bg, b_name), periods in sorted(all_brand_grouped.items(), key=lambda x: (x[0][0], x[0][1]))
+        ]
+        unique_platforms = sorted(list({key[2] for key in row_grouped.keys()}))
+        pivot_by_platform: dict[str, list[dict[str, Any]]] = {
+            "All": all_rows,
+        }
+        for p in unique_platforms:
+            p_rows = [
+                build_metric_row(bg, b_name, periods)
+                for (bg, b_name, plat), periods in sorted(row_grouped.items(), key=lambda x: (x[0][0], x[0][1]))
+                if plat == p
+            ]
+            pivot_by_platform[p] = p_rows
 
     # 11. Leaderboard Table
     leaderboard_rows = []
@@ -851,8 +1079,20 @@ def get_summary_performance_data(
             }
         })
 
+    cancel_summary = get_cancel_summary_data(
+        user=user,
+        today=today,
+        dimension=dimension,
+        selected_brand_group=selected_brand_group,
+        selected_brand=selected_brand,
+        selected_platform=selected_platform,
+        gross_orders_mtd=m_der["gross_order"],
+        gross_gmv_mtd=m_der["gmv"],
+    )
+
     return {
         "as_of_date": today.isoformat(),
+        "dimension": dimension,
         "cards": cards,
         "top_performers": top_performers,
         "anomalies": anomalies,
@@ -876,4 +1116,5 @@ def get_summary_performance_data(
             else (["All"] + unique_platforms if unique_platforms else ["All"])
         ),
         "leaderboard": leaderboard_rows,
+        "cancellation_summary": cancel_summary,
     }

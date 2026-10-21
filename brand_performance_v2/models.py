@@ -62,3 +62,24 @@ class ProductMartSummary(models.Model):
         managed = False
         db_table = "product_mart_summary"
 
+
+class CancelMartSummary(models.Model):
+    key_id = models.BigAutoField(primary_key=True)
+    platform = models.TextField(blank=True, null=True)
+    brand = models.TextField(blank=True, null=True)
+    brand_group = models.TextField(blank=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    std_reason = models.TextField(blank=True, null=True)
+    fault_category = models.TextField(blank=True, null=True)
+
+    gmv = models.BigIntegerField(null=True, blank=True)
+    gross_order = models.BigIntegerField(null=True, blank=True)
+    gross_quantity = models.BigIntegerField(null=True, blank=True)
+    nmv = models.BigIntegerField(null=True, blank=True)
+    net_order = models.BigIntegerField(null=True, blank=True)
+    net_quantity = models.BigIntegerField(null=True, blank=True)
+
+    class Meta:
+        managed = False
+        db_table = "cancel_mart_summary"
+

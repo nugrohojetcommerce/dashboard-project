@@ -962,20 +962,89 @@
     }
   }
 
-  .bp2-mascot-box {
-    width: 148px;
-    height: 148px;
+  /* ── Jetcommerce Dynamic Logo Loader ── */
+  .bp2-logo-loader-box {
+    position: relative;
+    width: 130px;
+    height: 130px;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 4px auto 8px;
     user-select: none;
     pointer-events: none;
   }
 
-  .bp2-mascot-animation {
-    width: 100%;
-    height: 100%;
+  .bp2-logo-glow {
+    position: absolute;
+    width: 95px;
+    height: 95px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(244, 123, 35, 0.4) 0%, rgba(240, 89, 41, 0.15) 50%, transparent 70%);
+    filter: blur(12px);
+    animation: jcGlowPulse 2.2s ease-in-out infinite;
+    z-index: 0;
+    will-change: transform, opacity;
+  }
+
+  .bp2-logo-ring {
+    position: absolute;
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(244, 123, 35, 0.32);
+    animation: jcRingPulse 2.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    z-index: 0;
+    will-change: transform, opacity;
+  }
+
+  .bp2-jc-logo-spin {
+    position: relative;
+    z-index: 1;
+    width: 78px;
+    height: 78px;
     object-fit: contain;
+    filter: drop-shadow(0 8px 18px rgba(244, 123, 35, 0.36));
+    animation: jcLogoSmoothMotion 2.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: center center;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  @keyframes jcLogoSmoothMotion {
+    0% {
+      transform: rotate(0deg) scale(0.93);
+    }
+    48% {
+      transform: rotate(195deg) scale(1.07);
+    }
+    100% {
+      transform: rotate(360deg) scale(0.93);
+    }
+  }
+
+  @keyframes jcGlowPulse {
+    0%, 100% {
+      opacity: 0.4;
+      transform: scale(0.88);
+    }
+    48% {
+      opacity: 0.85;
+      transform: scale(1.18);
+    }
+  }
+
+  @keyframes jcRingPulse {
+    0%, 100% {
+      transform: scale(0.85);
+      opacity: 0.25;
+      border-color: rgba(244, 123, 35, 0.2);
+    }
+    48% {
+      transform: scale(1.16);
+      opacity: 0.65;
+      border-color: rgba(244, 123, 35, 0.45);
+    }
   }
 
   .bp2-loading-text-wrap {
@@ -3976,16 +4045,18 @@
   })();
 </script>
 
-<!-- Full-Page Mascot Loading Overlay -->
+<!-- Full-Page Loading Overlay -->
 <div id="bp2LoadingOverlay" class="bp2-loading-overlay active" data-html2canvas-ignore="true" aria-live="polite"
   aria-label="Loading analytics data">
   <div class="bp2-loading-backdrop"></div>
   <div class="bp2-loading-card">
-    <div class="bp2-mascot-box">
-      <img src="{% static 'mascot/mascot-loading.svg' %}" alt="Loading mascot" class="bp2-mascot-animation" />
+    <div class="bp2-logo-loader-box">
+      <div class="bp2-logo-glow"></div>
+      <div class="bp2-logo-ring"></div>
+      <img src="{% static 'jetcommerce.svg' %}?v=2" alt="Jetcommerce Loading" class="bp2-jc-logo-spin" />
     </div>
     <div class="bp2-loading-text-wrap">
-      <span class="bp2-loading-text">Jeco is Preparing Your Data <span class="bp2-loading-dot d1">.</span> <span
+      <span class="bp2-loading-text">Preparing Dashboard Data <span class="bp2-loading-dot d1">.</span> <span
           class="bp2-loading-dot d2">.</span> <span class="bp2-loading-dot d3">.</span></span>
     </div>
     <div class="bp2-loading-bar-wrap">

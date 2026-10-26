@@ -240,3 +240,101 @@ def api_delete_category(request: HttpRequest) -> JsonResponse:
         "message": f"Category '{category}' unlinked from {deleted_count} SKUs.",
         "deleted_count": deleted_count,
     })
+
+
+@never_cache
+@login_required
+def api_template_catalog(request: HttpRequest) -> JsonResponse:
+    """Returns catalog of SKUs for a brand_group to pre-fill in the Excel template."""
+    brand_group = request.GET.get("brand_group", "").strip()
+    if not brand_group:
+        return JsonResponse({"status": "error", "message": "brand_group is required"}, status=400)
+
+    data = get_catalog_and_mappings(brand_group, request.user, page=1, page_size=10000, status_filter="all")
+
+    rows = []
+    for item in data.get("items", []):
+        rows.append({
+            "sku_code": item["sku"],
+            "product_name": item["name"] or "",
+            "brand_group": item["brand_group"],
+            "product_category": item["category"] or "",
+            "is_mapped": item["is_mapped"],
+        })
+
+    return JsonResponse({
+        "status": "success",
+        "brand_group": brand_group,
+        "rows": rows,
+        "total": len(rows),
+    })
+
+
+@never_cache
+@login_required
+def api_download_template_excel(request: HttpRequest) -> HttpResponse:
+    """
+    Generates and downloads a lightweight Excel (.xlsx) template
+    where entire Column A, B, and C natively have Text format ('@') down to row 1,048,576.
+    """
+    import io
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill
+
+    brand_group = request.GET.get("brand_group", "").strip() or "mars"
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Product_Category_Template"
+
+    # Set whole column dimensions to TEXT format ('@')
+    # In Excel OpenXML specification, this writes <col min="1" max="1" style="1" /> where style 1 has numFmtId 49 (@)
+    # This guarantees the ENTIRE Column A, B, and C down to row 1,048,576 natively has Text data type in Excel!
+    ws.column_dimensions["A"].number_format = "@"
+    ws.column_dimensions["A"].width = 28
+    ws.column_dimensions["B"].number_format = "@"
+    ws.column_dimensions["B"].width = 18
+    ws.column_dimensions["C"].number_format = "@"
+    ws.column_dimensions["C"].width = 28
+
+    # Headers
+    headers = ["sku_code", "brand_group", "product_category"]
+    ws.append(headers)
+
+    # Style header row
+    header_fill = PatternFill(start_color="F1F5F9", end_color="F1F5F9", fill_type="solid")
+    header_font = Font(name="Calibri", size=11, bold=True, color="0F172A")
+    for col_idx in range(1, 4):
+        cell = ws.cell(row=1, column=col_idx)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.number_format = "@"
+
+    # Sample rows (pure string values)
+    sample_rows = [
+        ["1729384538798392851", brand_group, "Contoh Kategori A"],
+        ["WHIS-DRY-1.2KG", brand_group, "Cat Dry Food"],
+        ["PEDI-WET-130G", brand_group, "Dog Wet Food"],
+        ["111617-24", brand_group, "Dog Care & Treat"],
+    ]
+
+    for row_data in sample_rows:
+        ws.append(row_data)
+
+    # Ensure sample data cells also have explicit '@' text format
+    for row in ws.iter_rows(min_row=2, max_row=len(sample_rows) + 1, min_col=1, max_col=3):
+        for cell in row:
+            cell.number_format = "@"
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"template_sku_product_category_{brand_group}.xlsx"
+    response = HttpResponse(
+        output.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+

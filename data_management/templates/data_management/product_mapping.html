@@ -1476,20 +1476,28 @@
       </div>
 
       <!-- Info Box -->
-      <div class="d-flex align-items-center justify-content-between mt-3 p-3" style="background: var(--surface-muted); border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
-        <div class="d-flex align-items-center gap-2">
-          <i class="bi bi-info-circle text-primary" style="font-size: 1.1rem;"></i>
-          <span style="font-size: 0.78rem; color: var(--text-sub);">
-            Kolom Excel wajib berisi: <code>sku_code</code>, <code>brand_group</code>, dan <code>product_category</code>.
-          </span>
+      <div class="mt-3 p-3" style="background: var(--surface-muted); border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle text-primary" style="font-size: 1.1rem;"></i>
+            <span style="font-size: 0.78rem; color: var(--text-sub);">
+              Kolom Excel wajib berisi: <code>sku_code</code>, <code>brand_group</code>, dan <code>product_category</code>.
+            </span>
+          </div>
+          <button type="button" class="pm-btn pm-btn-outline-orange" style="font-size: 0.74rem; padding: 5px 12px; white-space: nowrap;" onclick="downloadTemplateExcel()" id="btnDownloadTemplateExcel" title="Download template format file Excel (.xlsx) bertipe Text murni">
+            <i class="bi bi-download"></i> Template Excel (.xlsx)
+          </button>
         </div>
-        <button type="button" class="pm-btn pm-btn-outline-orange" style="font-size: 0.74rem; padding: 5px 12px; white-space: nowrap;" onclick="downloadTemplateExcel()">
-          <i class="bi bi-download"></i> Template Excel (.xlsx)
-        </button>
+        <div class="mt-2 pt-2 border-top" style="border-color: var(--glass-border) !important; font-size: 0.73rem; color: var(--text-muted); line-height: 1.4;">
+          <i class="bi bi-lightbulb text-warning me-1"></i> <strong>Tips Format SKU Text:</strong> Template ini ringan dengan beberapa baris contoh yang tipe datanya sudah dikunci sebagai <strong>Text (String)</strong> agar angka panjang (>15 digit) tidak terpotong menjadi <code>E+18</code>. Saat di-load, sistem akan otomatis melakukan LEFT JOIN ke katalog <code>ProductMartSummary</code>.
+        </div>
       </div>
 
       <!-- Preview Parsed Table -->
       <div id="uploadPreviewSection" class="mt-4 d-none">
+        <!-- Alert Banner for Scientific Notation / Corrupted SKUs -->
+        <div id="uploadScientificAlert" class="mb-3 d-none"></div>
+
         <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
           <div class="d-flex align-items-center gap-2">
             <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-primary);">
@@ -2382,12 +2390,14 @@
         let bgIdx = headers.findIndex(h => h === "brand_group" || h === "brand");
         if (bgIdx === -1) bgIdx = headers.findIndex(h => h.includes("brand"));
 
-        // Match category/group, BUT strictly exclude the brand column index!
-        let catIdx = headers.findIndex((h, idx) => idx !== bgIdx && idx !== skuIdx && 
+        let nameIdx = headers.findIndex((h, idx) => idx !== skuIdx && (h.includes("name") || h.includes("nama") || h.includes("reference") || h.includes("title")));
+
+        // Match category/group, BUT strictly exclude the brand column and name column indices!
+        let catIdx = headers.findIndex((h, idx) => idx !== bgIdx && idx !== skuIdx && idx !== nameIdx && 
           (h === "product_category" || h === "product_group" || h === "category" || h === "group" || h === "kategori"));
         if (catIdx === -1) {
-          catIdx = headers.findIndex((h, idx) => idx !== bgIdx && idx !== skuIdx && 
-            (h.includes("category") || h.includes("group") || h.includes("kategori") || h.includes("produk")));
+          catIdx = headers.findIndex((h, idx) => idx !== bgIdx && idx !== skuIdx && idx !== nameIdx && 
+            (h.includes("category") || h.includes("group") || h.includes("kategori")));
         }
 
         if (skuIdx === -1 || catIdx === -1) {
@@ -2399,6 +2409,7 @@
         parsedExcelRows = [];
         const seenSkus = new Set();
         let duplicateCount = 0;
+        let scientificCount = 0;
 
         for (let i = 1; i < json.length; i++) {
           const row = json[i];
@@ -2415,7 +2426,23 @@
             } else {
               seenSkus.add(key);
             }
-            parsedExcelRows.push({ sku_code: sku, brand_group: finalBg, product_category: cat });
+
+            // Detect scientific notation (e.g. 1.72938E+18) or truncated float zeroes
+            const isScientific = /[0-9]e\+[0-9]+/i.test(sku);
+            const isTruncatedZeroes = (/^\d{16,}$/.test(sku) && sku.endsWith("0000"));
+            const isCorrupted = isScientific || isTruncatedZeroes;
+
+            if (isCorrupted) {
+              scientificCount++;
+            }
+
+            parsedExcelRows.push({
+              sku_code: sku,
+              brand_group: finalBg,
+              product_category: cat,
+              is_corrupted: isCorrupted,
+              corrupted_reason: isScientific ? "Format E+18" : (isTruncatedZeroes ? "Angka terpotong ...0000" : "")
+            });
           }
         }
 
@@ -2438,19 +2465,54 @@
           }
         }
 
+        // Scientific / Corrupted SKU alert banner
+        const scientificAlert = document.getElementById("uploadScientificAlert");
+        if (scientificAlert) {
+          if (scientificCount > 0) {
+            scientificAlert.classList.remove("d-none");
+            scientificAlert.innerHTML = `
+              <div class="p-3" style="background: rgba(239, 68, 68, 0.12); border: 1px solid var(--danger); border-radius: var(--radius-sm); font-size: 0.78rem;">
+                <div class="d-flex align-items-center gap-2 mb-1" style="color: var(--danger); font-weight: 700;">
+                  <i class="bi bi-exclamation-octagon-fill"></i>
+                  <span>Terdeteksi ${scientificCount} SKU Rusak / Scientific Notation (E+ / ...0000)</span>
+                </div>
+                <div style="color: var(--text-primary); line-height: 1.4;">
+                  Excel telah memotong digit belakang SKU tersebut menjadi <code>00000</code> sehingga tidak cocok dengan katalog database asli.
+                  <br>
+                  <strong style="color: var(--orange);">Solusi Terbaik:</strong> Download <strong>"Template Excel Pre-filled"</strong> dari tombol di atas. File tersebut sudah berisi seluruh SKU katalog dari database dengan format Text murni tanpa perlu copy-paste manual.
+                </div>
+              </div>
+            `;
+          } else {
+            scientificAlert.classList.add("d-none");
+          }
+        }
+
         const tbody = document.getElementById("previewTableBody");
         tbody.innerHTML = parsedExcelRows.slice(0, 50).map(r => `
-          <tr>
-            <td class="pm-mono fw-bold">${escapeHtml(r.sku_code)}</td>
+          <tr style="${r.is_corrupted ? 'background: rgba(239, 68, 68, 0.08);' : ''}">
+            <td class="pm-mono fw-bold">
+              ${escapeHtml(r.sku_code)}
+              ${r.is_corrupted ? `<span class="badge bg-danger ms-1" style="font-size: 0.65rem;">⚠️ ${escapeHtml(r.corrupted_reason)}</span>` : ''}
+            </td>
             <td><span class="pm-brand-badge">${escapeHtml(r.brand_group)}</span></td>
             <td><span class="pm-group-pill" style="pointer-events:none;"><i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i> ${escapeHtml(r.product_category)}</span></td>
-            <td><span class="badge bg-success" style="font-size: 0.68rem;">Valid</span></td>
+            <td>
+              ${r.is_corrupted 
+                ? `<span class="badge bg-danger" style="font-size: 0.68rem;" title="Digit asli telah dipotong Excel menjadi 0000">Rusak (E+)</span>` 
+                : `<span class="badge bg-success" style="font-size: 0.68rem;">Valid</span>`}
+            </td>
           </tr>
         `).join("");
 
         document.getElementById("uploadPreviewSection").classList.remove("d-none");
         document.getElementById("btnConfirmImport").classList.remove("d-none");
-        showToast(`File "${file.name}" berhasil dibaca (${parsedExcelRows.length} baris, ${seenSkus.size} SKU unik)`, "info");
+        
+        if (scientificCount > 0) {
+          showToast(`Perhatian: Ditemukan ${scientificCount} SKU berformat E+ atau angka terpotong!`, "warn");
+        } else {
+          showToast(`File "${file.name}" berhasil dibaca (${parsedExcelRows.length} baris, ${seenSkus.size} SKU unik)`, "info");
+        }
 
       } catch (err) {
         console.error("Error reading Excel:", err);
@@ -2462,6 +2524,18 @@
 
   async function confirmImport() {
     if (parsedExcelRows.length === 0) return;
+
+    if (parsedExcelRows.some(r => r.is_corrupted)) {
+      const corruptCount = parsedExcelRows.filter(r => r.is_corrupted).length;
+      const proceed = confirm(
+        `PERINGATAN INTEGRITAS DATA:\n\n` +
+        `Ditemukan ${corruptCount} baris SKU yang berformat Scientific Notation (E+) atau terpotong ...0000 oleh Excel.\n\n` +
+        `Digit asli di belakangnya telah hilang saat disimpan oleh Excel (menjadi 00000), sehingga TIDAK AKAN cocok dengan katalog produk asli di database.\n\n` +
+        `Disarankan untuk klik "Batal", lalu gunakan tombol "Template Excel Pre-filled" untuk mengedit kategori.\n\n` +
+        `Apakah Anda tetap ingin memaksakan simpan ke database?`
+      );
+      if (!proceed) return;
+    }
 
     const btn = document.getElementById("btnConfirmImport");
     const closeBtns = document.querySelectorAll("#uploadModal .pm-modal-close, #uploadModal .pm-modal-footer .pm-btn:not(#btnConfirmImport)");
@@ -2516,31 +2590,19 @@
     }
   }
 
-  // Download Genuine Excel (.xlsx) Template
+  // Download Lightweight Excel (.xlsx) Template with whole-column Text formatting generated via openpyxl
   function downloadTemplateExcel() {
-    showToast("Membuat template Excel (.xlsx)...", "info");
-    const wb = XLSX.utils.book_new();
     const activeBg = state.selectedBrandGroup || "mars";
-
-    const templateData = [
-      ["sku_code", "brand_group", "product_category"],
-      ["111617-12", activeBg, "Dog Wet Food"],
-      ["111617-2", activeBg, "Dog Wet Food"],
-      ["111617-24", activeBg, "Dog Wet Food Multipack"],
-      ["111617-3", activeBg, "Dog Wet Food"],
-      ["WHIS-DRY-01", activeBg, "Cat Dry Food"]
-    ];
-
-    const ws = XLSX.utils.aoa_to_sheet(templateData);
-    ws['!cols'] = [
-      { wch: 20 },
-      { wch: 18 },
-      { wch: 26 }
-    ];
-
-    XLSX.utils.book_append_sheet(wb, ws, "Product_Category_Template");
-    XLSX.writeFile(wb, `template_sku_product_category_${activeBg}.xlsx`);
-    showToast("Template Excel (.xlsx) berhasil diunduh!", "success");
+    showToast("Mengunduh template Excel (.xlsx)...", "info");
+    const downloadUrl = `/data_management/api/download-template/?brand_group=${encodeURIComponent(activeBg)}`;
+    
+    // Trigger direct browser download
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `template_sku_product_category_${activeBg}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   // ── MODAL 4: MANAGE CATEGORIES PER BRAND GROUP ──

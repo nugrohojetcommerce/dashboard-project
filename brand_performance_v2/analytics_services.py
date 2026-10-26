@@ -1060,7 +1060,7 @@ def get_analytics_performance_data(
     # 6. Product Price Analytics (from ProductMartSummary)
     # -------------------------------------------------------------
     price_analytics_qs = prod_curr_qs.values(
-        "sku_code", "brand", "platform"
+        "sku_code", "brand", "brand_group", "platform"
     ).annotate(
         product_name=Max("product_name"),
         max_rsp=Max("max_rsp"),
@@ -1082,10 +1082,16 @@ def get_analytics_performance_data(
         if not sku or sku == "nan":
             sku = (r.get("product_name") or "-")[:20]
 
+        sku_clean = str(sku or "").strip()
+        bg_clean = str(r.get("brand_group") or "").lower().strip()
+        cat = mapping_lookup.get((bg_clean, sku_clean)) or "Belum Terpetakan"
+
         product_price_analytics.append({
             "sku_code": sku,
             "product_name": r.get("product_name") or "-",
             "brand": r.get("brand") or "-",
+            "brand_group": r.get("brand_group") or "-",
+            "product_group": cat,
             "platform": r.get("platform") or "-",
             "max_rsp": float(r.get("max_rsp") or 0),
             "min_rsp": float(r.get("min_rsp") or 0),
@@ -1109,7 +1115,7 @@ def get_analytics_performance_data(
         m_prod_qs = base_prod_qs.filter(
             date__range=(m_slice["start"], m_slice["end"])
         ).values(
-            "sku_code", "brand", "platform"
+            "sku_code", "brand", "brand_group", "platform"
         ).annotate(
             product_name=Max("product_name"),
             net_qty=Sum("net_quantity"),
@@ -1129,11 +1135,18 @@ def get_analytics_performance_data(
             gross_ord = float(r.get("gross_orders") or 0)
             net_ord = float(r.get("net_orders") or 0)
             cr = ((gross_ord - net_ord) / gross_ord * 100) if gross_ord > 0 else 0.0
+
+            sku_clean = str(sku or "").strip()
+            bg_clean = str(r.get("brand_group") or "").lower().strip()
+            cat = mapping_lookup.get((bg_clean, sku_clean)) or "Belum Terpetakan"
+
             m_prods.append({
                 "month_label": m_slice["label"],
                 "sku_code": sku,
                 "product_name": r.get("product_name") or "-",
                 "brand": r.get("brand") or "-",
+                "brand_group": r.get("brand_group") or "-",
+                "product_group": cat,
                 "platform": r.get("platform") or "-",
                 "net_qty": float(r.get("net_qty") or 0),
                 "nmv": float(r.get("nmv") or 0),
@@ -1156,7 +1169,7 @@ def get_analytics_performance_data(
 
     # B. Total Period view (Toggle Total)
     prod_total_qs = prod_curr_qs.values(
-        "sku_code", "brand", "platform"
+        "sku_code", "brand", "brand_group", "platform"
     ).annotate(
         product_name=Max("product_name"),
         net_qty=Sum("net_quantity"),
@@ -1177,11 +1190,18 @@ def get_analytics_performance_data(
         gross_ord = float(r.get("gross_orders") or 0)
         net_ord = float(r.get("net_orders") or 0)
         cr = ((gross_ord - net_ord) / gross_ord * 100) if gross_ord > 0 else 0.0
+
+        sku_clean = str(sku or "").strip()
+        bg_clean = str(r.get("brand_group") or "").lower().strip()
+        cat = mapping_lookup.get((bg_clean, sku_clean)) or "Belum Terpetakan"
+
         prod_total_period.append({
             "period_label": total_period_label,
             "sku_code": sku,
             "product_name": r.get("product_name") or "-",
             "brand": r.get("brand") or "-",
+            "brand_group": r.get("brand_group") or "-",
+            "product_group": cat,
             "platform": r.get("platform") or "-",
             "net_qty": float(r.get("net_qty") or 0),
             "nmv": float(r.get("nmv") or 0),

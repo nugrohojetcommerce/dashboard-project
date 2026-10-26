@@ -25,19 +25,20 @@
     --c-rose: #F43F5E;
     --c-emerald: #10B981;
     --c-slate: #94A3B8;
-    --bp2-radius: 16px;
-    --bp2-radius-sm: 10px;
-    --bp2-border: color-mix(in srgb, var(--text-muted) 16%, transparent);
+    --bp2-radius: 14px;
+    --bp2-radius-sm: 8px;
+    --bp2-border: var(--glass-border);
     --bp2-surface: var(--card-bg);
-    --bp2-surface-2: color-mix(in srgb, var(--text-muted) 5%, var(--card-bg));
-    --bp2-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 8px 24px -14px rgba(16, 24, 40, .12);
+    --bp2-surface-2: var(--surface-muted);
+    --bp2-shadow: var(--shadow-sm);
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: var(--text-primary);
   }
 
   .bp2 .mono {
     font-family: 'JetBrains Mono', monospace;
-    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
   }
 
   /* ── Surfaces ── */
@@ -46,13 +47,13 @@
     border: 1px solid var(--bp2-border);
     border-radius: var(--bp2-radius);
     box-shadow: var(--bp2-shadow);
-    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    transition: box-shadow .2s ease, border-color .2s ease;
     min-width: 0;
   }
 
   .bp2-card.hoverable:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 16px 32px -14px rgba(16, 24, 40, .18);
+    border-color: color-mix(in srgb, var(--orange) 30%, var(--bp2-border));
+    box-shadow: var(--shadow-md);
     position: relative;
     z-index: 5;
   }
@@ -60,20 +61,25 @@
   .bp2-section-title {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: .74rem;
+    justify-content: space-between;
+    font-size: .88rem;
     font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
+    letter-spacing: -.01em;
+    text-transform: none;
+    color: var(--text-primary);
+    margin: 28px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--bp2-border);
+  }
+
+  .bp2-section-title .bp2-sec-meta {
+    font-size: .74rem;
+    font-weight: 500;
     color: var(--text-muted);
-    margin: 26px 0 12px;
   }
 
   .bp2-section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--bp2-border);
+    display: none;
   }
 
   /* ── Top bar: tabs + filters + actions ── */
@@ -462,6 +468,7 @@
 
   .bp2-actions {
     display: flex;
+    align-items: center;
     gap: 8px;
   }
 
@@ -486,11 +493,83 @@
   }
 
   .bp2-btn .bi-file-earmark-excel {
-    color: #16A34A;
+    color: #10B981;
   }
 
   .bp2-btn .bi-file-earmark-pdf {
-    color: #E11D48;
+    color: #F43F5E;
+  }
+
+  /* Export Dropdown */
+  .bp2-dropdown-export {
+    position: relative;
+    display: inline-block;
+  }
+
+  .bp2-export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .bp2-dropdown-arrow {
+    font-size: .65rem;
+    margin-left: 2px;
+    transition: transform .2s ease;
+  }
+
+  .bp2-dropdown-export.open .bp2-dropdown-arrow {
+    transform: rotate(180deg);
+  }
+
+  .bp2-export-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 175px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    padding: 5px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 1050;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .bp2-dropdown-export.open .bp2-export-menu {
+    display: flex;
+    animation: bp2MenuFadeIn .15s ease-out;
+  }
+
+  @keyframes bp2MenuFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .bp2-export-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: .78rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: all .15s ease;
+  }
+
+  .bp2-export-item:hover {
+    background: var(--orange-dim);
+    color: var(--orange);
   }
 
   /* ── Hero ── */
@@ -570,7 +649,7 @@
   /* ── KPI cards ── */
   .bp2-kpi-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: 1.28fr 1fr 1fr 1fr;
     gap: 14px;
   }
 
@@ -594,6 +673,22 @@
     flex-direction: column;
   }
 
+  .bp2-kpi.bp2-kpi-hero {
+    border-color: color-mix(in srgb, var(--orange) 35%, var(--bp2-border));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--orange) 5%, var(--bp2-surface)) 0%, var(--bp2-surface) 100%);
+    box-shadow: 0 4px 18px -4px var(--orange-glow), var(--bp2-shadow);
+  }
+
+  .bp2-kpi.bp2-kpi-hero .bp2-kpi-label {
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+
+  .bp2-kpi.bp2-kpi-hero .bp2-kpi-value {
+    font-size: clamp(1.3rem, 1.55vw + .45rem, 1.75rem);
+    color: var(--orange-bright);
+  }
+
   .bp2-kpi-head {
     display: flex;
     align-items: center;
@@ -611,7 +706,7 @@
   .bp2-icon {
     width: 32px;
     height: 32px;
-    border-radius: 10px;
+    border-radius: 9px;
     flex-shrink: 0;
     display: grid;
     place-items: center;
@@ -3295,16 +3390,29 @@
       </div>
     </div>
 
-    <!-- Actions: Eye Toggle (Confidential), Excel, PDF -->
+    <!-- Actions: Eye Toggle (Confidential), Export Dropdown -->
     <div class="bp2-actions" data-html2canvas-ignore="true">
       <button type="button" class="bp2-btn bp2-btn-confidential bp2-btn-icon-only" id="btnToggleConfidential"
         onclick="toggleConfidentialMode()" title="Toggle Confidential Data Masking (Demo Mode)">
         <i class="bi bi-eye"></i>
       </button>
-      <button type="button" class="bp2-btn" id="btnExportExcel" onclick="exportToExcel()"><i
-          class="bi bi-file-earmark-excel"></i> Export .xlsx</button>
-      <button type="button" class="bp2-btn" id="btnExportPdf" onclick="exportToPDF()"><i
-          class="bi bi-file-earmark-pdf"></i> Export PDF</button>
+      <div class="bp2-dropdown-export" id="exportDropdownContainer">
+        <button type="button" class="bp2-btn bp2-export-btn" id="btnExportDropdown" onclick="toggleExportMenu(event)" title="Export options">
+          <i class="bi bi-download"></i>
+          <span>Export</span>
+          <i class="bi bi-chevron-down bp2-dropdown-arrow"></i>
+        </button>
+        <div class="bp2-export-menu" id="exportDropdownMenu">
+          <button type="button" class="bp2-export-item" id="btnExportExcel" onclick="exportToExcel(); closeExportMenu();">
+            <i class="bi bi-file-earmark-excel" style="color: #10B981;"></i>
+            <span>Export Excel (.xlsx)</span>
+          </button>
+          <button type="button" class="bp2-export-item" id="btnExportPdf" onclick="exportToPDF(); closeExportMenu();">
+            <i class="bi bi-file-earmark-pdf" style="color: #F43F5E;"></i>
+            <span>Export PDF (.pdf)</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -3325,23 +3433,27 @@
   </div>
 
   <!-- ── KPI cards ── -->
-  <div class="bp2-section-title">Month-to-date</div>
+  <!-- ── KPI cards ── -->
+  <div class="bp2-section-title">
+    <span>Month-to-Date Commercial Velocity</span>
+    <span class="bp2-sec-meta">Cutoff Pacing vs Target Benchmark</span>
+  </div>
   <section class="bp2-kpi-grid">
-    <article class="bp2-card hoverable bp2-kpi" style="--k: var(--c-indigo);">
+    <article class="bp2-card hoverable bp2-kpi bp2-kpi-hero" style="--k: var(--orange);">
+      <div class="bp2-kpi-head"><span class="bp2-kpi-label">MTD Actual NMV</span><span class="bp2-icon"><i
+            class="bi bi-cash-stack"></i></span></div>
+      <div class="bp2-kpi-value mono skel" id="cardActualNmv">Rp 0</div>
+      <div class="bp2-kpi-foot"><span>vs previous MTD</span><span id="cardMtdGrowth" class="chip flat">—</span></div>
+      <div class="bp2-spark"><canvas id="sparkNmv"></canvas></div>
+    </article>
+
+    <article class="bp2-card hoverable bp2-kpi" style="--k: var(--text-muted);">
       <div class="bp2-kpi-head"><span class="bp2-kpi-label">MTD Target NMV</span><span class="bp2-icon"><i
             class="bi bi-bullseye"></i></span></div>
       <div class="bp2-kpi-value mono skel" id="cardTargetNmv">Rp 0</div>
       <div class="bp2-kpi-foot"><span id="cardTargetSub">MTD Cutoff Target</span></div>
       <div class="bp2-progress" title="Run-rate vs target"><span id="runrateVsTargetBar" style="width:0"></span></div>
       <div class="bp2-kpi-foot"><span>Run-rate covers</span><b id="runrateVsTargetPct">0%</b></div>
-    </article>
-
-    <article class="bp2-card hoverable bp2-kpi" style="--k: var(--orange);">
-      <div class="bp2-kpi-head"><span class="bp2-kpi-label">MTD Actual NMV</span><span class="bp2-icon"><i
-            class="bi bi-cash-stack"></i></span></div>
-      <div class="bp2-kpi-value mono skel" id="cardActualNmv">Rp 0</div>
-      <div class="bp2-kpi-foot"><span>vs previous MTD</span><span id="cardMtdGrowth" class="chip flat">—</span></div>
-      <div class="bp2-spark"><canvas id="sparkNmv"></canvas></div>
     </article>
 
     <article class="bp2-card hoverable bp2-kpi" id="achCard" style="--k: var(--c-emerald);">
@@ -3364,7 +3476,10 @@
   </section>
 
   <!-- ── Spotlight: performers + NMV vs GMV gauge + alerts ── -->
-  <div class="bp2-section-title">Today's spotlight</div>
+  <div class="bp2-section-title">
+    <span>Velocity Spotlight &amp; Gross-to-Net Flow</span>
+    <span class="bp2-sec-meta">Performer Extremes · Conversion Gauge · Anomaly Watch</span>
+  </div>
   <section class="bp2-spot-grid">
     <!-- Card 1: Combined Top & Bottom Performers -->
     <article class="bp2-card hoverable bp2-performer-combo">
@@ -3436,7 +3551,10 @@
   </section>
 
   <!-- ── Today pulse (Bento Hub) ── -->
-  <div class="bp2-section-title">Today's pulse</div>
+  <div class="bp2-section-title">
+    <span>Daily Commercial Pulse</span>
+    <span class="bp2-sec-meta">Today's Revenue Momentum &amp; Unit Economics</span>
+  </div>
   <section class="bp2-bento-master" id="topKpiSummaryMaster">
     <div class="bp2-bento-body" id="topKpiSummaryBody">
       <div class="skel" style="height:260px; border-radius:12px;"></div>
@@ -3444,7 +3562,10 @@
   </section>
 
   <!-- ── Charts ── -->
-  <div class="bp2-section-title">Trends &amp; mix</div>
+  <div class="bp2-section-title">
+    <span>Commercial Trajectory &amp; Channel Mix</span>
+    <span class="bp2-sec-meta">Same Day-of-Month Benchmark · Marketplace Share</span>
+  </div>
   <section class="bp2-chart-grid">
     <article class="bp2-card bp2-chart">
       <div class="bp2-chart-head">
@@ -3628,7 +3749,10 @@
   </section>
 
   <!-- ── Table 1: Brand Leaderboard ── -->
-  <div class="bp2-section-title">Brand leaderboard</div>
+  <div class="bp2-section-title">
+    <span>Brand Commercial Leaderboard</span>
+    <span class="bp2-sec-meta">Ranked by MTD Net Merchandise Value</span>
+  </div>
   <section class="bp2-card bp2-table-card">
     <div class="bp2-table-toolbar is-split-3">
       <div class="bp2-toolbar-left">
@@ -3662,7 +3786,10 @@
   </section>
 
   <!-- ── Table 2: All Metrics Matrix (with Platform Toggle) ── -->
-  <div class="bp2-section-title">All metrics matrix</div>
+  <div class="bp2-section-title">
+    <span>Executive Performance &amp; Metrics Matrix</span>
+    <span class="bp2-sec-meta">Comprehensive Multi-Platform Cross Tabulation</span>
+  </div>
   <section class="bp2-card bp2-table-card">
     <div class="bp2-table-toolbar">
       <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -5889,8 +6016,26 @@
       }
     }
 
+    function toggleExportMenu(e) {
+      if (e) e.stopPropagation();
+      const dropdown = $('exportDropdownContainer');
+      if (dropdown) dropdown.classList.toggle('open');
+    }
+
+    function closeExportMenu() {
+      const dropdown = $('exportDropdownContainer');
+      if (dropdown) dropdown.classList.remove('open');
+    }
+
+    document.addEventListener('click', function(e) {
+      const dropdown = $('exportDropdownContainer');
+      if (dropdown && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
+
     // expose for inline handlers
-    Object.assign(window, { loadDashboardData, resetFilters, exportToExcel, exportToPDF, openAnomalyModal, closeAnomalyModal, handleModalBackdropClick, filterToBrand, toggleConfidentialMode, switchDimension });
+    Object.assign(window, { loadDashboardData, resetFilters, exportToExcel, exportToPDF, toggleExportMenu, closeExportMenu, openAnomalyModal, closeAnomalyModal, handleModalBackdropClick, filterToBrand, toggleConfidentialMode, switchDimension });
 
     document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.add('sidebar-collapse', 'sidebar-mini');

@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'dashboard',
     'order_mart',
     'brand_performance_v2',
+    'data_management',
     # "debug_toolbar",
 ]
 
@@ -148,7 +149,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Jakarta'
 
 USE_I18N = True
 

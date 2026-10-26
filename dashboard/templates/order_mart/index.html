@@ -1,378 +1,1216 @@
 {% extends "base.html" %}
-{% load humanize %}
-{% block title %}Consolidate Sales{% endblock %}
+{% load humanize static %}
+
+{% block title %}Periodic Reports — Commercial Multi-Period Ledger{% endblock %}
+
+{% block extra_css %}
+<!-- Grid.js CSS -->
+<link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+<style>
+  /* =====================================================================
+     PERIODIC REPORTS / COMMERCIAL LEDGER (.pr-ledger)
+     Built on top of base.html tokens with 100% theme awareness.
+     ===================================================================== */
+  .pr-ledger {
+    --pr-radius: 14px;
+    --pr-radius-sm: 8px;
+    --pr-border: var(--glass-border);
+    --pr-surface: var(--card-bg);
+    --pr-surface-2: var(--surface-muted);
+    --pr-shadow: var(--shadow-sm);
+    --pr-shadow-lg: var(--shadow-md);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .pr-ledger .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* ── Page Header Bar ── */
+  .pr-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--pr-border);
+  }
+
+  .pr-header-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .pr-header-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    margin: 0;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .pr-header-title i {
+    color: var(--orange);
+    font-size: 1.35rem;
+  }
+
+  .pr-header-subtitle {
+    font-size: .78rem;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .pr-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Buttons ── */
+  .pr-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: var(--pr-radius-sm);
+    font-size: .78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .16s ease;
+    border: 1px solid var(--pr-border);
+    background: var(--pr-surface);
+    color: var(--text-sub);
+    text-decoration: none;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .pr-btn:hover {
+    color: var(--text-primary);
+    border-color: color-mix(in srgb, var(--orange) 40%, var(--pr-border));
+    background: var(--pr-surface-2);
+  }
+
+  .pr-btn-primary {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px -1px var(--orange-glow);
+  }
+
+  .pr-btn-primary:hover {
+    background: var(--orange-bright);
+    border-color: var(--orange-bright);
+    box-shadow: 0 4px 14px -2px var(--orange-glow);
+    transform: translateY(-1px);
+  }
+
+  .pr-btn-sm {
+    padding: 5px 10px;
+    font-size: .74rem;
+  }
+
+  /* ── Filter Control Dock ── */
+  .pr-dock {
+    background: var(--pr-surface);
+    border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius);
+    padding: 12px 16px;
+    margin-bottom: 22px;
+    box-shadow: var(--pr-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pr-dock-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  .pr-dock-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Filter Pills & Custom Dropdowns ── */
+  .pr-dropdown-wrap {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .pr-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--pr-surface-2);
+    border: 1px solid var(--pr-border);
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all .16s ease;
+    user-select: none;
+  }
+
+  .pr-filter-pill:hover,
+  .pr-dropdown-wrap.open .pr-filter-pill {
+    border-color: color-mix(in srgb, var(--orange) 60%, var(--pr-border));
+    color: var(--text-primary);
+  }
+
+  .pr-dropdown-wrap.open .pr-filter-pill {
+    box-shadow: 0 0 0 2px var(--orange-dim);
+  }
+
+  .pr-filter-pill input[type="date"] {
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: .78rem;
+    font-weight: 600;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .pr-dropdown-label {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+  }
+
+  .pr-dropdown-badge {
+    background: var(--orange);
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+  }
+
+  .pr-dropdown-caret {
+    font-size: .65rem;
+    color: var(--text-muted);
+    transition: transform .2s ease;
+  }
+
+  .pr-dropdown-wrap.open .pr-dropdown-caret {
+    transform: rotate(180deg);
+  }
+
+  .pr-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 1050;
+    min-width: 260px;
+    max-width: 330px;
+    background: var(--pr-surface);
+    border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius);
+    box-shadow: var(--pr-shadow-lg);
+    padding: 10px;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    animation: prPop .16s ease-out;
+  }
+
+  .pr-dropdown-wrap.open .pr-dropdown-menu {
+    display: flex;
+  }
+
+  @keyframes prPop {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .pr-dropdown-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--pr-surface-2);
+    border: 1px solid var(--pr-border);
+  }
+
+  .pr-dropdown-search input {
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: .76rem;
+    font-weight: 600;
+    width: 100%;
+    font-family: inherit;
+  }
+
+  .pr-dropdown-actions {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 4px 6px;
+    border-bottom: 1px solid var(--pr-border);
+  }
+
+  .pr-dropdown-action-btn {
+    background: transparent;
+    border: 0;
+    color: var(--orange);
+    font-size: .72rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+
+  .pr-dropdown-action-btn:hover {
+    text-decoration: underline;
+  }
+
+  .pr-dropdown-options {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .pr-dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .76rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    transition: background .12s, color .12s;
+    user-select: none;
+  }
+
+  .pr-dropdown-option:hover {
+    background: var(--pr-surface-2);
+    color: var(--text-primary);
+  }
+
+  .pr-dropdown-option input[type="checkbox"] {
+    display: none;
+  }
+
+  .pr-custom-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid var(--pr-border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pr-surface);
+    color: transparent;
+    font-size: .65rem;
+    transition: all .12s ease;
+    flex-shrink: 0;
+  }
+
+  .pr-dropdown-option input[type="checkbox"]:checked ~ .pr-custom-check {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: #fff;
+  }
+
+  /* Preset Range Pills */
+  .pr-preset-group {
+    display: inline-flex;
+    align-items: center;
+    background: var(--pr-surface-2);
+    border: 1px solid var(--pr-border);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .pr-preset-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: .72rem;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all .14s ease;
+  }
+
+  .pr-preset-btn:hover {
+    color: var(--text-primary);
+  }
+
+  .pr-preset-btn.active {
+    background: var(--pr-surface);
+    color: var(--orange);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  }
+
+  /* ── KPI Strip ── */
+  .pr-kpi-grid {
+    display: grid;
+    grid-template-columns: 1.35fr 1.1fr 1fr 1fr 1.25fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 1350px) {
+    .pr-kpi-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 860px) {
+    .pr-kpi-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .pr-kpi-card {
+    background: var(--pr-surface);
+    border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius);
+    padding: 16px 18px;
+    box-shadow: var(--pr-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: border-color .18s, box-shadow .18s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pr-kpi-card:hover {
+    border-color: color-mix(in srgb, var(--orange) 35%, var(--pr-border));
+    box-shadow: var(--pr-shadow-lg);
+  }
+
+  .pr-kpi-card.hero {
+    border-color: color-mix(in srgb, var(--orange) 40%, var(--pr-border));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--orange) 5%, var(--pr-surface)) 0%, var(--pr-surface) 100%);
+    box-shadow: 0 4px 18px -4px var(--orange-glow), var(--pr-shadow);
+  }
+
+  .pr-kpi-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .pr-kpi-label {
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+
+  .pr-kpi-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    font-size: .95rem;
+    color: var(--k-color, var(--text-muted));
+    background: color-mix(in srgb, var(--k-color, var(--text-muted)) 12%, transparent);
+  }
+
+  .pr-kpi-value {
+    font-size: clamp(1.25rem, 1.4vw + .4rem, 1.65rem);
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1.15;
+    white-space: nowrap;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+  }
+
+  .pr-kpi-card.hero .pr-kpi-value {
+    color: var(--orange-bright);
+    font-size: clamp(1.35rem, 1.6vw + .45rem, 1.85rem);
+  }
+
+  .pr-kpi-sub {
+    font-size: .72rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .pr-kpi-sub b {
+    color: var(--text-primary);
+  }
+
+  /* Target Pacing Inside KPI Grid */
+  .pr-target-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    background: var(--pr-surface-2);
+    border: 1px solid var(--pr-border);
+    border-radius: 8px;
+    padding: 3px 8px;
+  }
+
+  .pr-target-input-wrap input {
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: .76rem;
+    font-weight: 600;
+    width: 100%;
+    outline: none;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .pr-progress-track {
+    height: 8px;
+    background: var(--pr-surface-2);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid var(--pr-border);
+    margin-top: 8px;
+  }
+
+  .pr-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #FF9447, #FF6B00);
+    transition: width .6s ease;
+  }
+
+  /* ── Card Containers ── */
+  .pr-card {
+    background: var(--pr-surface);
+    border: 1px solid var(--pr-border);
+    border-radius: var(--pr-radius);
+    box-shadow: var(--pr-shadow);
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: border-color .18s;
+  }
+
+  .pr-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--pr-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: color-mix(in srgb, var(--pr-surface-2) 40%, var(--pr-surface));
+  }
+
+  .pr-card-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .pr-card-title {
+    font-size: .92rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .pr-card-title i {
+    font-size: 1.05rem;
+    color: var(--orange);
+  }
+
+  .pr-card-subtitle {
+    font-size: .74rem;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .pr-card-body {
+    padding: 18px 20px;
+  }
+
+  /* ── 2-Col Chart Grid ── */
+  .pr-chart-grid {
+    display: grid;
+    grid-template-columns: 1.8fr 1.2fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 1080px) {
+    .pr-chart-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ── Table Customization & Grid.js Styling ── */
+  .pr-table-toolbar {
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--pr-border);
+    background: var(--pr-surface);
+  }
+
+  .pr-table-wrapper {
+    position: relative;
+    overflow-x: auto;
+  }
+
+  /* Override Grid.js Mermaid Theme to match modern design system */
+  .gridjs-container {
+    color: var(--text-primary) !important;
+    font-family: inherit !important;
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .gridjs-wrapper {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  table.gridjs-table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+  }
+
+  th.gridjs-th {
+    background: var(--pr-surface-2) !important;
+    color: var(--text-muted) !important;
+    border: none !important;
+    border-bottom: 1px solid var(--pr-border) !important;
+    font-size: .72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: .02em !important;
+    padding: 10px 14px !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 2 !important;
+  }
+
+  td.gridjs-td {
+    background: var(--pr-surface) !important;
+    border: none !important;
+    border-bottom: 1px solid var(--pr-border) !important;
+    font-size: .78rem !important;
+    padding: 11px 14px !important;
+    color: var(--text-primary) !important;
+    transition: background .12s !important;
+  }
+
+  tr.gridjs-tr:hover td.gridjs-td {
+    background: color-mix(in srgb, var(--orange) 6%, var(--pr-surface)) !important;
+  }
+
+  .gridjs-footer {
+    background: var(--pr-surface) !important;
+    border-top: 1px solid var(--pr-border) !important;
+    padding: 12px 18px !important;
+    font-size: .76rem !important;
+    color: var(--text-muted) !important;
+    box-shadow: none !important;
+  }
+
+  .gridjs-pagination .gridjs-pages button {
+    border: 1px solid var(--pr-border) !important;
+    background: var(--pr-surface-2) !important;
+    color: var(--text-primary) !important;
+    border-radius: 6px !important;
+    font-size: .74rem !important;
+    padding: 4px 10px !important;
+    margin: 0 2px !important;
+    transition: all .15s !important;
+  }
+
+  .gridjs-pagination .gridjs-pages button:hover {
+    border-color: var(--orange) !important;
+    color: var(--orange) !important;
+  }
+
+  .gridjs-pagination .gridjs-pages button.gridjs-currentPage {
+    background: var(--orange) !important;
+    border-color: var(--orange) !important;
+    color: #fff !important;
+  }
+
+  .gridjs-search input.gridjs-input {
+    border: 1px solid var(--pr-border) !important;
+    background: var(--pr-surface-2) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-size: .76rem !important;
+    outline: none !important;
+  }
+
+  .gridjs-search input.gridjs-input:focus {
+    border-color: var(--orange) !important;
+    box-shadow: 0 0 0 2px var(--orange-dim) !important;
+  }
+
+  /* ── Loading Overlay ── */
+  #loadingOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(13, 17, 26, 0.7);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #loadingOverlay.show {
+    display: flex;
+  }
+
+  .pr-loading-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 28px 36px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .pr-spinner-glow {
+    width: 44px;
+    height: 44px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pr-spinner-glow img {
+    width: 32px;
+    height: 32px;
+    animation: prSpin 2s linear infinite;
+  }
+
+  @keyframes prSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .pr-loading-text {
+    font-size: .88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -.01em;
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="bp-header">
-  <h1>Daily Sales</h1>
-  <span class="bp-subtitle">/ Overview</span>
-</div>
+<div class="pr-ledger">
 
-<form method="get" id="filterForm">
-  <div class="s-card filter-panel mb-3">
-    <div class="filter-panel-header">
-      <div class="filter-icon">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-          stroke-linecap="round" stroke-linejoin="round">
-          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-        </svg>
-      </div>
-      <span>Filters</span>
+  <!-- ── Page Header Bar ── -->
+  <div class="pr-page-header">
+    <div class="pr-header-title-group">
+      <h1 class="pr-header-title">
+        <i class="bi bi-calendar-range"></i> Periodic Commercial Ledger
+      </h1>
+      <p class="pr-header-subtitle">
+        Multi-Period Sales Velocity, Promotional Subsidy Audit &amp; Channel Breakdown
+      </p>
     </div>
-
-    <div class="row g-3 align-items-start">
-      <div class="col-md-4">
-        <label class="form-label">Brand Groups</label>
-        <select id="brandSelect" class="form-select" name="brand" multiple>
-          {% for brand in brands %}
-          <option value="{{ brand }}" {% if brand in selected_brands %}selected{% endif %}>{{ brand }}</option>
-          {% endfor %}
-        </select>
-        <div class="mt-2 d-flex gap-2">
-          <button type="button" class="btn-ghost-amber" onclick="selectAllBrands()">Select All</button>
-          <button type="button" class="btn-ghost-muted" onclick="clearBrands()">Clear</button>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <label class="form-label">Platforms</label>
-        <select id="platformSelect" class="form-select" name="platform" multiple>
-          {% for platform in platforms %}
-          <option value="{{ platform }}" {% if platform in selected_platforms %}selected{% endif %}>{{ platform }}
-          </option>
-          {% endfor %}
-        </select>
-        <div class="mt-2 d-flex gap-2">
-          <button type="button" class="btn-ghost-amber" onclick="selectAllPlatforms()">Select All</button>
-          <button type="button" class="btn-ghost-muted" onclick="clearPlatforms()">Clear</button>
-        </div>
-      </div>
-
-      <div class="col-md-2">
-        <label class="form-label">Start Date</label>
-        <input type="date" id="startDate" class="form-control" name="start_date" value="{{ start_date }}">
-      </div>
-
-      <div class="col-md-2">
-        <label class="form-label">End Date</label>
-        <input type="date" id="endDate" class="form-control" name="end_date" value="{{ end_date }}">
-      </div>
+    <div class="pr-header-actions">
+      <button type="button" class="pr-btn" onclick="loadConsolidateSales()" title="Refresh Ledger Data">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+      </button>
+      <button type="button" class="pr-btn pr-btn-primary" data-bs-toggle="modal" data-bs-target="#customTableModal">
+        <i class="bi bi-plus-circle-fill"></i> Add Custom Table
+      </button>
     </div>
   </div>
-</form>
 
-<!-- KPI Summary Cards -->
-<div class="row g-3 mb-4" id="kpiCardsContainer">
-  <!-- Filled via JS -->
-  <div class="col-md-3">
-    <div class="s-card text-center p-3">
-      <h6 class="text-muted mb-2">Total NMV</h6>
-      <h3 class="mb-0" id="kpiNmv">Rp 0</h3>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="s-card text-center p-3">
-      <h6 class="text-muted mb-2">Total GMV</h6>
-      <h3 class="mb-0" id="kpiGmv">Rp 0</h3>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="s-card text-center p-3">
-      <h6 class="text-muted mb-2">Net Orders</h6>
-      <h3 class="mb-0" id="kpiOrders">0</h3>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="s-card text-center p-3">
-      <h6 class="text-muted mb-2">AOV</h6>
-      <h3 class="mb-0" id="kpiAov">Rp 0</h3>
-    </div>
-  </div>
-</div>
+  <!-- ── Filter Control Dock ── -->
+  <form method="get" id="filterForm" onsubmit="return false;">
+    <!-- Hidden native selects to maintain complete JS compatibility -->
+    <select id="brandSelect" name="brand" multiple style="display:none;">
+      {% for brand in brands %}
+      <option value="{{ brand }}" selected>{{ brand }}</option>
+      {% endfor %}
+    </select>
+    <select id="platformSelect" name="platform" multiple style="display:none;">
+      {% for platform in platforms %}
+      <option value="{{ platform }}" selected>{{ platform }}</option>
+      {% endfor %}
+    </select>
 
-<!-- Target Pacing Section -->
-<div class="row mb-4">
-  <div class="col-12">
-    <div class="s-card p-3">
-      <div class="d-flex justify-content-between align-items-end mb-2">
-        <div>
-          <h6 class="text-muted mb-1">NMV Target Achievement</h6>
-          <h4 class="mb-0"><span id="targetAchievedText">0%</span> <small class="text-muted"
-              style="font-size: 0.6em;">of Target</small></h4>
-        </div>
-        <div style="width: 250px;">
-          <label class="form-label" style="font-size: 0.8rem; margin-bottom: 2px;">Set Monthly Target (Rp)</label>
-          <input type="number" class="form-control form-control-sm" id="targetInput" placeholder="e.g. 1000000000"
-            value="1000000000">
-        </div>
-      </div>
-      <div class="progress" style="height: 12px; background-color: var(--border-color);">
-        <div class="progress-bar" id="targetProgressBar" role="progressbar"
-          style="width: 0%; transition: width 0.5s ease-in-out;" aria-valuenow="0" aria-valuemin="0"
-          aria-valuemax="100"></div>
-      </div>
-    </div>
-  </div>
-</div>
+    <div class="pr-dock">
+      <div class="pr-dock-left">
 
-<!-- Charts Section -->
-<div class="row g-3 mb-3">
-  <div class="col-12">
-    <div class="s-card chart-card">
-      <div class="chart-header">
-        <div class="chart-title-group">
-          <div class="chart-accent-bar"></div>
-          <h3 class="chart-title">Daily Sales Trend (with Campaign Highlights)</h3>
-        </div>
-      </div>
-      <div class="chart-body" style="padding: 15px;">
-        <div id="trendChart" style="width: 100%; height: 350px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row g-3 mb-4">
-  <div class="col-md-8">
-    <div class="s-card chart-card">
-      <div class="chart-header">
-        <div class="chart-title-group">
-          <div class="chart-accent-bar"></div>
-          <h3 class="chart-title">Discount & Subsidy Efficiency</h3>
-        </div>
-      </div>
-      <div class="chart-body" style="padding: 15px;">
-        <div id="discountChart" style="width: 100%; height: 350px;"></div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="s-card chart-card">
-      <div class="chart-header">
-        <div class="chart-title-group">
-          <div class="chart-accent-bar"></div>
-          <h3 class="chart-title">Platform Contribution</h3>
-        </div>
-      </div>
-      <div class="chart-body" style="padding: 15px;">
-        <div id="platformChart" style="width: 100%; height: 350px;"></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Custom Table Builder Header -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h4 class="mb-0">Custom Tables</h4>
-  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customTableModal">
-    + Add Custom Table
-  </button>
-</div>
-<div id="customTablesContainer"></div>
-
-<!-- Table 1: Brand & Platform Breakdown with Period Comparison and Growth -->
-<div class="row g-3 mb-4">
-  <div class="col-12">
-    <div class="s-card mb-4">
-      <div class="p-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <div class="chart-title-group">
-            <div class="chart-accent-bar"></div>
-            <h3 class="chart-title" id="periodTableTitle">Brand & Platform Period Aggregation Comparison</h3>
+        <!-- Brand Filter Pill Dropdown -->
+        <div class="pr-dropdown-wrap" id="brandDropdownWrap">
+          <div class="pr-filter-pill" id="brandDropdownTrigger" title="Filter Brands">
+            <i class="bi bi-tag text-muted"></i>
+            <span class="pr-dropdown-label" id="brandDropdownLabel">All Brands</span>
+            <span class="pr-dropdown-badge" id="brandDropdownBadge">{{ brands|length }}</span>
+            <i class="bi bi-chevron-down pr-dropdown-caret"></i>
           </div>
-          <div>
-            <button type="button" class="btn btn-outline-primary btn-sm me-2" id="copyPeriodBtn">Copy Table</button>
-            <button type="button" class="btn btn-success btn-sm" id="exportPeriodExcelBtn">Export Period Table</button>
-          </div>
-        </div>
-        <div style="background-color: var(--card-bg, #ffffff);">
-          <div id="periodGrid" style="width: 100%;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Table 2: Daily Breakdown Spreadsheet -->
-<div class="row g-3 mb-3">
-  <div class="col-12">
-    <div class="s-card mb-4">
-      <div class="p-4">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-          <div class="chart-title-group">
-            <div class="chart-accent-bar"></div>
-            <h3 class="chart-title">Consolidated Daily Breakdown Spreadsheet</h3>
-          </div>
-          <div class="d-flex gap-2 align-items-center">
-            <div class="dropdown">
-              <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="globalMetricDropdown"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                Select Metrics
-              </button>
-              <ul class="dropdown-menu p-3" aria-labelledby="globalMetricDropdown" id="globalMetricSelector"
-                style="width: 250px;">
-                <!-- Filled via JS -->
-              </ul>
+          <div class="pr-dropdown-menu" id="brandDropdownMenu">
+            <div class="pr-dropdown-search">
+              <i class="bi bi-search text-muted"></i>
+              <input type="text" id="brandSearchInput" placeholder="Search brands…" autocomplete="off">
             </div>
-            <button type="button" class="btn btn-outline-primary btn-sm" id="copyDailyBtn">Copy Table</button>
-            <button type="button" class="btn btn-success btn-sm" id="exportDailyExcelBtn">Export Daily Table</button>
+            <div class="pr-dropdown-actions">
+              <button type="button" class="pr-dropdown-action-btn" onclick="selectAllBrands()">Select all</button>
+              <button type="button" class="pr-dropdown-action-btn" onclick="clearBrands()">Clear</button>
+            </div>
+            <div class="pr-dropdown-options" id="brandOptionsList">
+              {% for brand in brands %}
+              <label class="pr-dropdown-option" data-value="{{ brand }}">
+                <input type="checkbox" value="{{ brand }}" class="brand-check" checked onchange="syncBrandFilters()">
+                <span class="pr-custom-check"><i class="bi bi-check-lg"></i></span>
+                <span>{{ brand }}</span>
+              </label>
+              {% endfor %}
+            </div>
           </div>
         </div>
-        <div style="background-color: var(--card-bg, #ffffff);">
-          <div id="spreadsheetGrid" style="width: 100%;"></div>
+
+        <!-- Platform Filter Pill Dropdown -->
+        <div class="pr-dropdown-wrap" id="platformDropdownWrap">
+          <div class="pr-filter-pill" id="platformDropdownTrigger" title="Filter Platforms">
+            <i class="bi bi-shop text-muted"></i>
+            <span class="pr-dropdown-label" id="platformDropdownLabel">All Platforms</span>
+            <span class="pr-dropdown-badge" id="platformDropdownBadge">{{ platforms|length }}</span>
+            <i class="bi bi-chevron-down pr-dropdown-caret"></i>
+          </div>
+          <div class="pr-dropdown-menu" id="platformDropdownMenu">
+            <div class="pr-dropdown-search">
+              <i class="bi bi-search text-muted"></i>
+              <input type="text" id="platformSearchInput" placeholder="Search platforms…" autocomplete="off">
+            </div>
+            <div class="pr-dropdown-actions">
+              <button type="button" class="pr-dropdown-action-btn" onclick="selectAllPlatforms()">Select all</button>
+              <button type="button" class="pr-dropdown-action-btn" onclick="clearPlatforms()">Clear</button>
+            </div>
+            <div class="pr-dropdown-options" id="platformOptionsList">
+              {% for platform in platforms %}
+              <label class="pr-dropdown-option" data-value="{{ platform }}">
+                <input type="checkbox" value="{{ platform }}" class="platform-check" checked onchange="syncPlatformFilters()">
+                <span class="pr-custom-check"><i class="bi bi-check-lg"></i></span>
+                <span>{{ platform }}</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
         </div>
+
+        <!-- Date Range Filter Inputs -->
+        <div class="pr-filter-pill" title="Start Date">
+          <i class="bi bi-calendar-event text-muted"></i>
+          <input type="date" id="startDate" name="start_date" value="{{ start_date }}">
+        </div>
+        <span style="font-size: .8rem; color: var(--text-muted); font-weight: 700;">➔</span>
+        <div class="pr-filter-pill" title="End Date">
+          <i class="bi bi-calendar-check text-muted"></i>
+          <input type="date" id="endDate" name="end_date" value="{{ end_date }}">
+        </div>
+
+        <!-- Quick Timeframe Presets -->
+        <div class="pr-preset-group">
+          <button type="button" class="pr-preset-btn" onclick="setPresetDays(7, this)">7D</button>
+          <button type="button" class="pr-preset-btn" onclick="setPresetDays(14, this)">14D</button>
+          <button type="button" class="pr-preset-btn" onclick="setPresetDays(30, this)">30D</button>
+          <button type="button" class="pr-preset-btn active" onclick="setPresetMTD(this)">MTD</button>
+          <button type="button" class="pr-preset-btn" onclick="setPresetLastMonth(this)">Last M</button>
+        </div>
+
+      </div>
+
+      <div class="pr-dock-right">
+        <button type="button" class="pr-btn pr-btn-sm" onclick="resetFilters()" title="Reset All Filters">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <!-- ── Executive KPI & Target Pacing Strip ── -->
+  <div class="pr-kpi-grid" id="kpiCardsContainer">
+
+    <!-- Hero Card: Total NMV -->
+    <div class="pr-kpi-card hero" style="--k-color: var(--orange);">
+      <div class="pr-kpi-top">
+        <span class="pr-kpi-label">TOTAL NET MERCHANDISE VALUE</span>
+        <div class="pr-kpi-icon"><i class="bi bi-cash-stack"></i></div>
+      </div>
+      <div class="pr-kpi-value mono" id="kpiNmv">Rp 0</div>
+      <div class="pr-kpi-sub">
+        <span>Realized Net Revenue</span>
+        <span class="badge bg-success-subtle text-success" style="font-size:.68rem;">Net Sales</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Total GMV -->
+    <div class="pr-kpi-card" style="--k-color: #6366F1;">
+      <div class="pr-kpi-top">
+        <span class="pr-kpi-label">TOTAL GROSS MERCHANDISE VALUE</span>
+        <div class="pr-kpi-icon"><i class="bi bi-wallet2"></i></div>
+      </div>
+      <div class="pr-kpi-value mono" id="kpiGmv">Rp 0</div>
+      <div class="pr-kpi-sub">
+        <span>Gross Volume</span>
+        <span id="kpiRealizationRate" class="mono text-muted">0% conv.</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Net Orders & Volume -->
+    <div class="pr-kpi-card" style="--k-color: #10B981;">
+      <div class="pr-kpi-top">
+        <span class="pr-kpi-label">NET ORDERS &amp; QUANTITY</span>
+        <div class="pr-kpi-icon"><i class="bi bi-bag-check"></i></div>
+      </div>
+      <div class="pr-kpi-value mono" id="kpiOrders">0</div>
+      <div class="pr-kpi-sub">
+        <span>Units Sold: <b class="mono" id="kpiQty">0</b></span>
+        <span class="mono text-muted" id="kpiAbs">0 abs</span>
+      </div>
+    </div>
+
+    <!-- Card 4: Unit Economics (AOV & ASP) -->
+    <div class="pr-kpi-card" style="--k-color: #0EA5E9;">
+      <div class="pr-kpi-top">
+        <span class="pr-kpi-label">AVG ORDER VALUE (AOV)</span>
+        <div class="pr-kpi-icon"><i class="bi bi-cart-check"></i></div>
+      </div>
+      <div class="pr-kpi-value mono" id="kpiAov">Rp 0</div>
+      <div class="pr-kpi-sub">
+        <span>ASP: <b class="mono" id="kpiAsp">Rp 0</b></span>
+        <span class="text-muted" style="font-size:.68rem;">per unit</span>
+      </div>
+    </div>
+
+    <!-- Card 5: Target Pacing Simulator -->
+    <div class="pr-kpi-card" style="--k-color: #F59E0B;">
+      <div class="pr-kpi-top">
+        <span class="pr-kpi-label">NMV TARGET PACING</span>
+        <span class="badge" id="targetBadge" style="background:var(--orange-dim); color:var(--orange); font-size:.7rem;">
+          <span id="targetAchievedText">0.0%</span>
+        </span>
+      </div>
+      <div class="pr-progress-track">
+        <div class="pr-progress-fill" id="targetProgressBar" style="width: 0%;"></div>
+      </div>
+      <div class="pr-target-input-wrap">
+        <span style="font-size:.7rem; color:var(--text-muted); font-weight:700;">Goal:</span>
+        <input type="number" id="targetInput" value="10000000000" placeholder="Set Monthly Goal">
+      </div>
+      <div class="pr-kpi-sub" style="margin-top:6px;">
+        <span style="font-size:.68rem;">Gap to Target:</span>
+        <b class="mono" id="targetGapVal" style="font-size:.72rem;">Rp 0</b>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Visuals Row 1: Daily Velocity + Platform Contribution ── -->
+  <div class="pr-chart-grid">
+    <!-- Chart 1: Daily Velocity Trajectory -->
+    <div class="pr-card" style="margin-bottom:0;">
+      <div class="pr-card-header">
+        <div class="pr-card-title-group">
+          <h3 class="pr-card-title">
+            <i class="bi bi-graph-up-arrow"></i> Daily Sales Trajectory &amp; Campaign Milestones
+          </h3>
+          <p class="pr-card-subtitle">Daily progression of Net vs Gross revenue with Payday (25th) &amp; Twin-Date markers</p>
+        </div>
+      </div>
+      <div class="pr-card-body" style="padding: 12px 16px;">
+        <div id="trendChart" style="width: 100%; height: 340px;"></div>
+      </div>
+    </div>
+
+    <!-- Chart 2: Platform NMV Contribution -->
+    <div class="pr-card" style="margin-bottom:0;">
+      <div class="pr-card-header">
+        <div class="pr-card-title-group">
+          <h3 class="pr-card-title">
+            <i class="bi bi-pie-chart-fill"></i> Channel Contribution
+          </h3>
+          <p class="pr-card-subtitle">Net Merchandise Value distribution across e-commerce marketplaces</p>
+        </div>
+      </div>
+      <div class="pr-card-body" style="padding: 12px 16px;">
+        <div id="platformChart" style="width: 100%; height: 340px;"></div>
       </div>
     </div>
   </div>
-</div>
 
-<div id="loadingOverlay">
-  <div class="loading-box">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Loading dashboard...</div>
+  <!-- ── Visuals Row 2: Promotional Subsidy & Discount Forensics ── -->
+  <div class="pr-card">
+    <div class="pr-card-header">
+      <div class="pr-card-title-group">
+        <h3 class="pr-card-title">
+          <i class="bi bi-ticket-perforated"></i> Promotional Subsidy &amp; Discount Depth Forensics
+        </h3>
+        <p class="pr-card-subtitle">
+          Breakdown of Seller vs Platform Discounts &amp; Vouchers against Total Discount Depth (% of GMV)
+        </p>
+      </div>
+    </div>
+    <div class="pr-card-body" style="padding: 12px 16px;">
+      <div id="discountChart" style="width: 100%; height: 320px;"></div>
+    </div>
   </div>
+
+  <!-- ── Container for Dynamic User-Added Custom Tables ── -->
+  <div id="customTablesContainer"></div>
+
+  <!-- ── Table 1: Brand & Platform Multi-Period Audit Matrix ── -->
+  <div class="pr-card">
+    <div class="pr-card-header">
+      <div class="pr-card-title-group">
+        <h3 class="pr-card-title" id="periodTableTitle">
+          <i class="bi bi-table"></i> Brand &amp; Platform Period Aggregation Comparison
+        </h3>
+        <p class="pr-card-subtitle">Multi-period cross aggregation benchmarking Selected Timeframe vs Previous Period (MoM) vs Last Year (YoY)</p>
+      </div>
+      <div class="pr-header-actions">
+        <button type="button" class="pr-btn pr-btn-sm" id="copyPeriodBtn" title="Copy table to clipboard">
+          <i class="bi bi-clipboard"></i> Copy Table
+        </button>
+        <button type="button" class="pr-btn pr-btn-sm pr-btn-primary" id="exportPeriodExcelBtn" title="Export table to CSV">
+          <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+        </button>
+      </div>
+    </div>
+    <div class="pr-table-wrapper">
+      <div id="periodGrid" style="width: 100%;"></div>
+    </div>
+  </div>
+
+  <!-- ── Table 2: Consolidated Daily Fact Spreadsheet ── -->
+  <div class="pr-card">
+    <div class="pr-card-header">
+      <div class="pr-card-title-group">
+        <h3 class="pr-card-title">
+          <i class="bi bi-grid-3x3"></i> Consolidated Daily Fact Spreadsheet
+        </h3>
+        <p class="pr-card-subtitle">Granular daily transactional ledger with dynamic column visibility selector</p>
+      </div>
+      <div class="pr-header-actions">
+        <!-- Dynamic Column Selector Dropdown -->
+        <div class="dropdown">
+          <button class="pr-btn pr-btn-sm dropdown-toggle" type="button" id="globalMetricDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-sliders"></i> Visible Columns
+          </button>
+          <ul class="dropdown-menu p-3 shadow-lg" aria-labelledby="globalMetricDropdown" id="globalMetricSelector" style="width: 260px; max-height: 340px; overflow-y: auto; background: var(--pr-surface); border: 1px solid var(--pr-border);">
+            <!-- Populated via JS -->
+          </ul>
+        </div>
+        <button type="button" class="pr-btn pr-btn-sm" id="copyDailyBtn" title="Copy table to clipboard">
+          <i class="bi bi-clipboard"></i> Copy Table
+        </button>
+        <button type="button" class="pr-btn pr-btn-sm pr-btn-primary" id="exportDailyExcelBtn" title="Export table to CSV">
+          <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+        </button>
+      </div>
+    </div>
+    <div class="pr-table-wrapper">
+      <div id="spreadsheetGrid" style="width: 100%;"></div>
+    </div>
+  </div>
+
 </div>
 
-<!-- Custom Table Builder Modal -->
+<!-- ── Custom Table Builder Modal ── -->
 <div class="modal fade" id="customTableModal" tabindex="-1" aria-labelledby="customTableModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content s-card" style="border: none;">
-      <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
-        <h5 class="modal-title" id="customTableModalLabel">Build Custom Table</h5>
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content" style="background: var(--card-bg); border: 1px solid var(--glass-border); border-radius: 16px; box-shadow: var(--shadow-md);">
+      <div class="modal-header" style="border-bottom: 1px solid var(--glass-border); padding: 18px 24px;">
+        <h5 class="modal-title" id="customTableModalLabel" style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+          <i class="bi bi-table" style="color: var(--orange);"></i> Build On-Demand Custom Table
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="padding: 20px 24px;">
         <form id="customTableForm">
           <div class="mb-3">
-            <label class="form-label">Table Title</label>
-            <input type="text" class="form-control" id="customTableTitle"
-              placeholder="e.g., Shopee Performance for Brand A" required>
+            <label class="form-label" style="font-size: .8rem; font-weight: 700; color: var(--text-muted);">Table Title</label>
+            <input type="text" class="form-control" id="customTableTitle" placeholder="e.g. Shopee Flash Sale Analysis for Senka" required style="background: var(--surface-muted); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 8px; font-size: .84rem;">
           </div>
           <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label class="form-label">Brand</label>
-              <select id="customTableBrand" class="form-select" required>
-                <option value="">Select Brand...</option>
+              <label class="form-label" style="font-size: .8rem; font-weight: 700; color: var(--text-muted);">Brand</label>
+              <select id="customTableBrand" class="form-select" required style="background: var(--surface-muted); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 8px; font-size: .84rem;">
+                <option value="">Select Brand…</option>
                 {% for brand in brands %}
                 <option value="{{ brand }}">{{ brand }}</option>
                 {% endfor %}
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label">Platform</label>
-              <select id="customTablePlatform" class="form-select" required>
-                <option value="">Select Platform...</option>
+              <label class="form-label" style="font-size: .8rem; font-weight: 700; color: var(--text-muted);">Platform</label>
+              <select id="customTablePlatform" class="form-select" required style="background: var(--surface-muted); border: 1px solid var(--glass-border); color: var(--text-primary); border-radius: 8px; font-size: .84rem;">
+                <option value="">Select Platform…</option>
                 {% for platform in platforms %}
                 <option value="{{ platform }}">{{ platform }}</option>
                 {% endfor %}
               </select>
             </div>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Metrics to Show</label>
-            <div class="d-flex flex-wrap gap-3">
+          <div class="mb-2">
+            <label class="form-label" style="font-size: .8rem; font-weight: 700; color: var(--text-muted);">Metrics to Include</label>
+            <div class="d-flex flex-wrap gap-3 p-3" style="background: var(--surface-muted); border-radius: 10px; border: 1px solid var(--glass-border);">
               <div class="form-check">
-                <input class="form-check-input custom-metric-cb" type="checkbox" value="total_nmv" id="metricNMV"
-                  checked>
-                <label class="form-check-label" for="metricNMV">NMV</label>
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="total_nmv" id="metricNMV" checked>
+                <label class="form-check-label" for="metricNMV" style="font-size: .8rem; font-weight: 600;">NMV</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input custom-metric-cb" type="checkbox" value="total_gmv" id="metricGMV"
-                  checked>
-                <label class="form-check-label" for="metricGMV">GMV</label>
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="total_gmv" id="metricGMV" checked>
+                <label class="form-check-label" for="metricGMV" style="font-size: .8rem; font-weight: 600;">GMV</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input custom-metric-cb" type="checkbox" value="net_orders" id="metricOrders"
-                  checked>
-                <label class="form-check-label" for="metricOrders">Net Orders</label>
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="net_orders" id="metricOrders" checked>
+                <label class="form-check-label" for="metricOrders" style="font-size: .8rem; font-weight: 600;">Net Orders</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input custom-metric-cb" type="checkbox" value="gross_orders"
-                  id="metricGrossOrders">
-                <label class="form-check-label" for="metricGrossOrders">Gross Orders</label>
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="gross_orders" id="metricGrossOrders">
+                <label class="form-check-label" for="metricGrossOrders" style="font-size: .8rem; font-weight: 600;">Gross Orders</label>
               </div>
               <div class="form-check">
                 <input class="form-check-input custom-metric-cb" type="checkbox" value="AOV" id="metricAOV" checked>
-                <label class="form-check-label" for="metricAOV">AOV</label>
+                <label class="form-check-label" for="metricAOV" style="font-size: .8rem; font-weight: 600;">AOV</label>
               </div>
               <div class="form-check">
                 <input class="form-check-input custom-metric-cb" type="checkbox" value="ASP" id="metricASP" checked>
-                <label class="form-check-label" for="metricASP">ASP</label>
+                <label class="form-check-label" for="metricASP" style="font-size: .8rem; font-weight: 600;">ASP</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input custom-metric-cb" type="checkbox" value="seller_discount"
-                  id="metricSellerDisc">
-                <label class="form-check-label" for="metricSellerDisc">Seller Discount</label>
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="seller_discount" id="metricSellerDisc">
+                <label class="form-check-label" for="metricSellerDisc" style="font-size: .8rem; font-weight: 600;">Seller Discount</label>
               </div>
               <div class="form-check">
-                <input class="form-check-input custom-metric-cb" type="checkbox" value="platform_discount"
-                  id="metricPlatformDisc">
-                <label class="form-check-label" for="metricPlatformDisc">Platform Discount</label>
+                <input class="form-check-input custom-metric-cb" type="checkbox" value="platform_discount" id="metricPlatformDisc">
+                <label class="form-check-label" for="metricPlatformDisc" style="font-size: .8rem; font-weight: 600;">Platform Discount</label>
               </div>
             </div>
           </div>
         </form>
       </div>
-      <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" onclick="buildCustomTable()">Build Table</button>
+      <div class="modal-footer" style="border-top: 1px solid var(--glass-border); padding: 14px 24px;">
+        <button type="button" class="pr-btn" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="pr-btn pr-btn-primary" onclick="buildCustomTable()">
+          <i class="bi bi-check2-circle"></i> Create Table
+        </button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ── Loading Overlay ── -->
+<div id="loadingOverlay">
+  <div class="pr-loading-card">
+    <div class="pr-spinner-glow">
+      <img src="{% static 'jetcommerce.svg' %}?v=2" alt="Loading" />
+    </div>
+    <div class="pr-loading-text">Loading Periodic Reports…</div>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-  $(document).ready(function () {
-    $('#brandSelect').select2({ width: '100%', placeholder: 'Select brands' });
-    $('#platformSelect').select2({ width: '100%', placeholder: 'Select platforms' });
-
-    initSpreadsheets();
-    loadConsolidateSales();
-  });
-
-  function selectAllBrands() { $('#brandSelect option').prop('selected', true); $('#brandSelect').trigger('change'); }
-  function clearBrands() { $('#brandSelect option').prop('selected', false); $('#brandSelect').trigger('change'); }
-  function selectAllPlatforms() { $('#platformSelect option').prop('selected', true); $('#platformSelect').trigger('change'); }
-  function clearPlatforms() { $('#platformSelect option').prop('selected', false); $('#platformSelect').trigger('change'); }
-
-  let hotInstance;
-  let periodHotInstance;
-  let debounceTimer;
+  let hotInstance = null;
+  let periodHotInstance = null;
+  let debounceTimer = null;
+  let trendChartInstance = null;
+  let platformChartInstance = null;
+  let discountChartInstance = null;
+  let currentTotalNmv = 0;
+  let customTableCounter = 0;
+  const customTables = {};
 
   // Grid.js Formatters
-  const moneyFormatter = (cell) => gridjs.html(`<div style="text-align: right">${Number(cell || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>`);
-  const integerFormatter = (cell) => gridjs.html(`<div style="text-align: right">${Number(cell || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>`);
-  const percentFormatter = (cell) => gridjs.html(`<div style="text-align: right">${Number(cell || 0).toLocaleString('en-US', { style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>`);
+  const moneyFormatter = (cell) => gridjs.html(`<div style="text-align: right; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;">${Number(cell || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</div>`);
+  const integerFormatter = (cell) => gridjs.html(`<div style="text-align: right; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;">${Number(cell || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 })}</div>`);
+  const percentFormatter = (cell) => {
+    const num = Number(cell || 0);
+    const color = num > 0 ? '#10B981' : (num < 0 ? '#F43F5E' : 'inherit');
+    const sign = num > 0 ? '+' : '';
+    return gridjs.html(`<div style="text-align: right; font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; color: ${color}; font-weight: 700;">${sign}${num.toLocaleString('id-ID', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 })}</div>`);
+  };
 
-  // Definition of all possible metrics for the Global Table
+  // Global Metrics Definition for Dynamic Columns
   const globalMetricsDef = [
-    { id: 'total_nmv', label: 'NMV', type: 'numeric', render: moneyFormatter, default: true },
-    { id: 'total_gmv', label: 'GMV', type: 'numeric', render: moneyFormatter, default: true },
-    { id: 'net_orders', label: 'Net Orders', type: 'numeric', render: integerFormatter, default: true },
-    { id: 'net_quantity', label: 'Net Quantity', type: 'numeric', render: integerFormatter, default: true },
-    { id: 'gross_orders', label: 'Gross Orders', type: 'numeric', render: integerFormatter, default: false },
-    { id: 'seller_discount', label: 'Seller Discount', type: 'numeric', render: moneyFormatter, default: false },
-    { id: 'seller_discount_percentage', label: '% Seller Disc to NMV', type: 'numeric', render: percentFormatter, default: false },
-    { id: 'platform_discount', label: 'Platform Discount', type: 'numeric', render: moneyFormatter, default: false },
-    { id: 'platform_discount_percentage', label: '% Platform Disc to NMV', type: 'numeric', render: percentFormatter, default: false },
-    { id: 'total_seller_voucher', label: 'Seller Voucher', type: 'numeric', render: integerFormatter, default: false },
-    { id: 'seller_voucher_percentage', label: '% Seller Vouc to NMV', type: 'numeric', render: percentFormatter, default: false },
-    { id: 'total_platform_voucher', label: 'Platform Voucher', type: 'numeric', render: integerFormatter, default: false },
-    { id: 'platform_voucher_percentage', label: '% Platform Vouc to NMV', type: 'numeric', render: percentFormatter, default: false },
-    { id: 'AOV', label: 'AOV', type: 'numeric', render: integerFormatter, default: false },
-    { id: 'ASP', label: 'ASP', type: 'numeric', render: integerFormatter, default: false },
+    { id: 'total_nmv', label: 'NMV (Net Sales)', render: moneyFormatter, default: true },
+    { id: 'total_gmv', label: 'GMV (Gross Sales)', render: moneyFormatter, default: true },
+    { id: 'net_orders', label: 'Net Orders', render: integerFormatter, default: true },
+    { id: 'net_quantity', label: 'Net Quantity', render: integerFormatter, default: true },
+    { id: 'gross_orders', label: 'Gross Orders', render: integerFormatter, default: false },
+    { id: 'seller_discount', label: 'Seller Discount', render: moneyFormatter, default: false },
+    { id: 'seller_discount_percentage', label: '% Seller Disc / NMV', render: percentFormatter, default: false },
+    { id: 'platform_discount', label: 'Platform Discount', render: moneyFormatter, default: false },
+    { id: 'platform_discount_percentage', label: '% Platform Disc / NMV', render: percentFormatter, default: false },
+    { id: 'total_seller_voucher', label: 'Seller Voucher', render: moneyFormatter, default: false },
+    { id: 'seller_voucher_percentage', label: '% Seller Vouc / NMV', render: percentFormatter, default: false },
+    { id: 'total_platform_voucher', label: 'Platform Voucher', render: moneyFormatter, default: false },
+    { id: 'platform_voucher_percentage', label: '% Platform Vouc / NMV', render: percentFormatter, default: false },
+    { id: 'AOV', label: 'AOV', render: moneyFormatter, default: true },
+    { id: 'ASP', label: 'ASP', render: moneyFormatter, default: true },
   ];
 
   function getGlobalColumns() {
@@ -392,7 +1230,207 @@
     return columns;
   }
 
-  // Custom Export Function since Grid.js lacks an export plugin
+  // Dropdown Pill Toggle Logic
+  function setupDropdown(triggerId, menuId, wrapId) {
+    const $trigger = $(triggerId);
+    const $wrap = $(wrapId);
+
+    $trigger.on('click', function (e) {
+      e.stopPropagation();
+      $('.pr-dropdown-wrap').not($wrap).removeClass('open');
+      $wrap.toggleClass('open');
+    });
+
+    $(menuId).on('click', function (e) {
+      e.stopPropagation();
+    });
+  }
+
+  $(document).on('click', function () {
+    $('.pr-dropdown-wrap').removeClass('open');
+  });
+
+  // Filter Search & Sync Logic
+  function setupFilterSearch(inputId, listId) {
+    $(inputId).on('input', function () {
+      const q = $(this).val().toLowerCase();
+      $(`${listId} .pr-dropdown-option`).each(function () {
+        const text = $(this).text().toLowerCase();
+        $(this).toggle(text.indexOf(q) > -1);
+      });
+    });
+  }
+
+  function syncBrandFilters() {
+    const selected = [];
+    $('.brand-check:checked').each(function () {
+      selected.push($(this).val());
+    });
+
+    $('#brandSelect option').each(function () {
+      $(this).prop('selected', selected.includes($(this).val()));
+    });
+
+    const total = $('.brand-check').length;
+    const count = selected.length;
+    $('#brandDropdownBadge').text(count);
+
+    if (count === 0) {
+      $('#brandDropdownLabel').text('No brands');
+    } else if (count === total) {
+      $('#brandDropdownLabel').text('All Brands');
+    } else if (count <= 2) {
+      $('#brandDropdownLabel').text(selected.join(', '));
+    } else {
+      $('#brandDropdownLabel').text(`${count} Brands selected`);
+    }
+
+    debounceLoad();
+  }
+
+  function selectAllBrands() {
+    $('.brand-check').prop('checked', true);
+    syncBrandFilters();
+  }
+
+  function clearBrands() {
+    $('.brand-check').prop('checked', false);
+    syncBrandFilters();
+  }
+
+  function syncPlatformFilters() {
+    const selected = [];
+    $('.platform-check:checked').each(function () {
+      selected.push($(this).val());
+    });
+
+    $('#platformSelect option').each(function () {
+      $(this).prop('selected', selected.includes($(this).val()));
+    });
+
+    const total = $('.platform-check').length;
+    const count = selected.length;
+    $('#platformDropdownBadge').text(count);
+
+    if (count === 0) {
+      $('#platformDropdownLabel').text('No platforms');
+    } else if (count === total) {
+      $('#platformDropdownLabel').text('All Platforms');
+    } else if (count <= 2) {
+      $('#platformDropdownLabel').text(selected.join(', '));
+    } else {
+      $('#platformDropdownLabel').text(`${count} Platforms selected`);
+    }
+
+    debounceLoad();
+  }
+
+  function selectAllPlatforms() {
+    $('.platform-check').prop('checked', true);
+    syncPlatformFilters();
+  }
+
+  function clearPlatforms() {
+    $('.platform-check').prop('checked', false);
+    syncPlatformFilters();
+  }
+
+  // Presets for Quick Date Filtering
+  function setPresetDays(days, btn) {
+    $('.pr-preset-btn').removeClass('active');
+    $(btn).addClass('active');
+
+    const end = new Date();
+    end.setDate(end.getDate() - 1);
+    const start = new Date(end);
+    start.setDate(start.getDate() - (days - 1));
+
+    $('#startDate').val(start.toISOString().split('T')[0]);
+    $('#endDate').val(end.toISOString().split('T')[0]);
+    loadConsolidateSales();
+  }
+
+  function setPresetMTD(btn) {
+    $('.pr-preset-btn').removeClass('active');
+    $(btn).addClass('active');
+
+    const end = new Date();
+    end.setDate(end.getDate() - 1);
+    const start = new Date(end.getFullYear(), end.getMonth(), 1);
+
+    $('#startDate').val(start.toISOString().split('T')[0]);
+    $('#endDate').val(end.toISOString().split('T')[0]);
+    loadConsolidateSales();
+  }
+
+  function setPresetLastMonth(btn) {
+    $('.pr-preset-btn').removeClass('active');
+    $(btn).addClass('active');
+
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), 0);
+
+    $('#startDate').val(start.toISOString().split('T')[0]);
+    $('#endDate').val(end.toISOString().split('T')[0]);
+    loadConsolidateSales();
+  }
+
+  function resetFilters() {
+    selectAllBrands();
+    selectAllPlatforms();
+    setPresetMTD($('.pr-preset-btn:contains("MTD")')[0]);
+  }
+
+  // Target Pacing Logic
+  $('#targetInput').on('input', updateTargetPacing);
+
+  function updateTargetPacing() {
+    const targetVal = parseFloat($('#targetInput').val()) || 1;
+    const progress = (currentTotalNmv / targetVal) * 100;
+    const boundedProgress = Math.min(Math.max(progress, 0), 100);
+
+    $('#targetAchievedText').text(progress.toFixed(1) + '%');
+    $('#targetProgressBar').css('width', boundedProgress + '%');
+
+    const gap = targetVal - currentTotalNmv;
+    if (gap > 0) {
+      $('#targetGapVal').text('- Rp ' + Math.round(gap).toLocaleString('id-ID'));
+    } else {
+      $('#targetGapVal').text('+ Rp ' + Math.round(Math.abs(gap)).toLocaleString('id-ID') + ' (Met!)');
+    }
+
+    const $badge = $('#targetBadge');
+    if (progress >= 100) {
+      $badge.css({ background: 'rgba(16, 185, 129, 0.15)', color: '#10B981' });
+      $('#targetProgressBar').css('background', 'linear-gradient(90deg, #10B981, #059669)');
+    } else if (progress >= 80) {
+      $badge.css({ background: 'rgba(14, 165, 233, 0.15)', color: '#0EA5E9' });
+      $('#targetProgressBar').css('background', 'linear-gradient(90deg, #0EA5E9, #0284C7)');
+    } else if (progress >= 50) {
+      $badge.css({ background: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B' });
+      $('#targetProgressBar').css('background', 'linear-gradient(90deg, #F59E0B, #D97706)');
+    } else {
+      $badge.css({ background: 'rgba(244, 63, 94, 0.15)', color: '#F43F5E' });
+      $('#targetProgressBar').css('background', 'linear-gradient(90deg, #F43F5E, #E11D48)');
+    }
+  }
+
+  // Loading overlay
+  function showLoading() {
+    $('#loadingOverlay').addClass('show');
+  }
+
+  function hideLoading() {
+    $('#loadingOverlay').removeClass('show');
+  }
+
+  function debounceLoad() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(loadConsolidateSales, 300);
+  }
+
+  // Export Grid.js Data to CSV or Clipboard
   function exportGridData(gridObj, filename, format = 'csv') {
     if (!gridObj || !gridObj.config || !gridObj.config.data || gridObj.config.data.length === 0) {
       alert("No data available to export");
@@ -400,15 +1438,13 @@
     }
     const cols = gridObj.config.columns;
     let content = cols.map(c => c.name || c.id).join(format === 'csv' ? ',' : '\t') + '\n';
-    
+
     gridObj.config.data.forEach(row => {
       let rowValues = cols.map(c => {
         let val = row[c.id];
         if (val === undefined || val === null) {
           val = '';
         } else if (typeof val === 'number') {
-          // If the column ID contains percentage or growth, keep decimals (e.g. 4 decimals)
-          // Otherwise, round to integer (perfect for IDR currency, NMV, GMV, AOV, ASP, orders)
           if (String(c.id).includes('percentage') || String(c.id).includes('growth')) {
             val = Number(val).toFixed(4);
           } else {
@@ -445,90 +1481,7 @@
     }
   }
 
-  function initSpreadsheets() {
-    periodHotInstance = new gridjs.Grid({
-      columns: [''],
-      data: [],
-      sort: true,
-      search: true,
-      pagination: { limit: 15 },
-      resizable: true
-    }).render(document.getElementById("periodGrid"));
-
-    document.getElementById('copyPeriodBtn').addEventListener('click', function () {
-      exportGridData(periodHotInstance, '', 'tsv');
-    });
-
-    document.getElementById('exportPeriodExcelBtn').addEventListener('click', function () {
-      exportGridData(periodHotInstance, 'Brand_Platform_Pivoted_Aggregation', 'csv');
-    });
-
-    // Populate Dropdown
-    const $dropdown = $('#globalMetricSelector');
-    $dropdown.empty();
-    globalMetricsDef.forEach(m => {
-      $dropdown.append(`
-        <li>
-          <div class="form-check ms-2">
-            <input class="form-check-input global-metric-cb" type="checkbox" value="${m.id}" id="gcb_${m.id}" ${m.default ? 'checked' : ''}>
-            <label class="form-check-label" for="gcb_${m.id}">${m.label}</label>
-          </div>
-        </li>
-      `);
-    });
-
-    hotInstance = new gridjs.Grid({
-      columns: getGlobalColumns(),
-      data: [],
-      sort: true,
-      search: true,
-      pagination: { limit: 15 },
-      resizable: true
-    }).render(document.getElementById('spreadsheetGrid'));
-
-    $(document).on('change', '.global-metric-cb', function () {
-      hotInstance.updateConfig({
-        columns: getGlobalColumns()
-      }).forceRender();
-    });
-
-    document.getElementById('copyDailyBtn').addEventListener('click', function () {
-      exportGridData(hotInstance, '', 'tsv');
-    });
-
-    document.getElementById('exportDailyExcelBtn').addEventListener('click', function () {
-      exportGridData(hotInstance, 'Consolidated_Daily_Sales_Report', 'csv');
-    });
-  }
-
-  let trendChartInstance = null;
-  let platformChartInstance = null;
-  let discountChartInstance = null;
-  let currentTotalNmv = 0;
-
-  // Target Pacing Logic
-  document.getElementById('targetInput').addEventListener('input', updateTargetPacing);
-
-  function updateTargetPacing() {
-    const targetVal = parseFloat(document.getElementById('targetInput').val || document.getElementById('targetInput').value) || 1;
-    const progress = (currentTotalNmv / targetVal) * 100;
-    const boundedProgress = Math.min(Math.max(progress, 0), 100);
-
-    document.getElementById('targetAchievedText').innerText = progress.toFixed(1) + '%';
-    const bar = document.getElementById('targetProgressBar');
-    bar.style.width = boundedProgress + '%';
-
-    if (progress >= 100) {
-      bar.className = 'progress-bar bg-success';
-    } else if (progress >= 80) {
-      bar.className = 'progress-bar bg-info';
-    } else if (progress >= 50) {
-      bar.className = 'progress-bar bg-warning';
-    } else {
-      bar.className = 'progress-bar bg-danger';
-    }
-  }
-
+  // Render High-Resolution ECharts
   function renderCharts(trendData, platformData, dailyData) {
     if (!trendChartInstance) {
       trendChartInstance = echarts.init(document.getElementById('trendChart'));
@@ -540,14 +1493,15 @@
       discountChartInstance = echarts.init(document.getElementById('discountChart'));
     }
 
-    // Trend Chart
+    const themeColors = (window.BITheme && typeof window.BITheme.getColors === 'function')
+      ? window.BITheme.getColors()
+      : { text: '#94A3B8', textMuted: '#64748B', grid: 'rgba(255,255,255,0.06)', tooltipBg: '#141B28', tooltipBorder: 'rgba(255,255,255,0.1)', tooltipBody: '#F8FAFC' };
+
+    // 1. Daily Sales Velocity Chart
     const dates = trendData.map(item => item.date);
     const nmvSeries = trendData.map(item => item.nmv);
     const gmvSeries = trendData.map(item => item.gmv);
 
-    const themeColors = window.BITheme && typeof window.BITheme.getColors === 'function' ? window.BITheme.getColors() : { text: '#333', grid: '#eee' };
-
-    // Helper for Campaign Dates
     const campaignData = [];
     dates.forEach((dateStr, index) => {
       const d = new Date(dateStr);
@@ -561,65 +1515,124 @@
     });
 
     trendChartInstance.setOption({
-      tooltip: { trigger: 'axis', backgroundColor: themeColors.tooltipBg, borderColor: themeColors.tooltipBorder, textStyle: { color: themeColors.tooltipBody } },
-      legend: { data: ['NMV', 'GMV'], bottom: 0, textStyle: { color: themeColors.text } },
-      grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: themeColors.tooltipBg,
+        borderColor: themeColors.tooltipBorder,
+        textStyle: { color: themeColors.tooltipBody, fontSize: 12 },
+        formatter: function (params) {
+          let s = `<div style="font-weight:700; margin-bottom:4px;">${params[0].axisValue}</div>`;
+          params.forEach(p => {
+            s += `<div style="display:flex; justify-content:space-between; gap:16px;"><span>${p.marker} ${p.seriesName}</span><b style="font-family:'JetBrains Mono'">${'Rp ' + Math.round(p.value).toLocaleString('id-ID')}</b></div>`;
+          });
+          return s;
+        }
+      },
+      legend: {
+        data: ['Net Sales (NMV)', 'Gross Volume (GMV)'],
+        bottom: 0,
+        textStyle: { color: themeColors.text, fontWeight: 600 }
+      },
+      grid: { left: '2%', right: '3%', bottom: '14%', top: '8%', containLabel: true },
       xAxis: {
-        type: 'category', boundaryGap: false, data: dates,
-        axisLabel: { color: themeColors.textMuted },
-        splitLine: { lineStyle: { color: themeColors.grid } }
+        type: 'category',
+        boundaryGap: false,
+        data: dates,
+        axisLabel: { color: themeColors.textMuted, fontSize: 11 },
+        axisLine: { lineStyle: { color: themeColors.grid } },
+        splitLine: { show: false }
       },
       yAxis: {
         type: 'value',
-        axisLabel: { color: themeColors.textMuted, formatter: (value) => 'Rp ' + (value / 1000000).toFixed(0) + 'M' },
+        axisLabel: {
+          color: themeColors.textMuted,
+          fontSize: 11,
+          formatter: (value) => 'Rp ' + (value / 1000000).toFixed(0) + 'M'
+        },
         splitLine: { lineStyle: { color: themeColors.grid } }
       },
       series: [
         {
-          name: 'NMV', type: 'line', smooth: true, data: nmvSeries, itemStyle: { color: themeColors.accent || '#0d6efd' },
+          name: 'Net Sales (NMV)',
+          type: 'line',
+          smooth: true,
+          data: nmvSeries,
+          itemStyle: { color: '#FF6B00' },
+          lineStyle: { width: 3 },
+          areaStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: 'rgba(255, 107, 0, 0.28)' },
+              { offset: 1, color: 'rgba(255, 107, 0, 0.00)' }
+            ])
+          },
           markPoint: {
             data: campaignData,
             symbol: 'pin',
-            symbolSize: 45,
-            itemStyle: { color: themeColors.accent2 || '#e83e8c' },
-            label: { fontSize: 10, color: '#fff' }
+            symbolSize: 42,
+            itemStyle: { color: '#E11D48' },
+            label: { fontSize: 10, fontWeight: 'bold', color: '#fff' }
           }
         },
-        { name: 'GMV', type: 'line', smooth: true, data: gmvSeries, itemStyle: { color: themeColors.warn || '#ffc107' } }
+        {
+          name: 'Gross Volume (GMV)',
+          type: 'line',
+          smooth: true,
+          data: gmvSeries,
+          itemStyle: { color: '#6366F1' },
+          lineStyle: { width: 2, type: 'dashed' }
+        }
       ]
     });
 
-    // Platform Donut Chart
+    // 2. Platform NMV Donut Chart
     const pieData = platformData.map(item => ({
       name: item.platform,
       value: item.nmv
     }));
 
+    const platformColors = ['#FF6B00', '#0EA5E9', '#10B981', '#A855F7', '#F59E0B'];
+
     platformChartInstance.setOption({
-      tooltip: { trigger: 'item', backgroundColor: themeColors.tooltipBg, borderColor: themeColors.tooltipBorder, textStyle: { color: themeColors.tooltipBody }, formatter: '{b}: Rp {c} ({d}%)' },
-      legend: { bottom: 0, textStyle: { color: themeColors.text } },
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: themeColors.tooltipBg,
+        borderColor: themeColors.tooltipBorder,
+        textStyle: { color: themeColors.tooltipBody, fontSize: 12 },
+        formatter: '{b}: <br/><b>Rp {c}</b> ({d}%)'
+      },
+      legend: {
+        bottom: 0,
+        textStyle: { color: themeColors.text, fontWeight: 600 }
+      },
+      color: platformColors,
       series: [
         {
           name: 'Platform NMV',
           type: 'pie',
-          radius: ['40%', '70%'],
+          radius: ['45%', '72%'],
+          center: ['50%', '45%'],
           avoidLabelOverlap: false,
           itemStyle: {
-            borderRadius: 10,
-            borderColor: themeColors.donutBorder || '#fff',
+            borderRadius: 8,
+            borderColor: themeColors.donutBorder || (document.documentElement.getAttribute('data-theme') === 'dark' ? '#141B28' : '#FFFFFF'),
             borderWidth: 2
           },
-          label: { show: false, position: 'center' },
+          label: { show: false },
           emphasis: {
-            label: { show: true, fontSize: '18', fontWeight: 'bold', color: themeColors.text }
+            label: {
+              show: true,
+              fontSize: 14,
+              fontWeight: 'bold',
+              color: themeColors.text,
+              formatter: '{b}\n{d}%'
+            }
           },
-          labelLine: { show: false },
           data: pieData
         }
       ]
     });
 
-    // Discount Efficiency Chart (Stacked Bar + Line)
+    // 3. Discount & Subsidy Efficiency Chart
     if (dailyData && dailyData.length > 0) {
       const discAgg = {};
       dailyData.forEach(row => {
@@ -644,87 +1657,120 @@
       });
 
       discountChartInstance.setOption({
-        tooltip: { trigger: 'axis', backgroundColor: themeColors.tooltipBg, borderColor: themeColors.tooltipBorder, textStyle: { color: themeColors.tooltipBody } },
-        legend: { data: ['Seller Disc', 'Platform Disc', 'Seller Vouc', 'Platform Vouc', 'Discount Depth %'], bottom: 0, textStyle: { color: themeColors.text } },
-        grid: { left: '3%', right: '4%', bottom: '20%', containLabel: true },
-        xAxis: { type: 'category', data: sortedDates, axisLabel: { color: themeColors.textMuted } },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: themeColors.tooltipBg,
+          borderColor: themeColors.tooltipBorder,
+          textStyle: { color: themeColors.tooltipBody, fontSize: 12 }
+        },
+        legend: {
+          data: ['Seller Disc', 'Platform Disc', 'Seller Vouc', 'Platform Vouc', 'Discount Depth %'],
+          bottom: 0,
+          textStyle: { color: themeColors.text, fontWeight: 600 }
+        },
+        grid: { left: '2%', right: '4%', bottom: '14%', top: '10%', containLabel: true },
+        xAxis: {
+          type: 'category',
+          data: sortedDates,
+          axisLabel: { color: themeColors.textMuted, fontSize: 11 },
+          axisLine: { lineStyle: { color: themeColors.grid } }
+        },
         yAxis: [
-          { type: 'value', name: 'Value', axisLabel: { color: themeColors.textMuted, formatter: (val) => 'Rp ' + (val / 1000000).toFixed(0) + 'M' }, splitLine: { lineStyle: { color: themeColors.grid } } },
-          { type: 'value', name: 'Depth %', axisLabel: { color: themeColors.textMuted, formatter: '{value} %' }, splitLine: { show: false } }
+          {
+            type: 'value',
+            name: 'Nominal (IDR)',
+            nameTextStyle: { color: themeColors.textMuted },
+            axisLabel: {
+              color: themeColors.textMuted,
+              formatter: (val) => 'Rp ' + (val / 1000000).toFixed(0) + 'M'
+            },
+            splitLine: { lineStyle: { color: themeColors.grid } }
+          },
+          {
+            type: 'value',
+            name: 'Depth %',
+            nameTextStyle: { color: themeColors.textMuted },
+            axisLabel: { color: themeColors.textMuted, formatter: '{value}%' },
+            splitLine: { show: false }
+          }
         ],
         series: [
-          { name: 'Seller Disc', type: 'bar', stack: 'total', data: sDiscSeries, itemStyle: { color: '#ff7f50' } },
-          { name: 'Platform Disc', type: 'bar', stack: 'total', data: pDiscSeries, itemStyle: { color: '#87cefa' } },
-          { name: 'Seller Vouc', type: 'bar', stack: 'total', data: sVoucSeries, itemStyle: { color: '#da70d6' } },
-          { name: 'Platform Vouc', type: 'bar', stack: 'total', data: pVoucSeries, itemStyle: { color: '#32cd32' } },
-          { name: 'Discount Depth %', type: 'line', yAxisIndex: 1, data: depthSeries, itemStyle: { color: themeColors.accent || '#ff0000' }, smooth: true, symbolSize: 6 }
+          { name: 'Seller Disc', type: 'bar', stack: 'total', data: sDiscSeries, itemStyle: { color: '#F97316' } },
+          { name: 'Platform Disc', type: 'bar', stack: 'total', data: pDiscSeries, itemStyle: { color: '#0EA5E9' } },
+          { name: 'Seller Vouc', type: 'bar', stack: 'total', data: sVoucSeries, itemStyle: { color: '#8B5CF6' } },
+          { name: 'Platform Vouc', type: 'bar', stack: 'total', data: pVoucSeries, itemStyle: { color: '#10B981' } },
+          {
+            name: 'Discount Depth %',
+            type: 'line',
+            yAxisIndex: 1,
+            data: depthSeries,
+            itemStyle: { color: '#F43F5E' },
+            lineStyle: { width: 3 },
+            smooth: true,
+            symbolSize: 6
+          }
         ]
       });
     }
 
-    // Resize charts on window resize
     window.addEventListener('resize', () => {
-      trendChartInstance.resize();
-      platformChartInstance.resize();
+      if (trendChartInstance) trendChartInstance.resize();
+      if (platformChartInstance) platformChartInstance.resize();
       if (discountChartInstance) discountChartInstance.resize();
     });
   }
 
-  // Re-render charts when theme changes
-  document.addEventListener('bithemechange', () => {
-    // We can just call renderCharts again with the existing data if it's stored.
-    // Or simpler, trigger a reload or re-apply options.
-    // Since we don't store data globally, we can call loadConsolidateSales() which is debounced.
-    if (trendChartInstance) debounceLoad();
-  });
-
+  // Update KPI Cards from API Summary
   function updateKpiCards(kpi) {
     if (!kpi) return;
-    const formatCurrency = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
-    const formatNumber = (val) => new Intl.NumberFormat('id-ID').format(val);
+    const formatCurrency = (val) => 'Rp ' + Math.round(val || 0).toLocaleString('id-ID');
+    const formatNumber = (val) => Math.round(val || 0).toLocaleString('id-ID');
 
-    currentTotalNmv = kpi.total_nmv || 0;
+    currentTotalNmv = Number(kpi.total_nmv || 0);
+    const gmv = Number(kpi.total_gmv || 0);
+
+    $('#kpiNmv').text(formatCurrency(currentTotalNmv));
+    $('#kpiGmv').text(formatCurrency(gmv));
+    $('#kpiOrders').text(formatNumber(kpi.net_orders || 0));
+    $('#kpiAov').text(formatCurrency(kpi.AOV || 0));
+    $('#kpiQty').text(formatNumber(kpi.net_quantity || 0));
+    $('#kpiAsp').text(formatCurrency(kpi.ASP || 0));
+
+    // Conversion and ABS
+    if (gmv > 0) {
+      const conv = ((currentTotalNmv / gmv) * 100).toFixed(1);
+      $('#kpiRealizationRate').text(`${conv}% net conv.`);
+    }
+    const orders = Number(kpi.net_orders || 0);
+    const qty = Number(kpi.net_quantity || 0);
+    if (orders > 0 && qty > 0) {
+      $('#kpiAbs').text((qty / orders).toFixed(2) + ' items/ord');
+    }
+
     updateTargetPacing();
-
-    document.getElementById('kpiNmv').innerText = formatCurrency(kpi.total_nmv || 0);
-    document.getElementById('kpiGmv').innerText = formatCurrency(kpi.total_gmv || 0);
-    document.getElementById('kpiOrders').innerText = formatNumber(kpi.net_orders || 0);
-    document.getElementById('kpiAov').innerText = formatCurrency(kpi.AOV || 0);
   }
 
+  // Fetch and Load All Consolidate Sales Data
   async function loadConsolidateSales() {
     showLoading();
     try {
       const params = new URLSearchParams();
-      ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
-      ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
-      params.append("start_date", $("#startDate").val());
-      params.append("end_date", $("#endDate").val());
+      ($('#brandSelect').val() || []).forEach(brand => params.append('brand', brand));
+      ($('#platformSelect').val() || []).forEach(platform => params.append('platform', platform));
+      params.append('start_date', $('#startDate').val());
+      params.append('end_date', $('#endDate').val());
 
       const response = await fetch(`{% url 'daily_sales_api' %}?${params}`);
       const resJson = await response.json();
 
-      // Update KPIs and Charts
       updateKpiCards(resJson.summary_kpi);
+
       if (resJson.trend_data && resJson.platform_data) {
         renderCharts(resJson.trend_data, resJson.platform_data, resJson.daily_data || []);
       }
 
-      // Update Tables
-      if (hotInstance) {
-        const spreadContainer = document.getElementById('spreadsheetGrid');
-        spreadContainer.innerHTML = '<div id="spreadsheetGridInner"></div>';
-        hotInstance = new gridjs.Grid({
-          columns: getGlobalColumns(),
-          data: resJson.daily_data || [],
-          sort: true,
-          search: true,
-          pagination: { limit: 15 },
-          resizable: true
-        }).render(document.getElementById('spreadsheetGridInner'));
-      }
-      if (periodHotInstance && resJson.pivot_columns) {
-        // Deep copy the columns to prevent mutating the original resJson if it's cached or reused
+      // Render Table 1: Brand & Platform Period Aggregation Comparison
+      if (resJson.pivot_columns && resJson.pivot_data) {
         const newPivotColumns = JSON.parse(JSON.stringify(resJson.pivot_columns));
         newPivotColumns.forEach(col => {
           col.id = col.data;
@@ -734,13 +1780,13 @@
             if (col.data.includes('_growth_') || col.data.includes('_percentage')) {
               col.formatter = percentFormatter;
             } else {
-              col.formatter = integerFormatter;
+              col.formatter = moneyFormatter;
             }
           }
           delete col.data;
           delete col.title;
         });
-        
+
         const periodContainer = document.getElementById("periodGrid");
         periodContainer.innerHTML = '<div id="periodGridInner"></div>';
         periodHotInstance = new gridjs.Grid({
@@ -748,85 +1794,74 @@
           data: resJson.pivot_data || [],
           sort: true,
           search: true,
-          pagination: { limit: 15 },
+          pagination: { limit: 12 },
           resizable: true
         }).render(document.getElementById("periodGridInner"));
       }
-    }
-    catch (err) {
+
+      // Render Table 2: Consolidated Daily Fact Spreadsheet
+      if (resJson.daily_data) {
+        const spreadContainer = document.getElementById('spreadsheetGrid');
+        spreadContainer.innerHTML = '<div id="spreadsheetGridInner"></div>';
+        hotInstance = new gridjs.Grid({
+          columns: getGlobalColumns(),
+          data: resJson.daily_data || [],
+          sort: true,
+          search: true,
+          pagination: { limit: 12 },
+          resizable: true
+        }).render(document.getElementById('spreadsheetGridInner'));
+      }
+    } catch (err) {
       console.error(err);
-      alert(err.message || "Failed to load dashboard.");
-    }
-    finally {
+      alert("Error loading periodic ledger: " + (err.message || err));
+    } finally {
       hideLoading();
     }
   }
-  function showLoading() {
-    $("#loadingOverlay").addClass("show");
-    $("body").css("overflow", "hidden");
+
+  // Initialize Spreadsheets & Event Handlers
+  function initSpreadsheets() {
+    // Populate Metric Selector in Header of Table 2
+    const $dropdown = $('#globalMetricSelector');
+    $dropdown.empty();
+    globalMetricsDef.forEach(m => {
+      $dropdown.append(`
+        <li>
+          <div class="form-check ms-1 mb-1">
+            <input class="form-check-input global-metric-cb" type="checkbox" value="${m.id}" id="gcb_${m.id}" ${m.default ? 'checked' : ''}>
+            <label class="form-check-label" for="gcb_${m.id}" style="font-size: .78rem; font-weight: 600; cursor: pointer;">${m.label}</label>
+          </div>
+        </li>
+      `);
+    });
+
+    $(document).on('change', '.global-metric-cb', function () {
+      if (hotInstance) {
+        hotInstance.updateConfig({
+          columns: getGlobalColumns()
+        }).forceRender();
+      }
+    });
+
+    document.getElementById('copyPeriodBtn').addEventListener('click', function () {
+      exportGridData(periodHotInstance, '', 'tsv');
+    });
+
+    document.getElementById('exportPeriodExcelBtn').addEventListener('click', function () {
+      exportGridData(periodHotInstance, 'Brand_Platform_Period_Comparison', 'csv');
+    });
+
+    document.getElementById('copyDailyBtn').addEventListener('click', function () {
+      exportGridData(hotInstance, '', 'tsv');
+    });
+
+    document.getElementById('exportDailyExcelBtn').addEventListener('click', function () {
+      exportGridData(hotInstance, 'Consolidated_Daily_Sales_Report', 'csv');
+    });
   }
 
-  function hideLoading() {
-    $("#loadingOverlay").removeClass("show");
-    $("body").css("overflow", "");
-  }
-
-  // async function loadConsolidateSales() {
-  //   showLoading();
-  //   try {
-  //       const params = new URLSearchParams();
-  //       ($("#brandSelect").val() || []).forEach((brand) => params.append("brand", brand));
-  //       ($("#platformSelect").val() || []).forEach((platform) => params.append("platform", platform));
-  //       params.append("start_date", $("#startDate").val());
-  //       params.append("end_date", $("#endDate").val());
-
-  //       const response = await fetch(`{% url 'daily_sales_api' %}?${params}`);
-  //       const resJson = await response.json();
-
-  //       if (hotInstance) {
-  //           hotInstance.loadData(resJson.daily_data || []);
-  //       }
-  //       if (periodHotInstance) {
-  //           periodHotInstance.loadData(resJson.period_data || []);
-
-  //           if (resJson.period_headers) {
-  //               periodHotInstance.updateSettings({
-  //                   colHeaders: [
-  //                       'Brand',
-  //                       'Platform',
-  //                       'Metric', 
-  //                       resJson.period_headers.selected, 
-  //                       resJson.period_headers.previous, 
-  //                       resJson.period_headers.yoy, 
-  //                       'vs Previous Growth (%)', 
-  //                       'vs YoY Growth (%)'
-  //                   ]
-  //               });
-  //           }
-  //       }
-  //   }
-  //   catch(err) {
-  //       console.error(err);
-  //       alert(err.message || "Failed to load dashboard.");
-  //   }
-  //   finally {
-  //       hideLoading();
-  //   }
-  // }
-
-  function debounceLoad() {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(loadConsolidateSales, 300);
-  }
-
-  $("#brandSelect").on("change", debounceLoad);
-  $("#platformSelect").on("change", debounceLoad);
-  $("#startDate").on("change", loadConsolidateSales);
-  $("#endDate").on("change", loadConsolidateSales);
-
-  let customTableCounter = 0;
-  const customTables = {};
-
+  // Custom Table Builder Logic
   async function buildCustomTable() {
     const title = $("#customTableTitle").val();
     const brand = $("#customTableBrand").val();
@@ -850,7 +1885,6 @@
     const startDate = $("#startDate").val();
     const endDate = $("#endDate").val();
 
-    // Close modal
     const modalEl = document.getElementById('customTableModal');
     let modal = bootstrap.Modal.getInstance(modalEl);
     if (!modal) {
@@ -874,36 +1908,32 @@
       const tableId = 'customTable_' + customTableCounter;
 
       const cardHtml = `
-        <div class="row g-3 mb-4" id="card_${tableId}">
-          <div class="col-12">
-        <div class="col-12" id="card_${tableId}">
-          <div class="s-card mb-4">
-            <div class="p-4">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="m-0" style="font-weight:700; color:var(--text-primary);"><i class="bi bi-table me-2"></i>${title}</h6>
-                <div>
-                    <button class="btn btn-sm btn-outline-primary me-2" onclick="copyCustomTable('${tableId}')">Copy</button>
-                    <button class="btn btn-sm btn-outline-success me-2" onclick="exportCustomTable('${tableId}', '${title}')">Export</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeCustomTable('${tableId}')">Remove</button>
-                </div>
-              </div>
-              <div style="background-color: var(--card-bg, #ffffff);">
-                <div id="${tableId}" style="width: 100%;"></div>
-              </div>
+        <div class="pr-card" id="card_${tableId}">
+          <div class="pr-card-header">
+            <div class="pr-card-title-group">
+              <h3 class="pr-card-title"><i class="bi bi-table"></i> ${title}</h3>
+              <p class="pr-card-subtitle">Filtered for ${brand} on ${platform} (${startDate} to ${endDate})</p>
             </div>
+            <div class="pr-header-actions">
+              <button type="button" class="pr-btn pr-btn-sm" onclick="copyCustomTable('${tableId}')"><i class="bi bi-clipboard"></i> Copy</button>
+              <button type="button" class="pr-btn pr-btn-sm pr-btn-primary" onclick="exportCustomTable('${tableId}', '${title}')"><i class="bi bi-file-earmark-spreadsheet"></i> Export CSV</button>
+              <button type="button" class="pr-btn pr-btn-sm text-danger" onclick="removeCustomTable('${tableId}')"><i class="bi bi-trash"></i> Remove</button>
+            </div>
+          </div>
+          <div class="pr-table-wrapper">
+            <div id="${tableId}" style="width: 100%;"></div>
           </div>
         </div>`;
 
       $("#customTablesContainer").append(cardHtml);
 
-      // Define headers based on metrics selected
       const allMetricsMap = {
         'total_nmv': { label: 'NMV', render: moneyFormatter },
         'total_gmv': { label: 'GMV', render: moneyFormatter },
         'net_orders': { label: 'Net Orders', render: integerFormatter },
         'gross_orders': { label: 'Gross Orders', render: integerFormatter },
-        'AOV': { label: 'AOV', render: integerFormatter },
-        'ASP': { label: 'ASP', render: integerFormatter },
+        'AOV': { label: 'AOV', render: moneyFormatter },
+        'ASP': { label: 'ASP', render: moneyFormatter },
         'seller_discount': { label: 'Seller Discount', render: moneyFormatter },
         'platform_discount': { label: 'Platform Discount', render: moneyFormatter },
       };
@@ -930,12 +1960,11 @@
         data: resJson.daily_data || [],
         sort: true,
         search: true,
-        pagination: { limit: 15 },
+        pagination: { limit: 10 },
         resizable: true
       }).render(document.getElementById(tableId));
 
       customTables[tableId] = hot;
-
     } catch (err) {
       console.error(err);
       alert("Failed to build custom table: " + err.message);
@@ -962,5 +1991,24 @@
       exportGridData(customTables[tableId], '', 'tsv');
     }
   }
+
+  // Theme change listener for ECharts re-theming
+  document.addEventListener('bithemechange', () => {
+    debounceLoad();
+  });
+
+  // Document Ready
+  $(document).ready(function () {
+    setupDropdown('#brandDropdownTrigger', '#brandDropdownMenu', '#brandDropdownWrap');
+    setupDropdown('#platformDropdownTrigger', '#platformDropdownMenu', '#platformDropdownWrap');
+    setupFilterSearch('#brandSearchInput', '#brandOptionsList');
+    setupFilterSearch('#platformSearchInput', '#platformOptionsList');
+
+    $('#startDate').on('change', loadConsolidateSales);
+    $('#endDate').on('change', loadConsolidateSales);
+
+    initSpreadsheets();
+    loadConsolidateSales();
+  });
 </script>
 {% endblock %}

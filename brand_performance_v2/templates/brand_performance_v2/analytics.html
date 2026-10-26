@@ -27,19 +27,20 @@
     --c-emerald: #10B981;
     --emerald: #10B981;
     --c-slate: #94A3B8;
-    --bp2-radius: 16px;
-    --bp2-radius-sm: 10px;
-    --bp2-border: color-mix(in srgb, var(--text-muted) 16%, transparent);
+    --bp2-radius: 14px;
+    --bp2-radius-sm: 8px;
+    --bp2-border: var(--glass-border);
     --bp2-surface: var(--card-bg);
-    --bp2-surface-2: color-mix(in srgb, var(--text-muted) 5%, var(--card-bg));
-    --bp2-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 8px 24px -14px rgba(16, 24, 40, .12);
+    --bp2-surface-2: var(--surface-muted);
+    --bp2-shadow: var(--shadow-sm);
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: var(--text-primary);
   }
 
   .bp2 .mono {
     font-family: 'JetBrains Mono', monospace;
-    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
   }
 
   /* ── Surfaces & Cards ── */
@@ -48,7 +49,7 @@
     border: 1px solid var(--bp2-border);
     border-radius: var(--bp2-radius);
     box-shadow: var(--bp2-shadow);
-    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    transition: box-shadow .2s ease, border-color .2s ease;
     min-width: 0;
     overflow: hidden;
     margin-bottom: 24px;
@@ -76,7 +77,7 @@
   }
 
   .bp2-card-title {
-    font-size: .88rem;
+    font-size: .92rem;
     font-weight: 700;
     letter-spacing: -.01em;
     color: var(--text-primary);
@@ -86,17 +87,13 @@
     margin: 0;
   }
 
+  .bp2-card-title i {
+    font-size: 1rem;
+    vertical-align: middle;
+  }
+
   .bp2-card-title .badge-num {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    background: var(--orange-dim);
-    color: var(--orange);
-    font-size: .72rem;
-    font-weight: 800;
+    display: none;
   }
 
   .bp2-card-subtitle {
@@ -482,6 +479,7 @@
   /* Actions */
   .bp2-actions {
     display: flex;
+    align-items: center;
     gap: 8px;
   }
 
@@ -506,11 +504,83 @@
   }
 
   .bp2-btn .bi-file-earmark-excel {
-    color: #16A34A;
+    color: #10B981;
   }
 
   .bp2-btn .bi-file-earmark-pdf {
-    color: #E11D48;
+    color: #F43F5E;
+  }
+
+  /* Export Dropdown */
+  .bp2-dropdown-export {
+    position: relative;
+    display: inline-block;
+  }
+
+  .bp2-export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .bp2-dropdown-arrow {
+    font-size: .65rem;
+    margin-left: 2px;
+    transition: transform .2s ease;
+  }
+
+  .bp2-dropdown-export.open .bp2-dropdown-arrow {
+    transform: rotate(180deg);
+  }
+
+  .bp2-export-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 175px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    box-shadow: var(--shadow-md);
+    padding: 5px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 1050;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .bp2-dropdown-export.open .bp2-export-menu {
+    display: flex;
+    animation: bp2MenuFadeIn .15s ease-out;
+  }
+
+  @keyframes bp2MenuFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .bp2-export-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: .78rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: all .15s ease;
+  }
+
+  .bp2-export-item:hover {
+    background: var(--orange-dim);
+    color: var(--orange);
   }
 
   /* ── Hero ── */
@@ -4212,12 +4282,23 @@
         onclick="toggleConfidentialMode()" title="Toggle Confidential Data Masking (Demo Mode)">
         <i class="bi bi-eye"></i>
       </button>
-      <button type="button" class="bp2-btn" onclick="exportFullAnalyticsExcel()" title="Export all tables to Excel">
-        <i class="bi bi-file-earmark-excel"></i> Export Excel
-      </button>
-      <button type="button" class="bp2-btn" onclick="exportFullAnalyticsPDF()" title="Export page to PDF">
-        <i class="bi bi-file-earmark-pdf"></i> Export PDF
-      </button>
+      <div class="bp2-dropdown-export" id="exportDropdownContainer">
+        <button type="button" class="bp2-btn bp2-export-btn" id="btnExportDropdown" onclick="toggleExportMenu(event)" title="Export options">
+          <i class="bi bi-download"></i>
+          <span>Export</span>
+          <i class="bi bi-chevron-down bp2-dropdown-arrow"></i>
+        </button>
+        <div class="bp2-export-menu" id="exportDropdownMenu">
+          <button type="button" class="bp2-export-item" onclick="exportFullAnalyticsExcel(); closeExportMenu();">
+            <i class="bi bi-file-earmark-excel" style="color: #10B981;"></i>
+            <span>Export Excel (.xlsx)</span>
+          </button>
+          <button type="button" class="bp2-export-item" onclick="exportFullAnalyticsPDF(); closeExportMenu();">
+            <i class="bi bi-file-earmark-pdf" style="color: #F43F5E;"></i>
+            <span>Export PDF (.pdf)</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -4244,7 +4325,7 @@
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title">
-          <span class="badge-num">1</span> Comprehensive Metrics Performance & Growth vs <span
+          <i class="bi bi-speedometer2" style="color:var(--orange);"></i> Executive Performance Pulse &amp; Growth vs <span
             id="bentoHeaderVs">Month-1 (M-1)</span>
         </h2>
         <p class="bp2-card-subtitle">Executive performance pulse comparing selected timeframe with preceding period of
@@ -4502,7 +4583,7 @@
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title">
-          <span class="badge-num">2</span> Monthly Breakdown Per Platform
+          <i class="bi bi-shop" style="color:var(--orange);"></i> Monthly Breakdown per Platform
         </h2>
         <p class="bp2-card-subtitle">Values strictly from timeframe days broken down by calendar month</p>
       </div>
@@ -4545,7 +4626,7 @@
       <div class="bp2-card-header">
         <div class="bp2-card-title-group">
           <h2 class="bp2-card-title">
-            <span class="badge-num">3</span> Daily Trend (Selected vs <span id="trendChartVs">M-1</span>)
+            <i class="bi bi-graph-up" style="color:var(--orange);"></i> Daily Velocity Trajectory (Selected vs <span id="trendChartVs">M-1</span>)
           </h2>
           <p class="bp2-card-subtitle">Day-over-day progression comparison across periods</p>
         </div>
@@ -4602,7 +4683,7 @@
       <div class="bp2-card-header">
         <div class="bp2-card-title-group">
           <h2 class="bp2-card-title">
-            <span class="badge-num">4</span> Platform NMV Share Target Achievement
+            <i class="bi bi-bullseye" style="color:var(--orange);"></i> Platform Target Pacing
           </h2>
           <p class="bp2-card-subtitle">Platform distribution share vs target benchmark</p>
         </div>
@@ -4621,7 +4702,7 @@
     <div class="bp2-card" style="margin-bottom:0;">
       <div class="bp2-card-header">
         <div class="bp2-card-title-group">
-          <h2 class="bp2-card-title"><span class="badge-num">5</span> Platform Share (NMV)</h2>
+          <h2 class="bp2-card-title"><i class="bi bi-pie-chart" style="color:var(--orange);"></i> Platform Contribution (NMV)</h2>
         </div>
       </div>
       <div class="bp2-donut-wrap">
@@ -4642,7 +4723,7 @@
     <div class="bp2-card" style="margin-bottom:0;">
       <div class="bp2-card-header">
         <div class="bp2-card-title-group">
-          <h2 class="bp2-card-title"><span class="badge-num">6</span> Top SKUs (NMV Share)</h2>
+          <h2 class="bp2-card-title"><i class="bi bi-award" style="color:var(--orange);"></i> Leading SKU Contribution</h2>
         </div>
       </div>
       <div class="bp2-donut-wrap">
@@ -4659,35 +4740,19 @@
       </div>
     </div>
 
-    <!-- 7. Product Groups (Under Development) -->
+    <!-- 7. Product Groups -->
     <div class="bp2-card" style="margin-bottom:0;">
       <div class="bp2-card-header">
         <div class="bp2-card-title-group">
           <h2 class="bp2-card-title">
-            <span class="badge-num">7</span> Product Groups
-            <span class="placeholder-tag"><i class="bi bi-tools"></i> Under Development</span>
+            <i class="bi bi-diagram-3" style="color:var(--orange);"></i> Product Groups
           </h2>
         </div>
+        <a href="/data_management/product_mapping/" style="font-size: 0.74rem; font-weight: 600; color: var(--orange); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; background: var(--orange-dim); border: 1px solid var(--glass-border-h); transition: all 0.15s ease;" title="Buka Halaman Product Category Mapping">
+          Kelola Product Mapping &rarr;
+        </a>
       </div>
       <div class="bp2-donut-wrap" style="position: relative;">
-        <!-- Under Development Overlay -->
-        <div class="bp2-under-dev-overlay">
-          <div class="bp2-under-dev-pill">
-            <div class="bp2-under-dev-icon">
-              <i class="bi bi-tools"></i>
-            </div>
-            <div class="bp2-under-dev-text">
-              <div class="bp2-under-dev-title">
-                <span>Under Development</span>
-                <span class="bp2-dev-pulse"></span>
-              </div>
-              <div class="bp2-under-dev-sub">
-                Mapping category brand ke SKU sedang dipersiapkan
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div class="bp2-chart-body sm">
           <canvas id="groupDonutCanvas"></canvas>
           <div class="bp2-donut-center">
@@ -4709,7 +4774,7 @@
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title" id="scatterCardTitle">
-          <span class="badge-num">8</span> Product Efficiency Matrix (NMV vs Total Discount)
+          <i class="bi bi-grid-3x3-gap" style="color:var(--orange);"></i> Product Efficiency Matrix (NMV vs Total Discount)
         </h2>
         <p class="bp2-card-subtitle" id="scatterThresholdSubtitle">
           4-Quadrant product portfolio matrix benchmarking Net Sales (NMV) vs Total Promo Diskon (Platform + Seller)
@@ -4900,7 +4965,7 @@
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title">
-          <span class="badge-num">9</span> Product Price Analytics (Selected Timeframe)
+          <i class="bi bi-tags" style="color:var(--orange);"></i> Product Price Analytics (Selected Timeframe)
         </h2>
         <p class="bp2-card-subtitle">RSP, Selling Price, Platform & Seller Discount bounds from Product Mart</p>
       </div>
@@ -4963,7 +5028,7 @@
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title">
-          <span class="badge-num">10</span> Product Performance Monthly Breakdown
+          <i class="bi bi-calendar3-range" style="color:var(--orange);"></i> Product Performance Monthly Breakdown
         </h2>
         <p class="bp2-card-subtitle">Pivoted period metrics per SKU and product with clear color-coded period indicators
         </p>
@@ -5042,7 +5107,7 @@
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title">
-          <span class="badge-num">11</span> Cancellation & Order Leakage Forensics
+          <i class="bi bi-shield-exclamation" style="color:#ef4444;"></i> Cancellation &amp; Order Leakage Forensics
         </h2>
         <p class="bp2-card-subtitle">
           Root-cause diagnostic, daily leakage trajectory, platform vulnerability & mitigation action matrix
@@ -5277,7 +5342,7 @@
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title">
-          <span class="badge-num">12</span> Raw Data Export: Daily All Metrics Level
+          <i class="bi bi-file-earmark-arrow-down" style="color:var(--orange);"></i> Raw Data Export: Daily All Metrics Level
         </h2>
         <p class="bp2-card-subtitle">Granular daily order-mart facts with performance ratios (CVR, CR, ABS, AOV, ASP)
         </p>
@@ -7833,11 +7898,11 @@
     const subEl = document.getElementById('scatterThresholdSubtitle');
     if (titleEl) {
       if (currentScatterMode === 'multiplier') {
-        titleEl.innerHTML = `<span class="badge-num">8</span> Product Efficiency Matrix (NMV vs Promo Efficiency Multiplier)`;
+        titleEl.innerHTML = `<i class="bi bi-grid-3x3-gap" style="color:var(--orange);"></i> Product Efficiency Matrix (NMV vs Promo Efficiency Multiplier)`;
       } else if (currentScatterMode === 'percentage') {
-        titleEl.innerHTML = `<span class="badge-num">8</span> Product Efficiency Matrix (NMV vs Discount Depth %)`;
+        titleEl.innerHTML = `<i class="bi bi-grid-3x3-gap" style="color:var(--orange);"></i> Product Efficiency Matrix (NMV vs Discount Depth %)`;
       } else {
-        titleEl.innerHTML = `<span class="badge-num">8</span> Product Efficiency Matrix (NMV vs Total Discount)`;
+        titleEl.innerHTML = `<i class="bi bi-grid-3x3-gap" style="color:var(--orange);"></i> Product Efficiency Matrix (NMV vs Total Discount)`;
       }
     }
     if (subEl) {
@@ -10541,5 +10606,23 @@
       if (originalLoading) element.classList.add('is-loading');
     }
   }
+
+  function toggleExportMenu(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('exportDropdownContainer');
+    if (dropdown) dropdown.classList.toggle('open');
+  }
+
+  function closeExportMenu() {
+    const dropdown = document.getElementById('exportDropdownContainer');
+    if (dropdown) dropdown.classList.remove('open');
+  }
+
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('exportDropdownContainer');
+    if (dropdown && !dropdown.contains(e.target)) {
+      dropdown.classList.remove('open');
+    }
+  });
 </script>
 {% endblock %}

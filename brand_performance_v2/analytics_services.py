@@ -1002,24 +1002,58 @@ def get_analytics_performance_data(
             "share_pct": round((remaining_nmv / total_sku_nmv * 100), 1) if total_sku_nmv > 0 else 0.0,
         })
 
-    # C. Product Groups (Dummy / Placeholder as requested by user)
-    # User note: "untuk product group bisa dibuat dummy / placeholder dulu karena itu perlu join data lagi dan datanya belum ready dari stakeholder"
-    # We create realistic dummy category breakdown matching total NMV:
-    dummy_ratios = [
-        ("Core / Best Sellers", 0.38),
-        ("New Launches", 0.24),
-        ("Multipacks & Bundles", 0.18),
-        ("Travel / Minis", 0.12),
-        ("Seasonal / Limited", 0.08),
-    ]
+    # C. Product Groups (Mapped from ProductCategoryMapping)
+    from data_management.models import ProductCategoryMapping
+
+    # Aggregate NMV per (brand_group, sku_code)
+    sku_group_qs = (
+        prod_curr_qs.values("brand_group", "sku_code")
+        .annotate(nmv=Sum("nmv"))
+        .filter(nmv__gt=0)
+    )
+
+    bg_list = list(prod_curr_qs.values_list("brand_group", flat=True).distinct())
+    mapping_lookup: dict[tuple[str, str], str] = {}
+    if bg_list:
+        mappings = ProductCategoryMapping.objects.filter(brand_group__in=bg_list).values(
+            "brand_group", "sku_code", "product_category"
+        )
+        for m in mappings:
+            mapping_lookup[(m["brand_group"].lower().strip(), m["sku_code"].strip())] = m["product_category"]
+
+    category_nmv_map: dict[str, float] = {}
+    total_group_nmv = 0.0
+
+    for r in sku_group_qs:
+        sku = str(r.get("sku_code") or "").strip()
+        bg = str(r.get("brand_group") or "").lower().strip()
+        nmv = float(r.get("nmv") or 0.0)
+
+        cat = mapping_lookup.get((bg, sku))
+        if not cat:
+            cat = "Belum Terpetakan"
+
+        category_nmv_map[cat] = category_nmv_map.get(cat, 0.0) + nmv
+        total_group_nmv += nmv
+
+    # Sort categories: mapped categories by NMV desc, with "Belum Terpetakan" at the end
+    sorted_cats = sorted(category_nmv_map.items(), key=lambda x: (x[0] == "Belum Terpetakan", -x[1]))
+
     group_donut = []
-    for cat_name, ratio in dummy_ratios:
-        cat_val = round(curr_metrics["nmv"] * ratio)
+    for cat_name, cat_val in sorted_cats:
         group_donut.append({
-            "name": f"{cat_name} *",
-            "value": cat_val,
-            "share_pct": round(ratio * 100, 1),
-            "is_placeholder": True,
+            "name": cat_name,
+            "value": round(cat_val, 2),
+            "share_pct": round((cat_val / total_group_nmv * 100), 1) if total_group_nmv > 0 else 0.0,
+            "is_placeholder": False,
+        })
+
+    if not group_donut and curr_metrics.get("nmv", 0) > 0:
+        group_donut.append({
+            "name": "Belum Terpetakan",
+            "value": round(curr_metrics["nmv"], 2),
+            "share_pct": 100.0,
+            "is_placeholder": False,
         })
 
     # -------------------------------------------------------------

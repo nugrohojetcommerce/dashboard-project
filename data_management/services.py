@@ -49,8 +49,8 @@ def get_catalog_and_mappings(
     Retrieves distinct SKUs for a brand_group from ProductMartSummary (auto-synced)
     and LEFT JOINs with ProductCategoryMapping table in PostgreSQL.
     """
-    brand_group = (brand_group or "").strip()
-    if not brand_group or brand_group == "ALL":
+    brand_group = (brand_group or "").lower().strip()
+    if not brand_group or brand_group == "all":
         available = get_available_brand_groups(user)
         if not available:
             return {
@@ -62,10 +62,10 @@ def get_catalog_and_mappings(
                 "kpis": {"total": 0, "mapped": 0, "unmapped": 0, "categories_count": 0},
                 "categories": [],
             }
-        brand_group = available[0]
+        brand_group = available[0].lower().strip()
 
     # 1. Fetch SKUs from ProductMartSummary within lookback window
-    min_date = date.today() - timedelta(days=days_lookback)
+    min_date = timezone.localdate() - timedelta(days=days_lookback)
     catalog_qs = (
         ProductMartSummary.objects.filter(
             brand_group=brand_group,
@@ -84,20 +84,20 @@ def get_catalog_and_mappings(
     # 2. Fetch existing mappings in PostgreSQL
     mappings_qs = ProductCategoryMapping.objects.filter(brand_group=brand_group)
     mapping_dict: dict[str, ProductCategoryMapping] = {
-        m.sku_code: m for m in mappings_qs
+        m.sku_code.lower().strip(): m for m in mappings_qs
     }
 
     # Also include any SKU in mapping table that might not have orders in last 365 days
-    for sku, m in mapping_dict.items():
-        if sku not in catalog_dict:
-            catalog_dict[sku] = f"[Catalog Item] {sku}"
+    for sku_clean, m in mapping_dict.items():
+        if m.sku_code not in catalog_dict:
+            catalog_dict[m.sku_code] = f"[Catalog Item] {m.sku_code}"
 
     # 3. Combine / LEFT JOIN
     all_combined: list[dict[str, Any]] = []
     distinct_categories = set()
 
     for sku, product_name in catalog_dict.items():
-        m = mapping_dict.get(sku)
+        m = mapping_dict.get(sku.lower().strip())
         is_mapped = m is not None and bool(m.product_category)
         cat = m.product_category if is_mapped else None
         if cat:
@@ -187,7 +187,7 @@ def save_single_mapping(
     """Upserts a single SKU mapping to ProductCategoryMapping in database."""
     now_sec = (click_time or timezone.now()).replace(microsecond=0)
     mapping, _ = ProductCategoryMapping.objects.update_or_create(
-        brand_group=brand_group.strip(),
+        brand_group=brand_group.lower().strip(),
         sku_code=sku_code.strip(),
         defaults={
             "product_category": product_category.strip(),
@@ -207,7 +207,7 @@ def batch_save_mappings(
     click_time: datetime | None = None,
 ) -> int:
     """Batch updates or clears product_category for multiple SKUs."""
-    brand_group = brand_group.strip()
+    brand_group = brand_group.lower().strip()
     clean_skus = [s.strip() for s in sku_codes if s.strip()]
 
     if clear:

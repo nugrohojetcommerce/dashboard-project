@@ -270,15 +270,15 @@ def get_cancel_analytics_data(
     if dimension == "brand_group":
         if selected_brand_group and selected_brand_group != "All":
             if isinstance(selected_brand_group, (list, tuple, set)):
-                bg_list = [bg for bg in selected_brand_group if bg and bg != "All"]
+                bg_list = [str(bg).lower().strip() for bg in selected_brand_group if bg and str(bg).lower().strip() != "all"]
                 if bg_list:
                     base_qs = base_qs.filter(brand_group__in=bg_list)
-            elif "," in selected_brand_group:
-                bg_list = [bg.strip() for bg in selected_brand_group.split(",") if bg.strip() and bg.strip() != "All"]
+            elif "," in str(selected_brand_group):
+                bg_list = [str(bg).lower().strip() for bg in str(selected_brand_group).split(",") if bg.strip() and str(bg).lower().strip() != "all"]
                 if bg_list:
                     base_qs = base_qs.filter(brand_group__in=bg_list)
             else:
-                base_qs = base_qs.filter(brand_group=selected_brand_group)
+                base_qs = base_qs.filter(brand_group=str(selected_brand_group).lower().strip())
     else:
         if selected_brands and "all" not in [b.lower() for b in selected_brands]:
             base_qs = base_qs.filter(brand__in=selected_brands)
@@ -546,13 +546,19 @@ def get_analytics_performance_data(
 
     # Apply Dimension Filtering
     if is_bg:
-        avail_groups = filter_opts.get("brand_groups") or []
-        if not selected_brand_group or selected_brand_group.lower() == "all":
-            selected_brand_group = "finetoday" if "finetoday" in avail_groups else (avail_groups[0] if avail_groups else None)
-
         if selected_brand_group:
-            base_order_qs = base_order_qs.filter(brand_group__iexact=selected_brand_group)
-            base_prod_qs = base_prod_qs.filter(brand_group__iexact=selected_brand_group)
+            if isinstance(selected_brand_group, (list, tuple, set)):
+                clean_bgs = [str(bg).lower().strip() for bg in selected_brand_group if bg and str(bg).lower().strip() != "all"]
+            elif "," in str(selected_brand_group):
+                clean_bgs = [str(bg).lower().strip() for bg in str(selected_brand_group).split(",") if bg.strip() and str(bg).lower().strip() != "all"]
+            elif str(selected_brand_group).lower().strip() != "all":
+                clean_bgs = [str(selected_brand_group).lower().strip()]
+            else:
+                clean_bgs = []
+
+            if clean_bgs:
+                base_order_qs = base_order_qs.filter(brand_group__in=clean_bgs)
+                base_prod_qs = base_prod_qs.filter(brand_group__in=clean_bgs)
     else:
         if not selected_brands:
             avail_brands = filter_opts.get("brands") or []
@@ -564,10 +570,6 @@ def get_analytics_performance_data(
             if clean_brands:
                 base_order_qs = base_order_qs.filter(brand__in=clean_brands)
                 base_prod_qs = base_prod_qs.filter(brand__in=clean_brands)
-
-        if selected_brand_group and selected_brand_group.lower() != "all":
-            base_order_qs = base_order_qs.filter(brand_group__iexact=selected_brand_group)
-            base_prod_qs = base_prod_qs.filter(brand_group__iexact=selected_brand_group)
 
     if selected_platforms:
         clean_plats = [p for p in selected_platforms if p and p.lower() != "all"]
@@ -1012,20 +1014,20 @@ def get_analytics_performance_data(
         .filter(nmv__gt=0)
     )
 
-    bg_list = list(prod_curr_qs.values_list("brand_group", flat=True).distinct())
+    bg_list = [str(bg).lower().strip() for bg in prod_curr_qs.values_list("brand_group", flat=True).distinct() if bg]
     mapping_lookup: dict[tuple[str, str], str] = {}
     if bg_list:
         mappings = ProductCategoryMapping.objects.filter(brand_group__in=bg_list).values(
             "brand_group", "sku_code", "product_category"
         )
         for m in mappings:
-            mapping_lookup[(m["brand_group"].lower().strip(), m["sku_code"].strip())] = m["product_category"]
+            mapping_lookup[(m["brand_group"].lower().strip(), str(m["sku_code"]).lower().strip())] = m["product_category"]
 
     category_nmv_map: dict[str, float] = {}
     total_group_nmv = 0.0
 
     for r in sku_group_qs:
-        sku = str(r.get("sku_code") or "").strip()
+        sku = str(r.get("sku_code") or "").lower().strip()
         bg = str(r.get("brand_group") or "").lower().strip()
         nmv = float(r.get("nmv") or 0.0)
 
@@ -1084,7 +1086,7 @@ def get_analytics_performance_data(
 
         sku_clean = str(sku or "").strip()
         bg_clean = str(r.get("brand_group") or "").lower().strip()
-        cat = mapping_lookup.get((bg_clean, sku_clean)) or "Belum Terpetakan"
+        cat = mapping_lookup.get((bg_clean, sku_clean.lower())) or "Belum Terpetakan"
 
         product_price_analytics.append({
             "sku_code": sku,
@@ -1138,7 +1140,7 @@ def get_analytics_performance_data(
 
             sku_clean = str(sku or "").strip()
             bg_clean = str(r.get("brand_group") or "").lower().strip()
-            cat = mapping_lookup.get((bg_clean, sku_clean)) or "Belum Terpetakan"
+            cat = mapping_lookup.get((bg_clean, sku_clean.lower())) or "Belum Terpetakan"
 
             m_prods.append({
                 "month_label": m_slice["label"],
@@ -1193,7 +1195,7 @@ def get_analytics_performance_data(
 
         sku_clean = str(sku or "").strip()
         bg_clean = str(r.get("brand_group") or "").lower().strip()
-        cat = mapping_lookup.get((bg_clean, sku_clean)) or "Belum Terpetakan"
+        cat = mapping_lookup.get((bg_clean, sku_clean.lower())) or "Belum Terpetakan"
 
         prod_total_period.append({
             "period_label": total_period_label,
@@ -1300,8 +1302,12 @@ def get_analytics_performance_data(
     # Return full package
     return {
         "dimension": dimension,
-        "selected_brand_group": selected_brand_group,
-        "selected_brand": selected_brands[0] if (selected_brands and len(selected_brands) > 0) else None,
+        "selected_brand_group": (
+            selected_brand_group if isinstance(selected_brand_group, str)
+            else (selected_brand_group[0] if (isinstance(selected_brand_group, list) and len(selected_brand_group) == 1)
+            else ("All" if not selected_brand_group else ", ".join(selected_brand_group)))
+        ),
+        "selected_brand": selected_brands[0] if (selected_brands and len(selected_brands) > 0 and not is_bg) else None,
         "start_date": start_d.isoformat(),
         "end_date": end_d.isoformat(),
         "prev_start_date": prev_start_d.isoformat(),

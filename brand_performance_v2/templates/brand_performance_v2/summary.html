@@ -3294,7 +3294,7 @@
             <div class="bp2-dropdown-options" id="brandGroupOptionsList">
               {% for bg in brand_groups %}
               <label class="bp2-dropdown-option" data-value="{{ bg }}">
-                <input type="checkbox" value="{{ bg }}" {% if bg == selected_brand_group %}checked{% endif %}>
+                <input type="checkbox" value="{{ bg }}" {% if bg in selected_brand_groups or bg == selected_brand_group %}checked{% endif %}>
                 <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
                 <span class="bp2-option-text">{{ bg }}</span>
               </label>

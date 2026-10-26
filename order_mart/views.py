@@ -20,6 +20,7 @@ from django.db.models import (  # type: ignore
 )
 from django.db.models.functions import Coalesce  # type: ignore
 from django.http import HttpRequest, JsonResponse  # type: ignore
+from django.utils import timezone  # type: ignore
 from django.utils.timezone import make_aware  # type: ignore
 
 from dashboard.models import User, UserBrand
@@ -54,7 +55,7 @@ def get_brand_variants(user):
     )
 
 def index(request):
-    today = date.today() - timedelta(days=1)  # noqa: DTZ011
+    today = timezone.localdate() - timedelta(days=1)
     context: dict[str, Any] = {
         "brands": get_brand_variants(request.user),
         "platforms": list(

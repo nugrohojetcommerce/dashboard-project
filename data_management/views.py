@@ -36,7 +36,7 @@ def product_mapping_view(request: HttpRequest) -> HttpResponse:
 @login_required
 def api_mapping_data(request: HttpRequest) -> JsonResponse:
     """Returns JSON payload with paginated SKUs, KPIs, and available categories."""
-    brand_group = request.GET.get("brand_group", "").strip()
+    brand_group = request.GET.get("brand_group", "").lower().strip()
     status_filter = request.GET.get("status", "all").strip().lower()
     category_filter = request.GET.get("category", "ALL").strip()
     search_query = request.GET.get("search", "").strip()
@@ -97,7 +97,7 @@ def api_save_mapping(request: HttpRequest) -> JsonResponse:
     except Exception:
         data = request.POST
 
-    brand_group = data.get("brand_group", "").strip()
+    brand_group = data.get("brand_group", "").lower().strip()
     sku_code = data.get("sku_code", "").strip()
     product_category = data.get("product_category", "").strip()
 
@@ -132,7 +132,7 @@ def api_batch_mapping(request: HttpRequest) -> JsonResponse:
     except Exception:
         data = request.POST
 
-    brand_group = data.get("brand_group", "").strip()
+    brand_group = data.get("brand_group", "").lower().strip()
     sku_codes = data.get("sku_codes", [])
     product_category = data.get("product_category", "").strip()
     clear = bool(data.get("clear", False))
@@ -194,7 +194,7 @@ def api_import_excel(request: HttpRequest) -> JsonResponse:
 @login_required
 def api_get_categories(request: HttpRequest) -> JsonResponse:
     """Returns list of distinct categories and SKU count for a brand_group."""
-    brand_group = request.GET.get("brand_group", "").strip()
+    brand_group = request.GET.get("brand_group", "").lower().strip()
     if not brand_group:
         return JsonResponse({"categories": []})
 
@@ -224,7 +224,7 @@ def api_delete_category(request: HttpRequest) -> JsonResponse:
     except Exception:
         data = request.POST
 
-    brand_group = data.get("brand_group", "").strip()
+    brand_group = data.get("brand_group", "").lower().strip()
     category = data.get("category", "").strip()
 
     if not brand_group or not category:
@@ -246,7 +246,7 @@ def api_delete_category(request: HttpRequest) -> JsonResponse:
 @login_required
 def api_template_catalog(request: HttpRequest) -> JsonResponse:
     """Returns catalog of SKUs for a brand_group to pre-fill in the Excel template."""
-    brand_group = request.GET.get("brand_group", "").strip()
+    brand_group = request.GET.get("brand_group", "").lower().strip()
     if not brand_group:
         return JsonResponse({"status": "error", "message": "brand_group is required"}, status=400)
 

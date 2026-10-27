@@ -119,7 +119,7 @@ def analytics_view(request: HttpRequest) -> HttpResponse:
         selected_brand_groups.extend([x.strip() for x in bg.split(",") if x.strip()])
 
     default_brand_group = user_brand_groups[0] if user_brand_groups else "All"
-    selected_brand_group = selected_brand_groups[0] if selected_brand_groups else "All"
+    selected_brand_group = selected_brand_groups[0] if selected_brand_groups else default_brand_group
 
     user_brands = filter_options.get("brands", [])
     raw_brands = request.GET.getlist("brand")
@@ -161,20 +161,29 @@ def analytics_api(request: HttpRequest) -> JsonResponse:
     end_date = request.GET.get("end_date")
     preset = request.GET.get("preset")
 
-    # Support multiple brand_groups (via getlist or comma-separated)
-    raw_brand_groups = request.GET.getlist("brand_group")
-    selected_brand_groups = []
-    for bg in raw_brand_groups:
-        selected_brand_groups.extend([x.strip() for x in bg.split(",") if x.strip()])
-
     filter_options = get_analytics_filter_options(request.user)
+    user_brand_groups = filter_options.get("brand_groups", [])
+    default_brand_group = user_brand_groups[0] if user_brand_groups else None
+
     user_brands = filter_options.get("brands", [])
     default_brand = "Senka" if "Senka" in user_brands else (user_brands[0] if user_brands else None)
 
     if dimension == "brand_group":
-        # In brand_group dimension, do NOT filter by or default to Senka
+        # Single-select brand group in brand_group dimension
         selected_brands = None
+        raw_brand_groups = request.GET.getlist("brand_group")
+        selected_brand_groups = []
+        for bg in raw_brand_groups:
+            selected_brand_groups.extend([x.strip() for x in bg.split(",") if x.strip()])
+
+        if not selected_brand_groups:
+            target_brand_group = default_brand_group
+        elif "all" in [bg.lower() for bg in selected_brand_groups]:
+            target_brand_group = None
+        else:
+            target_brand_group = selected_brand_groups[0]
     else:
+        target_brand_group = None
         # Single or multi-select brand in brand dimension
         raw_brands = request.GET.getlist("brand")
         selected_brands = []
@@ -197,7 +206,7 @@ def analytics_api(request: HttpRequest) -> JsonResponse:
         end_date_str=end_date,
         preset=preset,
         dimension=dimension,
-        selected_brand_group=selected_brand_groups if selected_brand_groups else None,
+        selected_brand_group=target_brand_group,
         selected_brands=selected_brands if selected_brands else None,
         selected_platforms=selected_platforms if selected_platforms else None,
     )

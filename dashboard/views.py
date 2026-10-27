@@ -470,3 +470,4 @@ def change_password_api(request):
                 "errors": form.errors
             }, status=400)
     return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+

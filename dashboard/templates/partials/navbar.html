@@ -49,6 +49,27 @@
   margin: 0;
 }
 
+.navbar-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+.navbar-action-btn:hover {
+  color: var(--orange);
+  border-color: var(--orange);
+  background: var(--orange-dim);
+  transform: translateY(-1px);
+}
+
 #themeToggleIcon {
   font-size: 0.65rem;
   line-height: 1;
@@ -69,6 +90,8 @@
                     Performance &amp; SKU Analytics
                 {% elif "/brand_performance_v2" in request.path %}
                     Brand &amp; Platform Performance
+                {% elif "/data_management" in request.path %}
+                    Product Category Mapping
                 {% elif "/order_mart" in request.path %}
                     Periodic Reports
                 {% else %}
@@ -77,7 +100,12 @@
             </h1>
         </div>
 
-        <ul class="navbar-nav ms-auto align-items-center" style="gap: 6px;">
+        <ul class="navbar-nav ms-auto align-items-center" style="gap: 8px;">
+            <li class="nav-item">
+                <button type="button" class="navbar-action-btn" id="btnFullscreenToggle" title="Toggle Fullscreen" onclick="toggleDashboardFullscreen()">
+                    <i id="fullscreenIcon" class="bi bi-arrows-fullscreen"></i>
+                </button>
+            </li>
             <li class="nav-item">
                 <label class="theme-switch" title="Toggle theme">
                     <input type="checkbox" id="themeSwitchInput" onchange="BITheme.toggle()">
@@ -94,6 +122,26 @@
 </nav>
 
 <script>
+  function toggleDashboardFullscreen() {
+    const icon = document.getElementById('fullscreenIcon');
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        if (icon) icon.className = 'bi bi-fullscreen-exit';
+      }).catch(err => console.log('Fullscreen request error:', err));
+    } else {
+      document.exitFullscreen().then(() => {
+        if (icon) icon.className = 'bi bi-arrows-fullscreen';
+      }).catch(err => console.log('Fullscreen exit error:', err));
+    }
+  }
+
+  document.addEventListener('fullscreenchange', function () {
+    const icon = document.getElementById('fullscreenIcon');
+    if (icon) {
+      icon.className = document.fullscreenElement ? 'bi bi-fullscreen-exit' : 'bi bi-arrows-fullscreen';
+    }
+  });
+
   document.addEventListener('DOMContentLoaded', function () {
     if (window.BITheme) {
       const icon = document.getElementById('themeToggleIcon');

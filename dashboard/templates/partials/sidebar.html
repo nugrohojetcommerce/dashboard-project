@@ -325,6 +325,16 @@
                       <p>Periodic Reports</p>
                   </a>
               </li>
+              <li class="nav-header text-uppercase mt-3 mb-1 px-3" style="font-size: 0.68rem; font-weight: 700; color: var(--text-faint); letter-spacing: .08em;">
+                  Data Management
+              </li>
+              <li class="nav-item">
+                  <a href="/data_management/product_mapping/" class="nav-link {% if '/data_management/' in request.path or '/product_mapping/' in request.path %}active{% endif %}">
+                      <i class="nav-icon bi bi-diagram-3"></i>
+                      <p>Product Mapping</p>
+                      <span class="badge rounded-pill ms-auto" style="font-size: 0.65rem; background: var(--orange-dim); color: var(--orange); border: 1px solid var(--glass-border-h);">New</span>
+                  </a>
+              </li>
             </ul>
         </nav>
     </div>

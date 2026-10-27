@@ -9,6 +9,7 @@ from typing import Any
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import Max, Q, Sum
+from django.utils import timezone
 
 from dashboard.models import User, UserBrand
 from .models import OrderMartSummary, CancelMartSummary
@@ -73,7 +74,7 @@ def get_filter_options(user: User) -> dict[str, Any]:
     base_qs = apply_brand_access_filter(OrderMartSummary.objects.all(), user)
 
     # Cutoff defaults to yesterday (H-1) because today is still ongoing / incomplete
-    completed_yesterday = date.today() - timedelta(days=1)
+    completed_yesterday = timezone.localdate() - timedelta(days=1)
     max_d = base_qs.aggregate(max_d=Max("create_order_date_time_date"))["max_d"]
     if max_d:
         latest_date = min(max_d, completed_yesterday)
@@ -203,15 +204,15 @@ def get_cancel_summary_data(
     if dimension == "brand_group":
         if selected_brand_group and selected_brand_group != "All":
             if isinstance(selected_brand_group, (list, tuple, set)):
-                bg_list = [bg for bg in selected_brand_group if bg and bg != "All"]
+                bg_list = [str(bg).lower().strip() for bg in selected_brand_group if bg and str(bg).lower().strip() != "all"]
                 if bg_list:
                     base_qs = base_qs.filter(brand_group__in=bg_list)
             elif "," in selected_brand_group:
-                bg_list = [bg.strip() for bg in selected_brand_group.split(",") if bg.strip() and bg.strip() != "All"]
+                bg_list = [str(bg).lower().strip() for bg in selected_brand_group.split(",") if bg.strip() and str(bg).lower().strip() != "all"]
                 if bg_list:
                     base_qs = base_qs.filter(brand_group__in=bg_list)
             else:
-                base_qs = base_qs.filter(brand_group=selected_brand_group)
+                base_qs = base_qs.filter(brand_group=str(selected_brand_group).lower().strip())
     else:
         if selected_brand and selected_brand != "All":
             if isinstance(selected_brand, (list, tuple, set)):
@@ -400,15 +401,15 @@ def get_summary_performance_data(
 
     if selected_brand_group and selected_brand_group != "All":
         if isinstance(selected_brand_group, (list, tuple, set)):
-            bg_list = [bg for bg in selected_brand_group if bg and bg != "All"]
+            bg_list = [str(bg).lower().strip() for bg in selected_brand_group if bg and str(bg).lower().strip() != "all"]
             if bg_list:
                 filtered_qs = filtered_qs.filter(brand_group__in=bg_list)
         elif "," in selected_brand_group:
-            bg_list = [bg.strip() for bg in selected_brand_group.split(",") if bg.strip() and bg.strip() != "All"]
+            bg_list = [str(bg).lower().strip() for bg in selected_brand_group.split(",") if bg.strip() and str(bg).lower().strip() != "all"]
             if bg_list:
                 filtered_qs = filtered_qs.filter(brand_group__in=bg_list)
         else:
-            filtered_qs = filtered_qs.filter(brand_group=selected_brand_group)
+            filtered_qs = filtered_qs.filter(brand_group=str(selected_brand_group).lower().strip())
 
     if not is_bg and selected_brand:
         if isinstance(selected_brand, (list, tuple, set)):
@@ -625,9 +626,10 @@ def get_summary_performance_data(
     # 4. Target Calculation directly from OrderMartSummary (aggregated MTD target up to cutoff date)
     total_target_nmv = float(global_kpi["mtd"].get("target") or 0.0)
 
-    # If no target data in database, fallback to 1.15x previous MTD
+    # If no target data in database, fallback to 1.15x previous MTD (or 0 if no prev MTD data)
     if total_target_nmv == 0:
-        total_target_nmv = float(int(global_kpi["prev_mtd"]["total_nmv"] * 1.15) or 1000000000)
+        prev_nmv_val = float(global_kpi["prev_mtd"]["total_nmv"] or 0.0)
+        total_target_nmv = float(int(prev_nmv_val * 1.15)) if prev_nmv_val > 0 else 0.0
 
     # 5. Executive Cards
     actual_nmv = global_kpi["mtd"]["total_nmv"]

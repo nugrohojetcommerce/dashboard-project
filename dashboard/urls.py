@@ -17,7 +17,7 @@ from .views import (
     ads_dashboard_api,
     ads_dashboard,
     insight_dashboard_api,
-    insight_dashboard
+    insight_dashboard,
 )
 from django.views.decorators.cache import never_cache
 from django.views.generic import RedirectView
@@ -46,6 +46,7 @@ urlpatterns = [
     path('ads_dashboard_api/',ads_dashboard_api,name="ads_dashboard_api"),
 
     path('dashboard_insight/',insight_dashboard,name="insight_dashboard"),
-    path('dashboard_insight_api/',insight_dashboard_api,name="insight_dashboard_api")
+    path('dashboard_insight_api/',insight_dashboard_api,name="insight_dashboard_api"),
 
+    path('product_mapping/', RedirectView.as_view(url='/data_management/product_mapping/', permanent=False)),
 ]

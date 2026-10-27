@@ -1,0 +1,2794 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Product Mapping — Jetcommerce Dashboard{% endblock %}
+
+{% block extra_css %}
+<!-- SheetJS for real .xlsx Excel generation & parsing -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+  /* =====================================================================
+     PRODUCT CATEGORY & SKU MAPPING INTERFACE (.pm-ledger)
+     Built on base.html tokens with 100% theme awareness.
+     ===================================================================== */
+  .pm-container {
+    padding: 10px 4px 60px;
+    color: var(--text-primary);
+  }
+
+  .pm-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* ── Header ── */
+  .pm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+
+  .pm-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .pm-breadcrumb a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .pm-breadcrumb a:hover {
+    color: var(--orange);
+  }
+
+  .pm-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .pm-title-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--orange-dim);
+    color: var(--orange);
+    border: 1px solid var(--glass-border-h);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .pm-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+    max-width: 760px;
+    line-height: 1.45;
+  }
+
+  .pm-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Buttons ── */
+  .pm-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+    line-height: 1.25;
+  }
+  .pm-btn:hover {
+    background: var(--glass-hover);
+    border-color: var(--glass-border-h);
+    color: var(--orange);
+    transform: translateY(-1px);
+  }
+  .pm-btn:active {
+    transform: translateY(0);
+  }
+
+  .pm-btn-primary {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.28);
+  }
+  .pm-btn-primary:hover {
+    background: var(--orange-bright);
+    border-color: var(--orange-bright);
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(255, 107, 0, 0.38);
+  }
+
+  .pm-btn-outline-orange {
+    background: var(--orange-dim);
+    border-color: var(--glass-border-h);
+    color: var(--orange) !important;
+  }
+  .pm-btn-outline-orange:hover {
+    background: var(--orange);
+    color: #ffffff !important;
+  }
+
+  /* ── Top Metric Cards Strip ── */
+  .pm-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .pm-stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .pm-stat-card:hover {
+    border-color: var(--glass-border-h);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .pm-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .pm-stat-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  .pm-stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+  }
+  .pm-stat-icon.orange {
+    background: var(--orange-dim);
+    color: var(--orange);
+  }
+  .pm-stat-icon.green {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  .pm-stat-icon.amber {
+    background: var(--warn-bg);
+    color: var(--warn);
+  }
+  .pm-stat-icon.blue {
+    background: rgba(2, 132, 199, 0.12);
+    color: var(--accent-2);
+  }
+
+  .pm-stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    line-height: 1.1;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .pm-stat-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .pm-stat-badge.success {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  .pm-stat-badge.warn {
+    background: var(--warn-bg);
+    color: var(--warn);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  .pm-progress-wrap {
+    margin-top: 10px;
+    height: 5px;
+    background: var(--surface-muted);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .pm-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--orange) 0%, var(--orange-light) 100%);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+
+  .pm-stat-foot {
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ── Filter Card ── */
+  .pm-filter-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .pm-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pm-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pm-filter-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .pm-select {
+    padding: 7px 30px 7px 11px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg) url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2364748B' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") no-repeat right 10px center/11px;
+    color: var(--text-primary);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: all 0.15s;
+    cursor: pointer;
+    min-width: 160px;
+  }
+  .pm-select:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 2px var(--orange-glow);
+  }
+
+  /* ── BP2-Style Custom Dropdown Component ── */
+  .bp2-dropdown-wrap {
+    position: relative;
+    display: inline-flex;
+  }
+  .bp2-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    height: 35px;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all .15s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+  .bp2-filter-pill:hover {
+    border-color: var(--orange);
+    color: var(--text-primary);
+  }
+  .bp2-dropdown-wrap.open .bp2-dropdown-trigger {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 2px var(--orange-dim);
+    color: var(--text-primary);
+  }
+  .bp2-dropdown-label {
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+  }
+  .bp2-dropdown-caret {
+    font-size: .65rem;
+    color: var(--text-muted);
+    transition: transform .18s ease;
+    margin-left: 2px;
+  }
+  .bp2-dropdown-wrap.open .bp2-dropdown-caret {
+    transform: rotate(180deg);
+  }
+  .bp2-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 240px;
+    max-width: 320px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px -8px rgba(16, 24, 40, .28);
+    padding: 8px;
+    z-index: 99999 !important;
+    display: none;
+  }
+  .bp2-dropdown-wrap.open .bp2-dropdown-menu {
+    display: block;
+    animation: bp2DropFade .15s ease-out;
+  }
+  @keyframes bp2DropFade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .bp2-dropdown-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+  .bp2-dropdown-search input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: .76rem;
+    width: 100%;
+    font-family: inherit;
+  }
+  .bp2-dropdown-options {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .bp2-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: .78rem;
+    color: var(--text-primary);
+    transition: background .12s, color .12s;
+  }
+  .bp2-dropdown-item:hover {
+    background: var(--surface-muted);
+  }
+  .bp2-dropdown-item.active {
+    background: var(--orange-dim);
+    color: var(--orange);
+    font-weight: 700;
+  }
+  .bp2-dropdown-item .bp2-single-check {
+    color: var(--orange);
+    font-size: .85rem;
+  }
+
+  /* Segmented status pills */
+  .pm-status-pills {
+    display: flex;
+    align-items: center;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 9px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .pm-pill-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pm-pill-btn:hover {
+    color: var(--text-primary);
+  }
+  .pm-pill-btn.active {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  }
+  .pm-pill-btn .badge-pill-count {
+    font-size: 0.68rem;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--surface-muted-hover);
+    color: var(--text-muted);
+  }
+  .pm-pill-btn.active .badge-pill-count {
+    background: var(--orange-dim);
+    color: var(--orange);
+  }
+  .pm-pill-btn.warn.active .badge-pill-count {
+    background: var(--warn-bg);
+    color: var(--warn);
+  }
+
+  /* Search input */
+  .pm-search-box {
+    position: relative;
+    flex: 1 1 240px;
+  }
+  .pm-search-input {
+    width: 100%;
+    padding: 7px 32px 7px 34px;
+    font-size: 0.82rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.15s;
+  }
+  .pm-search-input:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 2px var(--orange-glow);
+  }
+  .pm-search-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+  .pm-search-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    display: none;
+  }
+
+  /* ── Multi-Select Batch Action Bar ── */
+  .pm-batch-bar {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: linear-gradient(135deg, rgba(255, 107, 0, 0.08) 0%, rgba(255, 107, 0, 0.02) 100%);
+    border: 1px solid var(--glass-border-h);
+    border-radius: var(--radius-sm);
+    padding: 9px 16px;
+    margin-bottom: 14px;
+    animation: pmFadeIn 0.2s ease-out;
+  }
+  .pm-batch-bar.show {
+    display: flex;
+  }
+  @keyframes pmFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .pm-batch-info {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--orange);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .pm-batch-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Main Data Table Card ── */
+  .pm-table-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+
+  .pm-table-responsive {
+    overflow-x: auto;
+    width: 100%;
+    min-height: 200px;
+  }
+
+  .pm-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.83rem;
+  }
+
+  .pm-table th {
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--glass-border);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .pm-table th.sortable {
+    cursor: pointer;
+  }
+  .pm-table th.sortable:hover {
+    color: var(--text-primary);
+  }
+
+  .pm-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-sub);
+    vertical-align: middle;
+    background: var(--card-bg);
+    transition: background 0.12s ease;
+  }
+
+  .pm-table tbody tr:hover td {
+    background: var(--glass-hover);
+  }
+
+  .pm-table tbody tr.row-selected td {
+    background: rgba(255, 107, 0, 0.04) !important;
+  }
+
+  /* SKU code styling */
+  .pm-sku-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .pm-sku-copy {
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: color 0.15s;
+  }
+  .pm-sku-copy:hover {
+    color: var(--orange);
+  }
+
+  /* Product name cell (Auto-synced from ProductMartSummary) */
+  .pm-product-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.35;
+    max-width: 360px;
+  }
+  .pm-product-source-tag {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Brand Group badge */
+  .pm-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    border-radius: 999px;
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+    text-transform: capitalize;
+  }
+
+  /* Product category pills (Passive Display) */
+  .pm-group-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: var(--orange-dim);
+    color: var(--orange);
+    border: 1px solid var(--glass-border-h);
+    cursor: default;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .pm-group-unmapped-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.76rem;
+    font-weight: 500;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    border: 1px dashed var(--glass-border);
+    cursor: default;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* User avatar in table */
+  .pm-pic-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+  }
+  .pm-pic-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--orange-dim);
+    color: var(--orange);
+    font-weight: 700;
+    font-size: 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--glass-border);
+    text-transform: uppercase;
+  }
+
+  /* Actions column */
+  .pm-action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .pm-action-btn:hover {
+    background: var(--glass-hover);
+    color: var(--orange);
+    border-color: var(--glass-border-h);
+  }
+
+  /* Table footer pagination */
+  .pm-table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--glass-border);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .pm-pagination {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .pm-page-btn {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-sub);
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    padding: 0 6px;
+  }
+  .pm-page-btn:hover:not(:disabled) {
+    background: var(--glass-hover);
+    color: var(--orange);
+    border-color: var(--glass-border-h);
+  }
+  .pm-page-btn.active {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: #ffffff;
+  }
+  .pm-page-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Loading Overlay */
+  .pm-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  [data-bs-theme="light"] .pm-loading-overlay,
+  html:not([data-bs-theme="dark"]) .pm-loading-overlay {
+    background: rgba(255, 255, 255, 0.72);
+  }
+  .pm-loading-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .pm-spinner-box {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .pm-spinner-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3.5px solid rgba(249, 115, 22, 0.18);
+    border-top-color: var(--orange);
+    border-right-color: var(--orange);
+    animation: pmSpin 0.75s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  }
+  .pm-spinner-icon {
+    font-size: 1.25rem;
+    color: var(--orange);
+    animation: pmPulse 1.4s ease-in-out infinite;
+  }
+  .pm-loading-text {
+    text-align: center;
+  }
+  .pm-loading-text strong {
+    display: block;
+    font-size: 0.88rem;
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .pm-loading-text span {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+  }
+  @keyframes pmSpin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes pmPulse {
+    0%, 100% { transform: scale(0.92); opacity: 0.75; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+
+  /* ── Modals ── */
+  .pm-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1060;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .pm-modal-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .pm-modal-dialog {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+    transform: translateY(16px) scale(0.98);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .pm-modal-backdrop.show .pm-modal-dialog {
+    transform: translateY(0) scale(1);
+  }
+  .pm-modal-dialog.lg {
+    max-width: 760px;
+  }
+
+  .pm-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .pm-modal-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pm-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .pm-modal-close:hover {
+    color: var(--danger);
+    background: var(--danger-bg);
+  }
+
+  .pm-modal-body {
+    padding: 20px;
+  }
+  .pm-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--glass-border);
+    background: var(--surface-muted);
+  }
+
+  .pm-form-group {
+    margin-bottom: 16px;
+  }
+  .pm-form-label {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .pm-form-input, .pm-form-select, .pm-form-textarea {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.83rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.15s;
+  }
+  .pm-form-input:focus, .pm-form-select:focus, .pm-form-textarea:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 2px var(--orange-glow);
+  }
+
+  /* File upload dropzone */
+  .pm-dropzone {
+    border: 2px dashed var(--glass-border-h);
+    border-radius: var(--radius);
+    padding: 30px 20px;
+    text-align: center;
+    background: var(--orange-dim);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .pm-dropzone:hover {
+    border-color: var(--orange);
+    background: rgba(255, 107, 0, 0.12);
+  }
+  .pm-dropzone-icon {
+    font-size: 2.2rem;
+    color: var(--orange);
+    margin-bottom: 8px;
+  }
+
+  /* Toast notification */
+  .pm-toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1080;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .pm-toast {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-left: 4px solid var(--orange);
+    border-radius: var(--radius-sm);
+    padding: 10px 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    pointer-events: auto;
+    animation: pmSlideToast 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .pm-toast.success { border-left-color: var(--success); }
+  .pm-toast.warn { border-left-color: var(--warn); }
+  .pm-toast.info { border-left-color: var(--accent-2); }
+  @keyframes pmSlideToast {
+    from { opacity: 0; transform: translateY(12px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .pm-checkbox {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--orange);
+    cursor: pointer;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pm-container">
+
+  <!-- ── 1. Top Action Toolbar ── -->
+  <div class="d-flex justify-content-end align-items-center mb-3">
+    <div class="pm-header-actions">
+      <button type="button" class="pm-btn" onclick="openManageCategoriesModal()" title="Kelola Product Category per Brand Group">
+        <i class="bi bi-tags"></i> Kelola Category
+      </button>
+      <button type="button" class="pm-btn" onclick="downloadTemplateExcel()" title="Download format file Excel (.xlsx)">
+        <i class="bi bi-file-earmark-excel"></i> Template Excel (.xlsx)
+      </button>
+      <button type="button" class="pm-btn pm-btn-outline-orange" onclick="openUploadModal()" title="Upload file Excel (.xlsx / .xls)">
+        <i class="bi bi-file-earmark-arrow-up"></i> Import Excel
+      </button>
+      <button type="button" class="pm-btn pm-btn-primary" onclick="openAddSkuModal()">
+        <i class="bi bi-plus-lg"></i> Tambah SKU Mapping
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 2. Top Metric Cards ── -->
+  <div class="pm-stats-grid">
+    <!-- Card 1: Total SKU -->
+    <div class="pm-stat-card">
+      <div class="pm-stat-top">
+        <span class="pm-stat-label">Total Katalog SKU</span>
+        <div class="pm-stat-icon orange"><i class="bi bi-box-seam"></i></div>
+      </div>
+      <div class="pm-stat-value">
+        <span id="statTotalSkus" class="pm-mono tabular-nums">0</span>
+        <span class="pm-stat-badge success">ProductMart</span>
+      </div>
+      <div class="pm-stat-foot">
+        <i class="bi bi-database-check"></i> Sumber: <code>product_mart_summary</code>
+      </div>
+    </div>
+
+    <!-- Card 2: Mapped SKU -->
+    <div class="pm-stat-card">
+      <div class="pm-stat-top">
+        <span class="pm-stat-label">Sudah Terpetakan</span>
+        <div class="pm-stat-icon green"><i class="bi bi-check2-circle"></i></div>
+      </div>
+      <div class="pm-stat-value">
+        <span id="statMappedSkus" class="pm-mono tabular-nums">0</span>
+        <span id="statPercentBadge" class="pm-stat-badge success">0%</span>
+      </div>
+      <div class="pm-progress-wrap">
+        <div id="statProgressBar" class="pm-progress-bar" style="width: 0%;"></div>
+      </div>
+      <div class="pm-stat-foot">
+        <span id="statProgressText">Kelengkapan Category</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Needs Mapping -->
+    <div class="pm-stat-card" style="border-color: rgba(245, 158, 11, 0.25);">
+      <div class="pm-stat-top">
+        <span class="pm-stat-label">Belum Terpetakan (PIC Action)</span>
+        <div class="pm-stat-icon amber"><i class="bi bi-exclamation-triangle"></i></div>
+      </div>
+      <div class="pm-stat-value">
+        <span id="statUnmappedSkus" class="pm-mono tabular-nums text-warning" style="color: var(--warn) !important;">0</span>
+        <span class="pm-stat-badge warn">Belum ada category</span>
+      </div>
+      <div class="pm-stat-foot">
+        <a href="javascript:void(0)" onclick="filterByStatus('unmapped')" style="color: var(--warn); font-weight: 600; text-decoration: none;">
+          <i class="bi bi-arrow-right-short"></i> Tampilkan SKU ini sekarang
+        </a>
+      </div>
+    </div>
+
+    <!-- Card 4: Categories Count -->
+    <div class="pm-stat-card">
+      <div class="pm-stat-top">
+        <span class="pm-stat-label">Product Categories</span>
+        <div class="pm-stat-icon blue"><i class="bi bi-diagram-3"></i></div>
+      </div>
+      <div class="pm-stat-value">
+        <span id="statTotalCategories" class="pm-mono tabular-nums">0</span>
+        <span class="pm-stat-badge" style="background: rgba(2, 132, 199, 0.12); color: var(--accent-2);">Aktif</span>
+      </div>
+      <div class="pm-stat-foot">
+        <a href="javascript:void(0)" onclick="openManageCategoriesModal()" style="color: var(--accent-2); font-weight: 600; text-decoration: none;">
+          <i class="bi bi-gear"></i> Kelola kategori brand group
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. Filters Toolbar ── -->
+  <div class="pm-filter-card">
+    <div class="pm-filter-row">
+      
+      <!-- Brand Group Custom Dropdown -->
+      <div class="pm-filter-group">
+        <span class="pm-filter-label"><i class="bi bi-collection"></i> Brand Group</span>
+        <div class="bp2-dropdown-wrap" id="brandGroupDropdownWrap">
+          <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="brandGroupDropdownTrigger"
+            onclick="toggleDropdown('brandGroupDropdownWrap')" aria-haspopup="true" aria-expanded="false" title="Pilih Brand Group">
+            <i class="bi bi-collection" style="color: var(--orange);"></i>
+            <span class="bp2-dropdown-label" id="brandGroupDropdownLabel">{{ default_brand_group|default:"Select Brand Group" }}</span>
+            <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+          </button>
+          <div class="bp2-dropdown-menu" id="brandGroupDropdownMenu">
+            <div class="bp2-dropdown-search">
+              <i class="bi bi-search"></i>
+              <input type="text" id="brandGroupSearchInput" placeholder="Cari brand group..." autocomplete="off" oninput="filterDropdownOptions('brandGroupOptionsList', this.value)">
+            </div>
+            <div class="bp2-dropdown-options" id="brandGroupOptionsList">
+              {% for bg in brand_groups %}
+              <div class="bp2-dropdown-item {% if bg == default_brand_group %}active{% endif %}" data-value="{{ bg }}"
+                onclick="selectBrandGroup('{{ bg|escapejs }}')">
+                <span class="bp2-option-text">{{ bg }}</span>
+                <i class="bi bi-check-lg bp2-single-check {% if bg != default_brand_group %}d-none{% endif %}"></i>
+              </div>
+              {% empty %}
+              <div class="text-muted p-2" style="font-size:0.75rem;">Tidak ada brand group</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Pills -->
+      <div class="pm-filter-group">
+        <span class="pm-filter-label">Status</span>
+        <div class="pm-status-pills">
+          <button type="button" class="pm-pill-btn active" data-status="all" onclick="filterByStatus('all')">
+            Semua <span class="badge-pill-count" id="pillCountAll">0</span>
+          </button>
+          <button type="button" class="pm-pill-btn warn" data-status="unmapped" onclick="filterByStatus('unmapped')">
+            <i class="bi bi-exclamation-circle text-warning"></i> Butuh Mapping <span class="badge-pill-count" id="pillCountUnmapped">0</span>
+          </button>
+          <button type="button" class="pm-pill-btn" data-status="mapped" onclick="filterByStatus('mapped')">
+            <i class="bi bi-check-circle text-success"></i> Terpetakan <span class="badge-pill-count" id="pillCountMapped">0</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Category Custom Dropdown -->
+      <div class="pm-filter-group">
+        <span class="pm-filter-label"><i class="bi bi-tag"></i> Category</span>
+        <div class="bp2-dropdown-wrap" id="categoryDropdownWrap">
+          <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="categoryDropdownTrigger"
+            onclick="toggleDropdown('categoryDropdownWrap')" aria-haspopup="true" aria-expanded="false" title="Pilih Product Category">
+            <i class="bi bi-tag" style="color: var(--orange);"></i>
+            <span class="bp2-dropdown-label" id="categoryDropdownLabel">Semua Category</span>
+            <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+          </button>
+          <div class="bp2-dropdown-menu" id="categoryDropdownMenu">
+            <div class="bp2-dropdown-search">
+              <i class="bi bi-search"></i>
+              <input type="text" id="categorySearchInput" placeholder="Cari category..." autocomplete="off" oninput="filterDropdownOptions('categoryOptionsList', this.value)">
+            </div>
+            <div class="bp2-dropdown-options" id="categoryOptionsList">
+              <div class="bp2-dropdown-item active" data-value="ALL" onclick="selectCategory('ALL')">
+                <span class="bp2-option-text">Semua Product Category</span>
+                <i class="bi bi-check-lg bp2-single-check"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Input -->
+      <div class="pm-search-box">
+        <i class="bi bi-search pm-search-icon"></i>
+        <input type="text" id="searchInput" class="pm-search-input" placeholder="Cari SKU Code atau Nama Produk..." oninput="handleSearchInput(this.value)">
+        <button type="button" id="searchClearBtn" class="pm-search-clear" onclick="clearSearch()" aria-label="Clear search">
+          <i class="bi bi-x-circle-fill"></i>
+        </button>
+      </div>
+
+      <!-- Reset button -->
+      <button type="button" class="pm-btn" onclick="resetAllFilters()" title="Reset semua filter">
+        <i class="bi bi-arrow-counterclockwise"></i> Reset
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ── 4. Multi-Select Floating Batch Action Bar ── -->
+  <div id="batchActionBar" class="pm-batch-bar">
+    <div class="pm-batch-info">
+      <i class="bi bi-check2-square" style="font-size: 1.1rem;"></i>
+      <span id="batchSelectedCount">0 SKU terpilih</span>
+    </div>
+    <div class="pm-batch-actions">
+      <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Brand Group:</span>
+      <span id="batchBrandGroupBadge" class="pm-brand-badge me-2">-</span>
+
+      <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600;">Set Category:</span>
+      <select id="batchCategorySelect" class="pm-select" style="min-width: 170px; padding-top: 5px; padding-bottom: 5px;">
+        <option value="">Pilih Category...</option>
+      </select>
+
+      <button type="button" class="pm-btn pm-btn-primary" style="padding: 5px 12px;" onclick="applyBatchMapping()">
+        Terapkan Masal
+      </button>
+      <button type="button" class="pm-btn" style="padding: 5px 12px; color: var(--danger);" onclick="clearBatchMapping()">
+        Kosongkan Category
+      </button>
+      <button type="button" class="pm-btn" style="padding: 5px 10px;" onclick="deselectAllRows()">
+        Batal
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 5. Main Data Table ── -->
+  <div class="pm-table-card">
+    <!-- Loading spinner overlay -->
+    <div id="tableLoadingOverlay" class="pm-loading-overlay">
+      <div class="pm-spinner-box">
+        <div class="pm-spinner-ring"></div>
+        <i class="bi bi-diagram-3 pm-spinner-icon"></i>
+      </div>
+      <div class="pm-loading-text">
+        <strong>Memuat Data Mapping...</strong>
+        <span>Mengambil katalog &amp; status mapping</span>
+      </div>
+    </div>
+
+    <div class="pm-table-responsive">
+      <table class="pm-table">
+        <thead>
+          <tr>
+            <th style="width: 40px; text-align: center;">
+              <input type="checkbox" id="masterCheckbox" class="pm-checkbox" onchange="toggleSelectAll(this.checked)" title="Pilih Semua">
+            </th>
+            <th class="sortable" onclick="sortTable('sku')">
+              SKU Code <i class="bi bi-arrow-down-up" style="font-size: 0.65rem;"></i>
+            </th>
+            <th class="sortable" onclick="sortTable('name')">
+              Nama Produk (ProductMartSummary) <i class="bi bi-arrow-down-up" style="font-size: 0.65rem;"></i>
+            </th>
+            <th class="sortable" onclick="sortTable('brand_group')">
+              Brand Group <i class="bi bi-arrow-down-up" style="font-size: 0.65rem;"></i>
+            </th>
+            <th class="sortable" onclick="sortTable('category')">
+              Product Category <i class="bi bi-arrow-down-up" style="font-size: 0.65rem;"></i>
+            </th>
+            <th class="sortable" onclick="sortTable('last_updated')">
+              Terakhir Diupdate <i class="bi bi-arrow-down-up" style="font-size: 0.65rem;"></i>
+            </th>
+            <th>PIC / User</th>
+            <th style="text-align: right; width: 80px;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="skuTableBody">
+          <!-- Dynamically populated from PostgreSQL API -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div id="tableEmptyState" class="text-center py-5 d-none">
+      <div style="font-size: 2.4rem; color: var(--text-muted); margin-bottom: 10px;">
+        <i class="bi bi-inbox"></i>
+      </div>
+      <h6 style="color: var(--text-primary); font-weight: 700; margin-bottom: 4px;">Tidak Ada SKU yang Cocok</h6>
+      <p style="color: var(--text-muted); font-size: 0.8rem; max-width: 420px; margin: 0 auto 16px;">
+        Belum ada SKU yang terdeteksi untuk filter ini atau kata kunci pencarian tidak ditemukan.
+      </p>
+      <button type="button" class="pm-btn pm-btn-outline-orange" onclick="resetAllFilters()">
+        <i class="bi bi-arrow-counterclockwise"></i> Reset Semua Filter
+      </button>
+    </div>
+
+    <!-- Table Footer / Pagination -->
+    <div class="pm-table-footer">
+      <div class="d-flex align-items-center gap-2">
+        <span>Tampilkan</span>
+        <select id="pageSizeSelect" class="pm-select" style="min-width: 70px; padding: 3px 24px 3px 8px; font-size: 0.76rem;" onchange="changePageSize(this.value)">
+          <option value="10">10</option>
+          <option value="25" selected>25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+        <span id="paginationInfo">Menampilkan 0 dari 0 SKU</span>
+      </div>
+
+      <div class="pm-pagination" id="paginationControls">
+        <!-- populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 1: EDIT SINGLE SKU MAPPING
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="editMappingModal" class="pm-modal-backdrop" onclick="handleBackdropClick(event, 'editMappingModal')">
+  <div class="pm-modal-dialog">
+    <div class="pm-modal-header">
+      <h5 class="pm-modal-title">
+        <i class="bi bi-pencil-square" style="color: var(--orange);"></i> Edit SKU Category Mapping
+      </h5>
+      <button type="button" class="pm-modal-close" onclick="closeModal('editMappingModal')">&times;</button>
+    </div>
+    <div class="pm-modal-body">
+      <input type="hidden" id="editModalSkuCode">
+      
+      <!-- Brand Group & SKU Info -->
+      <div class="row mb-3">
+        <div class="col-6">
+          <label class="pm-form-label">Brand Group</label>
+          <div id="editModalBrandGroupDisplay" class="p-2 fw-bold text-capitalize" style="background: var(--surface-muted); border: 1px solid var(--glass-border); border-radius: 6px;">
+            -
+          </div>
+        </div>
+        <div class="col-6">
+          <label class="pm-form-label">SKU Code</label>
+          <div id="editModalSkuCodeDisplay" class="p-2 pm-mono fw-bold" style="background: var(--surface-muted); border: 1px solid var(--glass-border); border-radius: 6px; color: var(--orange);">
+            -
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Name: Read-Only from ProductMart -->
+      <div class="pm-form-group">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="pm-form-label mb-0">Nama Produk</label>
+          <span class="badge" style="background: var(--surface-muted); color: var(--text-muted); font-size: 0.68rem; border: 1px solid var(--glass-border);">
+            <i class="bi bi-link-45deg"></i> ProductMart (any_value)
+          </span>
+        </div>
+        <div id="editModalProductNameDisplay" class="p-2" style="background: var(--surface-muted); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); font-size: 0.83rem; font-weight: 600; color: var(--text-primary); line-height: 1.35;">
+          -
+        </div>
+      </div>
+
+      <!-- Product Category Dropdown & Custom Input -->
+      <div class="pm-form-group">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label class="pm-form-label mb-0">Product Category <span style="color: var(--orange);">*</span></label>
+          <a href="javascript:void(0)" onclick="toggleEditCustomCategoryInput()" id="editToggleCustomLink" style="font-size: 0.72rem; color: var(--orange); text-decoration: none; font-weight: 600;">
+            <i class="bi bi-plus-circle"></i> Ketik Kategori Baru
+          </a>
+        </div>
+        <select id="editModalCategorySelect" class="pm-form-select">
+          <!-- populated dynamically -->
+        </select>
+        <input type="text" id="editModalCategoryInput" class="pm-form-input mt-2 d-none" placeholder="Ketik nama kategori baru...">
+        <small style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: block;">
+          Kategori ini akan disimpan ke tabel <code>product_category_mapping</code> di database.
+        </small>
+      </div>
+
+    </div>
+    <div class="pm-modal-footer">
+      <button type="button" class="pm-btn" onclick="closeModal('editMappingModal')">Batal</button>
+      <button type="button" class="pm-btn pm-btn-primary" onclick="saveEditMapping()">Simpan ke Database</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 2: ADD NEW SKU MAPPING
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="addSkuModal" class="pm-modal-backdrop" onclick="handleBackdropClick(event, 'addSkuModal')">
+  <div class="pm-modal-dialog">
+    <div class="pm-modal-header">
+      <h5 class="pm-modal-title">
+        <i class="bi bi-plus-circle" style="color: var(--orange);"></i> Tambah SKU Mapping Baru
+      </h5>
+      <button type="button" class="pm-modal-close" onclick="closeModal('addSkuModal')">&times;</button>
+    </div>
+    <div class="pm-modal-body">
+      <!-- 1. Brand Group -->
+      <div class="pm-form-group">
+        <label class="pm-form-label">1. Brand Group <span style="color: var(--orange);">*</span></label>
+        <select id="addSkuBrandGroup" class="pm-form-select" onchange="handleAddSkuBrandGroupChange(this.value)">
+          {% for bg in brand_groups %}
+            <option value="{{ bg }}">{{ bg }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- 2. SKU Code -->
+      <div class="pm-form-group">
+        <label class="pm-form-label">2. SKU Code <span style="color: var(--orange);">*</span></label>
+        <input type="text" id="addSkuCode" class="pm-form-input pm-mono" placeholder="Contoh: 0201003000038">
+        <small style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: block;">
+          <i class="bi bi-info-circle"></i> Nama produk akan otomatis diambil dari <code>ProductMartSummary</code> berdasarkan SKU Code ini.
+        </small>
+      </div>
+
+      <!-- 3. Product Category -->
+      <div class="pm-form-group mb-0">
+        <label class="pm-form-label">3. Product Category <span style="color: var(--orange);">*</span></label>
+        <input type="text" id="addSkuCategory" class="pm-form-input" placeholder="Contoh: Diapers Slim, Wipes, Shampoo...">
+      </div>
+    </div>
+    <div class="pm-modal-footer">
+      <button type="button" class="pm-btn" onclick="closeModal('addSkuModal')">Batal</button>
+      <button type="button" class="pm-btn pm-btn-primary" onclick="saveNewSku()">Simpan Mapping</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 3: BULK IMPORT EXCEL ONLY (.xlsx / .xls)
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="uploadModal" class="pm-modal-backdrop" onclick="handleBackdropClick(event, 'uploadModal')">
+  <div class="pm-modal-dialog lg">
+    <div class="pm-modal-header">
+      <h5 class="pm-modal-title">
+        <i class="bi bi-file-earmark-excel" style="color: var(--orange);"></i> Bulk Upload SKU Mapping (Excel)
+      </h5>
+      <button type="button" class="pm-modal-close" onclick="closeModal('uploadModal')">&times;</button>
+    </div>
+    <div class="pm-modal-body">
+      
+      <!-- Dropzone -->
+      <div id="dropzoneArea" class="pm-dropzone" onclick="triggerFileInput()">
+        <input type="file" id="fileUploadInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileSelected(this)">
+        <div class="pm-dropzone-icon">
+          <i class="bi bi-file-earmark-spreadsheet"></i>
+        </div>
+        <h6 style="color: var(--text-primary); font-weight: 700; margin-bottom: 4px;">Pilih atau Tarik File Excel (.xlsx / .xls) di sini</h6>
+        <p style="color: var(--text-muted); font-size: 0.78rem; margin-bottom: 12px;">
+          Format didukung: <strong>Microsoft Excel (.xlsx, .xls)</strong>
+        </p>
+        <button type="button" class="pm-btn pm-btn-primary" style="pointer-events: none;">
+          <i class="bi bi-upload"></i> Pilih File Excel
+        </button>
+      </div>
+
+      <!-- Info Box -->
+      <div class="mt-3 p-3" style="background: var(--surface-muted); border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle text-primary" style="font-size: 1.1rem;"></i>
+            <span style="font-size: 0.78rem; color: var(--text-sub);">
+              Kolom Excel wajib berisi: <code>sku_code</code>, <code>brand_group</code>, dan <code>product_category</code>.
+            </span>
+          </div>
+          <button type="button" class="pm-btn pm-btn-outline-orange" style="font-size: 0.74rem; padding: 5px 12px; white-space: nowrap;" onclick="downloadTemplateExcel()" id="btnDownloadTemplateExcel" title="Download template format file Excel (.xlsx) bertipe Text murni">
+            <i class="bi bi-download"></i> Template Excel (.xlsx)
+          </button>
+        </div>
+        <div class="mt-2 pt-2 border-top" style="border-color: var(--glass-border) !important; font-size: 0.73rem; color: var(--text-muted); line-height: 1.4;">
+          <i class="bi bi-lightbulb text-warning me-1"></i> <strong>Tips Format SKU Text:</strong> Template ini ringan dengan beberapa baris contoh yang tipe datanya sudah dikunci sebagai <strong>Text (String)</strong> agar angka panjang (>15 digit) tidak terpotong menjadi <code>E+18</code>. Saat di-load, sistem akan otomatis melakukan LEFT JOIN ke katalog <code>ProductMartSummary</code>.
+        </div>
+      </div>
+
+      <!-- Preview Parsed Table -->
+      <div id="uploadPreviewSection" class="mt-4 d-none">
+        <!-- Alert Banner for Scientific Notation / Corrupted SKUs -->
+        <div id="uploadScientificAlert" class="mb-3 d-none"></div>
+
+        <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-primary);">
+              Pratinjau Data File Excel (<span id="previewCount">0</span> baris, <span id="previewUniqueCount">0</span> SKU unik):
+            </span>
+            <span id="previewDupBadge" class="badge bg-warning text-dark d-none" style="font-size: 0.7rem;"></span>
+          </div>
+          <span class="badge bg-success" style="font-size: 0.7rem;">Siap Di-load</span>
+        </div>
+        <div class="pm-table-responsive" style="max-height: 220px; border: 1px solid var(--glass-border); border-radius: 8px;">
+          <table class="pm-table" style="font-size: 0.78rem;">
+            <thead>
+              <tr>
+                <th>SKU Code</th>
+                <th>Brand Group</th>
+                <th>Product Category</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="previewTableBody">
+              <!-- populated after upload -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Upload Progress Alert -->
+      <div id="uploadProgressAlert" class="mt-3 d-none"></div>
+
+    </div>
+    <div class="pm-modal-footer">
+      <button type="button" class="pm-btn" onclick="closeModal('uploadModal')">Tutup</button>
+      <button type="button" id="btnConfirmImport" class="pm-btn pm-btn-primary d-none" onclick="confirmImport()">
+        <i class="bi bi-cloud-arrow-up"></i> Load ke Database
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 4: MANAGE CATEGORIES PER BRAND GROUP
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="manageCategoriesModal" class="pm-modal-backdrop" onclick="handleBackdropClick(event, 'manageCategoriesModal')">
+  <div class="pm-modal-dialog lg">
+    <div class="pm-modal-header">
+      <h5 class="pm-modal-title">
+        <i class="bi bi-tags" style="color: var(--orange);"></i> Kelola Master Product Category per Brand Group
+      </h5>
+      <button type="button" class="pm-modal-close" onclick="closeModal('manageCategoriesModal')">&times;</button>
+    </div>
+    <div class="pm-modal-body">
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+        Kategori produk ini terikat di tingkat Brand Group dan langsung tersimpan di database.
+      </p>
+
+      <!-- Select Brand Group for Managing Categories -->
+      <div class="d-flex align-items-center gap-2 mb-3 p-3" style="background: var(--surface-muted); border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
+        <span class="pm-filter-label"><i class="bi bi-collection"></i> Brand Group:</span>
+        <select id="manageBrandGroupSelect" class="pm-select" style="min-width: 180px;" onchange="loadCategoriesList(this.value)">
+          {% for bg in brand_groups %}
+            <option value="{{ bg }}">{{ bg }}</option>
+          {% endfor %}
+        </select>
+        <span class="ms-auto" style="font-size: 0.76rem; color: var(--text-muted);" id="manageCountText">
+          0 Kategori terdaftar
+        </span>
+      </div>
+
+      <!-- Categories Table -->
+      <div class="pm-table-responsive" style="max-height: 280px; border: 1px solid var(--glass-border); border-radius: 8px;">
+        <table class="pm-table" style="font-size: 0.8rem;">
+          <thead>
+            <tr>
+              <th>Brand Group</th>
+              <th>Nama Product Category</th>
+              <th style="text-align: center;">Jumlah SKU Terpetakan</th>
+              <th style="text-align: right; width: 80px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="categoriesListBody">
+            <!-- populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+    <div class="pm-modal-footer">
+      <button type="button" class="pm-btn" onclick="closeModal('manageCategoriesModal')">Selesai</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 5: AUDIT TRAIL / CHANGE HISTORY
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="historyModal" class="pm-modal-backdrop" onclick="handleBackdropClick(event, 'historyModal')">
+  <div class="pm-modal-dialog">
+    <div class="pm-modal-header">
+      <h5 class="pm-modal-title">
+        <i class="bi bi-clock-history" style="color: var(--orange);"></i> Riwayat Mapping SKU
+      </h5>
+      <button type="button" class="pm-modal-close" onclick="closeModal('historyModal')">&times;</button>
+    </div>
+    <div class="pm-modal-body">
+      <div class="mb-3 p-2" style="background: var(--surface-muted); border-radius: 6px; font-size: 0.8rem;">
+        <span style="color: var(--text-muted);">SKU:</span> <strong id="historySkuCode" class="pm-mono"></strong> — <span id="historyProductName"></span>
+      </div>
+
+      <div id="historyTimeline" style="display: flex; flex-direction: column; gap: 12px; font-size: 0.78rem;">
+        <!-- timeline events -->
+      </div>
+    </div>
+    <div class="pm-modal-footer">
+      <button type="button" class="pm-btn" onclick="closeModal('historyModal')">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Floating Toast Container ── -->
+<div id="toastContainer" class="pm-toast-container"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  /* =====================================================================
+     PRODUCT MAPPING LIVE POSTGRESQL CONTROLLER
+     Communicates with Django data_management API in real-time.
+     ===================================================================== */
+
+  let state = {
+    selectedBrandGroup: document.getElementById("brandGroupFilterSelect")?.value || "",
+    selectedStatus: "all",
+    selectedCategory: "ALL",
+    searchQuery: "",
+    sortColumn: "sku",
+    sortAsc: true,
+    currentPage: 1,
+    pageSize: 25,
+    selectedSkuCodes: new Set(),
+    cachedCategories: []
+  };
+
+  let currentTableItems = [];
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // If brand group select exists, use its value
+    const bgSelect = document.getElementById("brandGroupFilterSelect");
+    if (bgSelect && bgSelect.value) {
+      state.selectedBrandGroup = bgSelect.value;
+    }
+    fetchMappingData();
+  });
+
+  // 1. Core Fetcher from Database API
+  async function fetchMappingData() {
+    showTableLoading(true);
+    try {
+      const params = new URLSearchParams({
+        brand_group: state.selectedBrandGroup,
+        status: state.selectedStatus,
+        category: state.selectedCategory,
+        search: state.searchQuery,
+        page: state.currentPage,
+        page_size: state.pageSize,
+        sort_col: state.sortColumn,
+        sort_dir: state.sortAsc ? "asc" : "desc"
+      });
+
+      const res = await fetch(`/data_management/api/data/?${params.toString()}`);
+      if (!res.ok) throw new Error("Gagal mengambil data dari server");
+      const data = await res.json();
+
+      currentTableItems = data.items || [];
+      state.cachedCategories = data.categories || [];
+
+      updateKPIs(data.kpis);
+      updateCategoryDropdown(data.categories);
+      renderTable(data.items, data.total_items, data.total_pages, data.current_page, data.page_size);
+      updateBatchBar();
+
+    } catch (err) {
+      console.error("Fetch error:", err);
+      showToast("Gagal memuat data dari database: " + err.message, "warn");
+    } finally {
+      showTableLoading(false);
+    }
+  }
+
+  function showTableLoading(isLoading) {
+    const overlay = document.getElementById("tableLoadingOverlay");
+    if (overlay) {
+      overlay.classList.toggle("show", isLoading);
+    }
+  }
+
+  // 2. Update KPI Cards & Progress
+  function updateKPIs(kpis) {
+    if (!kpis) return;
+    const total = kpis.total || 0;
+    const mapped = kpis.mapped || 0;
+    const unmapped = kpis.unmapped || 0;
+    const pct = total > 0 ? Math.round((mapped / total) * 100) : 0;
+
+    document.getElementById("statTotalSkus").textContent = total.toLocaleString();
+    document.getElementById("statMappedSkus").textContent = mapped.toLocaleString();
+    document.getElementById("statPercentBadge").textContent = `${pct}%`;
+    document.getElementById("statProgressBar").style.width = `${pct}%`;
+    document.getElementById("statProgressText").textContent = `${mapped.toLocaleString()} dari ${total.toLocaleString()} SKU sudah punya category`;
+    document.getElementById("statUnmappedSkus").textContent = unmapped.toLocaleString();
+    document.getElementById("statTotalCategories").textContent = (kpis.categories_count || 0).toLocaleString();
+
+    document.getElementById("pillCountAll").textContent = total.toLocaleString();
+    document.getElementById("pillCountUnmapped").textContent = unmapped.toLocaleString();
+    document.getElementById("pillCountMapped").textContent = mapped.toLocaleString();
+  }
+
+  // 3. Update Category Dropdowns in Toolbar & Batch Bar
+  function updateCategoryDropdown(categories) {
+    const list = document.getElementById("categoryOptionsList");
+    if (list) {
+      const currentVal = state.selectedCategory;
+      const allActive = (currentVal === "ALL");
+      let html = `
+        <div class="bp2-dropdown-item ${allActive ? 'active' : ''}" data-value="ALL" onclick="selectCategory('ALL')">
+          <span class="bp2-option-text">Semua Product Category</span>
+          <i class="bi bi-check-lg bp2-single-check ${allActive ? '' : 'd-none'}"></i>
+        </div>
+      `;
+
+      (categories || []).forEach(cat => {
+        const isActive = (cat === currentVal);
+        html += `
+          <div class="bp2-dropdown-item ${isActive ? 'active' : ''}" data-value="${escapeHtml(cat)}" onclick="selectCategory(this.dataset.value)">
+            <span class="bp2-option-text">${escapeHtml(cat)}</span>
+            <i class="bi bi-check-lg bp2-single-check ${isActive ? '' : 'd-none'}"></i>
+          </div>
+        `;
+      });
+
+      list.innerHTML = html;
+
+      const labelEl = document.getElementById("categoryDropdownLabel");
+      if (labelEl) {
+        labelEl.textContent = (currentVal === "ALL" ? "Semua Category" : currentVal);
+      }
+    }
+
+    // Also update batch modal select if present
+    const batchSelect = document.getElementById("batchCategorySelect");
+    if (batchSelect) {
+      batchSelect.innerHTML = `<option value="">Pilih Category...</option>`;
+      (categories || []).forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        batchSelect.appendChild(opt);
+      });
+    }
+  }
+
+  // 4. Render Table
+  function renderTable(items, totalItems, totalPages, currentPage, pageSize) {
+    const tbody = document.getElementById("skuTableBody");
+    const emptyState = document.getElementById("tableEmptyState");
+    const tableFooter = document.querySelector(".pm-table-footer");
+
+    if (!items || items.length === 0) {
+      tbody.innerHTML = "";
+      emptyState.classList.remove("d-none");
+      tableFooter.classList.add("d-none");
+      return;
+    }
+
+    emptyState.classList.add("d-none");
+    tableFooter.classList.remove("d-none");
+
+    const startIdx = (currentPage - 1) * pageSize;
+    const endIdx = Math.min(startIdx + items.length, totalItems);
+    document.getElementById("paginationInfo").textContent = 
+      `Menampilkan ${startIdx + 1}-${endIdx} dari ${totalItems.toLocaleString()} SKU`;
+
+    renderPaginationControls(totalPages, currentPage);
+
+    tbody.innerHTML = items.map(item => {
+      const isChecked = state.selectedSkuCodes.has(item.sku);
+      const rowClass = isChecked ? "row-selected" : "";
+
+      let categoryBadgeHtml = "";
+      if (item.category) {
+        categoryBadgeHtml = `
+          <span class="pm-group-pill" title="Product Category: ${escapeHtml(item.category)}">
+            <i class="bi bi-tag-fill" style="font-size: 0.7rem;"></i> ${escapeHtml(item.category)}
+          </span>
+        `;
+      } else {
+        categoryBadgeHtml = `
+          <span class="pm-group-unmapped-badge" title="Belum Dipetakan">
+            <i class="bi bi-dash-circle"></i> Belum Dipetakan
+          </span>
+        `;
+      }
+
+      return `
+        <tr class="${rowClass}" data-sku="${escapeHtml(item.sku)}">
+          <td style="text-align: center;">
+            <input type="checkbox" class="pm-checkbox row-checkbox" data-sku="${escapeHtml(item.sku)}" ${isChecked ? "checked" : ""} onchange="handleRowCheckboxChange('${escapeHtml(item.sku)}', this.checked)">
+          </td>
+          <td>
+            <div class="pm-sku-badge pm-mono">
+              <span>${escapeHtml(item.sku)}</span>
+              <i class="bi bi-copy pm-sku-copy" onclick="copyToClipboard('${escapeHtml(item.sku)}')" title="Copy SKU Code"></i>
+            </div>
+          </td>
+          <td>
+            <div class="pm-product-name">${escapeHtml(item.name || "-")}</div>
+            <div class="pm-product-source-tag">
+              <i class="bi bi-database text-muted" style="font-size: 0.68rem;"></i>
+              <span>ProductMartSummary (any_value)</span>
+            </div>
+          </td>
+          <td>
+            <span class="pm-brand-badge">${escapeHtml(item.brand_group)}</span>
+          </td>
+          <td>
+            ${categoryBadgeHtml}
+          </td>
+          <td>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">${formatRelativeTime(item.last_updated)}</span>
+            <div style="font-size: 0.68rem; color: var(--text-faint);">${item.last_updated}</div>
+          </td>
+          <td>
+            <div class="pm-pic-badge">
+              <span class="pm-pic-avatar">${(item.pic || 'US').slice(0, 2)}</span>
+              <span>${escapeHtml(item.pic || 'system')}</span>
+            </div>
+          </td>
+          <td style="text-align: right;">
+            <div class="d-inline-flex gap-1">
+              <button type="button" class="pm-action-btn" onclick="openInlineEdit('${escapeHtml(item.sku)}')" title="Edit Category">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button type="button" class="pm-action-btn" onclick="openHistoryModal('${escapeHtml(item.sku)}')" title="Riwayat Mapping">
+                <i class="bi bi-clock-history"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    const allPageSkus = items.map(i => i.sku);
+    const masterCheckbox = document.getElementById("masterCheckbox");
+    if (allPageSkus.length > 0 && allPageSkus.every(sku => state.selectedSkuCodes.has(sku))) {
+      masterCheckbox.checked = true;
+      masterCheckbox.indeterminate = false;
+    } else if (allPageSkus.some(sku => state.selectedSkuCodes.has(sku))) {
+      masterCheckbox.checked = false;
+      masterCheckbox.indeterminate = true;
+    } else {
+      masterCheckbox.checked = false;
+      masterCheckbox.indeterminate = false;
+    }
+  }
+
+  function renderPaginationControls(totalPages, currentPage) {
+    const container = document.getElementById("paginationControls");
+    if (totalPages <= 1) {
+      container.innerHTML = "";
+      return;
+    }
+
+    let html = `
+      <button type="button" class="pm-page-btn" ${currentPage === 1 ? "disabled" : ""} onclick="goToPage(${currentPage - 1})">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+    `;
+
+    for (let p = 1; p <= totalPages; p++) {
+      if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
+        html += `
+          <button type="button" class="pm-page-btn ${p === currentPage ? "active" : ""}" onclick="goToPage(${p})">
+            ${p}
+          </button>
+        `;
+      } else if (p === currentPage - 2 || p === currentPage + 2) {
+        html += `<span style="padding: 0 4px; color: var(--text-muted); font-size: 0.75rem;">...</span>`;
+      }
+    }
+
+    html += `
+      <button type="button" class="pm-page-btn" ${currentPage === totalPages ? "disabled" : ""} onclick="goToPage(${currentPage + 1})">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    `;
+
+    container.innerHTML = html;
+  }
+
+  function goToPage(page) {
+    state.currentPage = page;
+    fetchMappingData();
+  }
+
+  function changePageSize(size) {
+    state.pageSize = parseInt(size, 10);
+    state.currentPage = 1;
+    fetchMappingData();
+  }
+
+  // 5. Toolbar Filter Handlers & BP2 Dropdown Controllers
+  function toggleDropdown(id) {
+    const wrap = document.getElementById(id);
+    if (!wrap) return;
+    const wasOpen = wrap.classList.contains("open");
+    document.querySelectorAll(".bp2-dropdown-wrap").forEach(w => w.classList.remove("open"));
+    if (!wasOpen) {
+      wrap.classList.add("open");
+      const searchInput = wrap.querySelector(".bp2-dropdown-search input");
+      if (searchInput) {
+        searchInput.value = "";
+        searchInput.focus();
+        const list = wrap.querySelector(".bp2-dropdown-options");
+        if (list) {
+          list.querySelectorAll(".bp2-dropdown-item").forEach(item => item.style.display = "flex");
+        }
+      }
+    }
+  }
+
+  function filterDropdownOptions(containerId, query) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const q = (query || "").toLowerCase();
+    container.querySelectorAll(".bp2-dropdown-item").forEach(item => {
+      const text = (item.querySelector(".bp2-option-text")?.textContent || "").toLowerCase();
+      item.style.display = text.includes(q) ? "flex" : "none";
+    });
+  }
+
+  function selectBrandGroup(bg) {
+    state.selectedBrandGroup = bg;
+    state.selectedCategory = "ALL";
+    state.currentPage = 1;
+    state.selectedSkuCodes.clear();
+
+    const label = document.getElementById("brandGroupDropdownLabel");
+    if (label) label.textContent = bg;
+
+    document.querySelectorAll("#brandGroupOptionsList .bp2-dropdown-item").forEach(item => {
+      const isMatch = item.getAttribute("data-value") === bg;
+      item.classList.toggle("active", isMatch);
+      const check = item.querySelector(".bp2-single-check");
+      if (check) check.classList.toggle("d-none", !isMatch);
+    });
+
+    document.getElementById("brandGroupDropdownWrap")?.classList.remove("open");
+    fetchMappingData();
+  }
+
+  function selectCategory(cat) {
+    state.selectedCategory = cat;
+    state.currentPage = 1;
+
+    const label = document.getElementById("categoryDropdownLabel");
+    if (label) label.textContent = (cat === "ALL" ? "Semua Category" : cat);
+
+    document.querySelectorAll("#categoryOptionsList .bp2-dropdown-item").forEach(item => {
+      const isMatch = item.getAttribute("data-value") === cat;
+      item.classList.toggle("active", isMatch);
+      const check = item.querySelector(".bp2-single-check");
+      if (check) check.classList.toggle("d-none", !isMatch);
+    });
+
+    document.getElementById("categoryDropdownWrap")?.classList.remove("open");
+    fetchMappingData();
+  }
+
+  function handleBrandGroupChange(bg) {
+    selectBrandGroup(bg);
+  }
+
+  function handleCategoryFilterChange(cat) {
+    selectCategory(cat);
+  }
+
+  function filterByStatus(status) {
+    state.selectedStatus = status;
+    state.currentPage = 1;
+    document.querySelectorAll(".pm-pill-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.status === status);
+    });
+    fetchMappingData();
+  }
+
+  let searchTimeout = null;
+  function handleSearchInput(val) {
+    state.searchQuery = val;
+    state.currentPage = 1;
+    document.getElementById("searchClearBtn").style.display = val ? "block" : "none";
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      fetchMappingData();
+    }, 300);
+  }
+
+  function clearSearch() {
+    document.getElementById("searchInput").value = "";
+    handleSearchInput("");
+  }
+
+  function resetAllFilters() {
+    state.selectedStatus = "all";
+    state.selectedCategory = "ALL";
+    state.searchQuery = "";
+
+    const catLabel = document.getElementById("categoryDropdownLabel");
+    if (catLabel) catLabel.textContent = "Semua Category";
+    document.querySelectorAll("#categoryOptionsList .bp2-dropdown-item").forEach(item => {
+      const isAll = item.getAttribute("data-value") === "ALL";
+      item.classList.toggle("active", isAll);
+      const check = item.querySelector(".bp2-single-check");
+      if (check) check.classList.toggle("d-none", !isAll);
+    });
+
+    document.getElementById("searchInput").value = "";
+    document.getElementById("searchClearBtn").style.display = "none";
+
+    document.querySelectorAll(".pm-pill-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.status === "all");
+    });
+
+    state.currentPage = 1;
+    fetchMappingData();
+    showToast("Filter berhasil di-reset", "info");
+  }
+
+  // Close dropdowns on outside click
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".bp2-dropdown-wrap")) {
+      document.querySelectorAll(".bp2-dropdown-wrap").forEach(w => w.classList.remove("open"));
+    }
+  });
+
+  function sortTable(column) {
+    if (state.sortColumn === column) {
+      state.sortAsc = !state.sortAsc;
+    } else {
+      state.sortColumn = column;
+      state.sortAsc = true;
+    }
+    fetchMappingData();
+  }
+
+  // 6. Multi-Select Batch Actions
+  function handleRowCheckboxChange(sku, checked) {
+    if (checked) {
+      state.selectedSkuCodes.add(sku);
+    } else {
+      state.selectedSkuCodes.delete(sku);
+    }
+    updateBatchBar();
+    // re-check master state
+    const allPageSkus = currentTableItems.map(i => i.sku);
+    const masterCheckbox = document.getElementById("masterCheckbox");
+    if (allPageSkus.length > 0 && allPageSkus.every(s => state.selectedSkuCodes.has(s))) {
+      masterCheckbox.checked = true;
+      masterCheckbox.indeterminate = false;
+    } else if (allPageSkus.some(s => state.selectedSkuCodes.has(s))) {
+      masterCheckbox.checked = false;
+      masterCheckbox.indeterminate = true;
+    } else {
+      masterCheckbox.checked = false;
+      masterCheckbox.indeterminate = false;
+    }
+  }
+
+  function toggleSelectAll(checked) {
+    currentTableItems.forEach(item => {
+      if (checked) {
+        state.selectedSkuCodes.add(item.sku);
+      } else {
+        state.selectedSkuCodes.delete(item.sku);
+      }
+    });
+    // Update individual checkboxes
+    document.querySelectorAll(".row-checkbox").forEach(cb => {
+      cb.checked = checked;
+      const tr = cb.closest("tr");
+      if (tr) tr.classList.toggle("row-selected", checked);
+    });
+    updateBatchBar();
+  }
+
+  function deselectAllRows() {
+    state.selectedSkuCodes.clear();
+    document.querySelectorAll(".row-checkbox").forEach(cb => {
+      cb.checked = false;
+      const tr = cb.closest("tr");
+      if (tr) tr.classList.remove("row-selected");
+    });
+    const masterCheckbox = document.getElementById("masterCheckbox");
+    if (masterCheckbox) {
+      masterCheckbox.checked = false;
+      masterCheckbox.indeterminate = false;
+    }
+    updateBatchBar();
+  }
+
+  function updateBatchBar() {
+    const bar = document.getElementById("batchActionBar");
+    const count = state.selectedSkuCodes.size;
+    if (count > 0) {
+      bar.classList.add("show");
+      document.getElementById("batchSelectedCount").textContent = `${count} SKU terpilih`;
+      document.getElementById("batchBrandGroupBadge").textContent = state.selectedBrandGroup;
+    } else {
+      bar.classList.remove("show");
+    }
+  }
+
+  async function applyBatchMapping() {
+    const categoryVal = document.getElementById("batchCategorySelect").value;
+    if (!categoryVal) {
+      showToast("Pilih Product Category tujuan terlebih dahulu!", "warn");
+      return;
+    }
+
+    const count = state.selectedSkuCodes.size;
+    const skuList = Array.from(state.selectedSkuCodes);
+    const clickTime = new Date();
+    clickTime.setMilliseconds(0);
+
+    try {
+      showTableLoading(true);
+      const res = await fetch("/data_management/api/batch/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brand_group: state.selectedBrandGroup,
+          sku_codes: skuList,
+          product_category: categoryVal,
+          load_timestamp: clickTime.toISOString()
+        })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        showToast(`Sukses memetakan ${data.updated_count} SKU ke category "${categoryVal}"!`, "success");
+        deselectAllRows();
+        fetchMappingData();
+      } else {
+        showToast("Gagal batch update: " + data.message, "warn");
+      }
+    } catch (err) {
+      showToast("Error batch update: " + err.message, "warn");
+    } finally {
+      showTableLoading(false);
+    }
+  }
+
+  async function clearBatchMapping() {
+    const count = state.selectedSkuCodes.size;
+    if (!confirm(`Yakin ingin mengosongkan Product Category untuk ${count} SKU terpilih?`)) {
+      return;
+    }
+
+    const skuList = Array.from(state.selectedSkuCodes);
+    const clickTime = new Date();
+    clickTime.setMilliseconds(0);
+
+    try {
+      showTableLoading(true);
+      const res = await fetch("/data_management/api/batch/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brand_group: state.selectedBrandGroup,
+          sku_codes: skuList,
+          clear: true,
+          load_timestamp: clickTime.toISOString()
+        })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        showToast(`Product Category untuk ${data.updated_count} SKU berhasil dikosongkan.`, "info");
+        deselectAllRows();
+        fetchMappingData();
+      } else {
+        showToast("Gagal mengosongkan category: " + data.message, "warn");
+      }
+    } catch (err) {
+      showToast("Error: " + err.message, "warn");
+    } finally {
+      showTableLoading(false);
+    }
+  }
+
+  // 7. Modals Open / Close Helpers
+  function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.add("show");
+  }
+
+  function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove("show");
+  }
+
+  function handleBackdropClick(e, id) {
+    if (e.target.id === id) closeModal(id);
+  }
+
+  // ── MODAL 1: EDIT MAPPING ──
+  function openInlineEdit(skuCode) {
+    const item = currentTableItems.find(i => i.sku === skuCode);
+    if (!item) return;
+
+    document.getElementById("editModalSkuCode").value = item.sku;
+    document.getElementById("editModalSkuCodeDisplay").textContent = item.sku;
+    document.getElementById("editModalBrandGroupDisplay").textContent = item.brand_group;
+    document.getElementById("editModalProductNameDisplay").textContent = item.name || "-";
+
+    const select = document.getElementById("editModalCategorySelect");
+    select.innerHTML = `<option value="">-- Pilih Product Category --</option>`;
+    state.cachedCategories.forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat;
+      opt.textContent = cat;
+      if (cat === item.category) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    const customInput = document.getElementById("editModalCategoryInput");
+    customInput.value = "";
+    customInput.classList.add("d-none");
+    document.getElementById("editToggleCustomLink").innerHTML = `<i class="bi bi-plus-circle"></i> Ketik Kategori Baru`;
+
+    openModal("editMappingModal");
+  }
+
+  function toggleEditCustomCategoryInput() {
+    const customInput = document.getElementById("editModalCategoryInput");
+    const link = document.getElementById("editToggleCustomLink");
+    const isHidden = customInput.classList.contains("d-none");
+    if (isHidden) {
+      customInput.classList.remove("d-none");
+      customInput.focus();
+      link.innerHTML = `<i class="bi bi-x-circle"></i> Batal Custom`;
+    } else {
+      customInput.classList.add("d-none");
+      customInput.value = "";
+      link.innerHTML = `<i class="bi bi-plus-circle"></i> Ketik Kategori Baru`;
+    }
+  }
+
+  async function saveEditMapping() {
+    const skuCode = document.getElementById("editModalSkuCode").value;
+    const customVal = document.getElementById("editModalCategoryInput").value.trim();
+    const selectVal = document.getElementById("editModalCategorySelect").value;
+    const finalCategory = customVal || selectVal;
+
+    if (!finalCategory) {
+      showToast("Pilih atau ketik Product Category!", "warn");
+      return;
+    }
+
+    const clickTime = new Date();
+    clickTime.setMilliseconds(0);
+
+    try {
+      const res = await fetch("/data_management/api/save/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brand_group: state.selectedBrandGroup,
+          sku_code: skuCode,
+          product_category: finalCategory,
+          load_timestamp: clickTime.toISOString()
+        })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        closeModal("editMappingModal");
+        showToast(`SKU ${skuCode} berhasil disimpan ke database sebagai "${finalCategory}"!`, "success");
+        fetchMappingData();
+      } else {
+        showToast("Gagal menyimpan mapping: " + data.message, "warn");
+      }
+    } catch (err) {
+      showToast("Error simpan: " + err.message, "warn");
+    }
+  }
+
+  // ── MODAL 2: ADD NEW SKU MAPPING ──
+  function openAddSkuModal() {
+    const bgSelect = document.getElementById("addSkuBrandGroup");
+    if (bgSelect) bgSelect.value = state.selectedBrandGroup;
+    document.getElementById("addSkuCode").value = "";
+    document.getElementById("addSkuCategory").value = "";
+    openModal("addSkuModal");
+  }
+
+  function handleAddSkuBrandGroupChange(bg) {}
+
+  async function saveNewSku() {
+    const bg = document.getElementById("addSkuBrandGroup").value;
+    const sku = document.getElementById("addSkuCode").value.trim();
+    const cat = document.getElementById("addSkuCategory").value.trim();
+
+    if (!bg || !sku || !cat) {
+      showToast("Semua field wajib diisi!", "warn");
+      return;
+    }
+
+    const clickTime = new Date();
+    clickTime.setMilliseconds(0);
+
+    try {
+      const res = await fetch("/data_management/api/save/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brand_group: bg,
+          sku_code: sku,
+          product_category: cat,
+          load_timestamp: clickTime.toISOString()
+        })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        closeModal("addSkuModal");
+        showToast(`SKU ${sku} berhasil disimpan ke database!`, "success");
+        if (bg === state.selectedBrandGroup) {
+          fetchMappingData();
+        } else {
+          state.selectedBrandGroup = bg;
+          document.getElementById("brandGroupFilterSelect").value = bg;
+          fetchMappingData();
+        }
+      } else {
+        showToast("Gagal: " + data.message, "warn");
+      }
+    } catch (err) {
+      showToast("Error: " + err.message, "warn");
+    }
+  }
+
+  // ── MODAL 3: BULK IMPORT EXCEL ONLY ──
+  let parsedExcelRows = [];
+
+  function openUploadModal() {
+    document.getElementById("uploadPreviewSection").classList.add("d-none");
+    document.getElementById("btnConfirmImport").classList.add("d-none");
+    document.getElementById("fileUploadInput").value = "";
+    const alertEl = document.getElementById("uploadProgressAlert");
+    if (alertEl) alertEl.classList.add("d-none");
+    parsedExcelRows = [];
+    openModal("uploadModal");
+  }
+
+  function triggerFileInput() {
+    document.getElementById("fileUploadInput").click();
+  }
+
+  function handleFileSelected(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        // raw: false ensures strings and numbers keep exact text formatting (preserves leading zeroes)
+        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, defval: "" });
+
+        if (json.length < 2) {
+          showToast("File Excel kosong atau tidak memiliki baris data!", "warn");
+          return;
+        }
+
+        const headers = json[0].map(h => String(h || "").trim().toLowerCase());
+        
+        // Robust header detection
+        let skuIdx = headers.findIndex(h => h === "sku_code" || h === "sku");
+        if (skuIdx === -1) skuIdx = headers.findIndex(h => h.includes("sku"));
+
+        let bgIdx = headers.findIndex(h => h === "brand_group" || h === "brand");
+        if (bgIdx === -1) bgIdx = headers.findIndex(h => h.includes("brand"));
+
+        let nameIdx = headers.findIndex((h, idx) => idx !== skuIdx && (h.includes("name") || h.includes("nama") || h.includes("reference") || h.includes("title")));
+
+        // Match category/group, BUT strictly exclude the brand column and name column indices!
+        let catIdx = headers.findIndex((h, idx) => idx !== bgIdx && idx !== skuIdx && idx !== nameIdx && 
+          (h === "product_category" || h === "product_group" || h === "category" || h === "group" || h === "kategori"));
+        if (catIdx === -1) {
+          catIdx = headers.findIndex((h, idx) => idx !== bgIdx && idx !== skuIdx && idx !== nameIdx && 
+            (h.includes("category") || h.includes("group") || h.includes("kategori")));
+        }
+
+        if (skuIdx === -1 || catIdx === -1) {
+          showToast("Kolom wajib (sku_code dan product_category) tidak lengkap di Excel!", "warn");
+          return;
+        }
+
+        const defaultBg = state.selectedBrandGroup || "mars";
+        parsedExcelRows = [];
+        const seenSkus = new Set();
+        let duplicateCount = 0;
+        let scientificCount = 0;
+
+        for (let i = 1; i < json.length; i++) {
+          const row = json[i];
+          if (!row || row.length === 0) continue;
+          const sku = String(row[skuIdx] || "").trim();
+          const bg = bgIdx !== -1 ? String(row[bgIdx] || "").trim() : defaultBg;
+          const cat = String(row[catIdx] || "").trim();
+
+          if (sku && cat) {
+            const finalBg = bg || defaultBg;
+            const key = finalBg.toLowerCase() + "|||" + sku.toLowerCase();
+            if (seenSkus.has(key)) {
+              duplicateCount++;
+            } else {
+              seenSkus.add(key);
+            }
+
+            // Detect scientific notation (e.g. 1.72938E+18) or truncated float zeroes
+            const isScientific = /[0-9]e\+[0-9]+/i.test(sku);
+            const isTruncatedZeroes = (/^\d{16,}$/.test(sku) && sku.endsWith("0000"));
+            const isCorrupted = isScientific || isTruncatedZeroes;
+
+            if (isCorrupted) {
+              scientificCount++;
+            }
+
+            parsedExcelRows.push({
+              sku_code: sku,
+              brand_group: finalBg,
+              product_category: cat,
+              is_corrupted: isCorrupted,
+              corrupted_reason: isScientific ? "Format E+18" : (isTruncatedZeroes ? "Angka terpotong ...0000" : "")
+            });
+          }
+        }
+
+        if (parsedExcelRows.length === 0) {
+          showToast("Tidak ditemukan baris valid pada file Excel!", "warn");
+          return;
+        }
+
+        document.getElementById("previewCount").textContent = parsedExcelRows.length;
+        const uniqueCountEl = document.getElementById("previewUniqueCount");
+        if (uniqueCountEl) uniqueCountEl.textContent = seenSkus.size;
+
+        const dupBadge = document.getElementById("previewDupBadge");
+        if (dupBadge) {
+          if (duplicateCount > 0) {
+            dupBadge.classList.remove("d-none");
+            dupBadge.textContent = `${duplicateCount} Baris Duplikat SKU (di-merge)`;
+          } else {
+            dupBadge.classList.add("d-none");
+          }
+        }
+
+        // Scientific / Corrupted SKU alert banner
+        const scientificAlert = document.getElementById("uploadScientificAlert");
+        if (scientificAlert) {
+          if (scientificCount > 0) {
+            scientificAlert.classList.remove("d-none");
+            scientificAlert.innerHTML = `
+              <div class="p-3" style="background: rgba(239, 68, 68, 0.12); border: 1px solid var(--danger); border-radius: var(--radius-sm); font-size: 0.78rem;">
+                <div class="d-flex align-items-center gap-2 mb-1" style="color: var(--danger); font-weight: 700;">
+                  <i class="bi bi-exclamation-octagon-fill"></i>
+                  <span>Terdeteksi ${scientificCount} SKU Rusak / Scientific Notation (E+ / ...0000)</span>
+                </div>
+                <div style="color: var(--text-primary); line-height: 1.4;">
+                  Excel telah memotong digit belakang SKU tersebut menjadi <code>00000</code> sehingga tidak cocok dengan katalog database asli.
+                  <br>
+                  <strong style="color: var(--orange);">Solusi Terbaik:</strong> Download <strong>"Template Excel Pre-filled"</strong> dari tombol di atas. File tersebut sudah berisi seluruh SKU katalog dari database dengan format Text murni tanpa perlu copy-paste manual.
+                </div>
+              </div>
+            `;
+          } else {
+            scientificAlert.classList.add("d-none");
+          }
+        }
+
+        const tbody = document.getElementById("previewTableBody");
+        tbody.innerHTML = parsedExcelRows.slice(0, 50).map(r => `
+          <tr style="${r.is_corrupted ? 'background: rgba(239, 68, 68, 0.08);' : ''}">
+            <td class="pm-mono fw-bold">
+              ${escapeHtml(r.sku_code)}
+              ${r.is_corrupted ? `<span class="badge bg-danger ms-1" style="font-size: 0.65rem;">⚠️ ${escapeHtml(r.corrupted_reason)}</span>` : ''}
+            </td>
+            <td><span class="pm-brand-badge">${escapeHtml(r.brand_group)}</span></td>
+            <td><span class="pm-group-pill" style="pointer-events:none;"><i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i> ${escapeHtml(r.product_category)}</span></td>
+            <td>
+              ${r.is_corrupted 
+                ? `<span class="badge bg-danger" style="font-size: 0.68rem;" title="Digit asli telah dipotong Excel menjadi 0000">Rusak (E+)</span>` 
+                : `<span class="badge bg-success" style="font-size: 0.68rem;">Valid</span>`}
+            </td>
+          </tr>
+        `).join("");
+
+        document.getElementById("uploadPreviewSection").classList.remove("d-none");
+        document.getElementById("btnConfirmImport").classList.remove("d-none");
+        
+        if (scientificCount > 0) {
+          showToast(`Perhatian: Ditemukan ${scientificCount} SKU berformat E+ atau angka terpotong!`, "warn");
+        } else {
+          showToast(`File "${file.name}" berhasil dibaca (${parsedExcelRows.length} baris, ${seenSkus.size} SKU unik)`, "info");
+        }
+
+      } catch (err) {
+        console.error("Error reading Excel:", err);
+        showToast("Gagal membaca file Excel. Pastikan format .xlsx valid!", "warn");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  async function confirmImport() {
+    if (parsedExcelRows.length === 0) return;
+
+    if (parsedExcelRows.some(r => r.is_corrupted)) {
+      const corruptCount = parsedExcelRows.filter(r => r.is_corrupted).length;
+      const proceed = confirm(
+        `PERINGATAN INTEGRITAS DATA:\n\n` +
+        `Ditemukan ${corruptCount} baris SKU yang berformat Scientific Notation (E+) atau terpotong ...0000 oleh Excel.\n\n` +
+        `Digit asli di belakangnya telah hilang saat disimpan oleh Excel (menjadi 00000), sehingga TIDAK AKAN cocok dengan katalog produk asli di database.\n\n` +
+        `Disarankan untuk klik "Batal", lalu gunakan tombol "Template Excel Pre-filled" untuk mengedit kategori.\n\n` +
+        `Apakah Anda tetap ingin memaksakan simpan ke database?`
+      );
+      if (!proceed) return;
+    }
+
+    const btn = document.getElementById("btnConfirmImport");
+    const closeBtns = document.querySelectorAll("#uploadModal .pm-modal-close, #uploadModal .pm-modal-footer .pm-btn:not(#btnConfirmImport)");
+
+    // Record the exact click timestamp down to seconds
+    const clickTime = new Date();
+    clickTime.setMilliseconds(0);
+    const loadTimestamp = clickTime.toISOString();
+
+    // Disable button & show spinner immediately
+    btn.disabled = true;
+    const originalBtnHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Menyimpan ke Database...`;
+    closeBtns.forEach(b => b.disabled = true);
+
+    const alertEl = document.getElementById("uploadProgressAlert");
+    if (alertEl) {
+      alertEl.classList.remove("d-none");
+      alertEl.innerHTML = `
+        <div class="d-flex align-items-center gap-2 p-3" style="background: rgba(249,115,22,0.1); border: 1px solid var(--orange); border-radius: var(--radius-sm); color: var(--text-primary); font-size: 0.8rem;">
+          <span class="spinner-border spinner-border-sm text-warning" role="status"></span>
+          <span>Sedang memproses <strong>${parsedExcelRows.length}</strong> baris ke database. Mohon tunggu...</span>
+        </div>
+      `;
+    }
+
+    try {
+      showToast("Menyimpan data Excel ke Database...", "info");
+      const res = await fetch("/data_management/api/import-excel/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rows: parsedExcelRows,
+          load_timestamp: loadTimestamp
+        })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        closeModal("uploadModal");
+        showToast(data.message || `Berhasil menyimpan ${data.imported_count} baris mapping ke database!`, "success");
+        fetchMappingData();
+      } else {
+        showToast("Gagal import: " + data.message, "warn");
+      }
+    } catch (err) {
+      showToast("Error saat import: " + err.message, "warn");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnHtml;
+      closeBtns.forEach(b => b.disabled = false);
+      if (alertEl) alertEl.classList.add("d-none");
+    }
+  }
+
+  // Download Lightweight Excel (.xlsx) Template with whole-column Text formatting generated via openpyxl
+  function downloadTemplateExcel() {
+    const activeBg = state.selectedBrandGroup || "mars";
+    showToast("Mengunduh template Excel (.xlsx)...", "info");
+    const downloadUrl = `/data_management/api/download-template/?brand_group=${encodeURIComponent(activeBg)}`;
+    
+    // Trigger direct browser download
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `template_sku_product_category_${activeBg}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // ── MODAL 4: MANAGE CATEGORIES PER BRAND GROUP ──
+  function openManageCategoriesModal() {
+    const bgSelect = document.getElementById("manageBrandGroupSelect");
+    if (bgSelect) bgSelect.value = state.selectedBrandGroup;
+    loadCategoriesList(state.selectedBrandGroup);
+    openModal("manageCategoriesModal");
+  }
+
+  async function loadCategoriesList(bg) {
+    if (!bg) bg = state.selectedBrandGroup;
+    const tbody = document.getElementById("categoriesListBody");
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-muted">Memuat kategori...</td></tr>`;
+
+    try {
+      const res = await fetch(`/data_management/api/categories/?brand_group=${encodeURIComponent(bg)}`);
+      const data = await res.json();
+      const cats = data.categories || [];
+
+      document.getElementById("manageCountText").textContent = `${cats.length} Kategori terdaftar untuk ${bg}`;
+
+      if (cats.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="text-center py-4 text-muted">
+              Belum ada Product Category yang terdaftar untuk brand group <strong>${escapeHtml(bg)}</strong>.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = cats.map(c => `
+        <tr>
+          <td><span class="pm-brand-badge">${escapeHtml(bg)}</span></td>
+          <td>
+            <span class="pm-group-pill" style="pointer-events: none;">
+              <i class="bi bi-tag-fill" style="font-size: 0.7rem;"></i> ${escapeHtml(c.name)}
+            </span>
+          </td>
+          <td style="text-align: center;">
+            <span class="badge" style="background: var(--surface-muted); color: var(--text-primary); border: 1px solid var(--glass-border); font-size: 0.75rem;">
+              ${c.count} SKU
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <button type="button" class="pm-action-btn" style="color: var(--danger);" data-name="${escapeHtml(c.name)}" onclick="deleteCategoryFromDB('${escapeHtml(bg)}', this.dataset.name)" title="Hapus Category untuk ${escapeHtml(bg)}">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `).join("");
+
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-danger">Gagal memuat kategori</td></tr>`;
+    }
+  }
+
+  async function deleteCategoryFromDB(bg, catName) {
+    if (!confirm(`Hapus Product Category "${catName}" untuk brand group "${bg}"? SKU yang ter-assign ke kategori ini akan menjadi unmapped.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch("/data_management/api/categories/delete/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brand_group: bg, category: catName })
+      });
+      const data = await res.json();
+      if (data.status === "success") {
+        showToast(data.message, "info");
+        loadCategoriesList(bg);
+        fetchMappingData();
+      } else {
+        showToast("Gagal: " + data.message, "warn");
+      }
+    } catch (err) {
+      showToast("Error: " + err.message, "warn");
+    }
+  }
+
+  // ── MODAL 5: AUDIT LOG ──
+  function openHistoryModal(skuCode) {
+    const item = currentTableItems.find(i => i.sku === skuCode);
+    if (!item) return;
+
+    document.getElementById("historySkuCode").textContent = item.sku;
+    document.getElementById("historyProductName").textContent = item.name || "-";
+
+    const timeline = document.getElementById("historyTimeline");
+    timeline.innerHTML = `
+      <div class="d-flex gap-3 align-items-start">
+        <div class="pm-pic-avatar" style="width: 26px; height: 26px;">${(item.pic || 'US').slice(0, 2)}</div>
+        <div style="flex: 1;">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong>${escapeHtml(item.pic || 'System')}</strong>
+            <span style="color: var(--text-faint); font-size: 0.7rem;">${item.last_updated}</span>
+          </div>
+          <div style="color: var(--text-sub); margin-top: 2px;">
+            ${item.category ? `Dipetakan ke Product Category <strong>"${escapeHtml(item.category)}"</strong> untuk brand group <strong>${escapeHtml(item.brand_group)}</strong>.` : `Belum terpetakan (Unmapped).`}
+          </div>
+        </div>
+      </div>
+      <div class="d-flex gap-3 align-items-start" style="opacity: 0.75;">
+        <div class="pm-pic-avatar" style="width: 26px; height: 26px; background: var(--surface-muted); color: var(--text-muted);">PM</div>
+        <div style="flex: 1;">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong>ProductMartSummary Catalog</strong>
+            <span style="color: var(--text-faint); font-size: 0.7rem;">Database Source</span>
+          </div>
+          <div style="color: var(--text-sub); margin-top: 2px;">
+            Terdeteksi dari tabel transaksi order dengan nama: <em>"${escapeHtml(item.name || '-')}"</em>.
+          </div>
+        </div>
+      </div>
+    `;
+
+    openModal("historyModal");
+  }
+
+  // 8. Utilities
+  function showToast(message, type = "success") {
+    const container = document.getElementById("toastContainer");
+    const toast = document.createElement("div");
+    toast.className = `pm-toast ${type}`;
+
+    let icon = "bi-check-circle-fill text-success";
+    if (type === "warn") icon = "bi-exclamation-triangle-fill text-warning";
+    if (type === "info") icon = "bi-info-circle-fill text-primary";
+
+    toast.innerHTML = `
+      <i class="bi ${icon}" style="font-size: 1.1rem;"></i>
+      <span>${escapeHtml(message)}</span>
+    `;
+
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(10px)";
+      toast.style.transition = "all 0.25s ease";
+      setTimeout(() => toast.remove(), 250);
+    }, 3400);
+  }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(`SKU Code "${text}" disalin ke clipboard!`, "info");
+    });
+  }
+
+  function formatRelativeTime(dateStr) {
+    if (!dateStr || dateStr === "-") return "-";
+    const parts = dateStr.trim().split(" ");
+    if (parts.length !== 2) return dateStr;
+    const [y, m, d] = parts[0].split("-").map(Number);
+    const [h, min] = parts[1].split(":").map(Number);
+    if (!y || !m || !d) return dateStr;
+
+    const date = new Date(y, m - 1, d, h || 0, min || 0);
+    if (isNaN(date.getTime())) return dateStr;
+
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHours = Math.floor(diffMin / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMin < 1) return "Baru saja";
+    if (diffMin < 60) return `${diffMin} menit lalu`;
+    if (diffHours < 24) return `${diffHours} jam lalu`;
+    if (diffDays === 1) return "Kemarin";
+    if (diffDays < 7) return `${diffDays} hari lalu`;
+    return parts[0];
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+</script>
+{% endblock %}

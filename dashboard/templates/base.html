@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!--
       ==========================================================================
@@ -34,94 +34,93 @@
     -->
     <style>
       :root, [data-theme="light"] {
-        --bg-page:        #F8F9FA;
+        --bg-page:        #F8FAFC;
         --card-bg:        #FFFFFF;
-        --glass-hover:    #FAFAFA;
-        --glass-border:   #E4E7EB;
-        --glass-border-h: #FF7A00;
+        --glass-hover:    #F1F5F9;
+        --glass-border:   #E2E8F0;
+        --glass-border-h: #FF6B00;
 
-        /* "accent" tokens — kept named --orange* for backward compatibility
-           with existing page CSS; the VALUE is what changes per theme. */
-        --orange:         #FF7A00;
-        --orange-bright:  #D96500;
-        --orange-dim:     rgba(255, 122, 0, 0.06);
-        --orange-glow:    rgba(255, 122, 0, 0.12);
+        /* Jetcommerce Signature Signal Orange Palette */
+        --orange:         #FF6B00;
+        --orange-bright:  #E05300;
+        --orange-dim:     rgba(255, 107, 0, 0.08);
+        --orange-glow:    rgba(255, 107, 0, 0.16);
         --orange-deep:    #CC4400;
-        --orange-light:   #FFB347;
+        --orange-light:   #FF9447;
 
-        --accent-2:       #FF9500;
-        --accent-2-light: #FFCC44;
-        --accent-3:       #FF5500;
-        --accent-3-light: #FF8844;
+        --accent-2:       #0284C7;
+        --accent-2-light: #38BDF8;
+        --accent-3:       #7C3AED;
+        --accent-3-light: #A78BFA;
 
-        --text-primary:   #1F2937;
-        --text-sub:       #4B5563;
-        --text-muted:     #6B7280;
-        --text-faint:     #9CA3AF;
+        --text-primary:   #0F172A;
+        --text-sub:       #334155;
+        --text-muted:     #64748B;
+        --text-faint:     #94A3B8;
 
-        --success:        #059669;
-        --success-bg:     #E6F4EA;
-        --danger:         #DC2626;
-        --danger-bg:      #FCE8E6;
-        --warn:           #B45F06;
-        --warn-bg:        #FFF4E0;
+        --success:        #10B981;
+        --success-bg:     rgba(16, 185, 129, 0.10);
+        --danger:         #F43F5E;
+        --danger-bg:      rgba(244, 63, 94, 0.10);
+        --warn:           #F59E0B;
+        --warn-bg:        rgba(245, 158, 11, 0.10);
 
-        --surface-muted:       #F3F4F6;
-        --surface-muted-hover: #E5E7EB;
+        --surface-muted:       #F1F5F9;
+        --surface-muted-hover: #E2E8F0;
 
-        --radius:         12px;
+        --radius:         14px;
         --radius-sm:      8px;
-        --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
-        --shadow-md:      0 10px 20px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04);
+        --shadow-sm:      0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+        --shadow-md:      0 10px 24px -4px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
 
         --page-bg-gradient:
-          radial-gradient(ellipse 70% 45% at 85% 5%,  rgba(255,100,0,0.13) 0%, transparent 70%),
-          radial-gradient(ellipse 55% 35% at 5%  90%, rgba(200, 60,0,0.13) 0%, transparent 70%),
-          #fffcfb;
+          radial-gradient(ellipse 70% 45% at 85% 5%,  rgba(255,107,0,0.06) 0%, transparent 70%),
+          radial-gradient(ellipse 55% 35% at 5%  90%, rgba(224,83,0,0.04) 0%, transparent 70%),
+          #F8FAFC;
       }
 
-      /* ── DARK MODE — TickerWatch-style: dark glassmorphism + green accent ── */
+      /* ── DARK MODE — Jetcommerce Carbon Slate + Brand Signal Orange ── */
       [data-theme="dark"] {
-        --bg-page:        #0A0E14;
-        --card-bg:        #121826;
-        --glass-hover:    #182032;
-        --glass-border:   rgba(34, 197, 94, 0.14);
-        --glass-border-h: #22C55E;
+        --bg-page:        #0D111A;
+        --card-bg:        #141B28;
+        --glass-hover:    #1A2334;
+        --glass-border:   rgba(255, 255, 255, 0.075);
+        --glass-border-h: rgba(255, 107, 0, 0.55);
 
-        --orange:         #22C55E;
-        --orange-bright:  #4ADE80;
-        --orange-dim:     rgba(34, 197, 94, 0.10);
-        --orange-glow:    rgba(34, 197, 94, 0.20);
-        --orange-deep:    #15803D;
-        --orange-light:   #86EFAC;
+        --orange:         #FF6B00;
+        --orange-bright:  #FF7D1A;
+        --orange-dim:     rgba(255, 107, 0, 0.12);
+        --orange-glow:    rgba(255, 107, 0, 0.24);
+        --orange-deep:    #EA580C;
+        --orange-light:   #FDBA74;
 
-        --accent-2:       #0EA5E9;
-        --accent-2-light: #38BDF8;
-        --accent-3:       #A3E635;
-        --accent-3-light: #BEF264;
+        --accent-2:       #38BDF8;
+        --accent-2-light: #7DD3FC;
+        --accent-3:       #A855F7;
+        --accent-3-light: #C084FC;
 
-        --text-primary:   #E7ECF6;
-        --text-sub:       #A8B3C7;
-        --text-muted:     #6B7A99;
-        --text-faint:     #4A5568;
+        --text-primary:   #F8FAFC;
+        --text-sub:       #94A3B8;
+        --text-muted:     #64748B;
+        --text-faint:     #475569;
 
-        --success:        #2DD4BF;
-        --success-bg:     rgba(45, 212, 191, 0.12);
-        --danger:         #F87171;
-        --danger-bg:      rgba(248, 113, 113, 0.12);
-        --warn:           #FBBF24;
-        --warn-bg:        rgba(251, 191, 36, 0.12);
+        --success:        #10B981;
+        --success-bg:     rgba(16, 185, 129, 0.12);
+        --danger:         #F43F5E;
+        --danger-bg:      rgba(244, 63, 94, 0.12);
+        --warn:           #F59E0B;
+        --warn-bg:        rgba(245, 158, 11, 0.12);
 
-        --surface-muted:       #182032;
-        --surface-muted-hover: #202B44;
+        --surface-muted:       #172030;
+        --surface-muted-hover: #1E2A3E;
 
-        --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25);
-        --shadow-md:      0 10px 24px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+        --shadow-sm:      0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.25);
+        --shadow-md:      0 12px 28px -4px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.35);
 
         --page-bg-gradient:
-          radial-gradient(ellipse 65% 40% at 88% 0%,  rgba(34,197,94,0.10) 0%, transparent 70%),
-          radial-gradient(ellipse 55% 35% at 4%  95%, rgba(16,185,129,0.08) 0%, transparent 70%),
-          #0A0E14;
+          radial-gradient(ellipse 65% 40% at 88% 0%,  rgba(255,107,0,0.07) 0%, transparent 70%),
+          radial-gradient(ellipse 55% 35% at 4%  95%, rgba(234,88,12,0.05) 0%, transparent 70%),
+          #0D111A;
       }
 
       html, body, .app-wrapper,
@@ -132,11 +131,48 @@
       }
       body, html {
         color: var(--text-primary);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
       /* hapus bg putih dari container AdminLTE */
       .bg-body-tertiary { background: transparent !important; }
       .app-content      { background: transparent !important; }
+
+      /* Sleek Modern Scrollbars */
+      ::-webkit-scrollbar {
+        width: 7px;
+        height: 7px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(156, 163, 175, 0.35);
+        border-radius: 999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(156, 163, 175, 0.6);
+      }
+      [data-theme="dark"] ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.16);
+      }
+      [data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.32);
+      }
+
+      /* Tabular figures for alignment of financial and analytics metrics */
+      .tabular-nums,
+      .metric-value,
+      .bp2-metric-num,
+      .kpi-value,
+      table td.text-end,
+      table th.text-end,
+      .bp2-growth-badge,
+      .badge-kpi {
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "tnum" 1;
+      }
 
       /* ── SHARED CARD / LAYOUT PRIMITIVES (used by every dashboard page) ── */
       .bp-header {
@@ -336,8 +372,9 @@
       transform: translateX(0);
       transition: transform .2s ease, background .2s;
       }
+      .theme-switch input:checked + .theme-switch-track .theme-switch-thumb,
       .theme-switch input:checked ~ .theme-switch-track .theme-switch-thumb {
-      transform: translateX(22px);
+        transform: translateX(22px);
       }
 
       /* ── metric / KPI cards ── */
@@ -698,24 +735,24 @@
   function getThemeChartColors(theme) {
     const dark = theme === 'dark';
     return {
-      text:          dark ? '#A8B3C7' : '#4B5563',
-      textMuted:     dark ? '#6B7A99' : '#6B7280',
-      grid:          dark ? 'rgba(255,255,255,0.06)' : '#F3F4F6',
-      tooltipBg:     dark ? '#0F1729' : '#FFFFFF',
-      tooltipBorder: dark ? '#22314D' : '#E4E7EB',
-      tooltipTitle:  dark ? '#8B9BB4' : '#6B7280',
-      tooltipBody:   dark ? '#E7ECF6' : '#1F2937',
-      accent:        dark ? '#22C55E' : '#FF7A00',
-      accentBright:  dark ? '#4ADE80' : '#D96500',
-      accent2:       dark ? '#0EA5E9' : '#FF9500',
-      accent3:       dark ? '#A3E635' : '#FF5500',
+      text:          dark ? '#94A3B8' : '#475569',
+      textMuted:     dark ? '#64748B' : '#64748B',
+      grid:          dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+      tooltipBg:     dark ? '#111622' : '#FFFFFF',
+      tooltipBorder: dark ? 'rgba(255,255,255,0.12)' : '#E2E8F0',
+      tooltipTitle:  dark ? '#94A3B8' : '#64748B',
+      tooltipBody:   dark ? '#F1F5F9' : '#1E293B',
+      accent:        '#FF7A00',
+      accentBright:  '#FF9500',
+      accent2:       dark ? '#38BDF8' : '#FF9500',
+      accent3:       dark ? '#A855F7' : '#FF5500',
       good:          '#10B981',
-      warn:          dark ? '#F59E0B' : '#FF9500',
-      bad:           '#EF4444',
-      donutBorder:   dark ? '#121826' : '#FFFFFF',
+      warn:          '#F59E0B',
+      bad:           '#F43F5E',
+      donutBorder:   dark ? '#111622' : '#FFFFFF',
       palette:       dark
-        ? ['#22C55E', '#4ADE80', '#16A34A', '#86EFAC', '#15803D', '#0EA5E9', '#A3E635']
-        : ['#FF7A00', '#FFB347', '#CC4400', '#FF9500', '#FFCC44', '#FF5500', '#D96500'],
+        ? ['#FF7A00', '#38BDF8', '#F59E0B', '#A855F7', '#10B981', '#F43F5E', '#94A3B8']
+        : ['#FF7A00', '#FF9500', '#38BDF8', '#10B981', '#A855F7', '#F43F5E', '#D96500'],
     };
   }
 

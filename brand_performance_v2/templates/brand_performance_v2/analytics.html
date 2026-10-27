@@ -4175,35 +4175,27 @@
             M</button>
         </div>
 
-        <!-- Custom Multi-select: Brand Group -->
+        <!-- Single-select: Brand Group -->
         <div class="bp2-dropdown-wrap {% if dimension == 'brand' %}d-none{% endif %}" id="brandGroupDropdownWrap">
           <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="brandGroupDropdownTrigger"
-            aria-haspopup="true" aria-expanded="false" title="Filter brand groups">
+            aria-haspopup="true" aria-expanded="false" title="Filter brand group">
             <i class="bi bi-collection"></i>
-            <span class="bp2-dropdown-label" id="brandGroupDropdownLabel">All brand groups</span>
-            <span class="bp2-dropdown-badge" id="brandGroupDropdownBadge" style="display:none">0</span>
+            <span class="bp2-dropdown-label" id="brandGroupDropdownLabel">{{ selected_brand_group }}</span>
             <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
           </button>
           <div class="bp2-dropdown-menu" id="brandGroupDropdownMenu">
             <div class="bp2-dropdown-search">
               <i class="bi bi-search"></i>
-              <input type="text" id="brandGroupSearchInput" placeholder="Search brand groups…" autocomplete="off">
-            </div>
-            <div class="bp2-dropdown-actions">
-              <button type="button" class="bp2-dropdown-action-btn" id="brandGroupSelectAll">Select all</button>
-              <button type="button" class="bp2-dropdown-action-btn" id="brandGroupClearAll">Clear</button>
+              <input type="text" id="brandGroupSearchInput" placeholder="Search brand group…" autocomplete="off">
             </div>
             <div class="bp2-dropdown-options" id="brandGroupOptionsList">
               {% for bg in brand_groups %}
-              <label class="bp2-dropdown-option" data-value="{{ bg }}">
-                <input type="checkbox" value="{{ bg }}" {% if bg in selected_brand_groups or bg == selected_brand_group and selected_brand_group != "All" %}checked{% endif %}>
-                <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
+              <div class="bp2-dropdown-item {% if bg == selected_brand_group %}active{% endif %}" data-value="{{ bg }}"
+                onclick="selectSingleBrandGroup('{{ bg|escapejs }}')">
                 <span class="bp2-option-text">{{ bg }}</span>
-              </label>
+                <i class="bi bi-check-lg bp2-single-check {% if bg != selected_brand_group %}d-none{% endif %}"></i>
+              </div>
               {% endfor %}
-            </div>
-            <div class="bp2-dropdown-footer">
-              <button type="button" class="bp2-dropdown-apply-btn" id="brandGroupApplyBtn">Apply</button>
             </div>
           </div>
         </div>
@@ -5439,7 +5431,6 @@
   // Dimension & Filter states
   let currentDimension = '{{ dimension|default:"brand" }}';
   let selectedBrand = '{{ selected_brand }}';
-  let selectedBrandGroups = Array.from(document.querySelectorAll('#brandGroupOptionsList input[type="checkbox"]:checked')).map(cb => cb.value);
   let selectedBrandGroup = '{{ selected_brand_group }}';
   let selectedPlatforms = [];
 
@@ -5937,15 +5928,7 @@
      DROPDOWN MULTI-SELECT HANDLERS
      ===================================================================== */
   function setupMultiSelectDropdowns() {
-    setupDropdown(
-      'brandGroupDropdownWrap', 'brandGroupDropdownTrigger', 'brandGroupDropdownMenu',
-      'brandGroupSearchInput', 'brandGroupSelectAll', 'brandGroupClearAll',
-      'brandGroupOptionsList', 'brandGroupApplyBtn', 'brandGroupDropdownLabel', 'brandGroupDropdownBadge',
-      'All brand groups', (selected) => {
-        selectedBrandGroups = selected;
-        loadAnalyticsData();
-      }
-    );
+    setupBrandGroupSingleSelect();
     setupBrandSingleSelect();
 
     setupDropdown(
@@ -6336,12 +6319,14 @@
       if (icon) icon.classList.toggle('d-none', !isMatch);
     });
 
-    document.querySelectorAll('#brandGroupOptionsList input').forEach(cb => cb.checked = false);
     const bgLabelEl = document.getElementById('brandGroupDropdownLabel');
-    if (bgLabelEl) bgLabelEl.textContent = 'All brand groups';
-    const bgBadgeEl = document.getElementById('brandGroupDropdownBadge');
-    if (bgBadgeEl) bgBadgeEl.style.display = 'none';
-    selectedBrandGroups = [];
+    if (bgLabelEl) bgLabelEl.textContent = selectedBrandGroup;
+    document.querySelectorAll('#brandGroupOptionsList .bp2-dropdown-item').forEach(el => {
+      const isMatch = el.getAttribute('data-value') === selectedBrandGroup;
+      el.classList.toggle('active', isMatch);
+      const icon = el.querySelector('.bp2-single-check');
+      if (icon) icon.classList.toggle('d-none', !isMatch);
+    });
 
     document.querySelectorAll('#platformOptionsList input').forEach(cb => cb.checked = false);
     document.getElementById('platformDropdownLabel').textContent = 'All platforms';
@@ -6432,8 +6417,8 @@
 
     params.append('dimension', currentDimension);
     if (currentDimension === 'brand_group') {
-      if (selectedBrandGroups && selectedBrandGroups.length > 0) {
-        selectedBrandGroups.forEach(bg => params.append('brand_group', bg));
+      if (selectedBrandGroup) {
+        params.append('brand_group', selectedBrandGroup);
       }
     } else {
       if (selectedBrand) {

@@ -198,7 +198,9 @@ def api_get_categories(request: HttpRequest) -> JsonResponse:
     if not brand_group:
         return JsonResponse({"categories": []})
 
-    qs = ProductCategoryMapping.objects.filter(brand_group=brand_group)
+    qs = ProductCategoryMapping.objects.filter(brand_group=brand_group).exclude(
+        product_category__isnull=True
+    ).exclude(product_category="")
     cats = list(qs.values_list("product_category", flat=True).distinct().order_by("product_category"))
 
     cat_counts = []
@@ -215,7 +217,7 @@ def api_get_categories(request: HttpRequest) -> JsonResponse:
 @csrf_exempt
 @login_required
 def api_delete_category(request: HttpRequest) -> JsonResponse:
-    """Deletes / unlinks a category from all SKUs in a brand_group."""
+    """Unlinks a category from all SKUs in a brand_group by setting product_category to NULL."""
     if request.method != "POST":
         return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
 
@@ -230,15 +232,24 @@ def api_delete_category(request: HttpRequest) -> JsonResponse:
     if not brand_group or not category:
         return JsonResponse({"status": "error", "message": "brand_group and category required"}, status=400)
 
-    deleted_count, _ = ProductCategoryMapping.objects.filter(
+    pic_name = request.user.username if request.user.is_authenticated else "system"
+    click_dt = _parse_click_timestamp(data.get("load_timestamp"))
+    now_sec = (click_dt or timezone.now()).replace(microsecond=0)
+
+    updated_count = ProductCategoryMapping.objects.filter(
         brand_group=brand_group,
         product_category=category,
-    ).delete()
+    ).update(
+        product_category=None,
+        pic=pic_name,
+        last_updated=now_sec,
+    )
 
     return JsonResponse({
         "status": "success",
-        "message": f"Category '{category}' unlinked from {deleted_count} SKUs.",
-        "deleted_count": deleted_count,
+        "message": f"Category '{category}' unlinked from {updated_count} SKUs.",
+        "updated_count": updated_count,
+        "deleted_count": updated_count,
     })
 
 

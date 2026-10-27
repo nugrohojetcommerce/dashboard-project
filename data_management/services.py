@@ -210,20 +210,25 @@ def batch_save_mappings(
     brand_group = brand_group.lower().strip()
     clean_skus = [s.strip() for s in sku_codes if s.strip()]
 
+    pic_name = user.username if user.is_authenticated else "system"
+    now_sec = (click_time or timezone.now()).replace(microsecond=0)
+
     if clear:
-        # Clear/delete mapping from table
-        deleted_count, _ = ProductCategoryMapping.objects.filter(
+        # Clear category (set to NULL) in mapping table
+        updated_count = ProductCategoryMapping.objects.filter(
             brand_group=brand_group,
             sku_code__in=clean_skus,
-        ).delete()
-        return deleted_count
+        ).update(
+            product_category=None,
+            pic=pic_name,
+            last_updated=now_sec,
+        )
+        return updated_count
 
     if not product_category:
         return 0
 
-    pic_name = user.username if user.is_authenticated else "system"
     cat = product_category.strip()
-    now_sec = (click_time or timezone.now()).replace(microsecond=0)
 
     objs = [
         ProductCategoryMapping(

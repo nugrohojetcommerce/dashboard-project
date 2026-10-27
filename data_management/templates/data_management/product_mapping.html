@@ -1731,7 +1731,7 @@
       (categories || []).forEach(cat => {
         const isActive = (cat === currentVal);
         html += `
-          <div class="bp2-dropdown-item ${isActive ? 'active' : ''}" data-value="${escapeHtml(cat)}" onclick="selectCategory('${escapeHtml(cat)}')">
+          <div class="bp2-dropdown-item ${isActive ? 'active' : ''}" data-value="${escapeHtml(cat)}" onclick="selectCategory(this.dataset.value)">
             <span class="bp2-option-text">${escapeHtml(cat)}</span>
             <i class="bi bi-check-lg bp2-single-check ${isActive ? '' : 'd-none'}"></i>
           </div>
@@ -2650,7 +2650,7 @@
             </span>
           </td>
           <td style="text-align: right;">
-            <button type="button" class="pm-action-btn" style="color: var(--danger);" onclick="deleteCategoryFromDB('${escapeHtml(bg)}', '${escapeHtml(c.name)}')" title="Hapus Category untuk ${bg}">
+            <button type="button" class="pm-action-btn" style="color: var(--danger);" data-name="${escapeHtml(c.name)}" onclick="deleteCategoryFromDB('${escapeHtml(bg)}', this.dataset.name)" title="Hapus Category untuk ${escapeHtml(bg)}">
               <i class="bi bi-trash"></i>
             </button>
           </td>

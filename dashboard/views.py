@@ -471,3 +471,20 @@ def change_password_api(request):
             }, status=400)
     return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
 
+def tiktok_shop_callback(request):
+    auth_code = request.GET.get('code')
+    state = request.GET.get('state')
+    
+    # Log the code for debugging/testing
+    print(f"TikTok Shop auth code: {auth_code}")
+    print(f"State: {state}")
+    
+    if not auth_code:
+        return HttpResponse("Error: Authorization code is missing.", status=400)
+        
+    # For now, return a simple success response so you can copy the code if needed
+    return HttpResponse(
+        f"<h3>TikTok Shop authorization received!</h3>"
+        f"<p>Auth Code: <code>{auth_code}</code></p>"
+        f"<p>You can close this page or proceed to exchange this code for an access token.</p>"
+    )

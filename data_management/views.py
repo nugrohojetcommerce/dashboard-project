@@ -10,6 +10,8 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .services import (
     get_available_brand_groups,
+    get_all_standard_brand_groups,
+    validate_brand_group_for_user,
     get_catalog_and_mappings,
     save_single_mapping,
     batch_save_mappings,
@@ -22,11 +24,13 @@ from .models import ProductCategoryMapping
 @login_required
 def product_mapping_view(request: HttpRequest) -> HttpResponse:
     """Renders the SKU & Product Category Mapping management page."""
-    brand_groups = get_available_brand_groups(request.user)
+    user_brand_groups = get_available_brand_groups(request.user)
+    all_standard_bgs = get_all_standard_brand_groups()
 
     context: dict[str, Any] = {
-        "brand_groups": brand_groups,
-        "default_brand_group": brand_groups[0] if brand_groups else "",
+        "brand_groups": user_brand_groups,
+        "all_standard_brand_groups": all_standard_bgs,
+        "default_brand_group": user_brand_groups[0] if user_brand_groups else "",
         "is_superuser": getattr(request.user, "is_superuser", False),
     }
     return render(request, "data_management/product_mapping.html", context)
@@ -105,7 +109,11 @@ def api_save_mapping(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"status": "error", "message": "brand_group, sku_code, and product_category are required"}, status=400)
 
     click_dt = _parse_click_timestamp(data.get("load_timestamp"))
-    mapping = save_single_mapping(brand_group, sku_code, product_category, request.user, click_time=click_dt)
+    try:
+        mapping = save_single_mapping(brand_group, sku_code, product_category, request.user, click_time=click_dt)
+    except ValueError as val_err:
+        return JsonResponse({"status": "error", "message": str(val_err)}, status=400)
+
     return JsonResponse({
         "status": "success",
         "message": f"SKU {sku_code} successfully mapped to {product_category}",
@@ -141,14 +149,17 @@ def api_batch_mapping(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"status": "error", "message": "brand_group and sku_codes are required"}, status=400)
 
     click_dt = _parse_click_timestamp(data.get("load_timestamp"))
-    updated_count = batch_save_mappings(
-        brand_group=brand_group,
-        sku_codes=sku_codes,
-        product_category=product_category,
-        user=request.user,
-        clear=clear,
-        click_time=click_dt,
-    )
+    try:
+        updated_count = batch_save_mappings(
+            brand_group=brand_group,
+            sku_codes=sku_codes,
+            product_category=product_category,
+            user=request.user,
+            clear=clear,
+            click_time=click_dt,
+        )
+    except ValueError as val_err:
+        return JsonResponse({"status": "error", "message": str(val_err)}, status=400)
 
     action_word = "dikosongkan" if clear else f"dipetakan ke {product_category}"
     return JsonResponse({
@@ -175,7 +186,10 @@ def api_import_excel(request: HttpRequest) -> JsonResponse:
         return JsonResponse({"status": "error", "message": "Tidak ada baris data untuk diimport"}, status=400)
 
     click_dt = _parse_click_timestamp(data.get("load_timestamp"))
-    res = import_excel_parsed_rows(rows, request.user, click_time=click_dt)
+    try:
+        res = import_excel_parsed_rows(rows, request.user, click_time=click_dt)
+    except ValueError as val_err:
+        return JsonResponse({"status": "error", "message": str(val_err)}, status=400)
 
     dup_msg = ""
     if res.get("duplicates_collapsed", 0) > 0:
@@ -232,12 +246,17 @@ def api_delete_category(request: HttpRequest) -> JsonResponse:
     if not brand_group or not category:
         return JsonResponse({"status": "error", "message": "brand_group and category required"}, status=400)
 
+    try:
+        canonical_bg = validate_brand_group_for_user(brand_group, request.user)
+    except ValueError as val_err:
+        return JsonResponse({"status": "error", "message": str(val_err)}, status=400)
+
     pic_name = request.user.username if request.user.is_authenticated else "system"
     click_dt = _parse_click_timestamp(data.get("load_timestamp"))
     now_sec = (click_dt or timezone.now()).replace(microsecond=0)
 
     updated_count = ProductCategoryMapping.objects.filter(
-        brand_group=brand_group,
+        brand_group=canonical_bg,
         product_category=category,
     ).update(
         product_category=None,
@@ -261,7 +280,12 @@ def api_template_catalog(request: HttpRequest) -> JsonResponse:
     if not brand_group:
         return JsonResponse({"status": "error", "message": "brand_group is required"}, status=400)
 
-    data = get_catalog_and_mappings(brand_group, request.user, page=1, page_size=10000, status_filter="all")
+    try:
+        canonical_bg = validate_brand_group_for_user(brand_group, request.user)
+    except ValueError as val_err:
+        return JsonResponse({"status": "error", "message": str(val_err)}, status=400)
+
+    data = get_catalog_and_mappings(canonical_bg, request.user, page=1, page_size=10000, status_filter="all")
 
     rows = []
     for item in data.get("items", []):
@@ -275,7 +299,7 @@ def api_template_catalog(request: HttpRequest) -> JsonResponse:
 
     return JsonResponse({
         "status": "success",
-        "brand_group": brand_group,
+        "brand_group": canonical_bg,
         "rows": rows,
         "total": len(rows),
     })
@@ -292,7 +316,12 @@ def api_download_template_excel(request: HttpRequest) -> HttpResponse:
     import openpyxl
     from openpyxl.styles import Font, PatternFill
 
-    brand_group = request.GET.get("brand_group", "").strip() or "mars"
+    raw_bg = request.GET.get("brand_group", "").strip() or "mars"
+    try:
+        brand_group = validate_brand_group_for_user(raw_bg, request.user)
+    except ValueError:
+        user_bgs = get_available_brand_groups(request.user)
+        brand_group = user_bgs[0] if user_bgs else raw_bg
 
     wb = openpyxl.Workbook()
     ws = wb.active

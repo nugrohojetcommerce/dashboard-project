@@ -1498,6 +1498,9 @@
         <!-- Alert Banner for Scientific Notation / Corrupted SKUs -->
         <div id="uploadScientificAlert" class="mb-3 d-none"></div>
 
+        <!-- Alert Banner for Brand Group Validation Errors -->
+        <div id="uploadBrandGroupAlert" class="mb-3 d-none"></div>
+
         <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
           <div class="d-flex align-items-center gap-2">
             <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-primary);">
@@ -1622,11 +1625,20 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ all_standard_brand_groups|json_script:"allStandardBrandGroupsData" }}
+{{ brand_groups|json_script:"userBrandGroupsData" }}
 <script>
   /* =====================================================================
      PRODUCT MAPPING LIVE POSTGRESQL CONTROLLER
      Communicates with Django data_management API in real-time.
      ===================================================================== */
+
+  const userBrandGroups = new Set(
+    (JSON.parse(document.getElementById("userBrandGroupsData")?.textContent || "[]")).map(s => String(s || "").trim().toLowerCase())
+  );
+  const allStandardBrandGroups = new Set(
+    (JSON.parse(document.getElementById("allStandardBrandGroupsData")?.textContent || "[]")).map(s => String(s || "").trim().toLowerCase())
+  );
 
   let state = {
     selectedBrandGroup: document.getElementById("brandGroupFilterSelect")?.value || "",
@@ -2149,9 +2161,11 @@
         deselectAllRows();
         fetchMappingData();
       } else {
+        alert("Gagal Batch Update:\n\n" + data.message);
         showToast("Gagal batch update: " + data.message, "warn");
       }
     } catch (err) {
+      alert("Error batch update: " + err.message);
       showToast("Error batch update: " + err.message, "warn");
     } finally {
       showTableLoading(false);
@@ -2186,9 +2200,11 @@
         deselectAllRows();
         fetchMappingData();
       } else {
+        alert("Gagal Mengosongkan Category:\n\n" + data.message);
         showToast("Gagal mengosongkan category: " + data.message, "warn");
       }
     } catch (err) {
+      alert("Error: " + err.message);
       showToast("Error: " + err.message, "warn");
     } finally {
       showTableLoading(false);
@@ -2284,9 +2300,11 @@
         showToast(`SKU ${skuCode} berhasil disimpan ke database sebagai "${finalCategory}"!`, "success");
         fetchMappingData();
       } else {
+        alert("Gagal Menyimpan Mapping:\n\n" + data.message);
         showToast("Gagal menyimpan mapping: " + data.message, "warn");
       }
     } catch (err) {
+      alert("Error simpan: " + err.message);
       showToast("Error simpan: " + err.message, "warn");
     }
   }
@@ -2338,9 +2356,11 @@
           fetchMappingData();
         }
       } else {
+        alert("Gagal Menambah SKU:\n\n" + data.message);
         showToast("Gagal: " + data.message, "warn");
       }
     } catch (err) {
+      alert("Error: " + err.message);
       showToast("Error: " + err.message, "warn");
     }
   }
@@ -2410,6 +2430,10 @@
         const seenSkus = new Set();
         let duplicateCount = 0;
         let scientificCount = 0;
+        let notFoundBgCount = 0;
+        let noAccessBgCount = 0;
+        const notFoundBgs = new Set();
+        const noAccessBgs = new Set();
 
         for (let i = 1; i < json.length; i++) {
           const row = json[i];
@@ -2420,7 +2444,23 @@
 
           if (sku && cat) {
             const finalBg = bg || defaultBg;
-            const key = finalBg.toLowerCase() + "|||" + sku.toLowerCase();
+            const bgLower = finalBg.toLowerCase();
+            let bgError = null;
+            let bgErrorReason = "";
+
+            if (!allStandardBrandGroups.has(bgLower)) {
+              bgError = "not_found";
+              bgErrorReason = "Tidak ada di standard penamaan kita (kemungkinan typo)";
+              notFoundBgCount++;
+              notFoundBgs.add(finalBg);
+            } else if (!userBrandGroups.has(bgLower)) {
+              bgError = "no_access";
+              bgErrorReason = "Di luar hak akses brand group akun Anda";
+              noAccessBgCount++;
+              noAccessBgs.add(finalBg);
+            }
+
+            const key = bgLower + "|||" + sku.toLowerCase();
             if (seenSkus.has(key)) {
               duplicateCount++;
             } else {
@@ -2441,7 +2481,9 @@
               brand_group: finalBg,
               product_category: cat,
               is_corrupted: isCorrupted,
-              corrupted_reason: isScientific ? "Format E+18" : (isTruncatedZeroes ? "Angka terpotong ...0000" : "")
+              corrupted_reason: isScientific ? "Format E+18" : (isTruncatedZeroes ? "Angka terpotong ...0000" : ""),
+              bg_error: bgError,
+              bg_error_reason: bgErrorReason,
             });
           }
         }
@@ -2488,22 +2530,67 @@
           }
         }
 
+        // Brand Group Alert Banner
+        const bgAlert = document.getElementById("uploadBrandGroupAlert");
+        if (bgAlert) {
+          if (notFoundBgCount > 0 || noAccessBgCount > 0) {
+            bgAlert.classList.remove("d-none");
+            let alertHtml = `
+              <div class="p-3" style="background: rgba(239, 68, 68, 0.12); border: 1px solid var(--danger); border-radius: var(--radius-sm); font-size: 0.78rem;">
+                <div class="d-flex align-items-center gap-2 mb-1" style="color: var(--danger); font-weight: 700;">
+                  <i class="bi bi-shield-x" style="font-size: 1.05rem;"></i>
+                  <span>Validasi Brand Group Gagal (${notFoundBgCount + noAccessBgCount} baris bermasalah)</span>
+                </div>
+                <div style="color: var(--text-primary); line-height: 1.5;">
+            `;
+            if (notFoundBgCount > 0) {
+              const sample = Array.from(notFoundBgs).map(x => `<code>${escapeHtml(x)}</code>`).join(", ");
+              alertHtml += `<div class="mt-1">• <strong>Tidak Ada di Standard:</strong> Brand Group ${sample} tidak ditemukan di standard penamaan kita (kemungkinan typo).</div>`;
+            }
+            if (noAccessBgCount > 0) {
+              const sample = Array.from(noAccessBgs).map(x => `<code>${escapeHtml(x)}</code>`).join(", ");
+              alertHtml += `<div class="mt-1">• <strong>Di Luar Hak Akses:</strong> Anda tidak memiliki izin untuk mengelola Brand Group ${sample}.</div>`;
+            }
+            alertHtml += `
+                  <div class="mt-2 text-danger fw-bold">
+                    <i class="bi bi-x-circle-fill"></i> Import ditolak! Silakan perbaiki file Excel Anda sebelum melakukan upload.
+                  </div>
+                </div>
+              </div>
+            `;
+            bgAlert.innerHTML = alertHtml;
+          } else {
+            bgAlert.classList.add("d-none");
+          }
+        }
+
         const tbody = document.getElementById("previewTableBody");
-        tbody.innerHTML = parsedExcelRows.slice(0, 50).map(r => `
-          <tr style="${r.is_corrupted ? 'background: rgba(239, 68, 68, 0.08);' : ''}">
-            <td class="pm-mono fw-bold">
-              ${escapeHtml(r.sku_code)}
-              ${r.is_corrupted ? `<span class="badge bg-danger ms-1" style="font-size: 0.65rem;">⚠️ ${escapeHtml(r.corrupted_reason)}</span>` : ''}
-            </td>
-            <td><span class="pm-brand-badge">${escapeHtml(r.brand_group)}</span></td>
-            <td><span class="pm-group-pill" style="pointer-events:none;"><i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i> ${escapeHtml(r.product_category)}</span></td>
-            <td>
-              ${r.is_corrupted 
-                ? `<span class="badge bg-danger" style="font-size: 0.68rem;" title="Digit asli telah dipotong Excel menjadi 0000">Rusak (E+)</span>` 
-                : `<span class="badge bg-success" style="font-size: 0.68rem;">Valid</span>`}
-            </td>
-          </tr>
-        `).join("");
+        tbody.innerHTML = parsedExcelRows.slice(0, 50).map(r => {
+          const hasError = r.is_corrupted || r.bg_error;
+          let statusBadge = `<span class="badge bg-success" style="font-size: 0.68rem;">Valid</span>`;
+          if (r.bg_error === "not_found") {
+            statusBadge = `<span class="badge bg-danger" style="font-size: 0.68rem;" title="${escapeHtml(r.bg_error_reason)}">Bukan Standard</span>`;
+          } else if (r.bg_error === "no_access") {
+            statusBadge = `<span class="badge bg-danger" style="font-size: 0.68rem;" title="${escapeHtml(r.bg_error_reason)}">Tanpa Akses</span>`;
+          } else if (r.is_corrupted) {
+            statusBadge = `<span class="badge bg-danger" style="font-size: 0.68rem;" title="Digit asli telah dipotong Excel menjadi 0000">Rusak (E+)</span>`;
+          }
+
+          return `
+            <tr style="${hasError ? 'background: rgba(239, 68, 68, 0.08);' : ''}">
+              <td class="pm-mono fw-bold">
+                ${escapeHtml(r.sku_code)}
+                ${r.is_corrupted ? `<span class="badge bg-danger ms-1" style="font-size: 0.65rem;">⚠️ ${escapeHtml(r.corrupted_reason)}</span>` : ''}
+              </td>
+              <td>
+                <span class="pm-brand-badge ${r.bg_error ? 'bg-danger text-white' : ''}">${escapeHtml(r.brand_group)}</span>
+                ${r.bg_error ? `<span class="badge bg-danger ms-1" style="font-size: 0.65rem;">⚠️ ${escapeHtml(r.bg_error_reason)}</span>` : ''}
+              </td>
+              <td><span class="pm-group-pill" style="pointer-events:none;"><i class="bi bi-tag-fill" style="font-size: 0.65rem;"></i> ${escapeHtml(r.product_category)}</span></td>
+              <td>${statusBadge}</td>
+            </tr>
+          `;
+        }).join("");
 
         document.getElementById("uploadPreviewSection").classList.remove("d-none");
         document.getElementById("btnConfirmImport").classList.remove("d-none");
@@ -2524,6 +2611,23 @@
 
   async function confirmImport() {
     if (parsedExcelRows.length === 0) return;
+
+    // 1. Validasi Brand Group (Standard penamaan & Hak Akses)
+    if (parsedExcelRows.some(r => r.bg_error)) {
+      const notFoundList = Array.from(new Set(parsedExcelRows.filter(r => r.bg_error === "not_found").map(r => `'${r.brand_group}'`)));
+      const noAccessList = Array.from(new Set(parsedExcelRows.filter(r => r.bg_error === "no_access").map(r => `'${r.brand_group}'`)));
+
+      let msg = "PERINGATAN VALIDASI BRAND GROUP:\n\n";
+      if (notFoundList.length > 0) {
+        msg += `1. Brand Group TIDAK DITEMUKAN di standard penamaan kita (kemungkinan typo):\n   ${notFoundList.join(", ")}\n\n`;
+      }
+      if (noAccessList.length > 0) {
+        msg += `2. Brand Group DI LUAR HAK AKSES akun Anda:\n   ${noAccessList.join(", ")}\n\n`;
+      }
+      msg += "Import ditolak. Silakan perbaiki file Excel Anda sebelum melakukan load ke database.";
+      alert(msg);
+      return;
+    }
 
     if (parsedExcelRows.some(r => r.is_corrupted)) {
       const corruptCount = parsedExcelRows.filter(r => r.is_corrupted).length;
@@ -2578,9 +2682,11 @@
         showToast(data.message || `Berhasil menyimpan ${data.imported_count} baris mapping ke database!`, "success");
         fetchMappingData();
       } else {
+        alert("Gagal Import:\n\n" + data.message);
         showToast("Gagal import: " + data.message, "warn");
       }
     } catch (err) {
+      alert("Error saat import: " + err.message);
       showToast("Error saat import: " + err.message, "warn");
     } finally {
       btn.disabled = false;
@@ -2679,9 +2785,11 @@
         loadCategoriesList(bg);
         fetchMappingData();
       } else {
+        alert("Gagal Menghapus Kategori:\n\n" + data.message);
         showToast("Gagal: " + data.message, "warn");
       }
     } catch (err) {
+      alert("Error: " + err.message);
       showToast("Error: " + err.message, "warn");
     }
   }

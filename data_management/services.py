@@ -33,6 +33,94 @@ def get_available_brand_groups(user: User) -> list[str]:
     return brand_groups
 
 
+def get_all_standard_brand_groups() -> list[str]:
+    """
+    Returns sorted list of all standard/valid brand groups in the system (OrderMartSummary, unrestricted).
+    """
+    return sorted(
+        list(
+            OrderMartSummary.objects.exclude(brand_group__isnull=True)
+            .exclude(brand_group="")
+            .values_list("brand_group", flat=True)
+            .distinct()
+        )
+    )
+
+
+def validate_brand_group_for_user(brand_group: str, user: User) -> str:
+    """
+    Validates a single brand_group against:
+    1. System standard naming (typo/invalid check).
+    2. User brand access permissions.
+    Returns canonical brand_group name if valid.
+    Raises ValueError with a clear reason if invalid.
+    """
+    bg_clean = (brand_group or "").strip()
+    if not bg_clean:
+        raise ValueError("Brand Group tidak boleh kosong.")
+
+    # 1. Cek apakah ada di standard penamaan sistem
+    standard_bgs = {bg.lower(): bg for bg in get_all_standard_brand_groups()}
+    if bg_clean.lower() not in standard_bgs:
+        raise ValueError(
+            f"Brand Group '{bg_clean}' tidak ditemukan di standard penamaan kita (pastikan tidak ada typo atau penulisan yang salah)."
+        )
+
+    canonical_bg = standard_bgs[bg_clean.lower()]
+
+    # 2. Cek apakah user punya hak akses ke brand group ini
+    user_bgs = {bg.lower(): bg for bg in get_available_brand_groups(user)}
+    if bg_clean.lower() not in user_bgs:
+        allowed_list = ", ".join(f"'{x}'" for x in sorted(user_bgs.values()))
+        raise ValueError(
+            f"Anda tidak memiliki hak akses untuk Brand Group '{canonical_bg}'. Brand Group yang dapat Anda kelola hanya: [{allowed_list}]."
+        )
+
+    return canonical_bg
+
+
+def validate_multiple_brand_groups_for_user(brand_groups: set[str], user: User) -> dict[str, str]:
+    """
+    Validates multiple brand groups (e.g., from Excel upload) against standard naming and user access.
+    Returns a mapping {raw_bg_lower: canonical_bg}.
+    Raises ValueError detailing exact reasons if any brand groups are invalid.
+    """
+    standard_bgs = {bg.lower(): bg for bg in get_all_standard_brand_groups()}
+    user_bgs = {bg.lower(): bg for bg in get_available_brand_groups(user)}
+
+    not_in_standard = set()
+    no_access = set()
+
+    for bg_raw in brand_groups:
+        bg_clean = str(bg_raw or "").strip()
+        if not bg_clean:
+            not_in_standard.add("(kosong)")
+            continue
+
+        if bg_clean.lower() not in standard_bgs:
+            not_in_standard.add(bg_clean)
+        elif bg_clean.lower() not in user_bgs:
+            no_access.add(standard_bgs[bg_clean.lower()])
+
+    error_messages = []
+    if not_in_standard:
+        sample = ", ".join(f"'{x}'" for x in sorted(list(not_in_standard))[:5])
+        error_messages.append(
+            f"Brand Group berikut tidak ditemukan di standard penamaan kita (kemungkinan typo): {sample}"
+        )
+    if no_access:
+        sample = ", ".join(f"'{x}'" for x in sorted(list(no_access))[:5])
+        allowed_list = ", ".join(f"'{x}'" for x in sorted(user_bgs.values()))
+        error_messages.append(
+            f"Anda tidak memiliki hak akses untuk Brand Group: {sample} (Akses Anda: [{allowed_list}])"
+        )
+
+    if error_messages:
+        raise ValueError("Validasi gagal! " + " Dan ".join(error_messages) + ".")
+
+    return {bg.lower(): standard_bgs[bg.lower()] for bg in brand_groups if str(bg or "").strip().lower() in user_bgs}
+
+
 def get_catalog_and_mappings(
     brand_group: str,
     user: User,
@@ -185,9 +273,10 @@ def save_single_mapping(
     click_time: datetime | None = None,
 ) -> ProductCategoryMapping:
     """Upserts a single SKU mapping to ProductCategoryMapping in database."""
+    canonical_bg = validate_brand_group_for_user(brand_group, user)
     now_sec = (click_time or timezone.now()).replace(microsecond=0)
     mapping, _ = ProductCategoryMapping.objects.update_or_create(
-        brand_group=brand_group.lower().strip(),
+        brand_group=canonical_bg,
         sku_code=sku_code.strip(),
         defaults={
             "product_category": product_category.strip(),
@@ -207,7 +296,7 @@ def batch_save_mappings(
     click_time: datetime | None = None,
 ) -> int:
     """Batch updates or clears product_category for multiple SKUs."""
-    brand_group = brand_group.lower().strip()
+    canonical_bg = validate_brand_group_for_user(brand_group, user)
     clean_skus = [s.strip() for s in sku_codes if s.strip()]
 
     pic_name = user.username if user.is_authenticated else "system"
@@ -216,7 +305,7 @@ def batch_save_mappings(
     if clear:
         # Clear category (set to NULL) in mapping table
         updated_count = ProductCategoryMapping.objects.filter(
-            brand_group=brand_group,
+            brand_group=canonical_bg,
             sku_code__in=clean_skus,
         ).update(
             product_category=None,
@@ -232,7 +321,7 @@ def batch_save_mappings(
 
     objs = [
         ProductCategoryMapping(
-            brand_group=brand_group,
+            brand_group=canonical_bg,
             sku_code=sku,
             product_category=cat,
             pic=pic_name,
@@ -262,10 +351,18 @@ def import_excel_parsed_rows(
     Upserts multiple mappings parsed from Excel using fast bulk_create.
     Deduplicates rows by (brand_group, sku_code) taking the last occurrence.
     All rows receive the exact click_time timestamp truncated to seconds.
+    Validates all brand_groups against standard naming and user access.
     """
     pic_name = user.username if user.is_authenticated else "excel-import"
     now_sec = (click_time or timezone.now()).replace(microsecond=0)
-    known_bgs = {bg.lower(): bg for bg in get_available_brand_groups(user)}
+
+    # 1. Kumpulkan semua brand_group unik di data Excel
+    raw_bgs = {str(r.get("brand_group", "")).strip() for r in rows if str(r.get("brand_group", "")).strip()}
+    if not raw_bgs:
+        raise ValueError("Tidak ada Brand Group yang valid pada file Excel.")
+
+    # 2. Validasi terhadap standard penamaan sistem & hak akses user
+    canonical_bgs = validate_multiple_brand_groups_for_user(raw_bgs, user)
 
     deduped: dict[tuple[str, str], str] = {}
     for r in rows:
@@ -273,8 +370,7 @@ def import_excel_parsed_rows(
         bg_raw = str(r.get("brand_group", "")).strip()
         cat = str(r.get("product_category", "")).strip()
 
-        # Match to exact case in DB if known
-        bg = known_bgs.get(bg_raw.lower(), bg_raw.lower())
+        bg = canonical_bgs.get(bg_raw.lower())
 
         if sku and bg and cat:
             deduped[(bg, sku)] = cat

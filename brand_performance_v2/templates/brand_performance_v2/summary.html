@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
   rel="stylesheet">
@@ -3270,7 +3271,7 @@
         <div class="bp2-filter-pill" title="As of date">
           <i class="bi bi-calendar3"></i>
           <input type="date" id="asOfDateFilter" value="{{ as_of_date }}" max="{{ latest_date }}"
-            onchange="loadDashboardData()">
+            onchange="onDateFilterChange()">
         </div>
 
         <!-- Custom Multi-select: Brand Group -->
@@ -3378,7 +3379,7 @@
               {% endfor %}
             </div>
             <div class="bp2-dropdown-footer">
-              <button type="button" class="bp2-dropdown-apply-btn" id="platformApplyBtn">Apply</button>
+              <button type="button" class="bp2-dropdown-apply-btn" id="platformApplyBtn">Done</button>
             </div>
           </div>
         </div>
@@ -3388,6 +3389,10 @@
           <i class="bi bi-arrow-counterclockwise"></i>
         </button>
       </div>
+      <button type="button" class="bp2-btn bp2-btn-apply" id="btnApplyFilters" onclick="applyFilters()" title="Apply filter changes">
+        <i class="bi bi-funnel-fill"></i>
+        <span>Apply Filter</span>
+      </button>
     </div>
 
     <!-- Actions: Eye Toggle (Confidential), Export Dropdown -->
@@ -3850,6 +3855,23 @@
 
 <script>
   (function () {
+
+    // Reusable Toast Notification
+    const bp2Toast = Swal.mixin({
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true,
+      background: 'var(--card-bg, #ffffff)',
+      color: 'var(--text-primary, #1e293b)',
+      didOpen: (toast) => {
+        // Pause timer saat kursor hover di atas toast
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+      }
+    });
+
     /* ================================================================
        Config
        ================================================================ */
@@ -5699,7 +5721,7 @@
           if (type === 'platform') {
             state.activePlatformTable = 'All';
           }
-          loadDashboardData();
+          // loadDashboardData();
         });
       }
 
@@ -5710,6 +5732,38 @@
     /* ================================================================
        Interactions
        ================================================================ */
+    function onDateFilterChange() {
+      // loadDashboardData();
+    }
+
+    function applyFilters() {
+      const asOfDate = $('asOfDateFilter')?.value;
+      if (!asOfDate) {
+        bp2Toast.fire({
+          icon: 'warning',
+          title: 'Pilih As of Date terlebih dahulu'
+        });
+        return;
+      }
+
+      const checkedBrandGroups = Array.from(
+        document.querySelectorAll('#brandGroupOptionsList input[type="checkbox"]:checked')
+      ).map(cb => cb.value);
+      state.selectedBrandGroups = new Set(checkedBrandGroups);
+
+      const checkedBrands = Array.from(
+        document.querySelectorAll('#brandOptionsList input[type="checkbox"]:checked')
+      ).map(cb => cb.value);
+      state.selectedBrands = new Set(checkedBrands);
+
+      const checkedPlatforms = Array.from(
+        document.querySelectorAll('#platformOptionsList input[type="checkbox"]:checked')
+      ).map(cb => cb.value);
+      state.selectedPlatforms = new Set(checkedPlatforms);
+
+      loadDashboardData();
+    }
+
     function resetFilters() {
       $('asOfDateFilter').value = '{{ latest_date }}';
       state.selectedBrandGroups.clear();
@@ -6035,7 +6089,7 @@
     });
 
     // expose for inline handlers
-    Object.assign(window, { loadDashboardData, resetFilters, exportToExcel, exportToPDF, toggleExportMenu, closeExportMenu, openAnomalyModal, closeAnomalyModal, handleModalBackdropClick, filterToBrand, toggleConfidentialMode, switchDimension });
+    Object.assign(window, { applyFilters, onDateFilterChange, loadDashboardData, resetFilters, exportToExcel, exportToPDF, toggleExportMenu, closeExportMenu, openAnomalyModal, closeAnomalyModal, handleModalBackdropClick, filterToBrand, toggleConfidentialMode, switchDimension });
 
     document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.add('sidebar-collapse', 'sidebar-mini');

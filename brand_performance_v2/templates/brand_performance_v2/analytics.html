@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1.5.8/dist/html2canvas-pro.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link
   href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
@@ -4264,7 +4265,7 @@
               {% endfor %}
             </div>
             <div class="bp2-dropdown-footer">
-              <button type="button" class="bp2-dropdown-apply-btn" id="platformApplyBtn">Apply</button>
+              <button type="button" class="bp2-dropdown-apply-btn" id="platformApplyBtn">Done</button>
             </div>
           </div>
         </div>
@@ -4274,6 +4275,10 @@
           <i class="bi bi-arrow-counterclockwise"></i>
         </button>
       </div>
+      <button type="button" class="bp2-btn bp2-btn-apply" id="btnApplyFilters" onclick="applyFilters()" title="Apply filter changes">
+        <i class="bi bi-funnel-fill"></i>
+        <span>Apply Filter</span>
+      </button>
     </div>
 
     <!-- Export Actions -->
@@ -5414,6 +5419,23 @@
 <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 <script>
+
+  // Reusable Toast Notification
+  const bp2Toast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    background: 'var(--card-bg, #ffffff)',
+    color: 'var(--text-primary, #1e293b)',
+    didOpen: (toast) => {
+      // Pause timer saat kursor hover di atas toast
+      toast.addEventListener('mouseenter', Swal.stopTimer);
+      toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+  });
+
   if (typeof Chart !== 'undefined' && typeof ChartZoom !== 'undefined') {
     try {
       Chart.register(ChartZoom);
@@ -5826,7 +5848,7 @@
     const wrap = document.getElementById('brandGroupDropdownWrap');
     if (wrap) wrap.classList.remove('open');
 
-    loadAnalyticsData();
+    // loadAnalyticsData();
   }
 
   function setupBrandGroupSingleSelect() {
@@ -5881,7 +5903,7 @@
     const wrap = document.getElementById('brandDropdownWrap');
     if (wrap) wrap.classList.remove('open');
 
-    loadAnalyticsData();
+    // loadAnalyticsData();
   }
 
   function setupBrandSingleSelect() {
@@ -5937,7 +5959,7 @@
       'platformOptionsList', 'platformApplyBtn', 'platformDropdownLabel', 'platformDropdownBadge',
       'All platforms', (selected) => {
         selectedPlatforms = selected;
-        loadAnalyticsData();
+        // loadAnalyticsData();
       }
     );
 
@@ -6257,7 +6279,7 @@
       setActivePresetPill(`${days}d`);
     }
 
-    applyFilters();
+    // applyFilters();
   }
 
   function setPresetThisMonth(btnElement) {
@@ -6274,7 +6296,7 @@
       setActivePresetPill('mtd');
     }
 
-    applyFilters();
+    // applyFilters();
   }
 
   function setPresetLastMonth(btnElement) {
@@ -6291,15 +6313,38 @@
       setActivePresetPill('last_month');
     }
 
-    applyFilters();
+    // applyFilters();
   }
 
   function onDateFilterChange() {
     syncActivePresetPill();
-    applyFilters();
+    // applyFilters();
   }
 
   function applyFilters() {
+    const startDate = document.getElementById('startDateFilter')?.value;
+    const endDate = document.getElementById('endDateFilter')?.value;
+    if(!startDate || !endDate){
+      bp2Toast.fire({
+        icon: 'warning',
+        title: 'Pilih Start Date & End Date terlebih dahulu'
+      });
+      return;
+    }
+
+    if(endDate < startDate){
+      bp2Toast.fire({
+        icon: 'error',
+        title: 'End Date tidak boleh lebih awal dari Start Date!'
+      });
+      return;
+    }
+
+    const checkedPlatforms = Array.from(
+      document.querySelectorAll('#platformOptionsList input[type="checkbox"]:checked')
+    ).map(cb => cb.value);
+    selectedPlatforms = checkedPlatforms;
+
     loadAnalyticsData();
   }
 
@@ -6505,6 +6550,8 @@
 
     // 9. Product Price Analytics Table
     priceListFull = data.price_analytics || [];
+
+    console.log(data.price_analytics);
     renderPricePlatformToggle();
     filterPriceTable();
 

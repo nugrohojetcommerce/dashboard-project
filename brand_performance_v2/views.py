@@ -168,6 +168,14 @@ def analytics_api(request: HttpRequest) -> JsonResponse:
     user_brands = filter_options.get("brands", [])
     default_brand = "Senka" if "Senka" in user_brands else (user_brands[0] if user_brands else None)
 
+    if start_date and end_date:
+        if end_date < start_date:
+            return JsonResponse({
+                "status": "error",
+                "message": "End Date Cannot be earlier than Start Date.",
+                "code": "INVALID_DATE_RANGE"
+            },status=400)
+
     if dimension == "brand_group":
         # Single-select brand group in brand_group dimension
         selected_brands = None

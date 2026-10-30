@@ -5641,8 +5641,8 @@
       sUrl.searchParams.set('dimension', dim);
       summaryLink.href = sUrl.pathname + sUrl.search;
     }
-
-    loadAnalyticsData();
+    resetFilters()
+    // loadAnalyticsData();
   }
 
   /* ── Confidential Mode State & Handlers ── */

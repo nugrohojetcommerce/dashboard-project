@@ -1,4 +1,5 @@
 from django.urls import path
+from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 # from django.conf import settings
 # from django.urls import include, path
@@ -24,10 +25,16 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import RedirectView
 
 
+def root_redirect(request):
+    if request.user.is_authenticated:
+        return redirect('brand_performance_v2')
+    return redirect('login')
+
+
 urlpatterns = [
-    # =============== contoh
-    path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
-    path('', RedirectView.as_view(url='/brand_performance_v2/', permanent=False), name="home_redirect"),
+    path('login/', auth_views.LoginView.as_view(template_name='login.html', redirect_authenticated_user=True), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path('', root_redirect, name="home_redirect"),
     path('brand_performance_api_new', brand_performance_api_new, name="brand_performance_api_new"),
     # path('',brand_performance_view),
     # path('api/gmv', api_gmv),
@@ -36,7 +43,6 @@ urlpatterns = [
     path('profile/', update_profile, name='update_profile'),
     path('api/change-password/', change_password_api, name='change_password_api'),
     path('profile/password/', never_cache(auth_views.PasswordChangeView.as_view(template_name='password_change.html', success_url='/profile/')), name='custom_password_change'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='/'), name='logout'),
     # path('brand_performance/',brand_performance, name="brand_performance"),
     path('brand_performance_api/',brand_performance_api, name="brand_performance_api"),
 

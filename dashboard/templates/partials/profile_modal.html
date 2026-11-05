@@ -1,4 +1,4 @@
-{% load static %}
+{% load static brand_tags %}
 <!-- ── PROFILE CARD MODAL OVERLAY ── -->
 <div id="profileCardBackdrop" class="profile-card-backdrop" aria-hidden="true">
   <div id="profileCardModal" class="profile-card-modal shadow-lg" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
@@ -76,7 +76,7 @@
             <div class="brand-grid" id="brandGrid">
               {% for brand in request.user.brands.all %}
                 <div class="brand-item-card" data-brand-name="{{ brand.name|lower }}">
-                  <span class="brand-item-dot"></span>
+                  {% render_brand_logo brand.name 32 %}
                   <span class="brand-item-text text-truncate" title="{{ brand.name }}">{{ brand.name }}</span>
                 </div>
               {% endfor %}

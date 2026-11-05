@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize static %}
+{% load humanize static brand_tags %}
 
 {% block title %}Brand Performance v2 — Analytics{% endblock %}
 
@@ -4206,7 +4206,7 @@
           <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="brandDropdownTrigger"
             aria-haspopup="true" aria-expanded="false" title="Filter brand">
             <i class="bi bi-tag"></i>
-            <span class="bp2-dropdown-label" id="brandDropdownLabel">{{ selected_brand }}</span>
+            <span class="bp2-dropdown-label" id="brandDropdownLabel"><span style="display:inline-flex; align-items:center; gap:6px;">{% render_brand_logo selected_brand 20 %} <span>{{ selected_brand }}</span></span></span>
             <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
           </button>
           <div class="bp2-dropdown-menu" id="brandDropdownMenu">
@@ -4218,6 +4218,7 @@
               {% for b in brands %}
               <div class="bp2-dropdown-item {% if b == selected_brand %}active{% endif %}" data-value="{{ b }}"
                 onclick="selectSingleBrand('{{ b|escapejs }}')">
+                {% render_brand_logo b 26 %}
                 <span class="bp2-option-text">{{ b }}</span>
                 <i class="bi bi-check-lg bp2-single-check {% if b != selected_brand %}d-none{% endif %}"></i>
               </div>
@@ -5891,7 +5892,7 @@
   function selectSingleBrand(brand) {
     selectedBrand = brand;
     const labelEl = document.getElementById('brandDropdownLabel');
-    if (labelEl) labelEl.textContent = brand;
+    if (labelEl) labelEl.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(brand, 20)} <span>${escapeHtml(brand)}</span></span>`;
 
     document.querySelectorAll('#brandOptionsList .bp2-dropdown-item').forEach(el => {
       const isMatch = el.getAttribute('data-value') === brand;
@@ -8827,9 +8828,9 @@
           </div>
           <p class="scatter-detail-prod" title="${escapeHtml(item.product_name)}">${escapeHtml(item.product_name)}</p>
           <div style="display:flex; align-items:center; gap:6px; margin-top:6px; font-size:.73rem; color:var(--text-muted);">
-            <span><i class="bi bi-tag"></i> <b>${escapeHtml(item.brand)}</b></span>
+            <span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(item.brand, 22)} <b>${escapeHtml(item.brand)}</b></span>
             <span>•</span>
-            <span style="display:inline-flex; align-items:center; gap:5px;">${renderPlatformIcon(item.platform, 13)} <b>${escapeHtml(item.platform)}</b></span>
+            <span style="display:inline-flex; align-items:center; gap:6px;">${renderPlatformIcon(item.platform, 16)} <b>${escapeHtml(item.platform)}</b></span>
           </div>
         </div>
         <button type="button" class="scatter-close-btn" onclick="clearScatterDetail()" title="Tutup detail">&times;</button>
@@ -9291,7 +9292,7 @@
       tr.innerHTML = `
         <td class="cell-truncate-sku" title="${escapeHtml(p.sku_code)}"><b>${escapeHtml(p.sku_code)}</b></td>
         <td class="cell-truncate-prod" title="${escapeHtml(p.product_name)}">${escapeHtml(p.product_name)}</td>
-        <td class="cell-truncate-brand" title="${escapeHtml(p.brand)}">${escapeHtml(p.brand)}</td>
+        <td class="cell-truncate-brand" title="${escapeHtml(p.brand)}"><span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(p.brand, 24)} <span>${escapeHtml(p.brand)}</span></span></td>
         <td>${splitBarHtml}</td>
         <td class="num mono">${formatCurrency(platDisc)}</td>
         <td class="num mono">${formatCurrency(sellerDisc)}</td>
@@ -9625,7 +9626,7 @@
         let rowHtml = `
           <td class="cell-truncate-sku" title="${escapeHtml(p.sku_code)}"><b>${escapeHtml(p.sku_code)}</b></td>
           <td class="cell-truncate-prod" title="${escapeHtml(p.product_name)}">${escapeHtml(p.product_name)}</td>
-          <td class="cell-truncate-brand" title="${escapeHtml(p.brand)}">${escapeHtml(p.brand)}</td>
+          <td class="cell-truncate-brand" title="${escapeHtml(p.brand)}"><span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(p.brand, 24)} <span>${escapeHtml(p.brand)}</span></span></td>
         `;
 
         p.months.forEach((m, i) => {
@@ -9750,7 +9751,7 @@
         tr.innerHTML = `
           <td class="cell-truncate-sku" title="${escapeHtml(p.sku_code)}"><b>${escapeHtml(p.sku_code)}</b></td>
           <td class="cell-truncate-prod" title="${escapeHtml(p.product_name)}">${escapeHtml(p.product_name)}</td>
-          <td class="cell-truncate-brand" title="${escapeHtml(p.brand)}">${escapeHtml(p.brand)}</td>
+          <td class="cell-truncate-brand" title="${escapeHtml(p.brand)}"><span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(p.brand, 24)} <span>${escapeHtml(p.brand)}</span></span></td>
           <td class="num mono">${formatNumber(p.net_qty)}</td>
           <td class="num mono">${formatCurrency(p.nmv)}</td>
           <td class="num mono">${formatCurrency(p.gmv)}</td>
@@ -10329,8 +10330,8 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
       <td class="mono"><b>${r.date}</b></td>
-      <td class="cell-truncate-brand" title="${escapeHtml(r.brand)}">${escapeHtml(r.brand)}</td>
-      <td class="cell-truncate-brand" title="${escapeHtml(r.brand_group)}">${escapeHtml(r.brand_group)}</td>
+      <td class="cell-truncate-brand" title="${escapeHtml(r.brand)}"><span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(r.brand, 24)} <span>${escapeHtml(r.brand)}</span></span></td>
+      <td class="cell-truncate-brand" title="${escapeHtml(r.brand_group)}"><span>${escapeHtml(r.brand_group)}</span></td>
       <td>${renderPlatformBadge(r.platform)}</td>
       <td class="num mono">${formatCurrency(r.nmv)}</td>
       <td class="num mono">${formatNumber(r.net_order)}</td>

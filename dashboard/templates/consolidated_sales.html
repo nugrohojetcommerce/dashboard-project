@@ -248,8 +248,18 @@
 
 <script>
 $(document).ready(function () {
-  $('#brandSelect').select2({ width: '100%', placeholder: 'Select brands' });
-  $('#platformSelect').select2({ width: '100%', placeholder: 'Select platforms' });
+  $('#brandSelect').select2({ 
+    width: '100%', 
+    placeholder: 'Select brands',
+    templateResult: formatBrandSelect2,
+    templateSelection: formatBrandSelect2
+  });
+  $('#platformSelect').select2({ 
+    width: '100%', 
+    placeholder: 'Select platforms',
+    templateResult: formatPlatformSelect2,
+    templateSelection: formatPlatformSelect2
+  });
 });
 
 function selectAllBrands()    { $('#brandSelect option').prop('selected', true);  $('#brandSelect').trigger('change'); }
@@ -409,7 +419,10 @@ function initChart() {
     data: [],
     scrollX: true,
     columns: [
-      { data: "brand_group" },
+      { 
+        data: "brand_group",
+        render: (v, type) => type === "display" && v ? `<span>${v}</span>` : v
+      },
       { data: "nmv", render: function (v, type) {
           if (type === "sort" || type === "type") return parseFloat(v) || 0;
           return `<span>Rp${Number(v || 0).toLocaleString()}</span>`;

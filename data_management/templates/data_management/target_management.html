@@ -1,0 +1,2431 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Target Ingestion & Planning — Jetcommerce Dashboard{% endblock %}
+
+{% block extra_css %}
+<!-- SheetJS for client-side Excel reading & writing -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- SweetAlert2 for modern alerts & toasts -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+  /* =====================================================================
+     TARGET INGESTION & PLANNING (MONTHLY AGGREGATION & DAILY BREAKDOWN)
+     Built on base.html tokens with 100% theme awareness.
+     Granularity: BRAND x PLATFORM (Monthly Table with Daily Modal Ledger)
+     ===================================================================== */
+  .tm-container {
+    padding: 10px 4px 60px;
+    color: var(--text-primary);
+  }
+
+  .tm-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* ── Header ── */
+  .tm-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+
+  .tm-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .tm-breadcrumb a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  .tm-breadcrumb a:hover {
+    color: var(--orange);
+  }
+
+  .tm-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .tm-title-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--orange-dim);
+    color: var(--orange);
+    border: 1px solid var(--glass-border-h);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .tm-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+    max-width: 840px;
+    line-height: 1.45;
+  }
+
+  .tm-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* ── Buttons ── */
+  .tm-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    transition: all 0.15s ease;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+    line-height: 1.25;
+  }
+  .tm-btn:hover {
+    background: var(--glass-hover);
+    border-color: var(--glass-border-h);
+    color: var(--orange);
+    transform: translateY(-1px);
+  }
+  .tm-btn:active {
+    transform: translateY(0);
+  }
+
+  .tm-btn-primary {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.28);
+  }
+  .tm-btn-primary:hover {
+    background: var(--orange-bright);
+    border-color: var(--orange-bright);
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(255, 107, 0, 0.38);
+  }
+
+  .tm-btn-outline-orange {
+    background: var(--orange-dim);
+    border-color: var(--glass-border-h);
+    color: var(--orange) !important;
+  }
+  .tm-btn-outline-orange:hover {
+    background: var(--orange);
+    color: #ffffff !important;
+  }
+
+  /* ── KPI Summary Cards ── */
+  .tm-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .tm-stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .tm-stat-card:hover {
+    border-color: var(--glass-border-h);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .tm-stat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .tm-stat-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+  }
+
+  .tm-stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+  }
+  .tm-stat-icon.orange { background: var(--orange-dim); color: var(--orange); }
+  .tm-stat-icon.green  { background: var(--success-bg); color: var(--success); }
+  .tm-stat-icon.blue   { background: rgba(2, 132, 199, 0.12); color: var(--accent-2); }
+  .tm-stat-icon.purple { background: rgba(139, 92, 246, 0.12); color: #8B5CF6; }
+
+  .tm-stat-value {
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    line-height: 1.15;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .tm-stat-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     CUSTOM STYLED DROPDOWNS & FILTER TOOLBAR (.tm-dropdown-*)
+     Clean, modern, zero default browser selects!
+     ══════════════════════════════════════════════════════════════════════ */
+  .tm-toolbar {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    z-index: 20;
+  }
+
+  .tm-dropdown-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  .tm-dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    height: 35px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: all 0.15s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+  .tm-dropdown-trigger:hover {
+    border-color: var(--orange);
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+  .tm-dropdown-wrap.open .tm-dropdown-trigger {
+    border-color: var(--orange);
+    background: var(--card-bg);
+    box-shadow: 0 0 0 2px var(--orange-dim);
+  }
+
+  .tm-dropdown-label {
+    max-width: 170px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tm-dropdown-caret {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    transition: transform 0.18s ease;
+    margin-left: 3px;
+  }
+  .tm-dropdown-wrap.open .tm-dropdown-caret {
+    transform: rotate(180deg);
+  }
+
+  .tm-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 230px;
+    max-width: 300px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px -8px rgba(16, 24, 40, 0.28);
+    padding: 8px;
+    z-index: 1000;
+    display: none;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .tm-dropdown-wrap.open .tm-dropdown-menu {
+    display: block;
+    animation: tmDropFade 0.15s ease-out;
+  }
+  @keyframes tmDropFade {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tm-dropdown-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+  .tm-dropdown-search i {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .tm-dropdown-search input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.76rem;
+    width: 100%;
+    font-family: inherit;
+  }
+
+  .tm-dropdown-options {
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .tm-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.78rem;
+    color: var(--text-primary);
+    transition: background 0.12s, color 0.12s;
+  }
+  .tm-dropdown-item:hover {
+    background: var(--surface-muted);
+  }
+  .tm-dropdown-item.active {
+    background: var(--orange-dim);
+    color: var(--orange);
+    font-weight: 700;
+  }
+  .tm-dropdown-item .tm-single-check {
+    color: var(--orange);
+    font-size: 0.85rem;
+  }
+
+  /* Search Input in Toolbar */
+  .tm-search-box {
+    position: relative;
+    flex: 1 1 200px;
+  }
+  .tm-search-input {
+    width: 100%;
+    height: 35px;
+    padding: 0 30px 0 34px;
+    font-size: 0.8rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.15s ease;
+  }
+  .tm-search-input:focus {
+    border-color: var(--orange);
+    background: var(--card-bg);
+    box-shadow: 0 0 0 2px var(--orange-dim);
+  }
+  .tm-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+    font-size: 0.8rem;
+  }
+  .tm-search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: none;
+  }
+  .tm-search-clear:hover {
+    color: var(--orange);
+  }
+
+  .tm-btn-reset {
+    height: 35px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  .tm-btn-reset:hover {
+    background: var(--surface-muted);
+    color: var(--orange);
+  }
+
+  /* ── Platform Logos & Badges ── */
+  .tm-platform-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    border: 1px solid var(--glass-border);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+  }
+  .tm-platform-icon {
+    width: 14px;
+    height: 14px;
+    object-fit: contain;
+    border-radius: 2px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .tm-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    font-weight: 600;
+    font-size: 0.76rem;
+    color: var(--text-primary);
+  }
+
+  /* ── Main Data Table Card (Monthly Aggregation) ── */
+  .tm-table-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+  }
+
+  .tm-table-responsive {
+    overflow-x: auto;
+    width: 100%;
+    min-height: 200px;
+  }
+
+  .tm-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.80rem;
+  }
+
+  .tm-table th {
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font-size: 0.69rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--glass-border);
+    white-space: nowrap;
+    user-select: none;
+  }
+
+  .tm-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-sub);
+    vertical-align: middle;
+    background: var(--card-bg);
+    transition: background 0.12s ease;
+  }
+
+  .tm-table tbody tr:hover td {
+    background: var(--glass-hover);
+  }
+
+  .tm-target-value {
+    font-weight: 700;
+    font-size: 0.86rem;
+    color: var(--orange);
+  }
+
+  .tm-day-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.71rem;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* Action buttons */
+  .tm-btn-detail {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    height: 25px;
+    border-radius: 6px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    background: var(--orange-dim);
+    color: var(--orange);
+    border: 1px solid var(--glass-border-h);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tm-btn-detail:hover {
+    background: var(--orange);
+    color: #ffffff;
+    border-color: var(--orange);
+    box-shadow: 0 2px 6px rgba(255, 107, 0, 0.22);
+  }
+
+  .tm-action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tm-action-btn:hover {
+    background: var(--glass-hover);
+    color: var(--orange);
+    border-color: var(--glass-border-h);
+  }
+
+  /* Table Footer & Pagination */
+  .tm-table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--glass-border);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     MODAL: DETAIL TARGET HARIAN (DAILY BREAKDOWN)
+     ══════════════════════════════════════════════════════════════════════ */
+  .tm-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 1060;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .tm-modal-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .tm-modal-dialog {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 580px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+    transform: translateY(16px) scale(0.98);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .tm-modal-backdrop.show .tm-modal-dialog {
+    transform: translateY(0) scale(1);
+  }
+  .tm-modal-dialog.lg {
+    max-width: 860px;
+  }
+
+  .tm-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .tm-modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tm-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    line-height: 1;
+    border-radius: 6px;
+    padding: 4px;
+    transition: color 0.15s;
+  }
+  .tm-modal-close:hover {
+    color: var(--text-primary);
+  }
+
+  .tm-modal-body {
+    padding: 20px;
+  }
+  .tm-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--glass-border);
+    background: var(--surface-muted);
+  }
+
+  /* Modal daily KPI strip */
+  .tm-modal-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+  .tm-modal-kpi-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .tm-modal-kpi-lbl {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .tm-modal-kpi-val {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+
+  /* Daily Table inside modal */
+  .tm-modal-table-wrap {
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    overflow: hidden;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .tm-daily-modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
+  .tm-daily-modal-table th {
+    background: var(--surface-muted);
+    padding: 6px 10px;
+    font-size: 0.69rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--glass-border);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .tm-daily-modal-table td {
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-sub);
+    vertical-align: middle;
+  }
+  .tm-daily-modal-table tr:hover td {
+    background: var(--glass-hover);
+  }
+
+  .tm-day-tag {
+    font-size: 0.68rem;
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: var(--surface-muted);
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+  .tm-day-tag.weekend {
+    background: rgba(244, 63, 94, 0.12);
+    color: #F43F5E;
+  }
+
+  .tm-excel-cell-wrap {
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 0 8px;
+    transition: all 0.15s ease;
+    height: 27px;
+  }
+  .tm-excel-cell-wrap:focus-within {
+    border-color: var(--orange);
+    background: var(--card-bg);
+    box-shadow: 0 0 0 2px var(--orange-dim);
+  }
+  .tm-excel-cell-prefix {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-right: 4px;
+    user-select: none;
+  }
+  .tm-input-daily-cell {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 120px;
+    height: 100%;
+    font-size: 0.81rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    padding: 0;
+  }
+  .tm-input-daily-cell::-webkit-outer-spin-button,
+  .tm-input-daily-cell::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .tm-input-daily-cell[type=number] {
+    -moz-appearance: textfield;
+  }
+
+  /* Form styling in Modals */
+  .tm-form-group {
+    margin-bottom: 16px;
+  }
+  .tm-form-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .tm-custom-select {
+    width: 100%;
+    height: 36px;
+    padding: 0 32px 0 12px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    background: var(--surface-muted) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E") no-repeat right 12px center;
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+  .tm-custom-select:focus {
+    border-color: var(--orange);
+    background-color: var(--card-bg);
+    box-shadow: 0 0 0 2px var(--orange-dim);
+  }
+
+  .tm-form-control {
+    width: 100%;
+    height: 36px;
+    padding: 0 12px;
+    font-size: 0.82rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tm-form-control:focus {
+    border-color: var(--orange);
+    background: var(--card-bg);
+    box-shadow: 0 0 0 2px var(--orange-dim);
+  }
+  .tm-form-help {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ── Drag & drop upload zone ── */
+  .tm-dropzone {
+    border: 2px dashed var(--glass-border-h);
+    border-radius: var(--radius);
+    padding: 28px 20px;
+    text-align: center;
+    background: var(--surface-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+  .tm-dropzone:hover, .tm-dropzone.dragover {
+    border-color: var(--orange);
+    background: var(--orange-dim);
+  }
+  .tm-dropzone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .tm-preview-wrap {
+    margin-top: 14px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+  .tm-preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+  .tm-preview-table th {
+    background: var(--surface-muted);
+    padding: 8px 10px;
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--glass-border);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .tm-preview-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-sub);
+  }
+  .tm-preview-badge-valid {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--success-bg);
+    color: var(--success);
+    font-weight: 700;
+  }
+  .tm-preview-badge-invalid {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: var(--warn-bg);
+    color: var(--warn);
+    font-weight: 700;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tm-container">
+
+  <!-- ── 1. Page Header ── -->
+  <div class="tm-header">
+    <div>
+      <div class="tm-breadcrumb">
+        <a href="{% url 'data_management_home' %}">Data Management</a>
+        <span>/</span>
+        <span style="color: var(--orange);">Target Ingest</span>
+      </div>
+      <h1 class="tm-title">
+        <span class="tm-title-icon"><i class="bi bi-bullseye"></i></span>
+        Target Data Ingestion & Planning
+      </h1>
+      <p class="tm-subtitle">
+        Kelola target penjualan bulanan per <strong>Brand</strong> dan per <strong>Platform</strong>. Tabel utama menyajikan ringkasan <strong>Agregasi Bulanan</strong>, dan kamu dapat melihat serta mengedit rincian <strong>Target Harian (Daily)</strong> melalui modal detail untuk fleksibilitas tracking run-rate.
+      </p>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="tm-header-actions">
+      <button type="button" class="tm-btn" onclick="downloadTemplateExcel()" title="Download file template Excel resmi">
+        <i class="bi bi-file-earmark-arrow-down"></i>
+        <span>Download Template</span>
+      </button>
+      <button type="button" class="tm-btn" onclick="exportMonthlyTableToExcel()" title="Export tabel agregasi bulanan ke Excel">
+        <i class="bi bi-download"></i>
+        <span>Export Excel</span>
+      </button>
+      <button type="button" class="tm-btn tm-btn-outline-orange" onclick="openDistributeModal()" title="Distribusi otomatis target bulanan ke seluruh hari dalam sebulan">
+        <i class="bi bi-calculator"></i>
+        <span>Set Target Bulanan</span>
+      </button>
+      <button type="button" class="tm-btn tm-btn-primary" onclick="openUploadModal()" title="Upload file Excel target harian massal">
+        <i class="bi bi-file-earmark-excel"></i>
+        <span>Bulk Import Excel</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── 2. KPI Summary Cards ── -->
+  <div class="tm-stats-grid">
+    <div class="tm-stat-card">
+      <div class="tm-stat-top">
+        <span class="tm-stat-label">Total Target Terjadwal (Agregasi)</span>
+        <div class="tm-stat-icon orange"><i class="bi bi-cash-stack"></i></div>
+      </div>
+      <div class="tm-stat-value tm-mono" id="kpiTotalTarget">Rp 0</div>
+      <div class="tm-stat-desc" id="kpiTotalTargetDesc">Total target bulanan terdaftar</div>
+    </div>
+
+    <div class="tm-stat-card">
+      <div class="tm-stat-top">
+        <span class="tm-stat-label">Rata-Rata Target / Hari (Run-Rate)</span>
+        <div class="tm-stat-icon green"><i class="bi bi-graph-up-arrow"></i></div>
+      </div>
+      <div class="tm-stat-value tm-mono" id="kpiDailyAvg">Rp 0</div>
+      <div class="tm-stat-desc">Kebutuhan target penjualan harian</div>
+    </div>
+
+    <div class="tm-stat-card">
+      <div class="tm-stat-top">
+        <span class="tm-stat-label">Kombinasi Brand & Platform</span>
+        <div class="tm-stat-icon blue"><i class="bi bi-shop"></i></div>
+      </div>
+      <div class="tm-stat-value tm-mono" id="kpiComboCount">0</div>
+      <div class="tm-stat-desc" id="kpiComboDesc">0 Brand · 0 Platform terdaftar</div>
+    </div>
+
+    <div class="tm-stat-card">
+      <div class="tm-stat-top">
+        <span class="tm-stat-label">Kelengkapan Record Harian</span>
+        <div class="tm-stat-icon purple"><i class="bi bi-calendar-check"></i></div>
+      </div>
+      <div class="tm-stat-value tm-mono" id="kpiDayCount">0</div>
+      <div class="tm-stat-desc">Target harian tersimpan di ledger</div>
+    </div>
+  </div>
+
+  <!-- ── 3. Custom Filter Toolbar (No Browser Defaults!) ── -->
+  <div class="tm-toolbar">
+
+    <!-- Custom Dropdown: Brand -->
+    <div class="tm-dropdown-wrap" id="wrapBrandDropdown">
+      <div class="tm-dropdown-trigger" onclick="toggleCustomDropdown('wrapBrandDropdown')" title="Filter Brand">
+        <i class="bi bi-tag" style="color:var(--orange);"></i>
+        <span class="tm-dropdown-label" id="labelBrandDropdown">Semua Brand</span>
+        <i class="bi bi-chevron-down tm-dropdown-caret"></i>
+      </div>
+      <div class="tm-dropdown-menu">
+        <div class="tm-dropdown-search">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Cari brand…" oninput="filterDropdownOptions('listBrandOptions', this.value)">
+        </div>
+        <div class="tm-dropdown-options" id="listBrandOptions">
+          <div class="tm-dropdown-item active" data-value="" onclick="selectBrandFilter('', 'Semua Brand')">
+            <span>Semua Brand</span>
+            <i class="bi bi-check-lg tm-single-check"></i>
+          </div>
+          {% for b in brands %}
+          <div class="tm-dropdown-item" data-value="{{ b }}" onclick="selectBrandFilter('{{ b|escapejs }}', '{{ b|escapejs }}')">
+            <span>{{ b }}</span>
+            <i class="bi bi-check-lg tm-single-check d-none"></i>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Dropdown: Platform (with Official SVG Icons) -->
+    <div class="tm-dropdown-wrap" id="wrapPlatformDropdown">
+      <div class="tm-dropdown-trigger" onclick="toggleCustomDropdown('wrapPlatformDropdown')" title="Filter Platform">
+        <i class="bi bi-shop" style="color:var(--orange);"></i>
+        <span class="tm-dropdown-label" id="labelPlatformDropdown">Semua Platform</span>
+        <i class="bi bi-chevron-down tm-dropdown-caret"></i>
+      </div>
+      <div class="tm-dropdown-menu">
+        <div class="tm-dropdown-options" id="listPlatformOptions">
+          <div class="tm-dropdown-item active" data-value="" onclick="selectPlatformFilter('', 'Semua Platform', '')">
+            <span>Semua Platform</span>
+            <i class="bi bi-check-lg tm-single-check"></i>
+          </div>
+          {% for p in platforms %}
+          <div class="tm-dropdown-item" data-value="{{ p }}" onclick="selectPlatformFilter('{{ p|escapejs }}', '{{ p|escapejs }}')">
+            <span style="display:inline-flex; align-items:center; gap:7px;">
+              {% if 'shopee' in p|lower %}
+              <img src="{% static 'logos/shopee.svg' %}" class="tm-platform-icon" alt="Shopee">
+              {% elif 'tokopedia' in p|lower or 'toped' in p|lower %}
+              <img src="{% static 'logos/tokopedia.svg' %}" class="tm-platform-icon" alt="Tokopedia">
+              {% elif 'tiktok' in p|lower %}
+              <img src="{% static 'logos/tiktok_shop.svg' %}" class="tm-platform-icon" alt="TikTok">
+              {% elif 'lazada' in p|lower %}
+              <img src="{% static 'logos/lazada.svg' %}" class="tm-platform-icon" alt="Lazada">
+              {% else %}
+              <i class="bi bi-shop"></i>
+              {% endif %}
+              <span>{{ p }}</span>
+            </span>
+            <i class="bi bi-check-lg tm-single-check d-none"></i>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Dropdown: Periode Bulan -->
+    <div class="tm-dropdown-wrap" id="wrapMonthDropdown">
+      <div class="tm-dropdown-trigger" onclick="toggleCustomDropdown('wrapMonthDropdown')" title="Filter Periode Bulan">
+        <i class="bi bi-calendar3" style="color:var(--orange);"></i>
+        <span class="tm-dropdown-label" id="labelMonthDropdown">Maret 2026</span>
+        <i class="bi bi-chevron-down tm-dropdown-caret"></i>
+      </div>
+      <div class="tm-dropdown-menu">
+        <div class="tm-dropdown-options" id="listMonthOptions">
+          <div class="tm-dropdown-item" data-value="" onclick="selectMonthFilter('', 'Semua Periode')">
+            <span>Semua Periode</span>
+            <i class="bi bi-check-lg tm-single-check d-none"></i>
+          </div>
+          <div class="tm-dropdown-item active" data-value="2026-03" onclick="selectMonthFilter('2026-03', 'Maret 2026')">
+            <span>Maret 2026</span>
+            <i class="bi bi-check-lg tm-single-check"></i>
+          </div>
+          <div class="tm-dropdown-item" data-value="2026-02" onclick="selectMonthFilter('2026-02', 'Februari 2026')">
+            <span>Februari 2026</span>
+            <i class="bi bi-check-lg tm-single-check d-none"></i>
+          </div>
+          <div class="tm-dropdown-item" data-value="2026-01" onclick="selectMonthFilter('2026-01', 'Januari 2026')">
+            <span>Januari 2026</span>
+            <i class="bi bi-check-lg tm-single-check d-none"></i>
+          </div>
+          <div class="tm-dropdown-item" data-value="2025-12" onclick="selectMonthFilter('2025-12', 'Desember 2025')">
+            <span>Desember 2025</span>
+            <i class="bi bi-check-lg tm-single-check d-none"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Input -->
+    <div class="tm-search-box">
+      <i class="bi bi-search tm-search-icon"></i>
+      <input type="text" id="searchInput" class="tm-search-input" placeholder="Cari brand, platform, bulan…" oninput="onSearchInput()">
+      <button type="button" id="searchClearBtn" class="tm-search-clear" onclick="clearSearch()"><i class="bi bi-x-circle-fill"></i></button>
+    </div>
+
+    <!-- Reset Filter Button -->
+    <button type="button" class="tm-btn-reset" onclick="resetFilters()" title="Reset semua filter">
+      <i class="bi bi-arrow-counterclockwise"></i>
+      <span>Reset</span>
+    </button>
+  </div>
+
+  <!-- ── 4. Main Data Table: MONTHLY AGGREGATIONS ONLY ── -->
+  <div class="tm-table-card">
+    <div class="tm-table-responsive">
+      <table class="tm-table" id="monthlyTable">
+        <thead>
+          <tr>
+            <th>Brand</th>
+            <th>Platform</th>
+            <th>Periode Bulan</th>
+            <th>Kelengkapan Hari</th>
+            <th>Total Target Bulanan</th>
+            <th>Rata-Rata / Hari</th>
+            <th>Porsi</th>
+            <th style="width: 90px; text-align: center;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="monthlyTableBody">
+          <!-- Monthly aggregate rows injected by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer -->
+    <div class="tm-table-footer">
+      <span id="paginationInfo">Menampilkan 0 ringkasan target bulanan</span>
+      <div style="font-size:0.75rem; color:var(--text-muted); display:flex; align-items:center; gap:6px;">
+        <i class="bi bi-info-circle"></i> Klik <strong>"Lihat Detail Harian"</strong> untuk mengedit target per tanggal.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 1: DETAIL TARGET HARIAN (DAILY BREAKDOWN)
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="dailyDetailModal" class="tm-modal-backdrop" onclick="handleBackdropClick(event, 'dailyDetailModal')">
+  <div class="tm-modal-dialog lg">
+    <div class="tm-modal-header">
+      <div class="tm-modal-title">
+        <i class="bi bi-calendar3-range" style="color: var(--orange);"></i>
+        <div>
+          <span id="modalDetailTitle">Detail Target Harian</span>
+          <div style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);" id="modalDetailSubtitle">
+            Brand · Platform · Periode
+          </div>
+        </div>
+      </div>
+      <button type="button" class="tm-modal-close" onclick="closeModal('dailyDetailModal')"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <div class="tm-modal-body">
+      <!-- Modal KPI Strip -->
+      <div class="tm-modal-kpis">
+        <div class="tm-modal-kpi-item">
+          <span class="tm-modal-kpi-lbl">Total Target Bulanan</span>
+          <span class="tm-modal-kpi-val tm-mono" id="modalKpiTotalTarget" style="color:var(--orange);">Rp 0</span>
+        </div>
+        <div class="tm-modal-kpi-item">
+          <span class="tm-modal-kpi-lbl">Rata-Rata / Hari</span>
+          <span class="tm-modal-kpi-val tm-mono" id="modalKpiDailyAvg">Rp 0</span>
+        </div>
+        <div class="tm-modal-kpi-item">
+          <span class="tm-modal-kpi-lbl">Target Tertinggi (Peak)</span>
+          <span class="tm-modal-kpi-val tm-mono" id="modalKpiPeakDay" style="font-size:0.95rem;">-</span>
+        </div>
+        <div class="tm-modal-kpi-item">
+          <span class="tm-modal-kpi-lbl">Jumlah Hari Tercover</span>
+          <span class="tm-modal-kpi-val tm-mono" id="modalKpiDayCount">0 Hari</span>
+        </div>
+      </div>
+
+      <!-- Quick bar in modal -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="font-size:0.78rem; font-weight:700; color:var(--text-primary);">
+            Rincian Target per Tanggal:
+          </span>
+          <span id="modalModeBadge" class="badge" style="display:none; font-size:0.7rem; background:var(--orange-dim); color:var(--orange); font-weight:700; border:1px solid var(--glass-border-h); padding:3px 8px; border-radius:999px;">
+            <i class="bi bi-pencil-fill" style="font-size:0.65rem;"></i> Edit Mode Aktif
+          </span>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button type="button" id="btnToggleEditMode" class="tm-btn tm-btn-outline-orange" style="font-size:0.74rem; padding:4px 12px;" onclick="toggleModalEditMode()">
+            <i class="bi bi-pencil-square"></i>
+            <span>Edit Mode</span>
+          </button>
+          <button type="button" id="btnCancelEditMode" class="tm-btn" style="font-size:0.74rem; padding:4px 10px; display:none;" onclick="cancelModalEditMode()">
+            <i class="bi bi-x"></i> Batal
+          </button>
+          <button type="button" class="tm-btn" style="font-size:0.74rem; padding:4px 10px;" onclick="exportSingleGroupExcel()">
+            <i class="bi bi-download"></i> Export Excel
+          </button>
+        </div>
+      </div>
+
+      <!-- Excel Navigation Hint Banner (Visible in Edit Mode) -->
+      <div id="excelTipsBanner" style="display:none; margin-bottom:10px; padding:7px 12px; background:var(--orange-dim); border:1px solid var(--glass-border-h); border-radius:8px; font-size:0.74rem; color:var(--text-primary); align-items:center; justify-content:space-between; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <i class="bi bi-keyboard-fill" style="color:var(--orange); font-size:0.95rem;"></i>
+          <span><strong>Navigasi ala Excel:</strong> Tekan <kbd style="background:var(--card-bg); border:1px solid var(--glass-border); padding:1px 5px; border-radius:4px; font-family:inherit; font-weight:700;">Enter</kbd> atau <kbd style="background:var(--card-bg); border:1px solid var(--glass-border); padding:1px 5px; border-radius:4px; font-family:inherit; font-weight:700;">↓</kbd> untuk baris berikutnya, <kbd style="background:var(--card-bg); border:1px solid var(--glass-border); padding:1px 5px; border-radius:4px; font-family:inherit; font-weight:700;">Shift + Enter</kbd> atau <kbd style="background:var(--card-bg); border:1px solid var(--glass-border); padding:1px 5px; border-radius:4px; font-family:inherit; font-weight:700;">↑</kbd> untuk baris sebelumnya.</span>
+        </div>
+        <span style="font-size:0.7rem; color:var(--text-muted); font-style:italic;">Kalkulasi langsung terupdate live</span>
+      </div>
+
+      <!-- Scrollable Daily Breakdown Table -->
+      <div class="tm-modal-table-wrap">
+        <table class="tm-daily-modal-table">
+          <thead>
+            <tr>
+              <th style="width: 45px;">#</th>
+              <th>Tanggal</th>
+              <th>Hari</th>
+              <th>Tag / Event</th>
+              <th>Target Harian (Rp)</th>
+              <th>Porsi Bulan</th>
+            </tr>
+          </thead>
+          <tbody id="dailyModalTableBody">
+            <!-- Daily rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tm-modal-footer">
+      <button type="button" class="tm-btn" onclick="closeModal('dailyDetailModal')">Tutup</button>
+      <button type="button" class="tm-btn tm-btn-primary" onclick="saveAllModalDailyTargets()">
+        <i class="bi bi-check-lg"></i> Simpan Perubahan Target
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 2: SET / DISTRIBUSI TARGET BULANAN
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="distributeModal" class="tm-modal-backdrop" onclick="handleBackdropClick(event, 'distributeModal')">
+  <div class="tm-modal-dialog">
+    <div class="tm-modal-header">
+      <h5 class="tm-modal-title">
+        <i class="bi bi-calculator" style="color: var(--orange);"></i>
+        Set Target Bulanan
+      </h5>
+      <button type="button" class="tm-modal-close" onclick="closeModal('distributeModal')"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <form id="distributeForm" onsubmit="generateDailyFromMonthly(event)">
+      <div class="tm-modal-body">
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
+          Tentukan total target 1 bulan untuk Brand & Platform tertentu. Sistem akan otomatis membagi target ke seluruh hari di bulan tersebut.
+        </p>
+
+        <div class="tm-form-group">
+          <label class="tm-form-label" for="distBrand">Brand <span style="color:#F43F5E;">*</span></label>
+          <select id="distBrand" class="tm-custom-select" required>
+            {% for b in brands %}
+            <option value="{{ b }}">{{ b }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="tm-form-group">
+          <label class="tm-form-label" for="distPlatform">Platform <span style="color:#F43F5E;">*</span></label>
+          <select id="distPlatform" class="tm-custom-select" required>
+            {% for p in platforms %}
+            <option value="{{ p }}">{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="tm-form-group">
+          <label class="tm-form-label" for="distMonthYear">Periode Bulan <span style="color:#F43F5E;">*</span></label>
+          <select id="distMonthYear" class="tm-custom-select" required>
+            <option value="2026-03" selected>Maret 2026 (31 Hari)</option>
+            <option value="2026-02">Februari 2026 (28 Hari)</option>
+            <option value="2026-01">Januari 2026 (31 Hari)</option>
+            <option value="2026-04">April 2026 (30 Hari)</option>
+          </select>
+        </div>
+
+        <div class="tm-form-group">
+          <label class="tm-form-label" for="distTotalTarget">Total Target 1 Bulan (Rupiah) <span style="color:#F43F5E;">*</span></label>
+          <input type="number" id="distTotalTarget" class="tm-form-control tm-mono" placeholder="Contoh: 600000000" min="1000" required oninput="previewDistRupiah(this.value)">
+          <div class="tm-form-help" id="distRupiahPreview">Rp 0</div>
+        </div>
+
+        <div class="tm-form-group">
+          <label class="tm-form-label">Metode Pembagian ke Target Harian</label>
+          <select id="distMethod" class="tm-custom-select">
+            <option value="payday_weighted">Berbobot Payday & Double-Date (Rekomendasi E-Commerce)</option>
+            <option value="even">Rata Setiap Hari (Total Target ÷ Jumlah Hari)</option>
+          </select>
+          <div class="tm-form-help">Metode berbobot memberikan porsi target harian lebih besar pada tanggal 25–31 dan tanggal kembar (seperti 3.3).</div>
+        </div>
+      </div>
+
+      <div class="tm-modal-footer">
+        <button type="button" class="tm-btn" onclick="closeModal('distributeModal')">Batal</button>
+        <button type="submit" class="tm-btn tm-btn-primary">
+          <i class="bi bi-magic"></i> Generate & Simpan Target
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL 3: BULK UPLOAD EXCEL (DAILY TARGETS)
+     ══════════════════════════════════════════════════════════════════════ -->
+<div id="uploadModal" class="tm-modal-backdrop" onclick="handleBackdropClick(event, 'uploadModal')">
+  <div class="tm-modal-dialog lg">
+    <div class="tm-modal-header">
+      <h5 class="tm-modal-title">
+        <i class="bi bi-file-earmark-excel" style="color: var(--orange);"></i>
+        Bulk Import Target via Excel
+      </h5>
+      <button type="button" class="tm-modal-close" onclick="closeModal('uploadModal')"><i class="bi bi-x-lg"></i></button>
+    </div>
+
+    <div class="tm-modal-body">
+      <!-- Drag & Drop Area -->
+      <div class="tm-dropzone" id="dropzone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDropFile(event)">
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls" onchange="onFileSelected(this)">
+        <div class="tm-dropzone-icon"><i class="bi bi-cloud-arrow-up-fill"></i></div>
+        <div class="tm-dropzone-text">Pilih atau seret file Excel ke sini</div>
+        <div class="tm-dropzone-hint">Format yang didukung: .xlsx, .xls (Maks. 5 MB)</div>
+      </div>
+
+      <!-- Format Information Box -->
+      <div style="margin-top: 14px; padding: 10px 14px; background: var(--surface-muted); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); font-size: 0.76rem; color: var(--text-muted); line-height: 1.5;">
+        <strong style="color: var(--text-primary);"><i class="bi bi-info-circle"></i> Struktur Kolom Excel yang Dibutuhkan:</strong>
+        <div style="margin-top: 5px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <code class="tm-mono" style="background:var(--card-bg); padding:2px 6px; border-radius:4px; border:1px solid var(--glass-border);">Brand</code>
+          <code class="tm-mono" style="background:var(--card-bg); padding:2px 6px; border-radius:4px; border:1px solid var(--glass-border);">Platform</code>
+          <code class="tm-mono" style="background:var(--card-bg); padding:2px 6px; border-radius:4px; border:1px solid var(--glass-border);">Date (YYYY-MM-DD)</code>
+          <code class="tm-mono" style="background:var(--card-bg); padding:2px 6px; border-radius:4px; border:1px solid var(--glass-border);">Target (Rupiah Harian)</code>
+        </div>
+        <div style="margin-top: 6px;">
+          Contoh baris: <code>Senka | Shopee | 2026-03-01 | 35000000</code>
+        </div>
+      </div>
+
+      <!-- Preview Section -->
+      <div id="uploadPreviewSection" style="display: none; margin-top: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <span>Preview Data Excel:</span>
+            <span id="previewSummaryBadge" style="font-size:0.72rem; padding:2px 8px; border-radius:999px; background:var(--orange-dim); color:var(--orange); font-weight:700;">0 Baris</span>
+          </div>
+          <button type="button" class="tm-btn" style="font-size: 0.75rem; padding: 4px 10px;" onclick="resetUploadFile()">
+            <i class="bi bi-trash"></i> Reset File
+          </button>
+        </div>
+
+        <div class="tm-preview-wrap">
+          <table class="tm-preview-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">#</th>
+                <th>Brand</th>
+                <th>Platform</th>
+                <th>Tanggal (YYYY-MM-DD)</th>
+                <th>Target Harian (Rp)</th>
+                <th>Status Validasi</th>
+              </tr>
+            </thead>
+            <tbody id="previewTableBody">
+              <!-- Preview rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="tm-modal-footer">
+      <button type="button" class="tm-btn" onclick="closeModal('uploadModal')">Batal</button>
+      <button type="button" class="tm-btn tm-btn-primary" id="btnSubmitImport" onclick="confirmImportExcel()" disabled>
+        <i class="bi bi-check-lg"></i>
+        <span>Import Target Data</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  /* =====================================================================
+     TARGET INGESTION CONTROLLER (MONTHLY AGGREGATIONS & DAILY MODAL)
+     Custom Styled Dropdowns · Official Static SVG Logos · Realtime Aggregations
+     ===================================================================== */
+
+  const tmToast = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    background: 'var(--card-bg, #ffffff)',
+    color: 'var(--text-primary, #1e293b)',
+    didOpen: (toast) => {
+      toast.addEventListener('mouseenter', Swal.stopTimer);
+      toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+  });
+
+  // Official Static SVG Logos
+  const PLATFORM_LOGOS = {
+    'shopee': "{% static 'logos/shopee.svg' %}",
+    'tokopedia': "{% static 'logos/tokopedia.svg' %}",
+    'toped': "{% static 'logos/tokopedia.svg' %}",
+    'tiktok': "{% static 'logos/tiktok_shop.svg' %}",
+    'tiktok shop': "{% static 'logos/tiktok_shop.svg' %}",
+    'lazada': "{% static 'logos/lazada.svg' %}"
+  };
+
+  const ALLOWED_BRANDS = [
+    {% for b in brands %}"{{ b|escapejs }}",{% endfor %}
+  ];
+  const ALLOWED_PLATFORMS = ['shopee', 'tokopedia', 'tiktok', 'lazada', 'blibli'];
+
+  // Global Ledger (Daily Records)
+  let targetLedger = [];
+  let nextId = 1;
+
+  // Active state
+  let selectedFilterBrand = '';
+  let selectedFilterPlatform = '';
+  let selectedFilterMonth = '2026-03';
+  let searchQuery = '';
+
+  // Modal active group state
+  let activeModalGroup = { brand: '', platform: '', month: '' };
+  let activeModalDailyRecords = [];
+  let backupModalDailyRecords = [];
+  let isModalEditMode = false;
+
+  const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  /* =====================================================================
+     Seed Realistic Daily Sample Data
+     ===================================================================== */
+  function initSeedDailyData() {
+    const brandsSample = ALLOWED_BRANDS.slice(0, 4);
+    if (brandsSample.length === 0) brandsSample.push('Senka', 'Anessa', 'Mattel', 'Colgate');
+    const platforms = ['Shopee', 'Tokopedia', 'Tiktok', 'Lazada'];
+
+    // Generate for March 2026 (31 days) and Feb 2026 (28 days)
+    const months = [
+      { y: 2026, m: 3, days: 31, ym: '2026-03' },
+      { y: 2026, m: 2, days: 28, ym: '2026-02' }
+    ];
+
+    brandsSample.forEach(brand => {
+      platforms.forEach(platform => {
+        months.forEach(mObj => {
+          const baseDaily = (brand === 'Senka' ? 18000000 : (brand === 'Mattel' ? 14000000 : 9000000)) *
+                            (platform === 'Shopee' ? 1.4 : (platform === 'TikTok' ? 1.2 : 0.9));
+
+          for (let d = 1; d <= mObj.days; d++) {
+            const dateStr = `${mObj.ym}-${String(d).padStart(2, '0')}`;
+            const dayOfWeek = new Date(dateStr).getDay();
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            const isPayday = d >= 25;
+            const isDoubleDate = (d === mObj.m);
+
+            let multiplier = 1.0;
+            if (isDoubleDate) multiplier = 2.8;
+            else if (isPayday) multiplier = 1.55;
+            else if (isWeekend) multiplier = 1.2;
+
+            const targetVal = Math.round((baseDaily * multiplier) / 100000) * 100000;
+
+            targetLedger.push({
+              id: nextId++,
+              brand: brand,
+              platform: platform,
+              date: dateStr,
+              year_month: mObj.ym,
+              target: targetVal,
+              status: 'Active',
+              updated_at: '2026-03-01 08:00'
+            });
+          }
+        });
+      });
+    });
+  }
+
+  initSeedDailyData();
+
+  /* =====================================================================
+     Initialization & Event Handlers
+     ===================================================================== */
+  document.addEventListener('DOMContentLoaded', () => {
+    applyFilters();
+
+    // Close custom dropdowns on click outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.tm-dropdown-wrap')) {
+        document.querySelectorAll('.tm-dropdown-wrap.open').forEach(w => w.classList.remove('open'));
+      }
+    });
+  });
+
+  /* =====================================================================
+     Custom Dropdown Controls
+     ===================================================================== */
+  function toggleCustomDropdown(wrapId) {
+    const wrap = document.getElementById(wrapId);
+    if (!wrap) return;
+    const isOpen = wrap.classList.contains('open');
+    document.querySelectorAll('.tm-dropdown-wrap.open').forEach(w => w.classList.remove('open'));
+    if (!isOpen) wrap.classList.add('open');
+  }
+
+  function filterDropdownOptions(listId, query) {
+    const q = (query || '').toLowerCase().trim();
+    const container = document.getElementById(listId);
+    if (!container) return;
+    container.querySelectorAll('.tm-dropdown-item').forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = (!q || text.includes(q)) ? 'flex' : 'none';
+    });
+  }
+
+  function selectBrandFilter(val, label) {
+    selectedFilterBrand = val;
+    document.getElementById('labelBrandDropdown').textContent = label;
+    updateDropdownActiveState('listBrandOptions', val);
+    document.getElementById('wrapBrandDropdown').classList.remove('open');
+    applyFilters();
+  }
+
+  function selectPlatformFilter(val, label) {
+    selectedFilterPlatform = val;
+    const labelEl = document.getElementById('labelPlatformDropdown');
+    if (!val) {
+      labelEl.innerHTML = 'Semua Platform';
+    } else {
+      labelEl.innerHTML = `${renderPlatformLogoHtml(val, 16)} <span>${escapeHtml(label)}</span>`;
+    }
+    updateDropdownActiveState('listPlatformOptions', val);
+    document.getElementById('wrapPlatformDropdown').classList.remove('open');
+    applyFilters();
+  }
+
+  function selectMonthFilter(val, label) {
+    selectedFilterMonth = val;
+    document.getElementById('labelMonthDropdown').textContent = label;
+    updateDropdownActiveState('listMonthOptions', val);
+    document.getElementById('wrapMonthDropdown').classList.remove('open');
+    applyFilters();
+  }
+
+  function updateDropdownActiveState(containerId, activeVal) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('.tm-dropdown-item').forEach(item => {
+      const match = (item.getAttribute('data-value') || '') === activeVal;
+      item.classList.toggle('active', match);
+      const icon = item.querySelector('.tm-single-check');
+      if (icon) icon.classList.toggle('d-none', !match);
+    });
+  }
+
+  function renderPlatformLogoHtml(platform, size = 16) {
+    const p = String(platform || '').trim().toLowerCase();
+    const url = PLATFORM_LOGOS[p] || PLATFORM_LOGOS[p.replace(/\s+/g, '_')];
+    if (url) {
+      return `<img src="${url}" class="tm-platform-icon" style="width:${size}px; height:${size}px;" alt="${escapeHtml(platform)}">`;
+    }
+    return `<i class="bi bi-shop" style="font-size:${size}px; color:var(--text-muted);"></i>`;
+  }
+
+  /* =====================================================================
+     Search & Reset
+     ===================================================================== */
+  function onSearchInput() {
+    searchQuery = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+    document.getElementById('searchClearBtn').style.display = searchQuery ? 'block' : 'none';
+    applyFilters();
+  }
+
+  function clearSearch() {
+    const input = document.getElementById('searchInput');
+    input.value = '';
+    searchQuery = '';
+    document.getElementById('searchClearBtn').style.display = 'none';
+    applyFilters();
+    input.focus();
+  }
+
+  function resetFilters() {
+    selectBrandFilter('', 'Semua Brand');
+    selectPlatformFilter('', 'Semua Platform');
+    selectMonthFilter('2026-03', 'Maret 2026');
+    clearSearch();
+    tmToast.fire({ icon: 'info', title: 'Filter di-reset ke Maret 2026' });
+  }
+
+  /* =====================================================================
+     Main Table Filtering & Rendering (Monthly Aggregation)
+     ===================================================================== */
+  function applyFilters() {
+    // 1. Filter daily records
+    const matchedDaily = targetLedger.filter(r => {
+      if (selectedFilterBrand && r.brand.toLowerCase() !== selectedFilterBrand.toLowerCase()) return false;
+      if (selectedFilterPlatform && r.platform.toLowerCase() !== selectedFilterPlatform.toLowerCase()) return false;
+      if (selectedFilterMonth && !r.date.startsWith(selectedFilterMonth)) return false;
+
+      if (searchQuery) {
+        const text = `${r.brand} ${r.platform} ${r.date} ${r.year_month}`.toLowerCase();
+        if (!text.includes(searchQuery)) return false;
+      }
+      return true;
+    });
+
+    // 2. Aggregate into Monthly Groups
+    const monthlyGroupsMap = {};
+    let grandTotalTarget = 0;
+    let grandTotalDays = matchedDaily.length;
+
+    matchedDaily.forEach(r => {
+      const monthKey = `${r.brand}__${r.platform}__${r.year_month}`;
+      if (!monthlyGroupsMap[monthKey]) {
+        monthlyGroupsMap[monthKey] = {
+          brand: r.brand,
+          platform: r.platform,
+          month: r.year_month,
+          totalTarget: 0,
+          dayCount: 0,
+          dailyList: []
+        };
+      }
+      monthlyGroupsMap[monthKey].totalTarget += Number(r.target) || 0;
+      monthlyGroupsMap[monthKey].dayCount += 1;
+      monthlyGroupsMap[monthKey].dailyList.push(r);
+      grandTotalTarget += Number(r.target) || 0;
+    });
+
+    const monthlyList = Object.values(monthlyGroupsMap);
+    monthlyList.sort((a, b) => a.month.localeCompare(b.month) || a.brand.localeCompare(b.brand) || a.platform.localeCompare(b.platform));
+
+    // Update KPI Cards
+    updateKPICards(grandTotalTarget, grandTotalDays, monthlyList);
+
+    // Render Table
+    renderMonthlyTable(monthlyList, grandTotalTarget);
+  }
+
+  function updateKPICards(grandTotalTarget, grandTotalDays, monthlyList) {
+    const dailyAvg = grandTotalDays > 0 ? (grandTotalTarget / grandTotalDays) : 0;
+    const uniqueBrands = new Set(monthlyList.map(m => m.brand.toLowerCase())).size;
+    const uniquePlatforms = new Set(monthlyList.map(m => m.platform.toLowerCase())).size;
+
+    document.getElementById('kpiTotalTarget').textContent = formatCompactNumber(grandTotalTarget);
+    document.getElementById('kpiTotalTargetDesc').textContent = `${formatRupiah(grandTotalTarget)} total target aktif`;
+    document.getElementById('kpiDailyAvg').textContent = formatCompactNumber(dailyAvg);
+    document.getElementById('kpiComboCount').textContent = `${uniqueBrands} · ${uniquePlatforms}`;
+    document.getElementById('kpiComboDesc').textContent = `${uniqueBrands} Brand · ${uniquePlatforms} Platform`;
+    document.getElementById('kpiDayCount').textContent = `${grandTotalDays} Hari`;
+  }
+
+  function renderMonthlyTable(monthlyList, grandTotalTarget) {
+    const tbody = document.getElementById('monthlyTableBody');
+    tbody.innerHTML = '';
+
+    if (monthlyList.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align: center; padding: 48px 16px; color: var(--text-muted);">
+            <i class="bi bi-inbox" style="font-size: 2.2rem; display: block; margin-bottom: 8px; color: var(--orange-dim);"></i>
+            <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-primary);">Tidak ada data target bulanan</span>
+            <div style="font-size: 0.78rem; margin-top: 4px;">Gunakan tombol <strong>Set Target Bulanan</strong> atau <strong>Bulk Import Excel</strong> untuk memasukkan target.</div>
+          </td>
+        </tr>
+      `;
+      document.getElementById('paginationInfo').textContent = 'Menampilkan 0 ringkasan target';
+      return;
+    }
+
+    monthlyList.forEach(m => {
+      const dailyAvg = m.dayCount > 0 ? Math.round(m.totalTarget / m.dayCount) : 0;
+      const sharePct = grandTotalTarget > 0 ? ((m.totalTarget / grandTotalTarget) * 100).toFixed(1) : 0;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <span class="tm-brand-badge">
+            <i class="bi bi-tag-fill" style="color: var(--orange); font-size: 0.7rem;"></i>
+            ${escapeHtml(m.brand)}
+          </span>
+        </td>
+        <td>
+          <span class="tm-platform-badge">
+            ${renderPlatformLogoHtml(m.platform, 17)}
+            <span>${escapeHtml(m.platform)}</span>
+          </span>
+        </td>
+        <td>
+          <span class="tm-mono font-weight-bold" style="font-size:0.86rem; color:var(--text-primary);">${m.month}</span>
+        </td>
+        <td>
+          <span class="tm-day-count-badge">
+            <i class="bi bi-calendar-check" style="color:var(--orange);"></i>
+            <span>${m.dayCount} Hari Terisi</span>
+          </span>
+        </td>
+        <td>
+          <span class="tm-target-value tm-mono">${formatRupiah(m.totalTarget)}</span>
+          <div style="font-size:0.7rem; color:var(--text-muted);">${formatCompactNumber(m.totalTarget)}</div>
+        </td>
+        <td>
+          <span class="tm-mono font-weight-bold" style="color:var(--text-primary);">${formatRupiah(dailyAvg)}</span>
+          <span style="font-size:0.7rem; color:var(--text-muted);">/hari</span>
+        </td>
+        <td>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div style="width:40px; height:5px; background:var(--surface-muted); border-radius:999px; overflow:hidden;">
+              <div style="width:${Math.min(sharePct, 100)}%; height:100%; background:var(--orange); border-radius:999px;"></div>
+            </div>
+            <span class="tm-mono" style="font-size:0.73rem; font-weight:700;">${sharePct}%</span>
+          </div>
+        </td>
+        <td style="text-align: center;">
+          <button type="button" class="tm-btn-detail" onclick="openDailyDetailModal('${escapeHtml(m.brand)}', '${escapeHtml(m.platform)}', '${m.month}')" title="Lihat detail target harian">
+            <i class="bi bi-eye"></i>
+            <span>Detail</span>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('paginationInfo').textContent = `Total ${monthlyList.length} kombinasi Brand & Platform terdaftar`;
+  }
+
+  /* =====================================================================
+     MODAL: DAILY DETAIL BREAKDOWN & EXCEL EDIT MODE
+     ===================================================================== */
+  function openDailyDetailModal(brand, platform, month) {
+    activeModalGroup = { brand, platform, month };
+    isModalEditMode = false;
+
+    // Filter daily records for this exact combination and DEEP CLONE
+    // so live typing in modal NEVER modifies targetLedger until explicitly saved
+    const matches = targetLedger.filter(r =>
+      r.brand.toLowerCase() === brand.toLowerCase() &&
+      r.platform.toLowerCase() === platform.toLowerCase() &&
+      r.year_month === month
+    );
+    activeModalDailyRecords = JSON.parse(JSON.stringify(matches));
+    activeModalDailyRecords.sort((a, b) => a.date.localeCompare(b.date));
+
+    // Deep clone backup in case user cancels edits
+    backupModalDailyRecords = JSON.parse(JSON.stringify(activeModalDailyRecords));
+
+    // Update modal header
+    document.getElementById('modalDetailTitle').textContent = `Detail Target Harian — ${brand}`;
+    document.getElementById('modalDetailSubtitle').innerHTML = `
+      <span style="display:inline-flex; align-items:center; gap:5px;">
+        ${renderPlatformLogoHtml(platform, 15)} <strong>${escapeHtml(platform)}</strong>
+      </span> · Periode: <strong>${month}</strong>
+    `;
+
+    updateEditModeUI();
+    renderDailyModalContent();
+    openModal('dailyDetailModal');
+  }
+
+  function updateEditModeUI() {
+    const btnToggle = document.getElementById('btnToggleEditMode');
+    const btnCancel = document.getElementById('btnCancelEditMode');
+    const hintBanner = document.getElementById('excelTipsBanner');
+    const modeBadge = document.getElementById('modalModeBadge');
+
+    if (isModalEditMode) {
+      if (btnToggle) {
+        btnToggle.innerHTML = `<i class="bi bi-check2-circle"></i> <span>Selesai Edit</span>`;
+        btnToggle.className = 'tm-btn tm-btn-primary';
+      }
+      if (btnCancel) btnCancel.style.display = 'inline-flex';
+      if (hintBanner) hintBanner.style.display = 'flex';
+      if (modeBadge) modeBadge.style.display = 'inline-flex';
+    } else {
+      if (btnToggle) {
+        btnToggle.innerHTML = `<i class="bi bi-pencil-square"></i> <span>Edit Mode</span>`;
+        btnToggle.className = 'tm-btn tm-btn-outline-orange';
+      }
+      if (btnCancel) btnCancel.style.display = 'none';
+      if (hintBanner) hintBanner.style.display = 'none';
+      if (modeBadge) modeBadge.style.display = 'none';
+    }
+  }
+
+  function toggleModalEditMode(forceState) {
+    if (forceState !== undefined) {
+      isModalEditMode = forceState;
+    } else {
+      isModalEditMode = !isModalEditMode;
+    }
+
+    if (isModalEditMode) {
+      // Refresh backup snapshot at the moment edit mode is entered
+      backupModalDailyRecords = JSON.parse(JSON.stringify(activeModalDailyRecords));
+    }
+
+    updateEditModeUI();
+    renderDailyModalContent();
+
+    if (isModalEditMode) {
+      // Auto-focus the first input row
+      setTimeout(() => {
+        const firstInput = document.getElementById('modalInput-0');
+        if (firstInput) {
+          firstInput.focus();
+          firstInput.select();
+        }
+      }, 50);
+    }
+  }
+
+  function cancelModalEditMode() {
+    activeModalDailyRecords = JSON.parse(JSON.stringify(backupModalDailyRecords));
+    isModalEditMode = false;
+    updateEditModeUI();
+    renderDailyModalContent();
+    tmToast.fire({ icon: 'info', title: 'Perubahan target harian dibatalkan' });
+  }
+
+  function renderDailyModalContent() {
+    const tbody = document.getElementById('dailyModalTableBody');
+    tbody.innerHTML = '';
+
+    const totalTarget = activeModalDailyRecords.reduce((acc, r) => acc + (Number(r.target) || 0), 0);
+    const dayCount = activeModalDailyRecords.length;
+    const dailyAvg = dayCount > 0 ? Math.round(totalTarget / dayCount) : 0;
+
+    // Peak day
+    let peakRecord = activeModalDailyRecords[0] || null;
+    activeModalDailyRecords.forEach(r => {
+      if (peakRecord && r.target > peakRecord.target) peakRecord = r;
+    });
+
+    // Update modal KPIs
+    document.getElementById('modalKpiTotalTarget').textContent = formatRupiah(totalTarget);
+    document.getElementById('modalKpiDailyAvg').textContent = formatRupiah(dailyAvg);
+    document.getElementById('modalKpiPeakDay').textContent = peakRecord ? `${peakRecord.date} (${formatCompactNumber(peakRecord.target)})` : '-';
+    document.getElementById('modalKpiDayCount').textContent = `${dayCount} Hari`;
+
+    activeModalDailyRecords.forEach((r, idx) => {
+      const dObj = new Date(r.date);
+      const dayOfWeek = dObj.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const dayName = DAY_NAMES[dayOfWeek];
+      const dNum = parseInt(r.date.substring(8, 10), 10);
+      const mNum = parseInt(r.date.substring(5, 7), 10);
+
+      // Event tag: Weekend, Weekday, Double Date, Pay Day (tanggal 25 saja)
+      let eventTag = '';
+      if (dNum === mNum) {
+        eventTag = `<span class="badge" style="background:var(--orange-dim); color:var(--orange); font-size:0.68rem; font-weight:700;"><i class="bi bi-stars"></i> Double Date</span>`;
+      } else if (dNum === 25) {
+        eventTag = `<span class="badge" style="background:rgba(16, 185, 129, 0.12); color:#10B981; font-size:0.68rem; font-weight:700;"><i class="bi bi-wallet2"></i> Pay Day</span>`;
+      } else if (isWeekend) {
+        eventTag = `<span class="badge" style="background:rgba(244, 63, 94, 0.10); color:#F43F5E; font-size:0.68rem; font-weight:600;">Weekend</span>`;
+      } else {
+        eventTag = `<span class="badge" style="background:var(--surface-muted); color:var(--text-muted); font-size:0.68rem; border:1px solid var(--glass-border); font-weight:600;">Weekday</span>`;
+      }
+
+      const sharePct = totalTarget > 0 ? ((r.target / totalTarget) * 100).toFixed(1) : 0;
+
+      let targetCellHtml = '';
+      if (isModalEditMode) {
+        targetCellHtml = `
+          <div class="tm-excel-cell-wrap">
+            <span class="tm-excel-cell-prefix tm-mono">Rp</span>
+            <input type="number"
+                   class="tm-input-daily-cell tm-mono"
+                   id="modalInput-${idx}"
+                   value="${r.target}"
+                   min="0"
+                   step="100000"
+                   oninput="onDailyInputRealtime(${idx}, this.value)"
+                   onkeydown="handleExcelNavKey(event, ${idx})"
+                   title="Enter atau ↓ untuk baris berikutnya">
+          </div>
+        `;
+      } else {
+        targetCellHtml = `
+          <span class="tm-mono font-weight-bold" style="font-size:0.84rem; color:var(--text-primary);">${formatRupiah(r.target)}</span>
+        `;
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="tm-mono" style="color:var(--text-muted);">${idx + 1}</td>
+        <td>
+          <span class="tm-mono font-weight-bold" style="color:var(--text-primary); font-size:0.82rem;">${r.date}</span>
+        </td>
+        <td>
+          <span class="tm-day-tag ${isWeekend ? 'weekend' : ''}">${dayName}</span>
+        </td>
+        <td>${eventTag}</td>
+        <td>${targetCellHtml}</td>
+        <td>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div style="width:48px; height:5px; background:var(--surface-muted); border-radius:999px; overflow:hidden;">
+              <div id="modalShareBar-${idx}" style="width:${Math.min(sharePct * 3.5, 100)}%; height:100%; background:var(--orange); border-radius:999px; transition: width 0.15s ease;"></div>
+            </div>
+            <span id="modalShareText-${idx}" class="tm-mono font-weight-bold" style="font-size:0.73rem;">${sharePct}%</span>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* =====================================================================
+     Excel-like Navigation & Real-time Live Recalculation
+     ===================================================================== */
+  function handleExcelNavKey(e, idx) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const nextIdx = e.shiftKey ? idx - 1 : idx + 1;
+      moveToRowInput(nextIdx);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      moveToRowInput(idx + 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      moveToRowInput(idx - 1);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancelModalEditMode();
+    }
+  }
+
+  function moveToRowInput(targetIdx) {
+    if (targetIdx < 0 || targetIdx >= activeModalDailyRecords.length) return;
+    const targetInput = document.getElementById(`modalInput-${targetIdx}`);
+    if (targetInput) {
+      targetInput.focus();
+      targetInput.select();
+      targetInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function onDailyInputRealtime(idx, val) {
+    const numVal = Math.max(0, Number(val) || 0);
+    activeModalDailyRecords[idx].target = numVal;
+
+    // Recalculate KPIs live without re-rendering DOM inputs
+    const totalTarget = activeModalDailyRecords.reduce((acc, r) => acc + (Number(r.target) || 0), 0);
+    const dayCount = activeModalDailyRecords.length;
+    const dailyAvg = dayCount > 0 ? Math.round(totalTarget / dayCount) : 0;
+
+    let peakRecord = activeModalDailyRecords[0] || null;
+    activeModalDailyRecords.forEach(r => {
+      if (peakRecord && r.target > peakRecord.target) peakRecord = r;
+    });
+
+    // Update modal KPI elements directly
+    document.getElementById('modalKpiTotalTarget').textContent = formatRupiah(totalTarget);
+    document.getElementById('modalKpiDailyAvg').textContent = formatRupiah(dailyAvg);
+    document.getElementById('modalKpiPeakDay').textContent = peakRecord ? `${peakRecord.date} (${formatCompactNumber(peakRecord.target)})` : '-';
+
+    // Update all contribution bars & percentages live
+    activeModalDailyRecords.forEach((r, i) => {
+      const sharePct = totalTarget > 0 ? ((r.target / totalTarget) * 100).toFixed(1) : 0;
+      const barEl = document.getElementById(`modalShareBar-${i}`);
+      const textEl = document.getElementById(`modalShareText-${i}`);
+      if (barEl) barEl.style.width = `${Math.min(sharePct * 3.5, 100)}%`;
+      if (textEl) textEl.textContent = `${sharePct}%`;
+    });
+  }
+
+  function saveAllModalDailyTargets() {
+    // Validate all records have positive target values
+    for (let i = 0; i < activeModalDailyRecords.length; i++) {
+      const val = Number(activeModalDailyRecords[i].target);
+      if (isNaN(val) || val < 0) {
+        tmToast.fire({ icon: 'warning', title: `Target pada ${activeModalDailyRecords[i].date} tidak valid` });
+        return;
+      }
+    }
+
+    // Sync activeModalDailyRecords back to main targetLedger
+    activeModalDailyRecords.forEach(mRec => {
+      const mainRec = targetLedger.find(r => r.id === mRec.id);
+      if (mainRec) {
+        mainRec.target = Number(mRec.target) || 0;
+        mainRec.updated_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      }
+    });
+
+    isModalEditMode = false;
+    closeModal('dailyDetailModal');
+    applyFilters();
+    Swal.fire({
+      icon: 'success',
+      title: 'Target Harian Tersimpan!',
+      text: `Perubahan target harian untuk ${activeModalGroup.brand} (${activeModalGroup.platform}) bulan ${activeModalGroup.month} telah diperbarui dan diagregasikan.`,
+      confirmButtonColor: '#f97316'
+    });
+  }
+
+  /* =====================================================================
+     SET TARGET BULANAN (AUTO-DISTRIBUTION TO DAILY)
+     ===================================================================== */
+  function openDistributeModal() {
+    document.getElementById('distTotalTarget').value = '';
+    document.getElementById('distRupiahPreview').textContent = 'Rp 0';
+    openModal('distributeModal');
+  }
+
+  function previewDistRupiah(val) {
+    const previewEl = document.getElementById('distRupiahPreview');
+    if (!val || isNaN(val) || Number(val) <= 0) {
+      previewEl.textContent = 'Rp 0';
+      return;
+    }
+    const n = Number(val);
+    previewEl.textContent = `${formatRupiah(n)} (${formatCompactNumber(n)})`;
+  }
+
+  function generateDailyFromMonthly(e) {
+    e.preventDefault();
+    const brand = document.getElementById('distBrand').value;
+    const platform = document.getElementById('distPlatform').value;
+    const monthYear = document.getElementById('distMonthYear').value;
+    const totalTarget = Number(document.getElementById('distTotalTarget').value);
+    const method = document.getElementById('distMethod').value;
+
+    if (!brand || !platform || !monthYear || isNaN(totalTarget) || totalTarget <= 0) {
+      tmToast.fire({ icon: 'warning', title: 'Lengkapi isian target bulanan dengan benar' });
+      return;
+    }
+
+    const [yStr, mStr] = monthYear.split('-');
+    const year = parseInt(yStr, 10);
+    const month = parseInt(mStr, 10);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    // Remove existing records for this brand + platform + month
+    targetLedger = targetLedger.filter(r => !(
+      r.brand.toLowerCase() === brand.toLowerCase() &&
+      r.platform.toLowerCase() === platform.toLowerCase() &&
+      r.year_month === monthYear
+    ));
+
+    let dailyTargets = [];
+
+    if (method === 'even') {
+      const dailyBase = Math.round(totalTarget / daysInMonth);
+      let runningSum = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        let val = dailyBase;
+        if (d === daysInMonth) val = totalTarget - runningSum;
+        runningSum += val;
+        dailyTargets.push(val);
+      }
+    } else {
+      // Payday (25-31) & Double Date weighted
+      let weights = [];
+      let totalWeight = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        let w = 1.0;
+        if (d === month) w = 2.6; // e.g. 3.3 in March
+        else if (d >= 25) w = 1.6; // Payday week
+        weights.push(w);
+        totalWeight += w;
+      }
+      let runningSum = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        let val = Math.round((totalTarget * (weights[d - 1] / totalWeight)) / 100000) * 100000;
+        if (d === daysInMonth) val = totalTarget - runningSum;
+        runningSum += val;
+        dailyTargets.push(val);
+      }
+    }
+
+    // Insert daily records
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${monthYear}-${String(d).padStart(2, '0')}`;
+      targetLedger.push({
+        id: nextId++,
+        brand: brand,
+        platform: platform,
+        date: dateStr,
+        year_month: monthYear,
+        target: dailyTargets[d - 1],
+        status: 'Active',
+        updated_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+      });
+    }
+
+    closeModal('distributeModal');
+    selectBrandFilter(brand, brand);
+    selectPlatformFilter(platform, platform);
+    selectMonthFilter(monthYear, monthYear);
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Target Bulanan Berhasil Di-set!',
+      text: `${formatRupiah(totalTarget)} telah diagregasikan ke dalam ${daysInMonth} target harian untuk ${brand} di ${platform}.`,
+      confirmButtonColor: '#f97316'
+    });
+  }
+
+  /* =====================================================================
+     BULK UPLOAD EXCEL (DAILY TARGETS)
+     ===================================================================== */
+  function openUploadModal() {
+    resetUploadFile();
+    openModal('uploadModal');
+  }
+
+  function onDragOver(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').classList.add('dragover');
+  }
+  function onDragLeave(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').classList.remove('dragover');
+  }
+  function onDropFile(e) {
+    e.preventDefault();
+    document.getElementById('dropzone').classList.remove('dragover');
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processExcelFile(e.dataTransfer.files[0]);
+    }
+  }
+
+  function onFileSelected(input) {
+    if (input.files && input.files.length > 0) {
+      processExcelFile(input.files[0]);
+    }
+  }
+
+  function resetUploadFile() {
+    document.getElementById('excelFileInput').value = '';
+    document.getElementById('uploadPreviewSection').style.display = 'none';
+    document.getElementById('btnSubmitImport').disabled = true;
+    parsedExcelRows = [];
+  }
+
+  let parsedExcelRows = [];
+
+  function processExcelFile(file) {
+    if (!file.name.match(/\.(xlsx|xls)$/i)) {
+      tmToast.fire({ icon: 'error', title: 'File harus berformat .xlsx atau .xls' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+        if (!rawJson || rawJson.length === 0) {
+          tmToast.fire({ icon: 'warning', title: 'File Excel kosong atau tidak terbaca' });
+          return;
+        }
+
+        parseAndValidateExcelRows(rawJson);
+      } catch (err) {
+        console.error('Error parsing Excel file:', err);
+        tmToast.fire({ icon: 'error', title: 'Gagal memproses file Excel' });
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function parseAndValidateExcelRows(rows) {
+    parsedExcelRows = [];
+    let validCount = 0;
+
+    rows.forEach((r, idx) => {
+      const brand = String(r['Brand'] || r['brand'] || '').trim();
+      const platform = String(r['Platform'] || r['platform'] || '').trim();
+      let dateVal = r['Date'] || r['date'] || r['Tanggal'] || '';
+      let targetVal = r['Target'] || r['target'] || r['Daily Target'] || 0;
+
+      let dateStr = '';
+      if (dateVal instanceof Date) {
+        dateStr = dateVal.toISOString().substring(0, 10);
+      } else {
+        dateStr = String(dateVal).trim();
+      }
+
+      if (typeof targetVal === 'string') {
+        targetVal = Number(targetVal.replace(/[^0-9.-]+/g, ''));
+      }
+
+      let isValid = true;
+      let reason = 'Valid';
+
+      if (!brand) {
+        isValid = false; reason = 'Brand kosong';
+      } else if (ALLOWED_BRANDS.length > 0 && !ALLOWED_BRANDS.map(b => b.toLowerCase()).includes(brand.toLowerCase())) {
+        isValid = false; reason = `Brand '${brand}' di luar akses`;
+      } else if (!platform) {
+        isValid = false; reason = 'Platform kosong';
+      } else if (!ALLOWED_PLATFORMS.includes(platform.toLowerCase())) {
+        isValid = false; reason = `Platform '${platform}' tidak dikenali`;
+      } else if (!dateStr || !dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        isValid = false; reason = 'Format tanggal harus YYYY-MM-DD';
+      } else if (isNaN(targetVal) || targetVal < 0) {
+        isValid = false; reason = 'Nilai target tidak valid';
+      }
+
+      if (isValid) validCount++;
+
+      parsedExcelRows.push({
+        index: idx + 1,
+        brand: brand,
+        platform: platform,
+        date: dateStr,
+        target: Number(targetVal) || 0,
+        isValid: isValid,
+        reason: reason
+      });
+    });
+
+    renderExcelPreview(validCount);
+  }
+
+  function renderExcelPreview(validCount) {
+    const previewSection = document.getElementById('uploadPreviewSection');
+    const tbody = document.getElementById('previewTableBody');
+    const badge = document.getElementById('previewSummaryBadge');
+    const btnSubmit = document.getElementById('btnSubmitImport');
+
+    previewSection.style.display = 'block';
+    badge.textContent = `${validCount} / ${parsedExcelRows.length} Baris Valid`;
+    badge.style.background = validCount === parsedExcelRows.length ? 'var(--success-bg)' : 'var(--warn-bg)';
+    badge.style.color = validCount === parsedExcelRows.length ? 'var(--success)' : 'var(--warn)';
+
+    tbody.innerHTML = '';
+    parsedExcelRows.slice(0, 50).forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="tm-mono">${r.index}</td>
+        <td><strong>${escapeHtml(r.brand || '-')}</strong></td>
+        <td>${escapeHtml(r.platform || '-')}</td>
+        <td class="tm-mono">${r.date || '-'}</td>
+        <td class="tm-mono font-weight-bold">${formatRupiah(r.target)}</td>
+        <td>
+          ${r.isValid
+            ? `<span class="tm-preview-badge-valid"><i class="bi bi-check-circle-fill"></i> Siap</span>`
+            : `<span class="tm-preview-badge-invalid"><i class="bi bi-exclamation-triangle-fill"></i> ${r.reason}</span>`
+          }
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    btnSubmit.disabled = validCount === 0;
+  }
+
+  function confirmImportExcel() {
+    const validRows = parsedExcelRows.filter(r => r.isValid);
+    if (validRows.length === 0) {
+      tmToast.fire({ icon: 'warning', title: 'Tidak ada baris valid yang dapat di-import' });
+      return;
+    }
+
+    validRows.forEach(vr => {
+      const existing = targetLedger.find(r =>
+        r.brand.toLowerCase() === vr.brand.toLowerCase() &&
+        r.platform.toLowerCase() === vr.platform.toLowerCase() &&
+        r.date === vr.date
+      );
+
+      if (existing) {
+        existing.target = vr.target;
+        existing.updated_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      } else {
+        targetLedger.unshift({
+          id: nextId++,
+          brand: vr.brand,
+          platform: vr.platform,
+          date: vr.date,
+          year_month: vr.date.substring(0, 7),
+          target: vr.target,
+          status: 'Active',
+          updated_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+        });
+      }
+    });
+
+    closeModal('uploadModal');
+    applyFilters();
+    Swal.fire({
+      icon: 'success',
+      title: 'Import Berhasil!',
+      text: `${validRows.length} target harian berhasil dimasukkan ke sistem dan diagregasi.`,
+      confirmButtonColor: '#f97316'
+    });
+  }
+
+  /* =====================================================================
+     Download Excel Template & Export
+     ===================================================================== */
+  function downloadTemplateExcel() {
+    const sampleBrand = ALLOWED_BRANDS[0] || 'Senka';
+    const samplePlatform = 'Shopee';
+
+    const templateData = [];
+    for (let d = 1; d <= 7; d++) {
+      templateData.push({
+        'Brand': sampleBrand,
+        'Platform': samplePlatform,
+        'Date': `2026-03-0${d}`,
+        'Target': 25000000
+      });
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Daily_Targets');
+    XLSX.writeFile(workbook, `Daily_Target_Template_${sampleBrand}_${samplePlatform}.xlsx`);
+    tmToast.fire({ icon: 'success', title: 'Template Excel Daily Target berhasil di-download' });
+  }
+
+  function exportMonthlyTableToExcel() {
+    const table = document.getElementById('monthlyTable');
+    const workbook = XLSX.utils.table_to_book(table, { sheet: "Monthly_Targets" });
+    XLSX.writeFile(workbook, `Target_Bulanan_Export_${new Date().toISOString().substring(0, 10)}.xlsx`);
+    tmToast.fire({ icon: 'success', title: 'Ringkasan bulanan berhasil di-export ke Excel' });
+  }
+
+  function exportSingleGroupExcel() {
+    if (activeModalDailyRecords.length === 0) return;
+    const exportRows = activeModalDailyRecords.map(r => ({
+      'Brand': r.brand,
+      'Platform': r.platform,
+      'Date': r.date,
+      'Target': r.target
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportRows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Daily_Detail');
+    XLSX.writeFile(workbook, `Target_Daily_${activeModalGroup.brand}_${activeModalGroup.platform}_${activeModalGroup.month}.xlsx`);
+    tmToast.fire({ icon: 'success', title: 'Data harian bulan ini berhasil di-export' });
+  }
+
+  /* =====================================================================
+     Modal & Format Helpers
+     ===================================================================== */
+  function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.add('show');
+  }
+
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.remove('show');
+    if (id === 'dailyDetailModal') {
+      isModalEditMode = false;
+      activeModalDailyRecords = [];
+      backupModalDailyRecords = [];
+    }
+  }
+
+  function handleBackdropClick(e, id) {
+    if (e.target.id === id) {
+      closeModal(id);
+    }
+  }
+
+  function formatRupiah(num) {
+    if (num == null || isNaN(num)) return 'Rp 0';
+    return 'Rp ' + Number(num).toLocaleString('id-ID');
+  }
+
+  function formatCompactNumber(num) {
+    if (num == null || isNaN(num)) return '0';
+    const n = Number(num);
+    if (n >= 1e12) return (n / 1e12).toFixed(2) + ' Triliun';
+    if (n >= 1e9)  return (n / 1e9).toFixed(2) + ' Miliar';
+    if (n >= 1e6)  return (n / 1e6).toFixed(2) + ' Juta';
+    return n.toLocaleString('id-ID');
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+</script>
+{% endblock %}

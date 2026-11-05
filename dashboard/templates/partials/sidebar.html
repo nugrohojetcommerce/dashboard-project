@@ -329,9 +329,15 @@
                   Data Management
               </li>
               <li class="nav-item">
-                  <a href="/data_management/product_mapping/" class="nav-link {% if '/data_management/' in request.path or '/product_mapping/' in request.path %}active{% endif %}">
+                  <a href="/data_management/product_mapping/" class="nav-link {% if '/data_management/product_mapping/' in request.path or request.path == '/data_management/' %}active{% endif %}">
                       <i class="nav-icon bi bi-diagram-3"></i>
                       <p>Product Mapping</p>
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a href="/data_management/target_management/" class="nav-link {% if '/target_management/' in request.path %}active{% endif %}">
+                      <i class="nav-icon bi bi-bullseye"></i>
+                      <p>Target Ingest</p>
                       <span class="badge rounded-pill ms-auto" style="font-size: 0.65rem; background: var(--orange-dim); color: var(--orange); border: 1px solid var(--glass-border-h);">New</span>
                   </a>
               </li>

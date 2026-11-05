@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize static %}
+{% load humanize static brand_tags %}
 
 {% block title %}Periodic Reports — Commercial Multi-Period Ledger{% endblock %}
 
@@ -816,6 +816,7 @@
               <label class="pr-dropdown-option" data-value="{{ brand }}">
                 <input type="checkbox" value="{{ brand }}" class="brand-check" checked onchange="syncBrandFilters()">
                 <span class="pr-custom-check"><i class="bi bi-check-lg"></i></span>
+                {% render_brand_logo brand 26 %}
                 <span>{{ brand }}</span>
               </label>
               {% endfor %}
@@ -845,6 +846,7 @@
               <label class="pr-dropdown-option" data-value="{{ platform }}">
                 <input type="checkbox" value="{{ platform }}" class="platform-check" checked onchange="syncPlatformFilters()">
                 <span class="pr-custom-check"><i class="bi bi-check-lg"></i></span>
+                {% render_platform_logo platform 15 %}
                 <span>{{ platform }}</span>
               </label>
               {% endfor %}
@@ -1216,8 +1218,18 @@
   function getGlobalColumns() {
     const columns = [
       { id: 'create_order_date_time_date', name: 'Date', width: '120px' },
-      { id: 'brand', name: 'Brand', width: '150px' },
-      { id: 'platform', name: 'Platform', width: '120px' },
+      { 
+        id: 'brand', 
+        name: 'Brand', 
+        width: '170px',
+        formatter: (cell) => gridjs.html(`<span class="brand-with-logo">${renderBrandIcon(cell, 24)} <span>${cell ?? ''}</span></span>`)
+      },
+      { 
+        id: 'platform', 
+        name: 'Platform', 
+        width: '140px',
+        formatter: (cell) => gridjs.html(`<span class="brand-with-logo">${renderPlatformIcon(cell, 18)} <span>${cell ?? ''}</span></span>`)
+      },
     ];
 
     $('.global-metric-cb:checked').each(function () {
@@ -1279,7 +1291,10 @@
       $('#brandDropdownLabel').text('No brands');
     } else if (count === total) {
       $('#brandDropdownLabel').text('All Brands');
-    } else if (count <= 2) {
+    } else if (count === 1) {
+      const b = selected[0];
+      $('#brandDropdownLabel').html(`<span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(b, 20)} <span>${b}</span></span>`);
+    } else if (count === 2) {
       $('#brandDropdownLabel').text(selected.join(', '));
     } else {
       $('#brandDropdownLabel').text(`${count} Brands selected`);
@@ -1316,7 +1331,10 @@
       $('#platformDropdownLabel').text('No platforms');
     } else if (count === total) {
       $('#platformDropdownLabel').text('All Platforms');
-    } else if (count <= 2) {
+    } else if (count === 1) {
+      const p = selected[0];
+      $('#platformDropdownLabel').html(`<span style="display:inline-flex; align-items:center; gap:5px;">${renderPlatformIcon(p, 14)} <span>${p}</span></span>`);
+    } else if (count === 2) {
       $('#platformDropdownLabel').text(selected.join(', '));
     } else {
       $('#platformDropdownLabel').text(`${count} Platforms selected`);
@@ -1940,8 +1958,18 @@
 
       const columns = [
         { id: 'create_order_date_time_date', name: 'Date', width: '120px' },
-        { id: 'brand', name: 'Brand', width: '150px' },
-        { id: 'platform', name: 'Platform', width: '120px' },
+        { 
+          id: 'brand', 
+          name: 'Brand', 
+          width: '170px',
+          formatter: (cell) => gridjs.html(`<span class="brand-with-logo">${renderBrandIcon(cell, 24)} <span>${cell ?? ''}</span></span>`)
+        },
+        { 
+          id: 'platform', 
+          name: 'Platform', 
+          width: '140px',
+          formatter: (cell) => gridjs.html(`<span class="brand-with-logo">${renderPlatformIcon(cell, 18)} <span>${cell ?? ''}</span></span>`)
+        },
       ];
 
       selectedMetrics.forEach(m => {

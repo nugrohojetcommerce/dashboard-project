@@ -591,8 +591,18 @@
 
 <script>
 $(document).ready(function () {
-  $('#brandSelect').select2({ width: '100%', placeholder: 'Select brands' });
-  $('#platformSelect').select2({ width: '100%', placeholder: 'Select platforms' });
+  $('#brandSelect').select2({ 
+    width: '100%', 
+    placeholder: 'Select brands',
+    templateResult: formatBrandSelect2,
+    templateSelection: formatBrandSelect2
+  });
+  $('#platformSelect').select2({ 
+    width: '100%', 
+    placeholder: 'Select platforms',
+    templateResult: formatPlatformSelect2,
+    templateSelection: formatPlatformSelect2
+  });
 });
 
 function selectAllBrands()    { $('#brandSelect option').prop('selected', true);  $('#brandSelect').trigger('change'); }

@@ -378,3 +378,36 @@ def api_download_template_excel(request: HttpRequest) -> HttpResponse:
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
+
+@never_cache
+@login_required
+def target_management_view(request: HttpRequest) -> HttpResponse:
+    """Renders the Daily & Monthly Target Data Ingestion and Planning management page."""
+    from brand_performance_v2.services import get_user_brands
+    from brand_performance_v2.models import OrderMartSummary
+
+    user_brands = get_user_brands(request.user)
+    if not user_brands:
+        user_brands = sorted(
+            list(
+                OrderMartSummary.objects.exclude(brand__isnull=True)
+                .exclude(brand="")
+                .values_list("brand", flat=True)
+                .distinct()
+            )
+        )
+
+    platforms = ["Shopee", "Tokopedia", "Tiktok", "Lazada"]
+
+    context: dict[str, Any] = {
+        "brands": user_brands,
+        "platforms": platforms,
+        "default_brand": user_brands[0] if user_brands else "Senka",
+        "default_platform": "Shopee",
+        "current_year": 2026,
+        "current_month": "03",
+        "years": [2026, 2025, 2024],
+        "is_superuser": getattr(request.user, "is_superuser", False),
+    }
+    return render(request, "data_management/target_management.html", context)
+

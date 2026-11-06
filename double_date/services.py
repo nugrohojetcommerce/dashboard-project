@@ -448,13 +448,23 @@ def get_campaign_war_room_data(
             "data": hour_entries,
         })
 
-    # Hourly Velocity Chart Series (Top 5 brands + Total)
-    velocity_top_brands = leaderboard[:6]
+    # Hourly Velocity Chart Series (Top 8 brands + Total)
+    def _make_cumulative(arr):
+        res = []
+        c = 0.0
+        for x in arr:
+            c += float(x or 0.0)
+            res.append(round(c, 2))
+        return res
+
+    velocity_top_brands = leaderboard[:8]
     velocity_brand_series = [
         {
             "name": b["brand"],
             "data_gmv": b["hourly_gmv"][: latest_active_hour + 1],
             "data_nmv": b["hourly_nmv"][: latest_active_hour + 1],
+            "cum_gmv": _make_cumulative(b["hourly_gmv"][: latest_active_hour + 1]),
+            "cum_nmv": _make_cumulative(b["hourly_nmv"][: latest_active_hour + 1]),
             "data": b["hourly_nmv"][: latest_active_hour + 1],
         }
         for b in velocity_top_brands
@@ -525,6 +535,8 @@ def get_campaign_war_room_data(
             "hours": [f"{h:02d}:00" for h in range(latest_active_hour + 1)],
             "total_series": [h["gmv"] for h in hourly_totals[: latest_active_hour + 1]],
             "total_series_nmv": [h["nmv"] for h in hourly_totals[: latest_active_hour + 1]],
+            "total_cum_gmv": _make_cumulative([h["gmv"] for h in hourly_totals[: latest_active_hour + 1]]),
+            "total_cum_nmv": _make_cumulative([h["nmv"] for h in hourly_totals[: latest_active_hour + 1]]),
             "brand_series": velocity_brand_series,
         },
         "scatter_matrix": {

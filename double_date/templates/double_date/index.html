@@ -1087,6 +1087,16 @@
             Speed: <span id="lineRaceSpeedLabel">1x</span>
           </button>
 
+          <!-- View Accumulation Switcher: Hourly vs Cumulative -->
+          <div class="dd-metric-switcher ms-1">
+            <button type="button" class="dd-metric-btn active" id="btnLineViewHourly" onclick="setLineView('hourly')" title="Hourly velocity (sales rate per hour)">
+              <i class="bi bi-clock-history"></i> Hourly
+            </button>
+            <button type="button" class="dd-metric-btn" id="btnLineViewCumulative" onclick="setLineView('cumulative')" title="Cumulative progress (accumulated total throughout the day)">
+              <i class="bi bi-graph-up-arrow"></i> Cumulative
+            </button>
+          </div>
+
           <!-- Metric Switcher: NMV / GMV -->
           <div class="dd-metric-switcher ms-1">
             <button type="button" class="dd-metric-btn active" id="btnMetricNmv" onclick="setLineMetric('nmv')">NMV Scale</button>
@@ -1236,6 +1246,7 @@
   let lineRaceRafId = null;
   let lineRaceLastTimestamp = null;
   let lineRaceSpeedMs = 1200; // 1.2s per 1 hour progress (customizable 1x / 2x)
+  let lineRaceView = 'hourly'; // 'hourly' or 'cumulative'
   let lineRaceMetric = 'nmv'; // 'nmv' or 'gmv'
   let lineRaceMode = 'brands'; // 'brands' (pure brand battle) or 'total' (with total line)
   let lineRaceWindowSize = 6; // sliding window of 6 hours
@@ -1719,8 +1730,47 @@
     }
 
     const isNmv = (lineRaceMetric === 'nmv');
+    const isCumulative = (lineRaceView === 'cumulative');
     const isBrandBattle = (lineRaceMode === 'brands');
-    const metricTitle = isNmv ? 'Hourly NMV' : 'Hourly GMV';
+    const metricTitle = isNmv ? 'NMV' : 'GMV';
+    const viewTitle = isCumulative ? 'Cumulative' : 'Hourly';
+
+    function makeCumulative(arr) {
+      let c = 0;
+      return (arr || []).map(v => (c += Number(v || 0)));
+    }
+
+    function getBrandData(b) {
+      if (isCumulative) {
+        if (isNmv) {
+          return b.cum_nmv || makeCumulative(b.data_nmv || b.data || []);
+        } else {
+          return b.cum_gmv || makeCumulative(b.data_gmv || b.data || []);
+        }
+      } else {
+        if (isNmv) {
+          return b.data_nmv || b.data || [];
+        } else {
+          return b.data_gmv || b.data || [];
+        }
+      }
+    }
+
+    function getTotalData() {
+      if (isCumulative) {
+        if (isNmv) {
+          return hv.total_cum_nmv || makeCumulative(hv.total_series_nmv || hv.total_series || []);
+        } else {
+          return hv.total_cum_gmv || makeCumulative(hv.total_series || []);
+        }
+      } else {
+        if (isNmv) {
+          return hv.total_series_nmv || hv.total_series || [];
+        } else {
+          return hv.total_series || [];
+        }
+      }
+    }
 
     const richEndLabels = {
       name: {
@@ -1753,7 +1803,7 @@
     let visibleVals = [];
 
     targetBrands.forEach(b => {
-      const raw = isNmv ? (b.data_nmv || b.data || []) : (b.data_gmv || b.data || []);
+      const raw = getBrandData(b);
       const s = Math.max(0, Math.floor(camStart));
       const e = Math.min(raw.length - 1, Math.ceil(curH));
       for (let i = s; i <= e; i++) {
@@ -1765,7 +1815,7 @@
     });
 
     if (!isBrandBattle) {
-      const totalRaw = isNmv ? (hv.total_series_nmv || hv.total_series || []) : (hv.total_series || []);
+      const totalRaw = getTotalData();
       const s = Math.max(0, Math.floor(camStart));
       const e = Math.min(totalRaw.length - 1, Math.ceil(curH));
       for (let i = s; i <= e; i++) {
@@ -1783,7 +1833,7 @@
       const vMax = Math.max(...visibleVals);
       const span = Math.max(1, vMax - vMin);
 
-      // If competing brands are elevated above zero, lift floor gently so differences are magnified
+      // If brands are tightly bunched high above zero, lift floor gently so differences are magnified
       if (vMin > vMax * 0.25) {
         targetMin = Math.max(0, Math.floor(vMin - span * 0.25));
       } else {
@@ -1805,7 +1855,7 @@
 
     // 1. Optional Total Campaign Line
     if (!isBrandBattle) {
-      const totalRaw = isNmv ? (hv.total_series_nmv || hv.total_series || []) : (hv.total_series || []);
+      const totalRaw = getTotalData();
       const totalPts = interpolateSeries(totalRaw, curH);
 
       series.push({
@@ -1861,7 +1911,7 @@
     // 2. Individual Top Brand Lines with 60FPS Fluid Tip Tracking
     targetBrands.forEach((b, idx) => {
       const color = tc.palette[(idx + 1) % tc.palette.length];
-      const rawData = isNmv ? (b.data_nmv || b.data || []) : (b.data_gmv || b.data || []);
+      const rawData = getBrandData(b);
       
       // Interpolate coordinates smoothly: [0, y0] ... [curH, y_interpolated]
       const brandPts = interpolateSeries(rawData, curH);
@@ -1927,10 +1977,14 @@
     const startHLabel = allHours[Math.max(0, Math.floor(camStart))] || `${String(Math.max(0, Math.floor(camStart))).padStart(2, '0')}:00`;
     const endHLabel = allHours[Math.min(23, Math.ceil(curH))] || `${String(Math.min(23, Math.ceil(curH))).padStart(2, '0')}:00`;
 
+    const titleText = isCumulative
+      ? `${metricTitle} Cumulative Progression (Tracking 00:00 - ${endHLabel})`
+      : `Hourly ${metricTitle} Velocity Race (Timeframe: ${startHLabel} - ${endHLabel})`;
+
     const option = {
       backgroundColor: 'transparent',
       title: {
-        text: `${metricTitle} Velocity Race (Timeframe: ${startHLabel} - ${endHLabel})`,
+        text: titleText,
         left: 20,
         top: 10,
         textStyle: { color: tc.titleColor, fontSize: 13, fontWeight: 700 }
@@ -1946,11 +2000,12 @@
           const xVal = params[0].value ? params[0].value[0] : 0;
           const h = Math.round(xVal);
           const hourStr = `${String(h).padStart(2, '0')}:00`;
+          const suffix = isCumulative ? ' (Cum.)' : ' / hr';
           let s = `<strong style="color:${tc.titleColor}">${hourStr}</strong><br/>`;
           params.forEach(p => {
             const yVal = Array.isArray(p.value) ? p.value[1] : p.value;
             if (yVal !== null && yVal !== undefined) {
-              s += `${p.marker} ${p.seriesName}: <strong>${formatIDR(yVal, true)}</strong><br/>`;
+              s += `${p.marker} ${p.seriesName}: <strong>${formatIDR(yVal, true)}</strong>${suffix}<br/>`;
             }
           });
           return s;
@@ -2127,6 +2182,17 @@
       lineRaceSpeedMs = 1200;
       document.getElementById('lineRaceSpeedLabel').textContent = '1x';
     }
+  };
+
+  window.setLineView = function(view) {
+    lineRaceView = view;
+    velocitySmoothedYMin = null;
+    velocitySmoothedYMax = null;
+    const btnH = document.getElementById('btnLineViewHourly');
+    const btnC = document.getElementById('btnLineViewCumulative');
+    if (btnH) btnH.classList.toggle('active', view === 'hourly');
+    if (btnC) btnC.classList.toggle('active', view === 'cumulative');
+    renderHourlyVelocityChart(lineRaceProgress);
   };
 
   window.setLineMetric = function(metric) {

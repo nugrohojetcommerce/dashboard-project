@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.contrib.auth.models import User
 
-from .models import Brand, UserBrand
+from .models import Brand, UserBrand, UserActivityLog
 
 
 # =========================================================
@@ -139,7 +139,7 @@ class CustomUserAdmin(BaseUserAdmin):
 # from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 # from django.contrib.auth.models import User
 
-# from .models import Brand, UserBrand
+# from .models import Brand, UserBrand, UserActivityLog
 
 
 # class UserBrandForm(forms.ModelForm):
@@ -233,3 +233,24 @@ class CustomUserAdmin(BaseUserAdmin):
 
 #     def has_module_permission(self, request):
 #         return request.user.is_superuser
+
+
+@admin.register(UserActivityLog)
+class UserActivityLogAdmin(admin.ModelAdmin):
+    list_display = ("username", "url", "ip_address", "timestamp")
+    list_filter = ("username", "timestamp")
+    search_fields = ("username", "url", "ip_address")
+    readonly_fields = ("username", "url", "ip_address", "timestamp")
+
+    def has_module_permission(self, request):
+        return True
+
+    def has_view_permission(self, request, obj=None):
+        return True
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+

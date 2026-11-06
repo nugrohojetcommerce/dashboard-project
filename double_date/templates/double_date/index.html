@@ -757,6 +757,29 @@
     white-space: nowrap;
   }
 
+  .podium-target-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.70rem;
+    font-weight: 700;
+    margin-top: 2px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+    transition: all 0.25s ease;
+  }
+  .podium-target-pill.target-over {
+    background: rgba(16, 185, 129, 0.16);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+  .podium-target-pill.target-under {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3B82F6;
+    border: 1px solid rgba(59, 130, 246, 0.28);
+  }
+
   .dd-momentum-pill {
     display: inline-flex;
     align-items: center;
@@ -1176,7 +1199,15 @@
           Campaign Champions Podium
         </h2>
       </div>
-      <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="dd-metric-switcher">
+          <button type="button" class="dd-metric-btn active" id="btnPodiumModeNmv" onclick="setPodiumMetric('nmv')">
+            <i class="bi bi-currency-dollar"></i> NMV Rank
+          </button>
+          <button type="button" class="dd-metric-btn" id="btnPodiumModeTarget" onclick="setPodiumMetric('target')" title="Rank champions by % Target Achievement">
+            <i class="bi bi-bullseye"></i> 🎯 % Target Rank
+          </button>
+        </div>
         <button type="button" class="dd-race-btn active" id="btnPodiumRaceSync" onclick="togglePodiumRaceSync()" title="Synchronize podium in real-time with race playback">
           <i class="bi bi-broadcast"></i> Live Race Sync: <span id="podiumSyncLabel">ON</span>
         </button>
@@ -1211,7 +1242,7 @@
     <!-- Tab 1: Bar Chart Race -->
     <div class="dd-tab-pane active" id="pane_bar_race">
       <div class="dd-race-bar">
-        <div style="display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           <button class="dd-race-btn" id="btnPlayRace" onclick="toggleRacePlay()">
             <i class="bi bi-play-fill" id="playRaceIcon"></i>
             <span id="playRaceLabel">Play Race</span>
@@ -1225,6 +1256,13 @@
           <button class="dd-race-btn active" id="btnRaceLoop" onclick="toggleRaceLoop()" title="Toggle Infinite Loop Mode">
             <i class="bi bi-repeat"></i> Loop: <span id="raceLoopLabel">ON</span>
           </button>
+
+          <!-- Metric Switcher for Bar Race -->
+          <div class="dd-metric-switcher ms-1">
+            <button type="button" class="dd-metric-btn active" id="btnBarMetricGmv" onclick="setBarMetric('gmv')">GMV</button>
+            <button type="button" class="dd-metric-btn" id="btnBarMetricNmv" onclick="setBarMetric('nmv')">NMV</button>
+            <button type="button" class="dd-metric-btn" id="btnBarMetricTarget" onclick="setBarMetric('target')" title="Race by % Target Achievement">🎯 % Target</button>
+          </div>
         </div>
 
         <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 500px;">
@@ -1268,10 +1306,11 @@
             </button>
           </div>
 
-          <!-- Metric Switcher: NMV / GMV -->
+          <!-- Metric Switcher: NMV / GMV / % Target -->
           <div class="dd-metric-switcher ms-1">
             <button type="button" class="dd-metric-btn active" id="btnMetricNmv" onclick="setLineMetric('nmv')">NMV Scale</button>
             <button type="button" class="dd-metric-btn" id="btnMetricGmv" onclick="setLineMetric('gmv')">GMV Scale</button>
+            <button type="button" class="dd-metric-btn" id="btnMetricTarget" onclick="setLineMetric('target')" title="Race by % Target Achievement">🎯 % Target</button>
           </div>
 
           <!-- Mode Switcher: Brands Battle vs With Total -->
@@ -1334,6 +1373,18 @@
       <div class="dd-kpi-sub">
         <i class="bi bi-shield-check text-success"></i>
         <span>NMV: <strong id="kpiNmv" class="mono">Rp 0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Campaign Target</span>
+        <i class="bi bi-bullseye text-primary" style="font-size: 1.1rem;"></i>
+      </div>
+      <div class="dd-kpi-value mono text-primary" id="kpiTarget">Rp 0</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-trophy text-warning"></i>
+        <span>NMV Achv: <strong id="kpiTargetAchieve" class="mono text-success">0.0%</strong></span>
       </div>
     </div>
 
@@ -1486,6 +1537,7 @@
   let raceTimer = null;
   let raceSpeedMs = 1000; // Synchronized at 1.0s per step
   let allRaceBrandsCache = null;
+  let barRaceMetric = 'gmv'; // 'gmv', 'nmv', or 'target'
 
   // Line Chart Race State (Continuous 60FPS Fluid Progression)
   let lineRaceProgress = 0.0; // Current float progression (e.g. 10.45)
@@ -1497,14 +1549,16 @@
   let lineRaceLastTimestamp = null;
   let lineRaceSpeedMs = 1200; // 1.2s per 1 hour progress (customizable 1x / 2x)
   let lineRaceView = 'hourly'; // 'hourly' or 'cumulative'
-  let lineRaceMetric = 'nmv'; // 'nmv' or 'gmv'
+  let lineRaceMetric = 'nmv'; // 'nmv', 'gmv', or 'target'
   let lineRaceMode = 'brands'; // 'brands' (pure brand battle) or 'total' (with total line)
   let lineRaceWindowSize = 6; // sliding window of 6 hours
   let velocitySmoothedYMin = null;
   let velocitySmoothedYMax = null;
+  let lineRaceLegendSelected = {}; // Dynamic line visibility tracking: { [seriesName]: boolean }
 
-  // Podium Live Race Sync State
+  // Podium State
   let isPodiumRaceSync = true; // Responsive to race animation by default
+  let podiumMetric = 'nmv'; // 'nmv' or 'target'
 
   // Auto-refresh timer state (300 seconds = 5 minutes)
   let refreshIntervalSec = 300;
@@ -1519,6 +1573,7 @@
     allRaceBrandsCache = null;
     velocitySmoothedYMin = null;
     velocitySmoothedYMax = null;
+    lineRaceLegendSelected = {};
 
     preloadBrandLogos();
     renderAll();
@@ -1623,6 +1678,7 @@
     allRaceBrandsCache = null;
     velocitySmoothedYMin = null;
     velocitySmoothedYMax = null;
+    lineRaceLegendSelected = {};
 
     preloadBrandLogos();
     renderKpis();
@@ -1674,6 +1730,11 @@
     document.getElementById('kpiDiscounts').textContent = formatIDR(s.total_discounts, true);
     document.getElementById('kpiPeakHour').textContent = s.peak_hour_label || '--:00';
     document.getElementById('kpiPeakGmv').textContent = formatIDR(s.peak_hour_gmv, true);
+
+    const kpiTgt = document.getElementById('kpiTarget');
+    if (kpiTgt) kpiTgt.textContent = formatIDR(s.total_target, true);
+    const kpiTgtAch = document.getElementById('kpiTargetAchieve');
+    if (kpiTgtAch) kpiTgtAch.textContent = `${(s.total_target_achieve_nmv || 0).toFixed(1)}%`;
   }
 
   /* ─────────────────────────────────────────────────────────────
@@ -1682,6 +1743,7 @@
      - Persistent DOM pillars for 100% zero-flicker smoothness
      - Spring pop-in CSS animation when brands swap positions
      - Tabular numbers updating with interpolated coordinates
+     - % Target Achievement Racing Mode Support
   ───────────────────────────────────────────────────────────── */
   function getDynamicPodiumData(progress) {
     if (!campaignData || !campaignData.leaderboard || campaignData.leaderboard.length === 0) {
@@ -1694,11 +1756,17 @@
 
     // In Line Race Hourly view, we track hourly velocity; otherwise cumulative progression
     const isCumulative = (currentActiveTab === 'hourly_velocity' ? (lineRaceView === 'cumulative') : true);
+    const isTargetMode = (podiumMetric === 'target');
 
     const brandValues = [];
     let totalSum = 0;
 
     campaignData.leaderboard.forEach(b => {
+      // When tracking Line Race, exclude brands currently toggled off on the canvas
+      if (currentActiveTab === 'hourly_velocity' && lineRaceLegendSelected && lineRaceLegendSelected[b.brand] === false) {
+        return;
+      }
+
       const raw = b.hourly_nmv || [];
       let val = 0;
 
@@ -1718,13 +1786,19 @@
       val = Math.max(0, val);
       totalSum += val;
 
+      const targetVal = Number(b.target || 0);
+      const achievePct = targetVal > 0 ? Number(((val / targetVal) * 100).toFixed(1)) : 0.0;
+
       brandValues.push({
         brand: b.brand,
-        value: val
+        value: val,
+        target: targetVal,
+        achieve_pct: achievePct,
+        rank_metric_val: isTargetMode ? achievePct : val
       });
     });
 
-    brandValues.sort((a, b) => b.value - a.value);
+    brandValues.sort((a, b) => b.rank_metric_val - a.rank_metric_val);
 
     return brandValues.slice(0, 3).map((item, idx) => {
       const share = totalSum > 0 ? ((item.value / totalSum) * 100) : 0;
@@ -1732,6 +1806,8 @@
         rank: idx + 1,
         brand: item.brand,
         total_nmv: item.value,
+        target: item.target,
+        achieve_pct: item.achieve_pct,
         share_pct: Number(share.toFixed(1))
       };
     });
@@ -1748,13 +1824,21 @@
 
     const pMap = {};
     podiumData.forEach(p => { pMap[p.rank] = p; });
+    const isTarget = (podiumMetric === 'target');
 
     // Initial render if pillars don't exist yet
     const existingPillars = stageEl.querySelectorAll('.podium-pillar');
     if (existingPillars.length < 3) {
       const renderInitialPillar = (rank, posClass, blockClass, badgeClass, iconClass, defaultLabel) => {
-        const p = pMap[rank] || { brand: '-', total_nmv: 0, share_pct: 0 };
+        const p = pMap[rank] || { brand: '-', total_nmv: 0, target: 0, achieve_pct: 0, share_pct: 0 };
         const brandLogoHtml = window.renderBrandIcon ? window.renderBrandIcon(p.brand, rank === 1 ? 52 : 44) : '';
+        const mainValHtml = isTarget ? `${(p.achieve_pct || 0).toFixed(1)}%` : formatIDR(p.total_nmv, true);
+        const isOver = (p.achieve_pct || 0) >= 100;
+        const targetPillHtml = isTarget
+          ? `<div class="podium-target-pill ${isOver ? 'target-over' : 'target-under'}"><i class="bi bi-bullseye"></i> Target: ${formatIDR(p.target, true)}</div>`
+          : `<div class="podium-target-pill ${isOver ? 'target-over' : 'target-under'}"><i class="bi bi-bullseye"></i> ${(p.achieve_pct || 0).toFixed(1)}% of Target</div>`;
+        const stepPctHtml = isTarget ? `${formatIDR(p.total_nmv, true)} NMV` : `${p.share_pct}% Share`;
+
         return `
           <div class="podium-pillar ${posClass}" data-rank="${rank}" data-brand="${p.brand}">
             <div class="podium-athlete">
@@ -1767,14 +1851,15 @@
                 </div>
               </div>
               <h3 class="podium-athlete-name" title="${p.brand}">${p.brand}</h3>
-              <div class="podium-athlete-nmv mono">${formatIDR(p.total_nmv, true)}</div>
+              <div class="podium-athlete-nmv mono ${isTarget ? 'text-success' : ''}">${mainValHtml}</div>
+              ${targetPillHtml}
             </div>
 
             <div class="podium-block ${blockClass}">
               <div class="podium-step-surface"></div>
               <span class="podium-step-num mono">${rank}</span>
               <span class="podium-step-lbl">${defaultLabel}</span>
-              <span class="podium-step-pct mono">${p.share_pct}% Share</span>
+              <span class="podium-step-pct mono">${stepPctHtml}</span>
             </div>
           </div>
         `;
@@ -1802,6 +1887,7 @@
       const pctEl = pillar.querySelector('.podium-step-pct');
       const logoContainer = pillar.querySelector('.podium-logo-img');
       const athleteEl = pillar.querySelector('.podium-athlete');
+      const targetPillEl = pillar.querySelector('.podium-target-pill');
 
       // Brand changed on this rank pillar -> Trigger smooth pop/swap animation
       if (prevBrand !== p.brand) {
@@ -1821,11 +1907,20 @@
       }
 
       // Always update numeric values smoothly (tabular nums)
+      const mainValHtml = isTarget ? `${(p.achieve_pct || 0).toFixed(1)}%` : formatIDR(p.total_nmv, true);
       if (nmvEl) {
-        nmvEl.textContent = formatIDR(p.total_nmv, true);
+        nmvEl.textContent = mainValHtml;
+        nmvEl.classList.toggle('text-success', isTarget);
+      }
+      if (targetPillEl) {
+        const isOver = (p.achieve_pct || 0) >= 100;
+        targetPillEl.className = `podium-target-pill ${isOver ? 'target-over' : 'target-under'}`;
+        targetPillEl.innerHTML = isTarget
+          ? `<i class="bi bi-bullseye"></i> Target: ${formatIDR(p.target, true)}`
+          : `<i class="bi bi-bullseye"></i> ${(p.achieve_pct || 0).toFixed(1)}% of Target`;
       }
       if (pctEl) {
-        pctEl.textContent = `${p.share_pct}% Share`;
+        pctEl.textContent = isTarget ? `${formatIDR(p.total_nmv, true)} NMV` : `${p.share_pct}% Share`;
       }
     });
   }
@@ -1839,20 +1934,53 @@
     if (subEl) {
       const curH = Math.min(raceMaxHour || 23, Math.floor(progress));
       const hStr = `${String(curH).padStart(2, '0')}:00`;
+      const isTarget = (podiumMetric === 'target');
       const isCumulative = (currentActiveTab === 'hourly_velocity' ? (lineRaceView === 'cumulative') : true);
-      const modeStr = isCumulative ? 'Cumulative NMV' : 'Hourly NMV';
+      const modeStr = isTarget ? '% Target Achieve' : (isCumulative ? 'Cumulative NMV' : 'Hourly NMV');
       subEl.textContent = `Live Race Sync • Hour ${hStr} (${modeStr})`;
     }
   }
 
   function renderPodiumStatic() {
-    const staticData = campaignData.podium || [];
+    let staticData = [];
+    if (podiumMetric === 'target') {
+      const sorted = [...(campaignData.leaderboard || [])].sort((a, b) => (b.target_achieve_nmv || 0) - (a.target_achieve_nmv || 0));
+      staticData = sorted.slice(0, 3).map((b, idx) => ({
+        rank: idx + 1,
+        brand: b.brand,
+        total_nmv: b.total_nmv,
+        target: b.target,
+        achieve_pct: b.target_achieve_nmv,
+        share_pct: b.share_pct
+      }));
+    } else {
+      staticData = (campaignData.podium || []).map((b, idx) => ({
+        rank: idx + 1,
+        brand: b.brand,
+        total_nmv: b.total_nmv,
+        target: b.target,
+        achieve_pct: b.target_achieve_nmv,
+        share_pct: b.share_pct
+      }));
+    }
     updatePodiumDOM(staticData);
     const subEl = document.getElementById('podiumSubText');
     if (subEl) {
-      subEl.textContent = 'Top 3 Brands • Full Campaign Total (Cumulative NMV)';
+      subEl.textContent = (podiumMetric === 'target')
+        ? 'Top 3 Brands • Full Campaign Total (% Target Achievement)'
+        : 'Top 3 Brands • Full Campaign Total (Cumulative NMV)';
     }
   }
+
+  window.setPodiumMetric = function(metric) {
+    podiumMetric = metric;
+    const btnNmv = document.getElementById('btnPodiumModeNmv');
+    const btnTgt = document.getElementById('btnPodiumModeTarget');
+    if (btnNmv) btnNmv.classList.toggle('active', metric === 'nmv');
+    if (btnTgt) btnTgt.classList.toggle('active', metric === 'target');
+
+    renderPodium();
+  };
 
   function renderPodium() {
     if (isPodiumRaceSync) {
@@ -1896,7 +2024,28 @@
      ECharts Tab 1: Dynamic Bar Race Chart
      - Descending Order (Rank 1 at the top)
      - Brand Logos in Y-Axis labels
+     - Multi-Metric: GMV, NMV, and 🎯 % Target Racing Mode
   ───────────────────────────────────────────────────────────── */
+  window.setBarMetric = function(metric) {
+    barRaceMetric = metric;
+    const bGmv = document.getElementById('btnBarMetricGmv');
+    const bNmv = document.getElementById('btnBarMetricNmv');
+    const bTgt = document.getElementById('btnBarMetricTarget');
+    if (bGmv) bGmv.classList.toggle('active', metric === 'gmv');
+    if (bNmv) bNmv.classList.toggle('active', metric === 'nmv');
+    if (bTgt) bTgt.classList.toggle('active', metric === 'target');
+
+    if (currentActiveTab === 'bar_race') {
+      if (metric === 'target') {
+        setPodiumMetric('target');
+      } else {
+        setPodiumMetric('nmv');
+      }
+    }
+
+    renderBarRaceChart(raceCurrentHour);
+  };
+
   function renderBarRaceChart(hourIndex = null, customDuration = null) {
     const el = document.getElementById('chartBarRace');
     if (!el) return;
@@ -1934,10 +2083,26 @@
       updateDynamicPodium(hIdx);
     }
 
+    const isTarget = (barRaceMetric === 'target');
+    const isNmv = (barRaceMetric === 'nmv');
+
     // Map the frame's values into the fixed category order
     const valueMap = {};
+    const targetMap = {};
+    const nmvMap = {};
+    const gmvMap = {};
+
     (frame.data || []).forEach(d => {
-      valueMap[d.brand] = d.value;
+      targetMap[d.brand] = d.target || 0;
+      nmvMap[d.brand] = d.nmv_value || 0;
+      gmvMap[d.brand] = d.value || 0;
+      if (isTarget) {
+        valueMap[d.brand] = d.target_achieve_nmv || d.target_achieve_gmv || 0;
+      } else if (isNmv) {
+        valueMap[d.brand] = d.nmv_value || 0;
+      } else {
+        valueMap[d.brand] = d.value || 0;
+      }
     });
     const values = allRaceBrandsCache.map(b => valueMap[b] || 0);
 
@@ -1982,6 +2147,31 @@
 
     const option = {
       backgroundColor: 'transparent',
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: tc.tooltipBg,
+        borderColor: tc.tooltipBorder,
+        textStyle: { color: tc.textColor },
+        formatter: function(params) {
+          const brand = params.name;
+          const tgt = targetMap[brand] || 0;
+          const actualNmv = nmvMap[brand] || 0;
+          const actualGmv = gmvMap[brand] || 0;
+          if (isTarget) {
+            return `
+              <div style="font-weight: 700; color:${tc.titleColor}">${brand}</div>
+              <div>Achievement: <strong style="color: #10B981">${Number(params.value || 0).toFixed(1)}%</strong></div>
+              <div>Actual NMV: <strong>${formatIDR(actualNmv, true)}</strong></div>
+              <div>Target Goal: <strong>${formatIDR(tgt, true)}</strong></div>
+            `;
+          }
+          return `
+            <div style="font-weight: 700; color:${tc.titleColor}">${brand}</div>
+            <div>${params.seriesName}: <strong>${formatIDR(params.value, true)}</strong></div>
+            <div>Target Goal: <strong>${formatIDR(tgt, true)}</strong></div>
+          `;
+        }
+      },
       grid: {
         top: 25,
         bottom: 25,
@@ -1990,10 +2180,10 @@
       },
       xAxis: {
         type: 'value',
-        max: 'dataMax',
+        max: isTarget ? (val => Math.max(120, Math.ceil(val.max * 1.15))) : 'dataMax',
         axisLabel: {
           color: tc.textColor,
-          formatter: val => formatIDR(val, true)
+          formatter: val => isTarget ? `${val}%` : formatIDR(val, true)
         },
         splitLine: { lineStyle: { color: tc.splitLineColor } }
       },
@@ -2021,7 +2211,7 @@
       series: [
         {
           realtimeSort: true, // ECharts natively interpolates vertical positions smoothly!
-          name: 'Cumulative GMV',
+          name: isTarget ? '% Target Achievement' : (isNmv ? 'Cumulative NMV' : 'Cumulative GMV'),
           type: 'bar',
           data: values,
           label: {
@@ -2031,15 +2221,50 @@
             color: tc.titleColor,
             fontWeight: 800,
             fontFamily: 'JetBrains Mono',
-            formatter: params => formatIDR(params.value, true)
+            formatter: params => isTarget ? `${Number(params.value || 0).toFixed(1)}%` : formatIDR(params.value, true)
           },
           itemStyle: {
             borderRadius: [0, 8, 8, 0],
-            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-              { offset: 0, color: 'rgba(255, 107, 0, 0.4)' },
-              { offset: 1, color: '#FF6B00' }
-            ])
-          }
+            color: isTarget
+              ? function(param) {
+                  const val = param.value || 0;
+                  if (val >= 100) {
+                    return new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                      { offset: 0, color: 'rgba(16, 185, 129, 0.4)' },
+                      { offset: 1, color: '#10B981' }
+                    ]);
+                  }
+                  return new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                    { offset: 0, color: 'rgba(59, 130, 246, 0.4)' },
+                    { offset: 1, color: '#3B82F6' }
+                  ]);
+                }
+              : new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                  { offset: 0, color: 'rgba(255, 107, 0, 0.4)' },
+                  { offset: 1, color: '#FF6B00' }
+                ])
+          },
+          markLine: isTarget ? {
+            symbol: ['none', 'none'],
+            lineStyle: {
+              color: '#10B981',
+              width: 2,
+              type: 'dashed'
+            },
+            data: [
+              {
+                xAxis: 100,
+                label: {
+                  show: true,
+                  position: 'insideEndTop',
+                  formatter: '🎯 100% TARGET',
+                  color: '#10B981',
+                  fontWeight: 800,
+                  fontSize: 11
+                }
+              }
+            ]
+          } : undefined
         }
       ],
       animationDuration: 0,
@@ -2088,6 +2313,24 @@
     if (!chartHourlyVelocity) {
       chartHourlyVelocity = echarts.init(el);
       initializedCharts.hourly_velocity = true;
+
+      let isHandlingLegendChange = false;
+      chartHourlyVelocity.on('legendselectchanged', function(params) {
+        if (isHandlingLegendChange) return;
+        isHandlingLegendChange = true;
+        try {
+          lineRaceLegendSelected = params.selected || {};
+          // Reset smoothed Y boundaries so chart immediately adapts to visible lines
+          velocitySmoothedYMin = null;
+          velocitySmoothedYMax = null;
+          renderHourlyVelocityChart(lineRaceProgress);
+          if (isPodiumRaceSync && currentActiveTab === 'hourly_velocity') {
+            updateDynamicPodium(lineRaceProgress);
+          }
+        } finally {
+          isHandlingLegendChange = false;
+        }
+      });
     }
 
     const hv = campaignData.hourly_velocity || {};
@@ -2116,10 +2359,11 @@
       camEnd = Math.max(lineRaceMaxHour, 23);
     }
 
+    const isTarget = (lineRaceMetric === 'target');
     const isNmv = (lineRaceMetric === 'nmv');
     const isCumulative = (lineRaceView === 'cumulative');
     const isBrandBattle = (lineRaceMode === 'brands');
-    const metricTitle = isNmv ? 'NMV' : 'GMV';
+    const metricTitle = isTarget ? '% Target Achievement' : (isNmv ? 'NMV' : 'GMV');
     const viewTitle = isCumulative ? 'Cumulative' : 'Hourly';
 
     function makeCumulative(arr) {
@@ -2128,6 +2372,13 @@
     }
 
     function getBrandData(b) {
+      if (isTarget) {
+        if (isCumulative) {
+          return b.cum_nmv_achieve || b.cum_gmv_achieve || [];
+        } else {
+          return b.hourly_nmv_achieve || b.hourly_gmv_achieve || [];
+        }
+      }
       if (isCumulative) {
         if (isNmv) {
           return b.cum_nmv || makeCumulative(b.data_nmv || b.data || []);
@@ -2144,6 +2395,9 @@
     }
 
     function getTotalData() {
+      if (isTarget) {
+        return isCumulative ? (hv.total_cum_nmv_achieve || hv.total_cum_gmv_achieve || []) : [];
+      }
       if (isCumulative) {
         if (isNmv) {
           return hv.total_cum_nmv || makeCumulative(hv.total_series_nmv || hv.total_series || []);
@@ -2158,6 +2412,30 @@
         }
       }
     }
+
+    const formatLineVal = (val) => isTarget ? `${Number(val || 0).toFixed(1)}%` : formatIDR(val, true);
+
+    const targetMarkLine = isTarget ? {
+      symbol: ['none', 'none'],
+      lineStyle: {
+        color: '#10B981',
+        width: 2,
+        type: 'dashed'
+      },
+      data: [
+        {
+          yAxis: 100,
+          label: {
+            show: true,
+            position: 'insideEndTop',
+            formatter: '🎯 100% TARGET GOAL',
+            color: '#10B981',
+            fontWeight: 800,
+            fontSize: 11
+          }
+        }
+      ]
+    } : undefined;
 
     const richEndLabels = {
       name: {
@@ -2186,47 +2464,76 @@
     };
 
     // Collect visible values in [camStart..curH] for dynamic Y-axis auto-scaling
+    // Strictly considering ONLY lines that are actively selected/visible on canvas right now
     const targetBrands = hv.brand_series || [];
     let visibleVals = [];
 
     targetBrands.forEach(b => {
+      // If user toggled off this brand in legend, do NOT include in Y-scale!
+      if (lineRaceLegendSelected && lineRaceLegendSelected[b.name] === false) {
+        return;
+      }
+
       const raw = getBrandData(b);
       const s = Math.max(0, Math.floor(camStart));
-      const e = Math.min(raw.length - 1, Math.ceil(curH));
-      for (let i = s; i <= e; i++) {
+      const curInt = Math.floor(curH);
+      const frac = curH - curInt;
+
+      for (let i = s; i <= curInt && i < raw.length; i++) {
         const v = raw[i];
         if (v !== undefined && v !== null && v > 0) {
           visibleVals.push(v);
         }
       }
+      if (frac > 0.001 && curInt + 1 < raw.length) {
+        const vPrev = raw[curInt] || 0;
+        const vNext = raw[curInt + 1] || 0;
+        const interpVal = vPrev + (vNext - vPrev) * frac;
+        if (interpVal > 0) visibleVals.push(interpVal);
+      }
     });
 
     if (!isBrandBattle) {
-      const totalRaw = getTotalData();
-      const s = Math.max(0, Math.floor(camStart));
-      const e = Math.min(totalRaw.length - 1, Math.ceil(curH));
-      for (let i = s; i <= e; i++) {
-        const v = totalRaw[i];
-        if (v !== undefined && v !== null && v > 0) visibleVals.push(v);
+      if (!lineRaceLegendSelected || lineRaceLegendSelected['Total Campaign'] !== false) {
+        const totalRaw = getTotalData();
+        const s = Math.max(0, Math.floor(camStart));
+        const curInt = Math.floor(curH);
+        const frac = curH - curInt;
+
+        for (let i = s; i <= curInt && i < totalRaw.length; i++) {
+          const v = totalRaw[i];
+          if (v !== undefined && v !== null && v > 0) visibleVals.push(v);
+        }
+        if (frac > 0.001 && curInt + 1 < totalRaw.length) {
+          const vPrev = totalRaw[curInt] || 0;
+          const vNext = totalRaw[curInt + 1] || 0;
+          const interpVal = vPrev + (vNext - vPrev) * frac;
+          if (interpVal > 0) visibleVals.push(interpVal);
+        }
       }
     }
 
-    // Dynamic, smoothly-damped Y-axis boundaries
+    // Dynamic, smoothly-damped Y-axis boundaries based strictly on visible lines
     let targetMin = 0;
-    let targetMax = 1000000;
+    let targetMax = isTarget ? 120 : 100000;
 
     if (visibleVals.length > 0) {
       const vMin = Math.min(...visibleVals);
       const vMax = Math.max(...visibleVals);
       const span = Math.max(1, vMax - vMin);
 
-      // If brands are tightly bunched high above zero, lift floor gently so differences are magnified
-      if (vMin > vMax * 0.25) {
-        targetMin = Math.max(0, Math.floor(vMin - span * 0.25));
-      } else {
+      if (isTarget) {
         targetMin = 0;
+        targetMax = Math.max(120, Math.ceil(vMax * 1.15));
+      } else {
+        // In hourly rate mode, if all brands are racing high above zero, lift floor gently
+        if (!isCumulative && vMin > vMax * 0.4) {
+          targetMin = Math.max(0, Math.floor(vMin - span * 0.2));
+        } else {
+          targetMin = 0;
+        }
+        targetMax = Math.ceil(vMax + Math.max(span * 0.15, vMax * 0.1));
       }
-      targetMax = Math.ceil(vMax + Math.max(span * 0.25, vMax * 0.15));
     }
 
     // Exponential smoothing so Y boundaries glide continuously without sudden leaps
@@ -2239,6 +2546,14 @@
     }
 
     const series = [];
+
+    // Track markLine assignment so it's always placed on the first visible series
+    let markLineAssigned = false;
+    let totalMarkLine = undefined;
+    if (isTarget && (!lineRaceLegendSelected || lineRaceLegendSelected['Total Campaign'] !== false)) {
+      totalMarkLine = targetMarkLine;
+      markLineAssigned = true;
+    }
 
     // 1. Optional Total Campaign Line
     if (!isBrandBattle) {
@@ -2263,7 +2578,7 @@
           distance: 14,
           formatter: function(params) {
             const yVal = Array.isArray(params.value) ? params.value[1] : params.value;
-            return `{flag|} {name|Total} {val|${formatIDR(yVal, true)}}`;
+            return `{flag|} {name|Total} {val|${formatLineVal(yVal)}}`;
           },
           rich: {
             flag: {
@@ -2291,6 +2606,7 @@
             }
           }
         },
+        markLine: totalMarkLine,
         labelLayout: { moveOverlap: 'shiftY' }
       });
     }
@@ -2329,6 +2645,13 @@
         };
       }
 
+      const isBrandVisible = (!lineRaceLegendSelected || lineRaceLegendSelected[b.name] !== false);
+      let brandMarkLine = undefined;
+      if (isTarget && !markLineAssigned && isBrandVisible) {
+        brandMarkLine = targetMarkLine;
+        markLineAssigned = true;
+      }
+
       series.push({
         name: b.name,
         type: 'line',
@@ -2351,12 +2674,13 @@
             const yVal = Array.isArray(params.value) ? params.value[1] : params.value;
             const hasLogo = window.getBrandLogoUrl ? window.getBrandLogoUrl(params.seriesName) : null;
             if (hasLogo) {
-              return `{${brandKey}|}  {name|${params.seriesName}} {val|${formatIDR(yVal, true)}}`;
+              return `{${brandKey}|}  {name|${params.seriesName}} {val|${formatLineVal(yVal)}}`;
             }
-            return `{fallback|${params.seriesName[0] || 'B'}}  {name|${params.seriesName}} {val|${formatIDR(params.value, true)}}`;
+            return `{fallback|${params.seriesName[0] || 'B'}}  {name|${params.seriesName}} {val|${formatLineVal(yVal)}}`;
           },
           rich: richEndLabels
         },
+        markLine: brandMarkLine,
         labelLayout: { moveOverlap: 'shiftY' }
       });
     });
@@ -2387,12 +2711,12 @@
           const xVal = params[0].value ? params[0].value[0] : 0;
           const h = Math.round(xVal);
           const hourStr = `${String(h).padStart(2, '0')}:00`;
-          const suffix = isCumulative ? ' (Cum.)' : ' / hr';
+          const suffix = isTarget ? '' : (isCumulative ? ' (Cum.)' : ' / hr');
           let s = `<strong style="color:${tc.titleColor}">${hourStr}</strong><br/>`;
           params.forEach(p => {
             const yVal = Array.isArray(p.value) ? p.value[1] : p.value;
             if (yVal !== null && yVal !== undefined) {
-              s += `${p.marker} ${p.seriesName}: <strong>${formatIDR(yVal, true)}</strong>${suffix}<br/>`;
+              s += `${p.marker} ${p.seriesName}: <strong>${formatLineVal(yVal)}</strong>${suffix}<br/>`;
             }
           });
           return s;
@@ -2401,7 +2725,8 @@
       legend: {
         top: 10,
         right: 30,
-        textStyle: { color: tc.textColor }
+        textStyle: { color: tc.textColor },
+        selected: lineRaceLegendSelected || {}
       },
       grid: {
         top: 65,
@@ -2440,7 +2765,7 @@
           color: tc.textColor,
           fontSize: 11,
           fontWeight: 700,
-          formatter: val => formatIDR(val, true)
+          formatter: val => isTarget ? `${val}%` : formatIDR(val, true)
         },
         splitLine: { lineStyle: { color: tc.splitLineColor } }
       },
@@ -2612,8 +2937,21 @@
     lineRaceMetric = metric;
     velocitySmoothedYMin = null;
     velocitySmoothedYMax = null;
-    document.getElementById('btnMetricNmv').classList.toggle('active', metric === 'nmv');
-    document.getElementById('btnMetricGmv').classList.toggle('active', metric === 'gmv');
+    const bNmv = document.getElementById('btnMetricNmv');
+    const bGmv = document.getElementById('btnMetricGmv');
+    const bTgt = document.getElementById('btnMetricTarget');
+    if (bNmv) bNmv.classList.toggle('active', metric === 'nmv');
+    if (bGmv) bGmv.classList.toggle('active', metric === 'gmv');
+    if (bTgt) bTgt.classList.toggle('active', metric === 'target');
+
+    if (currentActiveTab === 'hourly_velocity') {
+      if (metric === 'target') {
+        setPodiumMetric('target');
+      } else {
+        setPodiumMetric('nmv');
+      }
+    }
+
     renderHourlyVelocityChart(lineRaceProgress);
   };
 
@@ -2934,7 +3272,12 @@
           <td>
             <div class="dd-brand-cell">
               ${logoHtml}
-              <span>${b.brand}</span>
+              <div>
+                <span style="font-weight: 700;">${b.brand}</span>
+                <div style="font-size: 0.70rem; color: var(--text-muted); line-height: 1.2;">
+                  Target: ${formatIDR(b.target, true)} • <span class="${(b.target_achieve_nmv || 0) >= 100 ? 'text-success font-weight-bold' : ''}">${(b.target_achieve_nmv || 0).toFixed(1)}% Achv</span>
+                </div>
+              </div>
             </div>
           </td>
           <td>${platformPill}</td>
@@ -3112,6 +3455,15 @@
     const pane = document.getElementById(`pane_${tabName}`);
     if (pane) pane.classList.add('active');
 
+    // Sync podium mode with active tab metric
+    if (tabName === 'bar_race') {
+      const targetMetric = (barRaceMetric === 'target') ? 'target' : 'nmv';
+      setPodiumMetric(targetMetric);
+    } else if (tabName === 'hourly_velocity') {
+      const targetMetric = (lineRaceMetric === 'target') ? 'target' : 'nmv';
+      setPodiumMetric(targetMetric);
+    }
+
     setTimeout(() => {
       renderCurrentTabChart();
       resizeActiveChart();
@@ -3277,7 +3629,7 @@
 
   function rethemeAllCharts() {
     if (chartBarRace) renderBarRaceChart(raceCurrentHour);
-    if (chartHourlyVelocity) renderHourlyVelocityChart(lineRaceCurrentHour);
+    if (chartHourlyVelocity) renderHourlyVelocityChart(lineRaceProgress);
     if (chartScatterMatrix) renderScatterMatrixChart();
     if (chartPlatformDoughnut) renderPlatformDoughnutChart();
     if (chartCvrFunnel) renderCvrFunnelChart();

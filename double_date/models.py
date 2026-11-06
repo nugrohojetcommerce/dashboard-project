@@ -45,3 +45,21 @@ class TrafficMartDD(models.Model):
     def __str__(self):
         return f"{self.brand} - {self.platform} - {self.date} {self.hour}:00 (UV: {self.uv})"
 
+
+class DailyTargetMart(models.Model):
+    key_id = models.BigIntegerField(primary_key=True)
+    date = models.DateField(null=True, blank=True)
+    brand_group = models.TextField(null=True, blank=True)
+    store_name = models.TextField(null=True, blank=True)
+    platform = models.TextField(null=True, blank=True)
+    target = models.BigIntegerField(null=True, blank=True)
+    store_pic = models.TextField(db_column='Store PIC', null=True, blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'postgre_daily_target_mart'
+        ordering = ['date', 'brand_group', 'store_name', 'platform']
+
+    def __str__(self):
+        return f"{self.store_name} ({self.platform}) - {self.date}: {self.target}"
+

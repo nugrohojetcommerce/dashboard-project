@@ -10,7 +10,7 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from dashboard.models import User, UserBrand
-from .models import OrderMartDDSummary, TrafficMartDD
+from .models import DailyTargetMart, OrderMartDDSummary, TrafficMartDD
 
 
 @lru_cache(maxsize=256)
@@ -226,6 +226,8 @@ def get_campaign_war_room_data(
             "uv": 0,
             "pv": 0,
             "discounts": 0.0,
+            "target": 0.0,
+            "platform_targets": defaultdict(float),
             "platform_gmv": defaultdict(float),
             "platform_orders": defaultdict(int),
             "platform_uv": defaultdict(int),
@@ -324,6 +326,33 @@ def get_campaign_war_room_data(
                         platform_totals[p]["uv"] += uv
                         platform_totals[p]["pv"] += pv
 
+    # Populate daily target data
+    def _norm(name: str) -> str:
+        return "".join(c for c in (name or "").lower() if c.isalnum())
+
+    # Build normalized brand lookup, prioritizing brands with active orders/GMV on this date
+    brand_lookup: dict[str, str] = {}
+    for b in target_brands:
+        brand_lookup[_norm(b)] = b
+    for b in target_brands:
+        if brand_summary[b]["gmv"] > 0 or brand_summary[b]["orders"] > 0:
+            brand_lookup[_norm(b)] = b
+
+    target_qs = DailyTargetMart.objects.filter(date=target_date)
+    if selected_platforms:
+        target_qs = target_qs.filter(platform__in=[p.lower() for p in selected_platforms])
+    elif target_platforms:
+        target_qs = target_qs.filter(platform__in=[p.lower() for p in target_platforms])
+
+    for t in target_qs.values("store_name", "platform", "target", "brand_group"):
+        s_name = _norm(t["store_name"])
+        matched_b = brand_lookup.get(s_name)
+        if matched_b and matched_b in brand_summary:
+            t_val = _to_float(t["target"])
+            p_val = (t["platform"] or "").strip().capitalize()
+            brand_summary[matched_b]["target"] += t_val
+            brand_summary[matched_b]["platform_targets"][p_val] += t_val
+
     # Determine latest hour with active data (for live war room pacing)
     latest_active_hour = 0
     for h in range(23, -1, -1):
@@ -339,6 +368,9 @@ def get_campaign_war_room_data(
     total_uv = sum(h["uv"] for h in hourly_totals)
     total_pv = sum(h["pv"] for h in hourly_totals)
     total_discounts = sum(b_entry["discounts"] for b_entry in brand_summary.values())
+    total_target = sum(b_entry["target"] for b_entry in brand_summary.values())
+    total_target_achieve_gmv = round((total_gmv / total_target * 100.0), 1) if total_target > 0 else 0.0
+    total_target_achieve_nmv = round((total_nmv / total_target * 100.0), 1) if total_target > 0 else 0.0
 
     blended_cvr = (total_orders / total_uv * 100.0) if total_uv > 0 else 0.0
     overall_aov = (total_gmv / total_orders) if total_orders > 0 else 0.0
@@ -396,11 +428,18 @@ def get_campaign_war_room_data(
                 "pct": round(p_pct, 1),
             })
 
+        b_target = b.get("target", 0.0)
+        gmv_achieve_pct = round((b_gmv / b_target * 100.0), 1) if b_target > 0 else 0.0
+        nmv_achieve_pct = round((b["nmv"] / b_target * 100.0), 1) if b_target > 0 else 0.0
+
         leaderboard.append({
             "rank": rank,
             "brand": b["brand"],
             "total_gmv": b_gmv,
             "total_nmv": b["nmv"],
+            "target": b_target,
+            "target_achieve_gmv": gmv_achieve_pct,
+            "target_achieve_nmv": nmv_achieve_pct,
             "total_orders": b_orders,
             "total_units": b["units"],
             "total_uv": b_uv,
@@ -425,22 +464,34 @@ def get_campaign_war_room_data(
     race_hours = list(range(latest_active_hour + 1))
     race_timeline = []
 
-    # Calculate cumulative GMV for each brand hour by hour
-    top_race_brands = [b["brand"] for b in active_brands[:15]]  # Top 15 brands in race
-    brand_cumulative_map = {b: 0.0 for b in top_race_brands}
+    # Calculate cumulative GMV & NMV for each brand hour by hour
+    top_race_brands = [b["brand"] for b in active_brands[:20]]  # Top 20 brands in race
+    brand_cumulative_gmv = {b: 0.0 for b in top_race_brands}
+    brand_cumulative_nmv = {b: 0.0 for b in top_race_brands}
 
     for h in race_hours:
         hour_entries = []
         for b_name in top_race_brands:
             b_item = brand_summary[b_name]
-            brand_cumulative_map[b_name] += b_item["hourly_gmv"][h]
+            brand_cumulative_gmv[b_name] += b_item["hourly_gmv"][h]
+            brand_cumulative_nmv[b_name] += b_item["hourly_nmv"][h]
+            b_target = b_item.get("target", 0.0)
+            cum_gmv = brand_cumulative_gmv[b_name]
+            cum_nmv = brand_cumulative_nmv[b_name]
+            achieve_gmv = round((cum_gmv / b_target * 100.0), 1) if b_target > 0 else 0.0
+            achieve_nmv = round((cum_nmv / b_target * 100.0), 1) if b_target > 0 else 0.0
             hour_entries.append({
                 "brand": b_name,
-                "value": brand_cumulative_map[b_name],
+                "value": cum_gmv,
+                "nmv_value": cum_nmv,
+                "target": b_target,
+                "target_achieve_gmv": achieve_gmv,
+                "target_achieve_nmv": achieve_nmv,
                 "hourly_value": b_item["hourly_gmv"][h],
+                "hourly_nmv": b_item["hourly_nmv"][h],
                 "hourly_orders": b_item["hourly_orders"][h],
             })
-        # Sort descending for the hour
+        # Sort descending for the hour (default by GMV)
         hour_entries.sort(key=lambda x: x["value"], reverse=True)
         race_timeline.append({
             "hour": h,
@@ -448,7 +499,7 @@ def get_campaign_war_room_data(
             "data": hour_entries,
         })
 
-    # Hourly Velocity Chart Series (Top 8 brands + Total)
+    # Hourly Velocity Chart Series (Top 12 brands + Total)
     def _make_cumulative(arr):
         res = []
         c = 0.0
@@ -457,18 +508,34 @@ def get_campaign_war_room_data(
             res.append(round(c, 2))
         return res
 
-    velocity_top_brands = leaderboard[:8]
-    velocity_brand_series = [
-        {
+    velocity_top_brands = leaderboard[:12]
+    velocity_brand_series = []
+    for b in velocity_top_brands:
+        b_target = b.get("target", 0.0)
+        cum_gmv_arr = _make_cumulative(b["hourly_gmv"][: latest_active_hour + 1])
+        cum_nmv_arr = _make_cumulative(b["hourly_nmv"][: latest_active_hour + 1])
+        cum_gmv_achieve = [round((val / b_target * 100.0), 1) if b_target > 0 else 0.0 for val in cum_gmv_arr]
+        cum_nmv_achieve = [round((val / b_target * 100.0), 1) if b_target > 0 else 0.0 for val in cum_nmv_arr]
+        hourly_gmv_arr = b["hourly_gmv"][: latest_active_hour + 1]
+        hourly_nmv_arr = b["hourly_nmv"][: latest_active_hour + 1]
+        hourly_gmv_achieve = [round((val / b_target * 100.0), 1) if b_target > 0 else 0.0 for val in hourly_gmv_arr]
+        hourly_nmv_achieve = [round((val / b_target * 100.0), 1) if b_target > 0 else 0.0 for val in hourly_nmv_arr]
+
+        velocity_brand_series.append({
             "name": b["brand"],
-            "data_gmv": b["hourly_gmv"][: latest_active_hour + 1],
-            "data_nmv": b["hourly_nmv"][: latest_active_hour + 1],
-            "cum_gmv": _make_cumulative(b["hourly_gmv"][: latest_active_hour + 1]),
-            "cum_nmv": _make_cumulative(b["hourly_nmv"][: latest_active_hour + 1]),
-            "data": b["hourly_nmv"][: latest_active_hour + 1],
-        }
-        for b in velocity_top_brands
-    ]
+            "target": b_target,
+            "target_achieve_gmv": b.get("target_achieve_gmv", 0.0),
+            "target_achieve_nmv": b.get("target_achieve_nmv", 0.0),
+            "data_gmv": hourly_gmv_arr,
+            "data_nmv": hourly_nmv_arr,
+            "hourly_gmv_achieve": hourly_gmv_achieve,
+            "hourly_nmv_achieve": hourly_nmv_achieve,
+            "cum_gmv": cum_gmv_arr,
+            "cum_nmv": cum_nmv_arr,
+            "cum_gmv_achieve": cum_gmv_achieve,
+            "cum_nmv_achieve": cum_nmv_achieve,
+            "data": hourly_nmv_arr,
+        })
 
     # Traffic vs GMV Scatter Matrix Data
     # Points: [uv, gmv, orders, cvr, brand_name, aov]
@@ -512,6 +579,9 @@ def get_campaign_war_room_data(
         "summary": {
             "total_gmv": total_gmv,
             "total_nmv": total_nmv,
+            "total_target": total_target,
+            "total_target_achieve_gmv": total_target_achieve_gmv,
+            "total_target_achieve_nmv": total_target_achieve_nmv,
             "total_orders": total_orders,
             "total_units": total_units,
             "total_uv": total_uv,
@@ -537,6 +607,8 @@ def get_campaign_war_room_data(
             "total_series_nmv": [h["nmv"] for h in hourly_totals[: latest_active_hour + 1]],
             "total_cum_gmv": _make_cumulative([h["gmv"] for h in hourly_totals[: latest_active_hour + 1]]),
             "total_cum_nmv": _make_cumulative([h["nmv"] for h in hourly_totals[: latest_active_hour + 1]]),
+            "total_cum_gmv_achieve": [round((val / total_target * 100.0), 1) if total_target > 0 else 0.0 for val in _make_cumulative([h["gmv"] for h in hourly_totals[: latest_active_hour + 1]])],
+            "total_cum_nmv_achieve": [round((val / total_target * 100.0), 1) if total_target > 0 else 0.0 for val in _make_cumulative([h["nmv"] for h in hourly_totals[: latest_active_hour + 1]])],
             "brand_series": velocity_brand_series,
         },
         "scatter_matrix": {

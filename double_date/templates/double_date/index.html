@@ -677,6 +677,11 @@
     color: var(--orange);
     border-color: var(--dd-border-h);
   }
+  .dd-race-btn.active {
+    background: var(--orange-dim);
+    border-color: var(--orange);
+    color: var(--orange);
+  }
 
   .dd-race-slider {
     flex: 1;
@@ -1057,6 +1062,9 @@
           <button class="dd-race-btn" id="btnRaceSpeed" onclick="toggleRaceSpeed()">
             Speed: <span id="raceSpeedLabel">1x</span>
           </button>
+          <button class="dd-race-btn active" id="btnRaceLoop" onclick="toggleRaceLoop()" title="Toggle Infinite Loop Mode">
+            <i class="bi bi-repeat"></i> Loop: <span id="raceLoopLabel">ON</span>
+          </button>
         </div>
 
         <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 500px;">
@@ -1085,6 +1093,9 @@
           </button>
           <button class="dd-race-btn" id="btnLineRaceSpeed" onclick="toggleLineRaceSpeed()">
             Speed: <span id="lineRaceSpeedLabel">1x</span>
+          </button>
+          <button class="dd-race-btn active" id="btnLineRaceLoop" onclick="toggleLineRaceLoop()" title="Toggle Infinite Loop Mode">
+            <i class="bi bi-repeat"></i> Loop: <span id="lineRaceLoopLabel">ON</span>
           </button>
 
           <!-- View Accumulation Switcher: Hourly vs Cumulative -->
@@ -1235,6 +1246,8 @@
   let raceCurrentHour = 0;
   let raceMaxHour = 0;
   let isRacePlaying = false;
+  let isRaceLoop = true; // Infinite loop enabled by default
+  let raceLoopPauseTimer = null;
   let raceTimer = null;
   let raceSpeedMs = 1000; // Synchronized at 1.0s per step
   let allRaceBrandsCache = null;
@@ -1243,6 +1256,8 @@
   let lineRaceProgress = 0.0; // Current float progression (e.g. 10.45)
   let lineRaceMaxHour = 0;
   let isLineRacePlaying = false;
+  let isLineRaceLoop = true; // Infinite loop enabled by default
+  let lineRaceLoopPauseTimer = null;
   let lineRaceRafId = null;
   let lineRaceLastTimestamp = null;
   let lineRaceSpeedMs = 1200; // 1.2s per 1 hour progress (customizable 1x / 2x)
@@ -2131,8 +2146,22 @@
         lineRaceProgress = lineRaceMaxHour;
         renderHourlyVelocityChart(lineRaceProgress);
         updateLineRaceUI(lineRaceProgress);
-        window.toggleLineRacePlay();
-        return;
+
+        if (isLineRaceLoop && isLineRacePlaying) {
+          // Pause briefly (1.5s) at the finish line so the full curves can be inspected, then loop
+          stopLineRacePlayback();
+          lineRaceLoopPauseTimer = setTimeout(() => {
+            if (!isLineRacePlaying) return;
+            lineRaceProgress = 0.0;
+            velocitySmoothedYMin = null;
+            velocitySmoothedYMax = null;
+            startLineRacePlayback();
+          }, 1500);
+          return;
+        } else {
+          window.toggleLineRacePlay();
+          return;
+        }
       }
 
       renderHourlyVelocityChart(lineRaceProgress);
@@ -2148,7 +2177,19 @@
       cancelAnimationFrame(lineRaceRafId);
       lineRaceRafId = null;
     }
+    if (lineRaceLoopPauseTimer) {
+      clearTimeout(lineRaceLoopPauseTimer);
+      lineRaceLoopPauseTimer = null;
+    }
   }
+
+  window.toggleLineRaceLoop = function() {
+    isLineRaceLoop = !isLineRaceLoop;
+    const btn = document.getElementById('btnLineRaceLoop');
+    const lbl = document.getElementById('lineRaceLoopLabel');
+    if (btn) btn.classList.toggle('active', isLineRaceLoop);
+    if (lbl) lbl.textContent = isLineRaceLoop ? 'ON' : 'OFF';
+  };
 
   window.resetLineRaceTimeline = function() {
     stopLineRacePlayback();
@@ -2606,8 +2647,19 @@
 
     raceTimer = setInterval(() => {
       if (raceCurrentHour > raceMaxHour) {
-        window.toggleRacePlay();
-        return;
+        if (isRaceLoop && isRacePlaying) {
+          // Pause briefly (1.5s) at the finish line so final standings can be viewed, then loop
+          stopRacePlaybackLoop();
+          raceLoopPauseTimer = setTimeout(() => {
+            if (!isRacePlaying) return;
+            raceCurrentHour = 0;
+            startRacePlaybackLoop();
+          }, 1500);
+          return;
+        } else {
+          window.toggleRacePlay();
+          return;
+        }
       }
       const sl = document.getElementById('raceSlider');
       if (sl) sl.value = raceCurrentHour;
@@ -2622,7 +2674,19 @@
       clearInterval(raceTimer);
       raceTimer = null;
     }
+    if (raceLoopPauseTimer) {
+      clearTimeout(raceLoopPauseTimer);
+      raceLoopPauseTimer = null;
+    }
   }
+
+  window.toggleRaceLoop = function() {
+    isRaceLoop = !isRaceLoop;
+    const btn = document.getElementById('btnRaceLoop');
+    const lbl = document.getElementById('raceLoopLabel');
+    if (btn) btn.classList.toggle('active', isRaceLoop);
+    if (lbl) lbl.textContent = isRaceLoop ? 'ON' : 'OFF';
+  };
 
   window.resetRaceTimeline = function() {
     stopRacePlaybackLoop();

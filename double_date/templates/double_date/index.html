@@ -1,0 +1,2706 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Double Date War Room & Leaderboard — Jetcommerce{% endblock %}
+
+{% block extra_css %}
+<!-- Select2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+
+<style>
+  /* ─────────────────────────────────────────────────────────────
+     DOUBLE DATE WAR ROOM & LEADERBOARD DESIGN SYSTEM (.dd-warroom)
+     Built on top of base.html tokens with 100% theme awareness.
+  ───────────────────────────────────────────────────────────── */
+  .dd-warroom {
+    --dd-border: var(--glass-border);
+    --dd-border-h: var(--glass-border-h);
+    --dd-surface: var(--card-bg);
+    --dd-surface-hover: var(--glass-hover);
+    --dd-surface-muted: var(--surface-muted);
+    --dd-shadow: var(--shadow-sm);
+    --dd-shadow-md: var(--shadow-md);
+    color: var(--text-primary);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .dd-warroom .mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* TV / Fullscreen Mode */
+  body.tv-mode-active .app-sidebar,
+  body.tv-mode-active .app-header,
+  body.tv-mode-active footer {
+    display: none !important;
+  }
+  body.tv-mode-active .app-main {
+    margin-left: 0 !important;
+    padding-top: 0 !important;
+  }
+  body.tv-mode-active .container-fluid {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+    max-width: 100% !important;
+  }
+
+  /* ── Header Bar ── */
+  .dd-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px 22px;
+    background: var(--dd-surface);
+    border: 1px solid var(--dd-border);
+    border-radius: var(--radius, 14px);
+    box-shadow: var(--dd-shadow);
+  }
+
+  .dd-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .dd-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #EF4444;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .dd-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #EF4444;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    animation: ddLivePulse 1.8s infinite;
+  }
+
+  @keyframes ddLivePulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  }
+
+  .dd-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dd-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 3px 0 0 0;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .dd-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn-dd {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 9px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border: 1px solid var(--dd-border);
+    background: var(--dd-surface);
+    color: var(--text-sub);
+  }
+
+  .btn-dd:hover {
+    background: var(--dd-surface-hover);
+    color: var(--orange);
+    border-color: var(--dd-border-h);
+  }
+
+  .btn-dd-primary {
+    background: var(--orange);
+    color: #FFFFFF !important;
+    border-color: var(--orange-bright);
+    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.28);
+  }
+  .btn-dd-primary:hover {
+    background: var(--orange-bright);
+    color: #FFFFFF !important;
+  }
+
+  /* ── Filter Toolbar ── */
+  .dd-filter-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: var(--dd-surface);
+    border: 1px solid var(--dd-border);
+    border-radius: var(--radius, 14px);
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    box-shadow: var(--dd-shadow);
+  }
+
+  .dd-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .dd-filter-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .dd-select {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--dd-border);
+    background: var(--dd-surface);
+    color: var(--text-primary);
+    font-size: 0.84rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .dd-select:focus {
+    border-color: var(--orange);
+  }
+
+  .platform-pills {
+    display: flex;
+    align-items: center;
+    background: var(--dd-surface-hover);
+    border-radius: 9px;
+    padding: 3px;
+    gap: 3px;
+    border: 1px solid var(--dd-border);
+  }
+
+  .platform-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .platform-pill-btn:hover {
+    color: var(--orange);
+  }
+
+  .platform-pill-btn.active {
+    background: var(--dd-surface);
+    color: var(--orange);
+    font-weight: 700;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  /* ── KPI Strip ── */
+  .dd-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+
+  .dd-kpi-card {
+    background: var(--dd-surface);
+    border: 1px solid var(--dd-border);
+    border-radius: var(--radius-sm, 10px);
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--dd-shadow);
+    transition: transform 0.18s ease, border-color 0.18s ease;
+  }
+
+  .dd-kpi-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--dd-border-h);
+  }
+
+  .dd-kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--orange);
+    opacity: 0.75;
+  }
+
+  .dd-kpi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .dd-kpi-title {
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .dd-kpi-icon {
+    font-size: 1.1rem;
+    color: var(--orange);
+  }
+
+  .dd-kpi-value {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin: 0;
+  }
+
+  .dd-kpi-sub {
+    font-size: 0.74rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     LITERAL STEPPED CAMPAIGN PODIUM (OLYMPIC / WINNER STAGE)
+  ───────────────────────────────────────────────────────────── */
+  .dd-podium-section {
+    margin-bottom: 24px;
+  }
+
+  .dd-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .dd-section-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .dd-podium-stage {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 16px;
+    padding: 30px 24px 0 24px;
+    background: var(--dd-surface);
+    border: 1px solid var(--dd-border);
+    border-radius: var(--radius, 14px);
+    box-shadow: var(--dd-shadow);
+    position: relative;
+    overflow: hidden;
+    background-image: radial-gradient(circle at 50% 0%, rgba(255, 107, 0, 0.05) 0%, transparent 70%);
+  }
+
+  .podium-pillar {
+    flex: 1;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .podium-pillar.pos-2 { order: 1; }
+  .podium-pillar.pos-1 { order: 2; z-index: 3; }
+  .podium-pillar.pos-3 { order: 3; }
+
+  /* Brand entity standing on top of the podium */
+  .podium-athlete {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    margin-bottom: -4px;
+    z-index: 2;
+    position: relative;
+  }
+
+  .podium-icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.15rem;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .badge-gold {
+    background: linear-gradient(135deg, #FEF08A 0%, #EAB308 100%);
+    color: #713F12;
+    border: 2px solid #FDE047;
+    box-shadow: 0 0 16px rgba(234, 179, 8, 0.45);
+  }
+  .badge-silver {
+    background: linear-gradient(135deg, #F1F5F9 0%, #94A3B8 100%);
+    color: #1E293B;
+    border: 2px solid #CBD5E1;
+    box-shadow: 0 0 12px rgba(148, 163, 184, 0.35);
+  }
+  .badge-bronze {
+    background: linear-gradient(135deg, #FFEDD5 0%, #EA580C 100%);
+    color: #7C2D12;
+    border: 2px solid #FDBA74;
+    box-shadow: 0 0 12px rgba(234, 88, 12, 0.35);
+  }
+
+  .podium-avatar-stand {
+    position: relative;
+    margin-bottom: 8px;
+  }
+
+  .podium-logo-img {
+    border-radius: 50%;
+    background: var(--dd-surface);
+    border: 3px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    transition: transform 0.2s ease;
+  }
+
+  .podium-logo-img:hover {
+    transform: translateY(-4px) scale(1.04);
+  }
+
+  .podium-avatar-stand.rank-1 .podium-logo-img {
+    width: 68px;
+    height: 68px;
+    border-color: #EAB308;
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.35);
+  }
+
+  .podium-avatar-stand.rank-2 .podium-logo-img {
+    width: 56px;
+    height: 56px;
+    border-color: #94A3B8;
+  }
+
+  .podium-avatar-stand.rank-3 .podium-logo-img {
+    width: 52px;
+    height: 52px;
+    border-color: #EA580C;
+  }
+
+  .podium-athlete-name {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .podium-athlete-gmv {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 2px 0 6px 0;
+  }
+
+  .podium-pillar.pos-1 .podium-athlete-gmv {
+    font-size: 1.6rem;
+    color: #EAB308;
+    text-shadow: 0 2px 8px rgba(234, 179, 8, 0.2);
+  }
+
+  .podium-stats-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: var(--dd-surface-hover);
+    border: 1px solid var(--dd-border);
+    font-size: 0.72rem;
+    margin-bottom: 8px;
+  }
+
+  /* The Literal Pedestal Step Block */
+  .podium-block {
+    width: 100%;
+    border-radius: 12px 12px 0 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.08);
+  }
+
+  .podium-step-surface {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.25);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  .podium-block.block-1 {
+    height: 180px;
+    background: linear-gradient(180deg, #F59E0B 0%, #D97706 50%, #B45309 100%);
+    color: #FFFFFF;
+    border-top: 1px solid #FDE047;
+  }
+
+  [data-theme="dark"] .podium-block.block-1 {
+    background: linear-gradient(180deg, #B45309 0%, #78350F 55%, #451A03 100%);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-bottom: none;
+  }
+
+  .podium-block.block-2 {
+    height: 125px;
+    background: linear-gradient(180deg, #94A3B8 0%, #64748B 50%, #475569 100%);
+    color: #FFFFFF;
+    border-top: 1px solid #CBD5E1;
+  }
+
+  [data-theme="dark"] .podium-block.block-2 {
+    background: linear-gradient(180deg, #64748B 0%, #475569 55%, #1E293B 100%);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-bottom: none;
+  }
+
+  .podium-block.block-3 {
+    height: 85px;
+    background: linear-gradient(180deg, #FB923C 0%, #EA580C 50%, #C2410C 100%);
+    color: #FFFFFF;
+    border-top: 1px solid #FDBA74;
+  }
+
+  [data-theme="dark"] .podium-block.block-3 {
+    background: linear-gradient(180deg, #C2410C 0%, #9A3412 55%, #431407 100%);
+    border: 1px solid rgba(234, 88, 12, 0.3);
+    border-bottom: none;
+  }
+
+  .podium-step-num {
+    font-size: 3.5rem;
+    font-weight: 900;
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+    opacity: 0.95;
+    letter-spacing: -0.04em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .podium-step-lbl {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 2px;
+    opacity: 0.9;
+  }
+
+  .podium-step-pct {
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 4px;
+    background: rgba(0, 0, 0, 0.22);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .dd-momentum-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .momentum-pos {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10B981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+  }
+  .momentum-neg {
+    background: rgba(244, 63, 94, 0.12);
+    color: #F43F5E;
+    border: 1px solid rgba(244, 63, 94, 0.25);
+  }
+
+  /* ── Tabbed Battlefield Card ── */
+  .dd-card {
+    background: var(--dd-surface);
+    border: 1px solid var(--dd-border);
+    border-radius: var(--radius, 14px);
+    margin-bottom: 24px;
+    box-shadow: var(--dd-shadow);
+    overflow: hidden;
+  }
+
+  .dd-tabs-nav {
+    display: flex;
+    align-items: center;
+    padding: 6px 16px 0 16px;
+    border-bottom: 1px solid var(--dd-border);
+    background: var(--dd-surface-hover);
+    gap: 8px;
+    overflow-x: auto;
+  }
+
+  .dd-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .dd-tab-btn:hover {
+    color: var(--orange);
+  }
+
+  .dd-tab-btn.active {
+    color: var(--orange);
+    border-bottom-color: var(--orange);
+    background: var(--dd-surface);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    font-weight: 700;
+  }
+
+  .dd-tab-pane {
+    padding: 18px 20px;
+    display: none;
+  }
+  .dd-tab-pane.active {
+    display: block;
+  }
+
+  /* Race Control Strip */
+  .dd-race-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--dd-surface-hover);
+    border-radius: 10px;
+    border: 1px solid var(--dd-border);
+    margin-bottom: 14px;
+  }
+
+  .dd-race-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: 1px solid var(--dd-border);
+    background: var(--dd-surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .dd-race-btn:hover {
+    color: var(--orange);
+    border-color: var(--dd-border-h);
+  }
+
+  .dd-race-slider {
+    flex: 1;
+    min-width: 160px;
+    accent-color: var(--orange);
+  }
+
+  .dd-race-hour-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--orange);
+    background: var(--orange-dim);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--dd-border-h);
+    white-space: nowrap;
+  }
+
+  .dd-chart-box {
+    width: 100%;
+    height: 500px;
+  }
+
+  .dd-chart-box-lg {
+    width: 100%;
+    height: 600px;
+  }
+
+  /* ── Metric Switcher Pills ── */
+  .dd-metric-switcher {
+    display: inline-flex;
+    background: var(--dd-surface);
+    border: 1px solid var(--dd-border);
+    border-radius: 8px;
+    padding: 2px;
+  }
+  .dd-metric-btn {
+    border: none;
+    background: transparent;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .dd-metric-btn.active {
+    background: var(--orange);
+    color: #FFFFFF;
+    box-shadow: 0 1px 4px rgba(255, 107, 0, 0.3);
+  }
+
+  /* ── Leaderboard Table ── */
+  .dd-table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--dd-border);
+  }
+
+  .dd-search-box {
+    position: relative;
+    display: inline-block;
+  }
+  .dd-search-box i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    pointer-events: none;
+  }
+  .dd-search-input {
+    padding: 7px 12px 7px 32px;
+    border-radius: 8px;
+    border: 1px solid var(--dd-border);
+    background: var(--dd-surface);
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    width: 260px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .dd-search-input:focus {
+    border-color: var(--orange);
+  }
+
+  .dd-table-wrap {
+    overflow-x: auto;
+  }
+
+  .dd-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+
+  .dd-table th {
+    padding: 12px 14px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    background: var(--dd-surface-hover);
+    border-bottom: 1px solid var(--dd-border);
+    text-align: left;
+    white-space: nowrap;
+  }
+  .dd-table th.text-right, .dd-table td.text-right { text-align: right; }
+  .dd-table th.text-center, .dd-table td.text-center { text-align: center; }
+
+  .dd-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--dd-border);
+    color: var(--text-primary);
+    vertical-align: middle;
+  }
+
+  .dd-table tbody tr {
+    transition: background-color 0.12s ease;
+  }
+  .dd-table tbody tr:hover {
+    background-color: var(--dd-surface-hover);
+  }
+
+  .dd-rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 0.74rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .dd-rank-1 { background: #FEF08A; color: #854D0E; border: 1px solid #EAB308; }
+  .dd-rank-2 { background: #E2E8F0; color: #334155; border: 1px solid #94A3B8; }
+  .dd-rank-3 { background: #FFEDD5; color: #9A3412; border: 1px solid #F97316; }
+  .dd-rank-n { background: var(--dd-surface-hover); color: var(--text-muted); border: 1px solid var(--dd-border); }
+
+  .dd-brand-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .dd-cvr-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-weight: 700;
+    font-size: 0.75rem;
+  }
+  .cvr-high { background: rgba(16, 185, 129, 0.12); color: #10B981; }
+  .cvr-mid { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
+  .cvr-low { background: rgba(244, 63, 94, 0.12); color: #F43F5E; }
+
+  .dd-platform-bar {
+    display: flex;
+    height: 6px;
+    width: 100px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: var(--dd-border);
+  }
+
+  .dd-mini-sparkline {
+    width: 70px;
+    height: 20px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dd-warroom">
+
+  <!-- Top Header & Live Pulse Bar -->
+  <div class="dd-header">
+    <div class="dd-title-group">
+      <div class="dd-live-badge">
+        <span class="dd-live-dot"></span>
+        <span>CAMPAIGN LIVE</span>
+      </div>
+      <div>
+        <h1 class="dd-title">
+          <i class="bi bi-trophy-fill text-warning"></i>
+          Double Date War Room & Leaderboard
+        </h1>
+        <p class="dd-subtitle">
+          <span id="headerSyncTime">Synced up to hour: --:00</span> • 
+          <span id="nextSyncTimer">Next auto-refresh in: 05:00</span>
+        </p>
+      </div>
+    </div>
+
+    <div class="dd-actions">
+      <button class="btn-dd" id="btnTvMode" onclick="toggleTvMode()" title="Toggle Fullscreen TV War Room Mode">
+        <i class="bi bi-fullscreen" id="tvModeIcon"></i>
+        <span id="tvModeLabel">TV Mode</span>
+      </button>
+
+      <button class="btn-dd btn-dd-primary" id="btnManualRefresh" onclick="refreshCampaignData()" title="Fetch latest hourly data">
+        <i class="bi bi-arrow-repeat" id="refreshSpinIcon"></i>
+        <span>Refresh Now</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filter Toolbar -->
+  <div class="dd-filter-bar">
+    <div class="dd-filter-item">
+      <label class="dd-filter-label" for="campaignDateSelect">Campaign Date:</label>
+      <select id="campaignDateSelect" class="dd-select" style="min-width: 260px;" onchange="onDateFilterChanged(this.value)">
+        {% for cd in campaign_dates %}
+          <option value="{{ cd.date }}" {% if cd.date == selected_date %}selected{% endif %}>
+            {{ cd.label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="dd-filter-item">
+      <label class="dd-filter-label">Platform:</label>
+      <div class="platform-pills">
+        <button class="platform-pill-btn {% if not selected_platforms %}active{% endif %}" onclick="setPlatformFilter('')">
+          <i class="bi bi-grid-fill"></i> All
+        </button>
+        {% for plat in available_platforms %}
+          <button class="platform-pill-btn {% if plat in selected_platforms %}active{% endif %}" onclick="setPlatformFilter('{{ plat }}')">
+            <span id="plat_icon_{{ plat }}"><i class="bi bi-shop"></i></span> {{ plat }}
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="dd-filter-item" style="min-width: 220px;">
+      <label class="dd-filter-label" for="brandSelect">Filter Brands:</label>
+      <select id="brandSelect" class="form-select form-select-sm" multiple="multiple" style="width: 240px;">
+        {% for b in user_brands %}
+          <option value="{{ b }}" {% if b in selected_brands %}selected{% endif %}>{{ b }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <!-- Zone 1: Macro Campaign Ticker (KPI Strip) -->
+  <div class="dd-kpi-grid" id="kpiStrip">
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Total GMV</span>
+        <i class="bi bi-cash-stack dd-kpi-icon"></i>
+      </div>
+      <div class="dd-kpi-value mono" id="kpiGmv">Rp 0</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-shield-check text-success"></i>
+        <span>NMV: <strong id="kpiNmv" class="mono">Rp 0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Net Orders</span>
+        <i class="bi bi-bag-check dd-kpi-icon"></i>
+      </div>
+      <div class="dd-kpi-value mono" id="kpiOrders">0</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-box-seam"></i>
+        <span>Units: <strong id="kpiUnits" class="mono">0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Traffic (Visitors)</span>
+        <i class="bi bi-people dd-kpi-icon"></i>
+      </div>
+      <div class="dd-kpi-value mono" id="kpiUv">0</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-eye"></i>
+        <span>Pageviews: <strong id="kpiPv" class="mono">0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Blended CVR</span>
+        <i class="bi bi-percent dd-kpi-icon"></i>
+      </div>
+      <div class="dd-kpi-value mono" id="kpiCvr">0.00%</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-lightning-charge"></i>
+        <span>RPV: <strong id="kpiRpv" class="mono">Rp 0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Avg Order Value</span>
+        <i class="bi bi-basket dd-kpi-icon"></i>
+      </div>
+      <div class="dd-kpi-value mono" id="kpiAov">Rp 0</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-tags"></i>
+        <span>Discounts: <strong id="kpiDiscounts" class="mono">Rp 0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Peak Rush Hour</span>
+        <i class="bi bi-fire text-danger" style="font-size: 1.1rem;"></i>
+      </div>
+      <div class="dd-kpi-value mono text-warning" id="kpiPeakHour">--:00</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-graph-up-arrow"></i>
+        <span>GMV: <strong id="kpiPeakGmv" class="mono">Rp 0</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone 2: The Stepped Winner's Podium (Olympic / Stepped Champions Stand) -->
+  <div class="dd-podium-section">
+    <div class="dd-section-header">
+      <h2 class="dd-section-title">
+        <i class="bi bi-trophy-fill text-warning"></i>
+        Campaign Podium (Top 3 Champions)
+      </h2>
+      <span class="text-muted" style="font-size: 0.78rem; font-weight: 600;">
+        Ranked by Cumulative GMV
+      </span>
+    </div>
+
+    <div class="dd-podium-stage" id="podiumStage">
+      <!-- Injected via renderPodium() as 2nd (left), 1st (center), 3rd (right) literal steps -->
+    </div>
+  </div>
+
+  <!-- Zone 3: Visual Analytics Tabbed Battlefield -->
+  <div class="dd-card">
+    <div class="dd-tabs-nav">
+      <button class="dd-tab-btn active" onclick="switchAnalyticsTab('bar_race', this)">
+        <i class="bi bi-flag-fill text-warning"></i> Dynamic Bar Chart Race
+      </button>
+      <button class="dd-tab-btn" onclick="switchAnalyticsTab('hourly_velocity', this)">
+        <i class="bi bi-graph-up text-primary"></i> Animated Line Race & Velocity
+      </button>
+      <button class="dd-tab-btn" onclick="switchAnalyticsTab('scatter_matrix', this)">
+        <i class="bi bi-bullseye text-danger"></i> Traffic vs GMV Efficiency Matrix
+      </button>
+      <button class="dd-tab-btn" onclick="switchAnalyticsTab('platform_cvr', this)">
+        <i class="bi bi-pie-chart text-success"></i> Platform Share & CVR Funnel
+      </button>
+    </div>
+
+    <!-- Tab 1: Bar Chart Race -->
+    <div class="dd-tab-pane active" id="pane_bar_race">
+      <div class="dd-race-bar">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button class="dd-race-btn" id="btnPlayRace" onclick="toggleRacePlay()">
+            <i class="bi bi-play-fill" id="playRaceIcon"></i>
+            <span id="playRaceLabel">Play Race</span>
+          </button>
+          <button class="dd-race-btn" onclick="resetRaceTimeline()">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset
+          </button>
+          <button class="dd-race-btn" id="btnRaceSpeed" onclick="toggleRaceSpeed()">
+            Speed: <span id="raceSpeedLabel">1x</span>
+          </button>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 500px;">
+          <span class="text-muted" style="font-size: 0.75rem; font-weight: 700;">TIMELINE:</span>
+          <input type="range" class="dd-race-slider" id="raceSlider" min="0" max="23" value="0" oninput="onRaceSliderScrub(this.value)">
+        </div>
+
+        <div>
+          <span class="dd-race-hour-badge mono" id="raceHourBadge">HOUR 00:00</span>
+        </div>
+      </div>
+
+      <div id="chartBarRace" class="dd-chart-box"></div>
+    </div>
+
+    <!-- Tab 2: Animated Line Race & Velocity (Smooth Zero-Flicker Camera Tracking) -->
+    <div class="dd-tab-pane" id="pane_hourly_velocity">
+      <div class="dd-race-bar">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <button class="dd-race-btn" id="btnPlayLineRace" onclick="toggleLineRacePlay()">
+            <i class="bi bi-play-fill" id="playLineRaceIcon"></i>
+            <span id="playLineRaceLabel">Play Line Race</span>
+          </button>
+          <button class="dd-race-btn" onclick="resetLineRaceTimeline()">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset
+          </button>
+          <button class="dd-race-btn" id="btnLineRaceSpeed" onclick="toggleLineRaceSpeed()">
+            Speed: <span id="lineRaceSpeedLabel">1x</span>
+          </button>
+
+          <!-- Metric Switcher: NMV / GMV -->
+          <div class="dd-metric-switcher ms-1">
+            <button type="button" class="dd-metric-btn active" id="btnMetricNmv" onclick="setLineMetric('nmv')">NMV Scale</button>
+            <button type="button" class="dd-metric-btn" id="btnMetricGmv" onclick="setLineMetric('gmv')">GMV Scale</button>
+          </div>
+
+          <!-- Mode Switcher: Brands Battle vs With Total -->
+          <div class="dd-metric-switcher ms-1">
+            <button type="button" class="dd-metric-btn active" id="btnModeBrands" onclick="setLineMode('brands')" title="Focus exclusively on the competing brands">⚔️ Brand Battle</button>
+            <button type="button" class="dd-metric-btn" id="btnModeTotal" onclick="setLineMode('total')" title="Include Total Campaign Line">📊 With Total</button>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 360px;">
+          <span class="text-muted" style="font-size: 0.75rem; font-weight: 700;">TIMELINE:</span>
+          <input type="range" class="dd-race-slider" id="lineRaceSlider" min="0" max="23" value="0" oninput="onLineRaceSliderScrub(this.value)">
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="text-muted" style="font-size: 0.72rem; font-weight: 700;">WINDOW:</span>
+          <select class="dd-select" id="lineWindowSizeSelect" style="padding: 4px 8px; font-size: 0.75rem;" onchange="onLineWindowSizeChanged(this.value)">
+            <option value="6" selected>Sliding 6 Hours</option>
+            <option value="8">Sliding 8 Hours</option>
+            <option value="4">Sliding 4 Hours</option>
+            <option value="24">Full 24 Hours</option>
+          </select>
+          <span class="dd-race-hour-badge mono" id="lineRaceHourBadge">HOUR 00:00</span>
+        </div>
+      </div>
+
+      <div id="chartHourlyVelocity" class="dd-chart-box-lg"></div>
+    </div>
+
+    <!-- Tab 3: Traffic vs GMV Scatter -->
+    <div class="dd-tab-pane" id="pane_scatter_matrix">
+      <div style="margin-bottom: 8px; font-size: 0.78rem; color: var(--text-muted);">
+        <i class="bi bi-info-circle"></i> 
+        <strong>Quadrant Guide:</strong> Top-Right = <em>Champions</em> (High Traffic, High GMV), Bottom-Right = <em>Traffic Leakers</em> (High Traffic, Low GMV), Top-Left = <em>High Converters</em>. Bubble size represents Order volume.
+      </div>
+      <div id="chartScatterMatrix" class="dd-chart-box"></div>
+    </div>
+
+    <!-- Tab 4: Platform & CVR -->
+    <div class="dd-tab-pane" id="pane_platform_cvr">
+      <div class="row g-3">
+        <div class="col-lg-5">
+          <div id="chartPlatformDoughnut" style="width: 100%; height: 460px;"></div>
+        </div>
+        <div class="col-lg-7">
+          <div id="chartCvrFunnel" style="width: 100%; height: 460px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone 4: Full Interactive Leaderboard Table -->
+  <div class="dd-card">
+    <div class="dd-table-toolbar">
+      <div>
+        <h2 class="dd-section-title">
+          <i class="bi bi-list-ol text-warning"></i>
+          Campaign Leaderboard Standings
+        </h2>
+        <span class="text-muted" style="font-size: 0.75rem;" id="leaderboardBrandCount">
+          Showing 0 brands
+        </span>
+      </div>
+
+      <div class="dd-search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" class="dd-search-input" id="tableSearchInput" placeholder="Search brand name..." oninput="filterLeaderboardTable(this.value)">
+      </div>
+    </div>
+
+    <div class="dd-table-wrap">
+      <table class="dd-table" id="leaderboardTable">
+        <thead>
+          <tr>
+            <th class="text-center" style="width: 50px;">Rank</th>
+            <th>Brand</th>
+            <th>Platform Split</th>
+            <th class="text-right">Total GMV</th>
+            <th class="text-right">Share %</th>
+            <th class="text-right">Net Orders</th>
+            <th class="text-right">Units</th>
+            <th class="text-right">Traffic (UV)</th>
+            <th class="text-center">CVR %</th>
+            <th class="text-right">AOV</th>
+            <th class="text-center" style="width: 90px;">24h Trend</th>
+            <th class="text-center">Momentum</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardTableBody">
+          <!-- Populated by renderLeaderboardTable() -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery & Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- ECharts 5.5 -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   DOUBLE DATE CAMPAIGN WAR ROOM & LEADERBOARD CONTROLLER
+───────────────────────────────────────────────────────────── */
+(function() {
+  'use strict';
+
+  let campaignData = {{ initial_data_json|safe }};
+  let currentActiveTab = 'bar_race';
+  let isTvMode = false;
+
+  // Chart instances
+  let chartBarRace = null;
+  let chartHourlyVelocity = null;
+  let chartScatterMatrix = null;
+  let chartPlatformDoughnut = null;
+  let chartCvrFunnel = null;
+
+  const initializedCharts = {
+    bar_race: false,
+    hourly_velocity: false,
+    scatter_matrix: false,
+    platform_cvr: false
+  };
+
+  // Dynamic Bar Race State
+  let raceCurrentHour = 0;
+  let raceMaxHour = 0;
+  let isRacePlaying = false;
+  let raceTimer = null;
+  let raceSpeedMs = 1000; // Synchronized at 1.0s per step
+  let allRaceBrandsCache = null;
+
+  // Line Chart Race State
+  let lineRaceCurrentHour = 0;
+  let lineRaceMaxHour = 0;
+  let isLineRacePlaying = false;
+  let lineRaceTimer = null;
+  let lineRaceSpeedMs = 1000; // Synchronized at 1.0s per step
+  let lineRaceMetric = 'nmv'; // 'nmv' or 'gmv'
+  let lineRaceMode = 'brands'; // 'brands' (pure brand battle) or 'total' (with total line)
+  let lineRaceWindowSize = 6; // sliding window of 6 hours
+  let velocitySmoothedYMin = null;
+  let velocitySmoothedYMax = null;
+
+  // Auto-refresh timer state (300 seconds = 5 minutes)
+  let refreshIntervalSec = 300;
+  let refreshCountdown = refreshIntervalSec;
+  let countdownTimer = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initSelect2();
+    initPlatformIcons();
+    // Reset dynamic caches & scaling memories for new dataset
+    allRaceBrandsCache = null;
+    velocitySmoothedYMin = null;
+    velocitySmoothedYMax = null;
+
+    preloadBrandLogos();
+    renderAll();
+    startCountdown();
+
+    document.addEventListener('bithemechange', function() {
+      rethemeAllCharts();
+    });
+
+    window.addEventListener('resize', function() {
+      resizeActiveChart();
+    });
+  });
+
+  // Preload all brand logo images into browser cache so Canvas can draw them instantly
+  function preloadBrandLogos() {
+    if (campaignData && campaignData.leaderboard) {
+      campaignData.leaderboard.forEach(b => {
+        const url = window.getBrandLogoUrl ? window.getBrandLogoUrl(b.brand) : null;
+        if (url) {
+          const img = new Image();
+          img.src = url;
+        }
+      });
+    }
+  }
+
+  function initSelect2() {
+    if (window.jQuery && $.fn.select2) {
+      $('#brandSelect').select2({
+        placeholder: "All Brands",
+        allowClear: true,
+        closeOnSelect: false,
+        templateResult: window.formatBrandSelect2 || null,
+        templateSelection: window.formatBrandSelect2 || null
+      }).on('change', function() {
+        fetchFilteredData();
+      });
+    }
+  }
+
+  function initPlatformIcons() {
+    const plats = ['Shopee', 'TikTok', 'Tokopedia', 'Lazada'];
+    plats.forEach(p => {
+      const el = document.getElementById(`plat_icon_${p}`);
+      if (el && window.renderPlatformIcon) {
+        el.innerHTML = window.renderPlatformIcon(p, 16);
+      }
+    });
+  }
+
+  /* ── Formatters ── */
+  function formatIDR(val, compact = false) {
+    if (!val || isNaN(val)) return 'Rp 0';
+    const num = Number(val);
+    if (compact) {
+      if (Math.abs(num) >= 1e9) {
+        return 'Rp ' + (num / 1e9).toFixed(2) + 'B';
+      }
+      if (Math.abs(num) >= 1e6) {
+        return 'Rp ' + (num / 1e6).toFixed(1) + 'M';
+      }
+      if (Math.abs(num) >= 1e3) {
+        return 'Rp ' + (num / 1e3).toFixed(0) + 'K';
+      }
+    }
+    return 'Rp ' + Math.round(num).toLocaleString('id-ID');
+  }
+
+  function formatNumber(val) {
+    if (!val || isNaN(val)) return '0';
+    return Number(val).toLocaleString('id-ID');
+  }
+
+  function getTheme() {
+    return document.documentElement.getAttribute('data-theme') || 'light';
+  }
+
+  function getChartThemeColors() {
+    const isDark = getTheme() === 'dark';
+    return {
+      textColor: isDark ? '#94A3B8' : '#64748B',
+      titleColor: isDark ? '#F8FAFC' : '#0F172A',
+      splitLineColor: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.06)',
+      tooltipBg: isDark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.98)',
+      tooltipBorder: isDark ? '#334155' : '#E2E8F0',
+      orange: '#FF6B00',
+      palette: ['#FF6B00', '#3B82F6', '#10B981', '#EC4899', '#8B5CF6', '#F59E0B', '#06B6D4', '#6366F1']
+    };
+  }
+
+  /* ── Render Dispatcher ── */
+  function renderAll() {
+    if (!campaignData || campaignData.error) {
+      console.warn("No campaign data to render", campaignData);
+      return;
+    }
+
+    // Reset dynamic caches & scaling memories for new dataset
+    allRaceBrandsCache = null;
+    velocitySmoothedYMin = null;
+    velocitySmoothedYMax = null;
+
+    preloadBrandLogos();
+    renderKpis();
+    renderPodium();
+    renderLeaderboardTable();
+
+    // Set timeline max hours
+    raceMaxHour = campaignData.latest_active_hour || 0;
+    lineRaceMaxHour = raceMaxHour;
+
+    const slider = document.getElementById('raceSlider');
+    if (slider) {
+      slider.max = raceMaxHour;
+      slider.value = raceMaxHour;
+    }
+    raceCurrentHour = raceMaxHour;
+    updateRaceHourLabel(raceCurrentHour);
+
+    const lineSlider = document.getElementById('lineRaceSlider');
+    if (lineSlider) {
+      lineSlider.max = lineRaceMaxHour;
+      lineSlider.value = lineRaceMaxHour;
+    }
+    lineRaceCurrentHour = lineRaceMaxHour;
+    updateLineRaceHourLabel(lineRaceCurrentHour);
+
+    const syncEl = document.getElementById('headerSyncTime');
+    if (syncEl) {
+      syncEl.textContent = `Synced up to hour: ${campaignData.latest_active_hour_label || '--:00'}`;
+    }
+
+    renderCurrentTabChart();
+  }
+
+  /* ── 1. KPI Strip ── */
+  function renderKpis() {
+    const s = campaignData.summary || {};
+    document.getElementById('kpiGmv').textContent = formatIDR(s.total_gmv, true);
+    document.getElementById('kpiGmv').title = formatIDR(s.total_gmv);
+    document.getElementById('kpiNmv').textContent = formatIDR(s.total_nmv, true);
+    document.getElementById('kpiOrders').textContent = formatNumber(s.total_orders);
+    document.getElementById('kpiUnits').textContent = formatNumber(s.total_units);
+    document.getElementById('kpiUv').textContent = formatNumber(s.total_uv);
+    document.getElementById('kpiPv').textContent = formatNumber(s.total_pv);
+    document.getElementById('kpiCvr').textContent = (s.blended_cvr || 0).toFixed(2) + '%';
+    document.getElementById('kpiRpv').textContent = formatIDR(s.overall_rpv);
+    document.getElementById('kpiAov').textContent = formatIDR(s.overall_aov);
+    document.getElementById('kpiDiscounts').textContent = formatIDR(s.total_discounts, true);
+    document.getElementById('kpiPeakHour').textContent = s.peak_hour_label || '--:00';
+    document.getElementById('kpiPeakGmv').textContent = formatIDR(s.peak_hour_gmv, true);
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     2. Literal Stepped Podium (1st Center, 2nd Left, 3rd Right)
+  ───────────────────────────────────────────────────────────── */
+  function renderPodium() {
+    const stageEl = document.getElementById('podiumStage');
+    if (!stageEl) return;
+    const podiumData = campaignData.podium || [];
+
+    if (podiumData.length === 0) {
+      stageEl.innerHTML = `<div class="col-12 text-center text-muted py-4">No champion data available for current filter.</div>`;
+      return;
+    }
+
+    const pMap = {};
+    podiumData.forEach(p => { pMap[p.rank] = p; });
+
+    const renderPillar = (rank, posClass, blockClass, badgeClass, iconClass, defaultLabel) => {
+      const p = pMap[rank];
+      if (!p) {
+        return `
+          <div class="podium-pillar ${posClass}">
+            <div class="podium-athlete text-muted" style="opacity: 0.5;">
+              <div class="podium-icon-badge ${badgeClass}"><i class="${iconClass}"></i></div>
+              <div class="podium-athlete-name">-</div>
+            </div>
+            <div class="podium-block ${blockClass}">
+              <div class="podium-step-surface"></div>
+              <span class="podium-step-num mono">${rank}</span>
+              <span class="podium-step-lbl">${defaultLabel}</span>
+            </div>
+          </div>
+        `;
+      }
+
+      const brandLogoHtml = window.renderBrandIcon ? window.renderBrandIcon(p.brand, rank === 1 ? 52 : 44) : '';
+      const momentumClass = p.momentum >= 0 ? 'momentum-pos' : 'momentum-neg';
+      const momentumSign = p.momentum >= 0 ? '▲ +' : '▼ ';
+
+      return `
+        <div class="podium-pillar ${posClass}">
+          <div class="podium-athlete">
+            <div class="podium-icon-badge ${badgeClass}">
+              <i class="${iconClass}"></i>
+            </div>
+            <div class="podium-avatar-stand rank-${rank}">
+              <div class="podium-logo-img">
+                ${brandLogoHtml}
+              </div>
+            </div>
+            <h3 class="podium-athlete-name">${p.brand}</h3>
+            <div class="podium-athlete-gmv mono">${formatIDR(p.total_gmv, true)}</div>
+
+            <div class="podium-stats-chip mono">
+              <span>Orders: <strong>${formatNumber(p.total_orders)}</strong></span>
+              <span>•</span>
+              <span>CVR: <strong style="color: ${p.cvr > 3 ? '#10B981' : '#F59E0B'}">${p.cvr}%</strong></span>
+            </div>
+
+            <div class="dd-momentum-pill ${momentumClass} mono mb-2">
+              <span>${momentumSign}${Math.abs(p.momentum)}% vs last hr</span>
+            </div>
+          </div>
+
+          <div class="podium-block ${blockClass}">
+            <div class="podium-step-surface"></div>
+            <span class="podium-step-num mono">${rank}</span>
+            <span class="podium-step-lbl">${defaultLabel}</span>
+            <span class="podium-step-pct mono">${p.share_pct}% Share</span>
+          </div>
+        </div>
+      `;
+    };
+
+    stageEl.innerHTML = `
+      ${renderPillar(2, 'pos-2', 'block-2', 'badge-silver', 'bi bi-award-fill', '2ND PLACE')}
+      ${renderPillar(1, 'pos-1', 'block-1', 'badge-gold', 'bi bi-trophy-fill', 'CHAMPION')}
+      ${renderPillar(3, 'pos-3', 'block-3', 'badge-bronze', 'bi bi-medal-fill', '3RD PLACE')}
+    `;
+  }
+
+  /* ── 3. Lazy Tab Chart Renderer ── */
+  function renderCurrentTabChart() {
+    if (currentActiveTab === 'bar_race') {
+      renderBarRaceChart(raceCurrentHour);
+    } else if (currentActiveTab === 'hourly_velocity') {
+      renderHourlyVelocityChart(lineRaceCurrentHour);
+    } else if (currentActiveTab === 'scatter_matrix') {
+      renderScatterMatrixChart();
+    } else if (currentActiveTab === 'platform_cvr') {
+      renderPlatformDoughnutChart();
+      renderCvrFunnelChart();
+    }
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     ECharts Tab 1: Dynamic Bar Race Chart
+     - Descending Order (Rank 1 at the top)
+     - Brand Logos in Y-Axis labels
+  ───────────────────────────────────────────────────────────── */
+  function renderBarRaceChart(hourIndex = null, customDuration = null) {
+    const el = document.getElementById('chartBarRace');
+    if (!el) return;
+
+    if (!chartBarRace) {
+      chartBarRace = echarts.init(el);
+      initializedCharts.bar_race = true;
+    }
+
+    const timeline = (campaignData.bar_race && campaignData.bar_race.timeline) || [];
+    if (timeline.length === 0) return;
+
+    // Cache a stable, fixed list of all candidate brands in the dataset
+    // (Crucial for ECharts realtimeSort to smoothly glide bars vertically!)
+    if (!allRaceBrandsCache || allRaceBrandsCache.length === 0) {
+      const seen = new Set();
+      allRaceBrandsCache = [];
+      timeline.forEach(t => {
+        (t.data || []).forEach(d => {
+          if (!seen.has(d.brand)) {
+            seen.add(d.brand);
+            allRaceBrandsCache.push(d.brand);
+          }
+        });
+      });
+      if (allRaceBrandsCache.length === 0) {
+        allRaceBrandsCache = (campaignData.leaderboard || []).slice(0, 15).map(b => b.brand);
+      }
+    }
+
+    const hIdx = hourIndex !== null ? hourIndex : (timeline.length - 1);
+    const frame = timeline[hIdx] || timeline[0];
+
+    // Map the frame's values into the fixed category order
+    const valueMap = {};
+    (frame.data || []).forEach(d => {
+      valueMap[d.brand] = d.value;
+    });
+    const values = allRaceBrandsCache.map(b => valueMap[b] || 0);
+
+    const tc = getChartThemeColors();
+
+    const rich = {
+      name: {
+        color: tc.titleColor,
+        fontWeight: 700,
+        fontSize: 12,
+        padding: [0, 0, 0, 8]
+      }
+    };
+
+    allRaceBrandsCache.forEach(b => {
+      const safeKey = 'logo_' + b.replace(/[^a-zA-Z0-9]/g, '_');
+      const url = window.getBrandLogoUrl ? window.getBrandLogoUrl(b) : null;
+      if (url) {
+        rich[safeKey] = {
+          height: 22,
+          width: 22,
+          backgroundColor: { image: url },
+          borderRadius: 11
+        };
+      } else {
+        rich[safeKey] = {
+          height: 20,
+          width: 20,
+          backgroundColor: tc.orange,
+          borderRadius: 10,
+          align: 'center',
+          color: '#FFFFFF',
+          fontSize: 10,
+          fontWeight: 'bold',
+          lineHeight: 20
+        };
+      }
+    });
+
+    const stepDuration = customDuration !== null ? customDuration : raceSpeedMs;
+    const maxVisibleIndex = Math.min(9, allRaceBrandsCache.length - 1);
+
+    const option = {
+      backgroundColor: 'transparent',
+      grid: {
+        top: 25,
+        bottom: 25,
+        left: 180,
+        right: 95
+      },
+      xAxis: {
+        type: 'value',
+        max: 'dataMax',
+        axisLabel: {
+          color: tc.textColor,
+          formatter: val => formatIDR(val, true)
+        },
+        splitLine: { lineStyle: { color: tc.splitLineColor } }
+      },
+      yAxis: {
+        type: 'category',
+        data: allRaceBrandsCache, // FIXED category array enables true realtime vertical bar gliding!
+        inverse: true, // Rank 1 at TOP
+        max: maxVisibleIndex, // Shows top 10 categories
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: {
+          formatter: function(val) {
+            const safeKey = 'logo_' + val.replace(/[^a-zA-Z0-9]/g, '_');
+            const url = window.getBrandLogoUrl ? window.getBrandLogoUrl(val) : null;
+            if (url) {
+              return `{${safeKey}|} {name|${val}}`;
+            }
+            return `{${safeKey}|${val[0] || 'B'}} {name|${val}}`;
+          },
+          rich: rich
+        },
+        animationDuration: 300,
+        animationDurationUpdate: stepDuration
+      },
+      series: [
+        {
+          realtimeSort: true, // ECharts natively interpolates vertical positions smoothly!
+          name: 'Cumulative GMV',
+          type: 'bar',
+          data: values,
+          label: {
+            show: true,
+            position: 'right',
+            valueAnimation: true,
+            color: tc.titleColor,
+            fontWeight: 800,
+            fontFamily: 'JetBrains Mono',
+            formatter: params => formatIDR(params.value, true)
+          },
+          itemStyle: {
+            borderRadius: [0, 8, 8, 0],
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: 'rgba(255, 107, 0, 0.4)' },
+              { offset: 1, color: '#FF6B00' }
+            ])
+          }
+        }
+      ],
+      animationDuration: 0,
+      animationDurationUpdate: stepDuration,
+      animationEasing: 'linear',
+      animationEasingUpdate: 'linear'
+    };
+
+    chartBarRace.setOption(option, { notMerge: false, lazyUpdate: false });
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     ECharts Tab 2: Animated Line Race & Velocity
+     - ZERO-FLICKER CAMERA TRACKING (Hardware DataZoom Sliding Window)
+     - DYNAMIC AUTO-ADJUSTING NMV SCALE (Never Clumped at Bottom!)
+     - BRAND LOGOS GLIDING ON LINE TIPS (via EndLabel Image RichText)
+  ───────────────────────────────────────────────────────────── */
+  function renderHourlyVelocityChart(targetHour = null, customDuration = null) {
+    const el = document.getElementById('chartHourlyVelocity');
+    if (!el) return;
+
+    if (!chartHourlyVelocity) {
+      chartHourlyVelocity = echarts.init(el);
+      initializedCharts.hourly_velocity = true;
+    }
+
+    const hv = campaignData.hourly_velocity || {};
+    const tc = getChartThemeColors();
+    const allHours = hv.hours || [];
+    if (allHours.length === 0) return;
+
+    const curH = targetHour !== null ? targetHour : (allHours.length - 1);
+    const windowSize = parseInt(lineRaceWindowSize, 10) || 6;
+
+    // Sliding Window Index (dataZoom range)
+    let startIdx = 0;
+    if (windowSize < 24) {
+      startIdx = Math.max(0, curH - windowSize + 1);
+    }
+    const endIdx = curH;
+
+    const isNmv = (lineRaceMetric === 'nmv');
+    const isBrandBattle = (lineRaceMode === 'brands');
+    const metricTitle = isNmv ? 'Hourly NMV' : 'Hourly GMV';
+
+    const richEndLabels = {
+      name: {
+        color: tc.titleColor,
+        fontWeight: 800,
+        fontSize: 12,
+        padding: [0, 4, 0, 4]
+      },
+      val: {
+        color: tc.textColor,
+        fontFamily: 'JetBrains Mono',
+        fontWeight: 700,
+        fontSize: 11
+      },
+      fallback: {
+        height: 22,
+        width: 22,
+        backgroundColor: tc.orange,
+        borderRadius: 11,
+        align: 'center',
+        color: '#FFFFFF',
+        fontSize: 10,
+        fontWeight: 'bold',
+        lineHeight: 22
+      }
+    };
+
+    // Collect visible values in [startIdx..curH] for dynamic Y-axis auto-scaling!
+    const targetBrands = hv.brand_series || [];
+    let visibleVals = [];
+
+    targetBrands.forEach(b => {
+      const raw = isNmv ? (b.data_nmv || b.data || []) : (b.data_gmv || b.data || []);
+      for (let i = startIdx; i <= curH; i++) {
+        const v = raw[i];
+        if (v !== undefined && v !== null && v > 0) {
+          visibleVals.push(v);
+        }
+      }
+    });
+
+    // If "With Total" mode is active, include total values in scale
+    if (!isBrandBattle) {
+      const totalRaw = isNmv ? (hv.total_series_nmv || hv.total_series || []) : (hv.total_series || []);
+      for (let i = startIdx; i <= curH; i++) {
+        const v = totalRaw[i];
+        if (v !== undefined && v !== null && v > 0) visibleVals.push(v);
+      }
+    }
+
+    // Dynamic, smoothly-damped Y-axis boundaries (No sudden snapping or bouncing):
+    let targetMin = 0;
+    let targetMax = 1000000;
+
+    if (visibleVals.length > 0) {
+      const vMin = Math.min(...visibleVals);
+      const vMax = Math.max(...visibleVals);
+      const span = Math.max(1, vMax - vMin);
+
+      // If competing brands are elevated above zero, lift floor gently so differences are magnified
+      if (vMin > vMax * 0.25) {
+        targetMin = Math.max(0, Math.floor(vMin - span * 0.25));
+      } else {
+        targetMin = 0;
+      }
+      targetMax = Math.ceil(vMax + Math.max(span * 0.25, vMax * 0.15));
+    }
+
+    // Exponential smoothing so Y boundaries glide gradually like a fluid camera
+    if (velocitySmoothedYMin === null || customDuration === 0 || !isLineRacePlaying) {
+      velocitySmoothedYMin = targetMin;
+      velocitySmoothedYMax = targetMax;
+    } else {
+      velocitySmoothedYMin = Math.round(velocitySmoothedYMin * 0.65 + targetMin * 0.35);
+      velocitySmoothedYMax = Math.round(velocitySmoothedYMax * 0.65 + targetMax * 0.35);
+    }
+
+    const stepDuration = customDuration !== null ? customDuration : lineRaceSpeedMs;
+
+    const series = [];
+
+    // 1. Optional Total Campaign Line
+    if (!isBrandBattle) {
+      const totalRaw = isNmv ? (hv.total_series_nmv || hv.total_series || []) : (hv.total_series || []);
+      const totalData = allHours.map((_, i) => (i <= curH ? totalRaw[i] : null));
+      const lastTotalVal = totalRaw[curH] || 0;
+
+      series.push({
+        name: 'Total Campaign',
+        type: 'line',
+        smooth: 0.35,
+        data: totalData,
+        lineStyle: { width: 3, color: tc.orange, type: 'dashed' },
+        itemStyle: { color: tc.orange },
+        symbol: 'circle',
+        symbolSize: 6,
+        endLabel: {
+          show: true,
+          valueAnimation: true,
+          distance: 14,
+          formatter: function() {
+            return `{flag|} {name|Total} {val|${formatIDR(lastTotalVal, true)}}`;
+          },
+          rich: {
+            flag: {
+              height: 18,
+              width: 18,
+              backgroundColor: tc.orange,
+              borderRadius: 9,
+              align: 'center',
+              color: '#FFFFFF',
+              fontSize: 10,
+              fontWeight: 'bold',
+              lineHeight: 18
+            },
+            name: {
+              color: tc.orange,
+              fontWeight: 800,
+              fontSize: 12,
+              padding: [0, 4, 0, 4]
+            },
+            val: {
+              color: tc.textColor,
+              fontFamily: 'JetBrains Mono',
+              fontWeight: 700,
+              fontSize: 11
+            }
+          }
+        },
+        labelLayout: { moveOverlap: 'shiftY' }
+      });
+    }
+
+    // 2. Individual Top Brand Lines (Brand Logos on the Line Tips)
+    targetBrands.forEach((b, idx) => {
+      const color = tc.palette[(idx + 1) % tc.palette.length];
+      const rawData = isNmv ? (b.data_nmv || b.data || []) : (b.data_gmv || b.data || []);
+      
+      // Points up to curH; future points null so the line ends right at curH
+      const brandData = allHours.map((_, i) => (i <= curH ? rawData[i] : null));
+
+      const safeKey = 'logo_' + b.name.replace(/[^a-zA-Z0-9]/g, '_');
+      const logoUrl = window.getBrandLogoUrl ? window.getBrandLogoUrl(b.name) : null;
+
+      if (logoUrl) {
+        richEndLabels[safeKey] = {
+          height: 24,
+          width: 24,
+          backgroundColor: { image: logoUrl },
+          borderRadius: 12,
+          borderColor: color,
+          borderWidth: 2
+        };
+      } else {
+        richEndLabels[safeKey] = {
+          height: 22,
+          width: 22,
+          backgroundColor: color,
+          borderRadius: 11,
+          align: 'center',
+          color: '#FFFFFF',
+          fontSize: 10,
+          fontWeight: 'bold',
+          lineHeight: 22
+        };
+      }
+
+      series.push({
+        name: b.name,
+        type: 'line',
+        smooth: 0.35,
+        data: brandData,
+        lineStyle: { width: 3, color: color },
+        itemStyle: { color: color },
+        symbol: 'circle',
+        symbolSize: function(val, params) {
+          return params.dataIndex === curH ? 9 : 4;
+        },
+        endLabel: {
+          show: true,
+          valueAnimation: true,
+          distance: 14,
+          formatter: function(params) {
+            const brandKey = 'logo_' + params.seriesName.replace(/[^a-zA-Z0-9]/g, '_');
+            const hasLogo = window.getBrandLogoUrl ? window.getBrandLogoUrl(params.seriesName) : null;
+            if (hasLogo) {
+              return `{${brandKey}|}  {name|${params.seriesName}} {val|${formatIDR(params.value, true)}}`;
+            }
+            return `{fallback|${params.seriesName[0] || 'B'}}  {name|${params.seriesName}} {val|${formatIDR(params.value, true)}}`;
+          },
+          rich: richEndLabels
+        },
+        labelLayout: { moveOverlap: 'shiftY' }
+      });
+    });
+
+    // Continuous percentage-based camera tracking for smooth sliding
+    const totalH = Math.max(1, allHours.length);
+    const startPct = (startIdx / totalH) * 100;
+    const endPct = (Math.min(totalH, endIdx + (windowSize < 24 ? 1.2 : 0)) / totalH) * 100;
+
+    const option = {
+      backgroundColor: 'transparent',
+      title: {
+        text: `${metricTitle} Velocity Race (Timeframe: ${allHours[startIdx]} - ${allHours[endIdx]})`,
+        left: 20,
+        top: 10,
+        textStyle: { color: tc.titleColor, fontSize: 13, fontWeight: 700 }
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: tc.tooltipBg,
+        borderColor: tc.tooltipBorder,
+        textStyle: { color: tc.textColor },
+        formatter: function(params) {
+          let s = `<strong style="color:${tc.titleColor}">${params[0].axisValue}</strong><br/>`;
+          params.forEach(p => {
+            if (p.value !== null && p.value !== undefined) {
+              s += `${p.marker} ${p.seriesName}: <strong>${formatIDR(p.value, true)}</strong><br/>`;
+            }
+          });
+          return s;
+        }
+      },
+      legend: {
+        top: 10,
+        right: 30,
+        textStyle: { color: tc.textColor }
+      },
+      grid: {
+        top: 65,
+        bottom: 35,
+        left: 95,
+        right: 210 // Spacious right margin for logo + brand name + values
+      },
+      // FIXED X-Axis with all 24 hours: Never recreated, completely flicker-free!
+      xAxis: {
+        type: 'category',
+        data: allHours,
+        boundaryGap: false,
+        axisLabel: {
+          color: tc.textColor,
+          fontWeight: 700,
+          fontSize: 12
+        },
+        axisLine: { lineStyle: { color: tc.splitLineColor } }
+      },
+      // Smooth dynamic auto-adjusting Y-Axis:
+      yAxis: {
+        type: 'value',
+        scale: true,
+        min: velocitySmoothedYMin,
+        max: velocitySmoothedYMax,
+        axisLabel: {
+          color: tc.textColor,
+          fontSize: 11,
+          fontWeight: 700,
+          formatter: val => formatIDR(val, true)
+        },
+        splitLine: { lineStyle: { color: tc.splitLineColor } },
+        animationDuration: 300,
+        animationDurationUpdate: stepDuration
+      },
+      // Smooth camera gliding via continuous percentage DataZoom:
+      dataZoom: [
+        {
+          type: 'inside',
+          xAxisIndex: 0,
+          start: startPct,
+          end: endPct,
+          zoomLock: true
+        }
+      ],
+      series: series,
+      animation: true,
+      animationDuration: 0,
+      animationDurationUpdate: stepDuration,
+      animationEasing: 'linear',
+      animationEasingUpdate: 'linear'
+    };
+
+    chartHourlyVelocity.setOption(option, { notMerge: false, lazyUpdate: false });
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     Line Chart Race Animation Controller
+  ───────────────────────────────────────────────────────────── */
+  function updateLineRaceHourLabel(h) {
+    const badge = document.getElementById('lineRaceHourBadge');
+    if (badge) {
+      const hv = campaignData.hourly_velocity || {};
+      const allHours = hv.hours || [];
+      const windowSize = parseInt(lineRaceWindowSize, 10) || 6;
+      let startH = 0;
+      if (windowSize < 24) {
+        startH = Math.max(0, h - windowSize + 1);
+      }
+      const startStr = allHours[startH] || `${String(startH).padStart(2, '0')}:00`;
+      const endStr = allHours[h] || `${String(h).padStart(2, '0')}:00`;
+      badge.textContent = `HOUR ${endStr} (${startStr} - ${endStr})`;
+    }
+  }
+
+  window.toggleLineRacePlay = function() {
+    isLineRacePlaying = !isLineRacePlaying;
+    const btnIcon = document.getElementById('playLineRaceIcon');
+    const btnLabel = document.getElementById('playLineRaceLabel');
+
+    if (isLineRacePlaying) {
+      btnIcon.className = 'bi bi-pause-fill';
+      btnLabel.textContent = 'Pause';
+      startLineRacePlaybackLoop();
+    } else {
+      btnIcon.className = 'bi bi-play-fill';
+      btnLabel.textContent = 'Play Line Race';
+      stopLineRacePlaybackLoop();
+    }
+  };
+
+  function startLineRacePlaybackLoop() {
+    stopLineRacePlaybackLoop();
+    if (lineRaceCurrentHour >= lineRaceMaxHour) {
+      lineRaceCurrentHour = 0;
+      velocitySmoothedYMin = null;
+      velocitySmoothedYMax = null;
+    }
+
+    // Immediately kick off current frame
+    const slider = document.getElementById('lineRaceSlider');
+    if (slider) slider.value = lineRaceCurrentHour;
+    updateLineRaceHourLabel(lineRaceCurrentHour);
+    renderHourlyVelocityChart(lineRaceCurrentHour);
+    lineRaceCurrentHour++;
+
+    lineRaceTimer = setInterval(() => {
+      if (lineRaceCurrentHour > lineRaceMaxHour) {
+        window.toggleLineRacePlay();
+        return;
+      }
+      const sl = document.getElementById('lineRaceSlider');
+      if (sl) sl.value = lineRaceCurrentHour;
+      updateLineRaceHourLabel(lineRaceCurrentHour);
+      renderHourlyVelocityChart(lineRaceCurrentHour);
+      lineRaceCurrentHour++;
+    }, lineRaceSpeedMs);
+  }
+
+  function stopLineRacePlaybackLoop() {
+    if (lineRaceTimer) {
+      clearInterval(lineRaceTimer);
+      lineRaceTimer = null;
+    }
+  }
+
+  window.resetLineRaceTimeline = function() {
+    stopLineRacePlaybackLoop();
+    isLineRacePlaying = false;
+    velocitySmoothedYMin = null;
+    velocitySmoothedYMax = null;
+    document.getElementById('playLineRaceIcon').className = 'bi bi-play-fill';
+    document.getElementById('playLineRaceLabel').textContent = 'Play Line Race';
+    lineRaceCurrentHour = 0;
+    const slider = document.getElementById('lineRaceSlider');
+    if (slider) slider.value = 0;
+    updateLineRaceHourLabel(0);
+    renderHourlyVelocityChart(0, 0);
+  };
+
+  window.onLineRaceSliderScrub = function(val) {
+    stopLineRacePlaybackLoop();
+    isLineRacePlaying = false;
+    velocitySmoothedYMin = null;
+    velocitySmoothedYMax = null;
+    document.getElementById('playLineRaceIcon').className = 'bi bi-play-fill';
+    document.getElementById('playLineRaceLabel').textContent = 'Play Line Race';
+    lineRaceCurrentHour = parseInt(val, 10);
+    updateLineRaceHourLabel(lineRaceCurrentHour);
+    renderHourlyVelocityChart(lineRaceCurrentHour, 0);
+  };
+
+  window.toggleLineRaceSpeed = function() {
+    if (lineRaceSpeedMs === 1000) {
+      lineRaceSpeedMs = 500;
+      document.getElementById('lineRaceSpeedLabel').textContent = '2x';
+    } else {
+      lineRaceSpeedMs = 1000;
+      document.getElementById('lineRaceSpeedLabel').textContent = '1x';
+    }
+    if (isLineRacePlaying) {
+      startLineRacePlaybackLoop();
+    }
+  };
+
+  window.setLineMetric = function(metric) {
+    lineRaceMetric = metric;
+    velocitySmoothedYMin = null;
+    velocitySmoothedYMax = null;
+    document.getElementById('btnMetricNmv').classList.toggle('active', metric === 'nmv');
+    document.getElementById('btnMetricGmv').classList.toggle('active', metric === 'gmv');
+    renderHourlyVelocityChart(lineRaceCurrentHour, 0);
+  };
+
+  window.setLineMode = function(mode) {
+    lineRaceMode = mode;
+    velocitySmoothedYMin = null;
+    velocitySmoothedYMax = null;
+    document.getElementById('btnModeBrands').classList.toggle('active', mode === 'brands');
+    document.getElementById('btnModeTotal').classList.toggle('active', mode === 'total');
+    renderHourlyVelocityChart(lineRaceCurrentHour, 0);
+  };
+
+  window.onLineWindowSizeChanged = function(val) {
+    lineRaceWindowSize = parseInt(val, 10);
+    updateLineRaceHourLabel(lineRaceCurrentHour);
+    renderHourlyVelocityChart(lineRaceCurrentHour, 0);
+  };
+
+  /* ── ECharts Tab 3: Traffic vs GMV Scatter Matrix ── */
+  function renderScatterMatrixChart() {
+    const el = document.getElementById('chartScatterMatrix');
+    if (!el) return;
+
+    if (!chartScatterMatrix) {
+      chartScatterMatrix = echarts.init(el);
+      initializedCharts.scatter_matrix = true;
+    }
+
+    const sm = campaignData.scatter_matrix || {};
+    const tc = getChartThemeColors();
+
+    const points = (sm.points || []).map(p => [
+      p.uv,
+      p.gmv,
+      p.orders,
+      p.cvr,
+      p.brand,
+      p.aov
+    ]);
+
+    const option = {
+      backgroundColor: 'transparent',
+      tooltip: {
+        backgroundColor: tc.tooltipBg,
+        borderColor: tc.tooltipBorder,
+        textStyle: { color: tc.textColor },
+        formatter: function(param) {
+          const d = param.value;
+          return `
+            <strong style="color:${tc.titleColor}; font-size:1.05rem;">${d[4]}</strong><br/>
+            Visitors (Traffic): <strong>${formatNumber(d[0])}</strong><br/>
+            GMV: <strong>${formatIDR(d[1])}</strong><br/>
+            Orders: <strong>${formatNumber(d[2])}</strong><br/>
+            Conversion Rate (CVR): <strong style="color:#FF6B00">${d[3]}%</strong><br/>
+            AOV: <strong>${formatIDR(d[5])}</strong>
+          `;
+        }
+      },
+      grid: {
+        top: 30,
+        bottom: 40,
+        left: 90,
+        right: 40
+      },
+      xAxis: {
+        name: 'Total Visitors (UV)',
+        nameLocation: 'middle',
+        nameGap: 26,
+        nameTextStyle: { color: tc.textColor, fontWeight: 700 },
+        axisLabel: { color: tc.textColor },
+        splitLine: { lineStyle: { color: tc.splitLineColor } }
+      },
+      yAxis: {
+        name: 'Total GMV',
+        nameTextStyle: { color: tc.textColor, fontWeight: 700 },
+        axisLabel: {
+          color: tc.textColor,
+          formatter: val => formatIDR(val, true)
+        },
+        splitLine: { lineStyle: { color: tc.splitLineColor } }
+      },
+      series: [
+        {
+          type: 'scatter',
+          data: points,
+          symbolSize: function(val) {
+            return Math.max(12, Math.min(60, Math.sqrt(val[2] || 1) * 3));
+          },
+          itemStyle: {
+            color: function(param) {
+              const cvr = param.value[3];
+              if (cvr >= 5.0) return '#10B981';
+              if (cvr >= 2.0) return '#FF6B00';
+              return '#F43F5E';
+            },
+            shadowBlur: 10,
+            shadowColor: 'rgba(0, 0, 0, 0.2)'
+          },
+          label: {
+            show: true,
+            formatter: param => param.value[4],
+            position: 'top',
+            color: tc.titleColor,
+            fontSize: 10,
+            fontWeight: 700
+          },
+          markLine: {
+            silent: true,
+            lineStyle: { type: 'dashed', color: 'rgba(255, 107, 0, 0.4)' },
+            data: [
+              { xAxis: sm.avg_uv, name: 'Avg Traffic' },
+              { yAxis: sm.avg_gmv, name: 'Avg GMV' }
+            ]
+          }
+        }
+      ]
+    };
+
+    chartScatterMatrix.setOption(option);
+  }
+
+  /* ── ECharts Tab 4: Platform Doughnut & CVR Funnel ── */
+  function renderPlatformDoughnutChart() {
+    const el = document.getElementById('chartPlatformDoughnut');
+    if (!el) return;
+
+    if (!chartPlatformDoughnut) {
+      chartPlatformDoughnut = echarts.init(el);
+      initializedCharts.platform_cvr = true;
+    }
+
+    const pb = campaignData.platform_breakdown || [];
+    const tc = getChartThemeColors();
+
+    const data = pb.map(p => ({
+      name: p.platform,
+      value: p.gmv
+    }));
+
+    const option = {
+      backgroundColor: 'transparent',
+      title: {
+        text: 'Platform GMV Share',
+        left: 'center',
+        top: 10,
+        textStyle: { color: tc.titleColor, fontSize: 13, fontWeight: 700 }
+      },
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: tc.tooltipBg,
+        borderColor: tc.tooltipBorder,
+        textStyle: { color: tc.textColor },
+        formatter: p => `${p.name}: <strong>${formatIDR(p.value, true)}</strong> (${p.percent}%)`
+      },
+      legend: {
+        bottom: 10,
+        textStyle: { color: tc.textColor }
+      },
+      series: [
+        {
+          type: 'pie',
+          radius: ['45%', '70%'],
+          center: ['50%', '50%'],
+          avoidLabelOverlap: false,
+          itemStyle: {
+            borderRadius: 6,
+            borderColor: getTheme() === 'dark' ? '#141B28' : '#FFFFFF',
+            borderWidth: 2
+          },
+          label: { show: false },
+          data: data
+        }
+      ]
+    };
+
+    chartPlatformDoughnut.setOption(option);
+  }
+
+  function renderCvrFunnelChart() {
+    const el = document.getElementById('chartCvrFunnel');
+    if (!el) return;
+
+    if (!chartCvrFunnel) {
+      chartCvrFunnel = echarts.init(el);
+    }
+
+    const ht = campaignData.hourly_totals || [];
+    const tc = getChartThemeColors();
+
+    const hours = ht.map(h => h.hour_label);
+    const uvs = ht.map(h => h.uv);
+    const cvrs = ht.map(h => h.cvr);
+
+    const option = {
+      backgroundColor: 'transparent',
+      title: {
+        text: 'Hourly Traffic vs Conversion Rate (CVR %)',
+        left: 'center',
+        top: 10,
+        textStyle: { color: tc.titleColor, fontSize: 13, fontWeight: 700 }
+      },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: tc.tooltipBg,
+        borderColor: tc.tooltipBorder,
+        textStyle: { color: tc.textColor }
+      },
+      legend: {
+        bottom: 10,
+        textStyle: { color: tc.textColor }
+      },
+      grid: {
+        top: 60,
+        bottom: 40,
+        left: 60,
+        right: 60
+      },
+      xAxis: {
+        type: 'category',
+        data: hours,
+        axisLabel: { color: tc.textColor }
+      },
+      yAxis: [
+        {
+          type: 'value',
+          name: 'Visitors (UV)',
+          axisLabel: { color: tc.textColor },
+          splitLine: { lineStyle: { color: tc.splitLineColor } }
+        },
+        {
+          type: 'value',
+          name: 'CVR %',
+          axisLabel: {
+            color: tc.textColor,
+            formatter: '{value}%'
+          },
+          splitLine: { show: false }
+        }
+      ],
+      series: [
+        {
+          name: 'Visitors (UV)',
+          type: 'bar',
+          data: uvs,
+          itemStyle: {
+            color: 'rgba(59, 130, 246, 0.45)',
+            borderRadius: [4, 4, 0, 0]
+          }
+        },
+        {
+          name: 'CVR %',
+          type: 'line',
+          yAxisIndex: 1,
+          smooth: true,
+          data: cvrs,
+          itemStyle: { color: tc.orange },
+          lineStyle: { width: 3, color: tc.orange }
+        }
+      ]
+    };
+
+    chartCvrFunnel.setOption(option);
+  }
+
+  /* ── 4. Leaderboard Table ── */
+  function renderLeaderboardTable(filterText = '') {
+    const tbody = document.getElementById('leaderboardTableBody');
+    if (!tbody) return;
+
+    let items = campaignData.leaderboard || [];
+    if (filterText) {
+      const q = filterText.toLowerCase().trim();
+      items = items.filter(x => x.brand.toLowerCase().includes(q));
+    }
+
+    document.getElementById('leaderboardBrandCount').textContent = `Showing ${items.length} brand${items.length === 1 ? '' : 's'}`;
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted py-4">No matching brands found.</td></tr>`;
+      return;
+    }
+
+    let html = '';
+    items.forEach(b => {
+      let rankBadgeClass = 'dd-rank-n';
+      if (b.rank === 1) rankBadgeClass = 'dd-rank-1';
+      else if (b.rank === 2) rankBadgeClass = 'dd-rank-2';
+      else if (b.rank === 3) rankBadgeClass = 'dd-rank-3';
+
+      const logoHtml = window.renderBrandIcon ? window.renderBrandIcon(b.brand, 24) : '';
+
+      let platformPill = `<div class="dd-platform-bar" title="Shopee / TikTok / Toped / Lazada">`;
+      (b.platforms || []).forEach(p => {
+        if (p.pct > 0) {
+          let col = '#FF6B00';
+          if (p.platform.toLowerCase().includes('shopee')) col = '#EE4D2D';
+          else if (p.platform.toLowerCase().includes('tiktok')) col = '#000000';
+          else if (p.platform.toLowerCase().includes('tokopedia')) col = '#03AC0E';
+          else if (p.platform.toLowerCase().includes('lazada')) col = '#0F146D';
+          platformPill += `<span style="width:${p.pct}%; background:${col}; height:100%;" title="${p.platform}: ${p.pct}%"></span>`;
+        }
+      });
+      platformPill += `</div>`;
+
+      let cvrClass = 'cvr-low';
+      if (b.cvr >= 5.0) cvrClass = 'cvr-high';
+      else if (b.cvr >= 2.0) cvrClass = 'cvr-mid';
+
+      const momentumSign = b.momentum >= 0 ? '▲ +' : '▼ ';
+      const momentumClass = b.momentum >= 0 ? 'momentum-pos' : 'momentum-neg';
+      const sparklineSvg = generateSparklineSvg(b.hourly_gmv || []);
+
+      html += `
+        <tr>
+          <td class="text-center">
+            <span class="dd-rank-badge ${rankBadgeClass}">${b.rank}</span>
+          </td>
+          <td>
+            <div class="dd-brand-cell">
+              ${logoHtml}
+              <span>${b.brand}</span>
+            </div>
+          </td>
+          <td>${platformPill}</td>
+          <td class="text-right">
+            <strong class="mono">${formatIDR(b.total_gmv, true)}</strong>
+          </td>
+          <td class="text-right text-muted mono">${b.share_pct}%</td>
+          <td class="text-right mono">${formatNumber(b.total_orders)}</td>
+          <td class="text-right text-muted mono">${formatNumber(b.total_units)}</td>
+          <td class="text-right mono">${formatNumber(b.total_uv)}</td>
+          <td class="text-center">
+            <span class="dd-cvr-badge ${cvrClass} mono">${b.cvr}%</span>
+          </td>
+          <td class="text-right mono">${formatIDR(b.aov, true)}</td>
+          <td class="text-center">${sparklineSvg}</td>
+          <td class="text-center">
+            <span class="dd-momentum-pill ${momentumClass} mono">
+              ${momentumSign}${Math.abs(b.momentum)}%
+            </span>
+          </td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+  }
+
+  function generateSparklineSvg(values) {
+    if (!values || values.length === 0) return '';
+    const maxVal = Math.max(...values, 1);
+    const w = 70;
+    const h = 20;
+    const points = values.map((v, i) => {
+      const x = (i / (values.length - 1)) * w;
+      const y = h - ((v / maxVal) * (h - 2) + 1);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+
+    return `
+      <svg class="dd-mini-sparkline" viewBox="0 0 ${w} ${h}">
+        <polyline fill="none" stroke="#FF6B00" stroke-width="1.8" points="${points}" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    `;
+  }
+
+  /* ── 5. Bar Race Playback ── */
+  function updateRaceHourLabel(h) {
+    const badge = document.getElementById('raceHourBadge');
+    if (badge) {
+      badge.textContent = `HOUR ${String(h).padStart(2, '0')}:00`;
+    }
+  }
+
+  window.toggleRacePlay = function() {
+    isRacePlaying = !isRacePlaying;
+    const btnIcon = document.getElementById('playRaceIcon');
+    const btnLabel = document.getElementById('playRaceLabel');
+
+    if (isRacePlaying) {
+      btnIcon.className = 'bi bi-pause-fill';
+      btnLabel.textContent = 'Pause';
+      startRacePlaybackLoop();
+    } else {
+      btnIcon.className = 'bi bi-play-fill';
+      btnLabel.textContent = 'Play Race';
+      stopRacePlaybackLoop();
+    }
+  };
+
+  function startRacePlaybackLoop() {
+    stopRacePlaybackLoop();
+    if (raceCurrentHour >= raceMaxHour) {
+      raceCurrentHour = 0;
+    }
+
+    // Immediately kick off current frame
+    const slider = document.getElementById('raceSlider');
+    if (slider) slider.value = raceCurrentHour;
+    updateRaceHourLabel(raceCurrentHour);
+    renderBarRaceChart(raceCurrentHour);
+    raceCurrentHour++;
+
+    raceTimer = setInterval(() => {
+      if (raceCurrentHour > raceMaxHour) {
+        window.toggleRacePlay();
+        return;
+      }
+      const sl = document.getElementById('raceSlider');
+      if (sl) sl.value = raceCurrentHour;
+      updateRaceHourLabel(raceCurrentHour);
+      renderBarRaceChart(raceCurrentHour);
+      raceCurrentHour++;
+    }, raceSpeedMs);
+  }
+
+  function stopRacePlaybackLoop() {
+    if (raceTimer) {
+      clearInterval(raceTimer);
+      raceTimer = null;
+    }
+  }
+
+  window.resetRaceTimeline = function() {
+    stopRacePlaybackLoop();
+    isRacePlaying = false;
+    document.getElementById('playRaceIcon').className = 'bi bi-play-fill';
+    document.getElementById('playRaceLabel').textContent = 'Play Race';
+    raceCurrentHour = 0;
+    const slider = document.getElementById('raceSlider');
+    if (slider) slider.value = 0;
+    updateRaceHourLabel(0);
+    renderBarRaceChart(0, 0);
+  };
+
+  window.onRaceSliderScrub = function(val) {
+    stopRacePlaybackLoop();
+    isRacePlaying = false;
+    document.getElementById('playRaceIcon').className = 'bi bi-play-fill';
+    document.getElementById('playRaceLabel').textContent = 'Play Race';
+    raceCurrentHour = parseInt(val, 10);
+    updateRaceHourLabel(raceCurrentHour);
+    renderBarRaceChart(raceCurrentHour, 0);
+  };
+
+  window.toggleRaceSpeed = function() {
+    if (raceSpeedMs === 1000) {
+      raceSpeedMs = 500;
+      document.getElementById('raceSpeedLabel').textContent = '2x';
+    } else {
+      raceSpeedMs = 1000;
+      document.getElementById('raceSpeedLabel').textContent = '1x';
+    }
+    if (isRacePlaying) {
+      startRacePlaybackLoop();
+    }
+  };
+
+  /* ── 6. Tab Switching with Auto-Resize ── */
+  window.switchAnalyticsTab = function(tabName, btnEl) {
+    currentActiveTab = tabName;
+    document.querySelectorAll('.dd-tabs-nav .dd-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.dd-tab-pane').forEach(p => p.classList.remove('active'));
+
+    btnEl.classList.add('active');
+    const pane = document.getElementById(`pane_${tabName}`);
+    if (pane) pane.classList.add('active');
+
+    setTimeout(() => {
+      renderCurrentTabChart();
+      resizeActiveChart();
+    }, 60);
+  };
+
+  /* ── 7. Filtering & API ── */
+  window.onDateFilterChanged = function() {
+    fetchFilteredData();
+  };
+
+  window.setPlatformFilter = function(plat) {
+    const buttons = document.querySelectorAll('.platform-pill-btn');
+    buttons.forEach(b => {
+      if (!plat && b.textContent.includes('All')) b.classList.add('active');
+      else if (plat && b.textContent.includes(plat)) b.classList.add('active');
+      else b.classList.remove('active');
+    });
+
+    fetchFilteredData();
+  };
+
+  window.filterLeaderboardTable = function(query) {
+    renderLeaderboardTable(query);
+  };
+
+  function getSelectedPlatforms() {
+    const activeBtn = document.querySelector('.platform-pill-btn.active');
+    if (!activeBtn || activeBtn.textContent.includes('All')) return [];
+    return [activeBtn.textContent.trim()];
+  }
+
+  function getSelectedBrands() {
+    if (window.jQuery && $.fn.select2) {
+      return $('#brandSelect').val() || [];
+    }
+    return [];
+  }
+
+  function fetchFilteredData() {
+    const dateVal = document.getElementById('campaignDateSelect').value;
+    const plats = getSelectedPlatforms();
+    const brands = getSelectedBrands();
+
+    const params = new URLSearchParams();
+    if (dateVal) params.append('date', dateVal);
+    plats.forEach(p => params.append('platform', p));
+    brands.forEach(b => params.append('brand', b));
+
+    const spin = document.getElementById('refreshSpinIcon');
+    if (spin) spin.classList.add('spin-animation');
+
+    fetch(`/double_date/api/data/?${params.toString()}`)
+      .then(res => res.json())
+      .then(data => {
+        campaignData = data;
+        renderAll();
+        refreshCountdown = refreshIntervalSec;
+      })
+      .catch(err => {
+        console.error("Error fetching campaign data:", err);
+      })
+      .finally(() => {
+        if (spin) spin.classList.remove('spin-animation');
+      });
+  }
+
+  window.refreshCampaignData = function() {
+    fetchFilteredData();
+  };
+
+  /* ── 8. Fullscreen TV Mode ── */
+  window.toggleTvMode = function() {
+    isTvMode = !isTvMode;
+    document.body.classList.toggle('tv-mode-active', isTvMode);
+
+    const icon = document.getElementById('tvModeIcon');
+    const label = document.getElementById('tvModeLabel');
+
+    if (isTvMode) {
+      icon.className = 'bi bi-fullscreen-exit';
+      label.textContent = 'Exit TV';
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } else {
+      icon.className = 'bi bi-fullscreen';
+      label.textContent = 'TV Mode';
+      if (document.exitFullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    setTimeout(() => {
+      resizeActiveChart();
+    }, 150);
+  };
+
+  /* ── 9. Auto-Refresh Countdown ── */
+  function startCountdown() {
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+      refreshCountdown--;
+      if (refreshCountdown <= 0) {
+        refreshCountdown = refreshIntervalSec;
+        fetchFilteredData();
+      }
+      const min = Math.floor(refreshCountdown / 60);
+      const sec = refreshCountdown % 60;
+      const el = document.getElementById('nextSyncTimer');
+      if (el) {
+        el.textContent = `Next auto-refresh in: ${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+      }
+    }, 1000);
+  }
+
+  /* ── 10. Chart Sizing & Theme Handlers ── */
+  function resizeActiveChart() {
+    if (currentActiveTab === 'bar_race' && chartBarRace) chartBarRace.resize();
+    else if (currentActiveTab === 'hourly_velocity' && chartHourlyVelocity) chartHourlyVelocity.resize();
+    else if (currentActiveTab === 'scatter_matrix' && chartScatterMatrix) chartScatterMatrix.resize();
+    else if (currentActiveTab === 'platform_cvr') {
+      if (chartPlatformDoughnut) chartPlatformDoughnut.resize();
+      if (chartCvrFunnel) chartCvrFunnel.resize();
+    }
+  }
+
+  function rethemeAllCharts() {
+    if (chartBarRace) renderBarRaceChart(raceCurrentHour);
+    if (chartHourlyVelocity) renderHourlyVelocityChart(lineRaceCurrentHour);
+    if (chartScatterMatrix) renderScatterMatrixChart();
+    if (chartPlatformDoughnut) renderPlatformDoughnutChart();
+    if (chartCvrFunnel) renderCvrFunnelChart();
+  }
+
+})();
+</script>
+
+<style>
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .spin-animation {
+    animation: spin 0.8s linear infinite;
+  }
+</style>
+{% endblock %}

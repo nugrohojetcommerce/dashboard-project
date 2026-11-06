@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'order_mart',
     'brand_performance_v2',
     'data_management',
+    'double_date',
     # "debug_toolbar",
 ]
 

@@ -539,6 +539,17 @@
     margin-bottom: 6px;
     z-index: 2;
     position: relative;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .podium-swap-anim {
+    animation: podiumPopIn 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes podiumPopIn {
+    0% { transform: scale(0.88); opacity: 0.6; }
+    50% { transform: scale(1.06); }
+    100% { transform: scale(1); opacity: 1; }
   }
 
   .podium-icon-badge {
@@ -629,6 +640,10 @@
     font-weight: 800;
     color: var(--text-primary);
     margin: 2px 0 6px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+    transition: color 0.3s ease;
   }
 
   .podium-pillar.pos-1 .podium-athlete-nmv {
@@ -1161,9 +1176,14 @@
           Campaign Champions Podium
         </h2>
       </div>
-      <span class="text-muted" style="font-size: 0.78rem; font-weight: 600;">
-        Top 3 Brands • Ranked by Cumulative NMV
-      </span>
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <button type="button" class="dd-race-btn active" id="btnPodiumRaceSync" onclick="togglePodiumRaceSync()" title="Synchronize podium in real-time with race playback">
+          <i class="bi bi-broadcast"></i> Live Race Sync: <span id="podiumSyncLabel">ON</span>
+        </button>
+        <span class="text-muted" style="font-size: 0.78rem; font-weight: 600;" id="podiumSubText">
+          Top 3 Brands • Ranked by Cumulative NMV
+        </span>
+      </div>
     </div>
 
     <div class="dd-podium-stage" id="podiumStage">
@@ -1483,6 +1503,9 @@
   let velocitySmoothedYMin = null;
   let velocitySmoothedYMax = null;
 
+  // Podium Live Race Sync State
+  let isPodiumRaceSync = true; // Responsive to race animation by default
+
   // Auto-refresh timer state (300 seconds = 5 minutes)
   let refreshIntervalSec = 300;
   let refreshCountdown = refreshIntervalSec;
@@ -1603,7 +1626,6 @@
 
     preloadBrandLogos();
     renderKpis();
-    renderPodium();
     renderLeaderboardTable();
 
     // Set timeline max hours
@@ -1625,6 +1647,8 @@
     }
     lineRaceProgress = lineRaceMaxHour;
     updateLineRaceUI(lineRaceProgress);
+
+    renderPodium();
 
     const syncEl = document.getElementById('headerSyncTime');
     if (syncEl) {
@@ -1653,14 +1677,71 @@
   }
 
   /* ─────────────────────────────────────────────────────────────
-     2. Literal Stepped Podium (1st Center, 2nd Left, 3rd Right)
+     2. Literal Stepped Podium with Real-Time Race Synchronization
+     - Realtime dynamic top 3 computed from active timeline progress
+     - Persistent DOM pillars for 100% zero-flicker smoothness
+     - Spring pop-in CSS animation when brands swap positions
+     - Tabular numbers updating with interpolated coordinates
   ───────────────────────────────────────────────────────────── */
-  function renderPodium() {
+  function getDynamicPodiumData(progress) {
+    if (!campaignData || !campaignData.leaderboard || campaignData.leaderboard.length === 0) {
+      return campaignData.podium || [];
+    }
+
+    const curH = Math.max(0, Math.min(raceMaxHour || 23, progress));
+    const curInt = Math.floor(curH);
+    const frac = curH - curInt;
+
+    // In Line Race Hourly view, we track hourly velocity; otherwise cumulative progression
+    const isCumulative = (currentActiveTab === 'hourly_velocity' ? (lineRaceView === 'cumulative') : true);
+
+    const brandValues = [];
+    let totalSum = 0;
+
+    campaignData.leaderboard.forEach(b => {
+      const raw = b.hourly_nmv || [];
+      let val = 0;
+
+      if (isCumulative) {
+        for (let i = 0; i <= curInt && i < raw.length; i++) {
+          val += Number(raw[i] || 0);
+        }
+        if (frac > 0.001 && curInt + 1 < raw.length) {
+          val += Number(raw[curInt + 1] || 0) * frac;
+        }
+      } else {
+        const vPrev = Number(raw[curInt] || 0);
+        const vNext = (curInt + 1 < raw.length) ? Number(raw[curInt + 1] || 0) : vPrev;
+        val = vPrev + (vNext - vPrev) * frac;
+      }
+
+      val = Math.max(0, val);
+      totalSum += val;
+
+      brandValues.push({
+        brand: b.brand,
+        value: val
+      });
+    });
+
+    brandValues.sort((a, b) => b.value - a.value);
+
+    return brandValues.slice(0, 3).map((item, idx) => {
+      const share = totalSum > 0 ? ((item.value / totalSum) * 100) : 0;
+      return {
+        rank: idx + 1,
+        brand: item.brand,
+        total_nmv: item.value,
+        share_pct: Number(share.toFixed(1))
+      };
+    });
+  }
+
+  function updatePodiumDOM(podiumData) {
     const stageEl = document.getElementById('podiumStage');
     if (!stageEl) return;
-    const podiumData = campaignData.podium || [];
 
-    if (podiumData.length === 0) {
+    if (!podiumData || podiumData.length === 0) {
       stageEl.innerHTML = `<div class="col-12 text-center text-muted py-4">No champion data available for current filter.</div>`;
       return;
     }
@@ -1668,57 +1749,134 @@
     const pMap = {};
     podiumData.forEach(p => { pMap[p.rank] = p; });
 
-    const renderPillar = (rank, posClass, blockClass, badgeClass, iconClass, defaultLabel) => {
-      const p = pMap[rank];
-      if (!p) {
+    // Initial render if pillars don't exist yet
+    const existingPillars = stageEl.querySelectorAll('.podium-pillar');
+    if (existingPillars.length < 3) {
+      const renderInitialPillar = (rank, posClass, blockClass, badgeClass, iconClass, defaultLabel) => {
+        const p = pMap[rank] || { brand: '-', total_nmv: 0, share_pct: 0 };
+        const brandLogoHtml = window.renderBrandIcon ? window.renderBrandIcon(p.brand, rank === 1 ? 52 : 44) : '';
         return `
-          <div class="podium-pillar ${posClass}">
-            <div class="podium-athlete text-muted" style="opacity: 0.5;">
-              <div class="podium-icon-badge ${badgeClass}"><i class="${iconClass}"></i></div>
-              <div class="podium-athlete-name">-</div>
+          <div class="podium-pillar ${posClass}" data-rank="${rank}" data-brand="${p.brand}">
+            <div class="podium-athlete">
+              <div class="podium-icon-badge ${badgeClass}">
+                <i class="${iconClass}"></i>
+              </div>
+              <div class="podium-avatar-stand rank-${rank}">
+                <div class="podium-logo-img">
+                  ${brandLogoHtml}
+                </div>
+              </div>
+              <h3 class="podium-athlete-name" title="${p.brand}">${p.brand}</h3>
+              <div class="podium-athlete-nmv mono">${formatIDR(p.total_nmv, true)}</div>
             </div>
+
             <div class="podium-block ${blockClass}">
               <div class="podium-step-surface"></div>
               <span class="podium-step-num mono">${rank}</span>
               <span class="podium-step-lbl">${defaultLabel}</span>
+              <span class="podium-step-pct mono">${p.share_pct}% Share</span>
             </div>
           </div>
         `;
+      };
+
+      stageEl.innerHTML = `
+        ${renderInitialPillar(2, 'pos-2', 'block-2', 'badge-silver', 'bi bi-award-fill', '2ND PLACE')}
+        ${renderInitialPillar(1, 'pos-1', 'block-1', 'badge-gold', 'bi bi-trophy-fill', 'CHAMPION')}
+        ${renderInitialPillar(3, 'pos-3', 'block-3', 'badge-bronze', 'bi bi-star-fill', '3RD PLACE')}
+      `;
+      return;
+    }
+
+    // Dynamic, smooth zero-flicker updates on existing DOM
+    [1, 2, 3].forEach(rank => {
+      const pillar = stageEl.querySelector(`.podium-pillar[data-rank="${rank}"]`);
+      if (!pillar) return;
+
+      const p = pMap[rank];
+      if (!p) return;
+
+      const prevBrand = pillar.getAttribute('data-brand') || '';
+      const nameEl = pillar.querySelector('.podium-athlete-name');
+      const nmvEl = pillar.querySelector('.podium-athlete-nmv');
+      const pctEl = pillar.querySelector('.podium-step-pct');
+      const logoContainer = pillar.querySelector('.podium-logo-img');
+      const athleteEl = pillar.querySelector('.podium-athlete');
+
+      // Brand changed on this rank pillar -> Trigger smooth pop/swap animation
+      if (prevBrand !== p.brand) {
+        pillar.setAttribute('data-brand', p.brand);
+        if (nameEl) {
+          nameEl.textContent = p.brand;
+          nameEl.title = p.brand;
+        }
+        if (logoContainer && window.renderBrandIcon) {
+          logoContainer.innerHTML = window.renderBrandIcon(p.brand, rank === 1 ? 52 : 44);
+        }
+        if (athleteEl) {
+          athleteEl.classList.remove('podium-swap-anim');
+          void athleteEl.offsetWidth; // Reflow to restart CSS keyframe
+          athleteEl.classList.add('podium-swap-anim');
+        }
       }
 
-      const brandLogoHtml = window.renderBrandIcon ? window.renderBrandIcon(p.brand, rank === 1 ? 52 : 44) : '';
-
-      return `
-        <div class="podium-pillar ${posClass}">
-          <div class="podium-athlete">
-            <div class="podium-icon-badge ${badgeClass}">
-              <i class="${iconClass}"></i>
-            </div>
-            <div class="podium-avatar-stand rank-${rank}">
-              <div class="podium-logo-img">
-                ${brandLogoHtml}
-              </div>
-            </div>
-            <h3 class="podium-athlete-name" title="${p.brand}">${p.brand}</h3>
-            <div class="podium-athlete-nmv mono">${formatIDR(p.total_nmv, true)}</div>
-          </div>
-
-          <div class="podium-block ${blockClass}">
-            <div class="podium-step-surface"></div>
-            <span class="podium-step-num mono">${rank}</span>
-            <span class="podium-step-lbl">${defaultLabel}</span>
-            <span class="podium-step-pct mono">${p.share_pct}% Share</span>
-          </div>
-        </div>
-      `;
-    };
-
-    stageEl.innerHTML = `
-      ${renderPillar(2, 'pos-2', 'block-2', 'badge-silver', 'bi bi-award-fill', '2ND PLACE')}
-      ${renderPillar(1, 'pos-1', 'block-1', 'badge-gold', 'bi bi-trophy-fill', 'CHAMPION')}
-      ${renderPillar(3, 'pos-3', 'block-3', 'badge-bronze', 'bi bi-star-fill', '3RD PLACE')}
-    `;
+      // Always update numeric values smoothly (tabular nums)
+      if (nmvEl) {
+        nmvEl.textContent = formatIDR(p.total_nmv, true);
+      }
+      if (pctEl) {
+        pctEl.textContent = `${p.share_pct}% Share`;
+      }
+    });
   }
+
+  function updateDynamicPodium(progress) {
+    if (!isPodiumRaceSync) return;
+    const top3 = getDynamicPodiumData(progress);
+    updatePodiumDOM(top3);
+
+    const subEl = document.getElementById('podiumSubText');
+    if (subEl) {
+      const curH = Math.min(raceMaxHour || 23, Math.floor(progress));
+      const hStr = `${String(curH).padStart(2, '0')}:00`;
+      const isCumulative = (currentActiveTab === 'hourly_velocity' ? (lineRaceView === 'cumulative') : true);
+      const modeStr = isCumulative ? 'Cumulative NMV' : 'Hourly NMV';
+      subEl.textContent = `Live Race Sync • Hour ${hStr} (${modeStr})`;
+    }
+  }
+
+  function renderPodiumStatic() {
+    const staticData = campaignData.podium || [];
+    updatePodiumDOM(staticData);
+    const subEl = document.getElementById('podiumSubText');
+    if (subEl) {
+      subEl.textContent = 'Top 3 Brands • Full Campaign Total (Cumulative NMV)';
+    }
+  }
+
+  function renderPodium() {
+    if (isPodiumRaceSync) {
+      const curP = (currentActiveTab === 'bar_race') ? raceCurrentHour : lineRaceProgress;
+      updateDynamicPodium(curP);
+    } else {
+      renderPodiumStatic();
+    }
+  }
+
+  window.togglePodiumRaceSync = function() {
+    isPodiumRaceSync = !isPodiumRaceSync;
+    const btn = document.getElementById('btnPodiumRaceSync');
+    const lbl = document.getElementById('podiumSyncLabel');
+    if (btn) btn.classList.toggle('active', isPodiumRaceSync);
+    if (lbl) lbl.textContent = isPodiumRaceSync ? 'ON' : 'OFF';
+
+    if (isPodiumRaceSync) {
+      const curP = (currentActiveTab === 'bar_race') ? raceCurrentHour : lineRaceProgress;
+      updateDynamicPodium(curP);
+    } else {
+      renderPodiumStatic();
+    }
+  };
 
   /* ── 3. Lazy Tab Chart Renderer ── */
   function renderCurrentTabChart() {
@@ -1771,6 +1929,10 @@
 
     const hIdx = hourIndex !== null ? hourIndex : (timeline.length - 1);
     const frame = timeline[hIdx] || timeline[0];
+
+    if (isPodiumRaceSync && currentActiveTab === 'bar_race') {
+      updateDynamicPodium(hIdx);
+    }
 
     // Map the frame's values into the fixed category order
     const valueMap = {};
@@ -1937,6 +2099,10 @@
     const curH = Math.min(lineRaceMaxHour, Math.max(0, p));
     const curIntH = Math.floor(curH);
     const windowSize = parseInt(lineRaceWindowSize, 10) || 6;
+
+    if (isPodiumRaceSync && currentActiveTab === 'hourly_velocity') {
+      updateDynamicPodium(curH);
+    }
 
     // Continuous floating-point camera bounds (Value Axis Viewport):
     let camStart = 0;
@@ -2949,6 +3115,10 @@
     setTimeout(() => {
       renderCurrentTabChart();
       resizeActiveChart();
+      if (isPodiumRaceSync) {
+        const curP = (tabName === 'bar_race') ? raceCurrentHour : lineRaceProgress;
+        updateDynamicPodium(curP);
+      }
     }, 60);
   };
 

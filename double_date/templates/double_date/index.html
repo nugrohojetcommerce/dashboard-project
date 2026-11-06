@@ -1229,12 +1229,13 @@
   let raceSpeedMs = 1000; // Synchronized at 1.0s per step
   let allRaceBrandsCache = null;
 
-  // Line Chart Race State
-  let lineRaceCurrentHour = 0;
+  // Line Chart Race State (Continuous 60FPS Fluid Progression)
+  let lineRaceProgress = 0.0; // Current float progression (e.g. 10.45)
   let lineRaceMaxHour = 0;
   let isLineRacePlaying = false;
-  let lineRaceTimer = null;
-  let lineRaceSpeedMs = 1000; // Synchronized at 1.0s per step
+  let lineRaceRafId = null;
+  let lineRaceLastTimestamp = null;
+  let lineRaceSpeedMs = 1200; // 1.2s per 1 hour progress (customizable 1x / 2x)
   let lineRaceMetric = 'nmv'; // 'nmv' or 'gmv'
   let lineRaceMode = 'brands'; // 'brands' (pure brand battle) or 'total' (with total line)
   let lineRaceWindowSize = 6; // sliding window of 6 hours
@@ -1378,8 +1379,8 @@
       lineSlider.max = lineRaceMaxHour;
       lineSlider.value = lineRaceMaxHour;
     }
-    lineRaceCurrentHour = lineRaceMaxHour;
-    updateLineRaceHourLabel(lineRaceCurrentHour);
+    lineRaceProgress = lineRaceMaxHour;
+    updateLineRaceUI(lineRaceProgress);
 
     const syncEl = document.getElementById('headerSyncTime');
     if (syncEl) {
@@ -1492,7 +1493,7 @@
     if (currentActiveTab === 'bar_race') {
       renderBarRaceChart(raceCurrentHour);
     } else if (currentActiveTab === 'hourly_velocity') {
-      renderHourlyVelocityChart(lineRaceCurrentHour);
+      renderHourlyVelocityChart(lineRaceProgress);
     } else if (currentActiveTab === 'scatter_matrix') {
       renderScatterMatrixChart();
     } else if (currentActiveTab === 'platform_cvr') {
@@ -1658,11 +1659,35 @@
 
   /* ─────────────────────────────────────────────────────────────
      ECharts Tab 2: Animated Line Race & Velocity
-     - ZERO-FLICKER CAMERA TRACKING (Hardware DataZoom Sliding Window)
-     - DYNAMIC AUTO-ADJUSTING NMV SCALE (Never Clumped at Bottom!)
-     - BRAND LOGOS GLIDING ON LINE TIPS (via EndLabel Image RichText)
+     - 60FPS CONTINUOUS SUB-STEP PROGRESSION (Zero Teleporting!)
+     - LIQUID CAMERA TRACKING (Float Value Axis Viewport)
+     - DYNAMIC AUTO-ADJUSTING NMV SCALE (Never Clumped at Bottom)
+     - BRAND LOGOS GLIDING ON REAL-TIME LINE TIPS
   ───────────────────────────────────────────────────────────── */
-  function renderHourlyVelocityChart(targetHour = null, customDuration = null) {
+  function interpolateSeries(rawData, targetProgress) {
+    if (!rawData || rawData.length === 0) return [];
+    const curInt = Math.floor(targetProgress);
+    const frac = targetProgress - curInt;
+    const pts = [];
+
+    // All fully completed integer hours up to curInt
+    for (let i = 0; i <= curInt && i < rawData.length; i++) {
+      if (rawData[i] !== undefined && rawData[i] !== null) {
+        pts.push([i, rawData[i]]);
+      }
+    }
+
+    // Smooth continuous segment extending toward next hour in real-time!
+    if (frac > 0.001 && curInt + 1 < rawData.length) {
+      const vPrev = rawData[curInt] || 0;
+      const vNext = rawData[curInt + 1] || 0;
+      const interpVal = vPrev + (vNext - vPrev) * frac;
+      pts.push([targetProgress, interpVal]);
+    }
+    return pts;
+  }
+
+  function renderHourlyVelocityChart(targetProgress = null) {
     const el = document.getElementById('chartHourlyVelocity');
     if (!el) return;
 
@@ -1676,15 +1701,22 @@
     const allHours = hv.hours || [];
     if (allHours.length === 0) return;
 
-    const curH = targetHour !== null ? targetHour : (allHours.length - 1);
+    const p = (targetProgress !== null && targetProgress !== undefined) ? targetProgress : lineRaceProgress;
+    const curH = Math.min(lineRaceMaxHour, Math.max(0, p));
+    const curIntH = Math.floor(curH);
     const windowSize = parseInt(lineRaceWindowSize, 10) || 6;
 
-    // Sliding Window Index (dataZoom range)
-    let startIdx = 0;
+    // Continuous floating-point camera bounds (Value Axis Viewport):
+    let camStart = 0;
+    let camEnd = 23;
     if (windowSize < 24) {
-      startIdx = Math.max(0, curH - windowSize + 1);
+      const rawStart = curH - windowSize + 1;
+      camStart = Math.max(0, rawStart);
+      camEnd = Math.max(windowSize - 1, curH + 1.2);
+    } else {
+      camStart = 0;
+      camEnd = Math.max(lineRaceMaxHour, 23);
     }
-    const endIdx = curH;
 
     const isNmv = (lineRaceMetric === 'nmv');
     const isBrandBattle = (lineRaceMode === 'brands');
@@ -1716,13 +1748,15 @@
       }
     };
 
-    // Collect visible values in [startIdx..curH] for dynamic Y-axis auto-scaling!
+    // Collect visible values in [camStart..curH] for dynamic Y-axis auto-scaling
     const targetBrands = hv.brand_series || [];
     let visibleVals = [];
 
     targetBrands.forEach(b => {
       const raw = isNmv ? (b.data_nmv || b.data || []) : (b.data_gmv || b.data || []);
-      for (let i = startIdx; i <= curH; i++) {
+      const s = Math.max(0, Math.floor(camStart));
+      const e = Math.min(raw.length - 1, Math.ceil(curH));
+      for (let i = s; i <= e; i++) {
         const v = raw[i];
         if (v !== undefined && v !== null && v > 0) {
           visibleVals.push(v);
@@ -1730,16 +1764,17 @@
       }
     });
 
-    // If "With Total" mode is active, include total values in scale
     if (!isBrandBattle) {
       const totalRaw = isNmv ? (hv.total_series_nmv || hv.total_series || []) : (hv.total_series || []);
-      for (let i = startIdx; i <= curH; i++) {
+      const s = Math.max(0, Math.floor(camStart));
+      const e = Math.min(totalRaw.length - 1, Math.ceil(curH));
+      for (let i = s; i <= e; i++) {
         const v = totalRaw[i];
         if (v !== undefined && v !== null && v > 0) visibleVals.push(v);
       }
     }
 
-    // Dynamic, smoothly-damped Y-axis boundaries (No sudden snapping or bouncing):
+    // Dynamic, smoothly-damped Y-axis boundaries
     let targetMin = 0;
     let targetMax = 1000000;
 
@@ -1757,40 +1792,41 @@
       targetMax = Math.ceil(vMax + Math.max(span * 0.25, vMax * 0.15));
     }
 
-    // Exponential smoothing so Y boundaries glide gradually like a fluid camera
-    if (velocitySmoothedYMin === null || customDuration === 0 || !isLineRacePlaying) {
+    // Exponential smoothing so Y boundaries glide continuously without sudden leaps
+    if (velocitySmoothedYMin === null || !isLineRacePlaying) {
       velocitySmoothedYMin = targetMin;
       velocitySmoothedYMax = targetMax;
     } else {
-      velocitySmoothedYMin = Math.round(velocitySmoothedYMin * 0.65 + targetMin * 0.35);
-      velocitySmoothedYMax = Math.round(velocitySmoothedYMax * 0.65 + targetMax * 0.35);
+      velocitySmoothedYMin = Math.round(velocitySmoothedYMin * 0.90 + targetMin * 0.10);
+      velocitySmoothedYMax = Math.round(velocitySmoothedYMax * 0.90 + targetMax * 0.10);
     }
-
-    const stepDuration = customDuration !== null ? customDuration : lineRaceSpeedMs;
 
     const series = [];
 
     // 1. Optional Total Campaign Line
     if (!isBrandBattle) {
       const totalRaw = isNmv ? (hv.total_series_nmv || hv.total_series || []) : (hv.total_series || []);
-      const totalData = allHours.map((_, i) => (i <= curH ? totalRaw[i] : null));
-      const lastTotalVal = totalRaw[curH] || 0;
+      const totalPts = interpolateSeries(totalRaw, curH);
 
       series.push({
         name: 'Total Campaign',
         type: 'line',
-        smooth: 0.35,
-        data: totalData,
+        smooth: 0.25,
+        data: totalPts,
         lineStyle: { width: 3, color: tc.orange, type: 'dashed' },
         itemStyle: { color: tc.orange },
+        showSymbol: true,
         symbol: 'circle',
-        symbolSize: 6,
+        symbolSize: function(val, params) {
+          return params.dataIndex === totalPts.length - 1 ? 8 : 4;
+        },
         endLabel: {
           show: true,
-          valueAnimation: true,
+          valueAnimation: false,
           distance: 14,
-          formatter: function() {
-            return `{flag|} {name|Total} {val|${formatIDR(lastTotalVal, true)}}`;
+          formatter: function(params) {
+            const yVal = Array.isArray(params.value) ? params.value[1] : params.value;
+            return `{flag|} {name|Total} {val|${formatIDR(yVal, true)}}`;
           },
           rich: {
             flag: {
@@ -1822,13 +1858,13 @@
       });
     }
 
-    // 2. Individual Top Brand Lines (Brand Logos on the Line Tips)
+    // 2. Individual Top Brand Lines with 60FPS Fluid Tip Tracking
     targetBrands.forEach((b, idx) => {
       const color = tc.palette[(idx + 1) % tc.palette.length];
       const rawData = isNmv ? (b.data_nmv || b.data || []) : (b.data_gmv || b.data || []);
       
-      // Points up to curH; future points null so the line ends right at curH
-      const brandData = allHours.map((_, i) => (i <= curH ? rawData[i] : null));
+      // Interpolate coordinates smoothly: [0, y0] ... [curH, y_interpolated]
+      const brandPts = interpolateSeries(rawData, curH);
 
       const safeKey = 'logo_' + b.name.replace(/[^a-zA-Z0-9]/g, '_');
       const logoUrl = window.getBrandLogoUrl ? window.getBrandLogoUrl(b.name) : null;
@@ -1859,23 +1895,26 @@
       series.push({
         name: b.name,
         type: 'line',
-        smooth: 0.35,
-        data: brandData,
+        smooth: 0.25,
+        data: brandPts,
         lineStyle: { width: 3, color: color },
         itemStyle: { color: color },
+        showSymbol: true,
         symbol: 'circle',
         symbolSize: function(val, params) {
-          return params.dataIndex === curH ? 9 : 4;
+          // Prominent dot traveling on the leading edge!
+          return params.dataIndex === brandPts.length - 1 ? 9 : 4;
         },
         endLabel: {
           show: true,
-          valueAnimation: true,
+          valueAnimation: false, // Updated continuously at 60 FPS
           distance: 14,
           formatter: function(params) {
             const brandKey = 'logo_' + params.seriesName.replace(/[^a-zA-Z0-9]/g, '_');
+            const yVal = Array.isArray(params.value) ? params.value[1] : params.value;
             const hasLogo = window.getBrandLogoUrl ? window.getBrandLogoUrl(params.seriesName) : null;
             if (hasLogo) {
-              return `{${brandKey}|}  {name|${params.seriesName}} {val|${formatIDR(params.value, true)}}`;
+              return `{${brandKey}|}  {name|${params.seriesName}} {val|${formatIDR(yVal, true)}}`;
             }
             return `{fallback|${params.seriesName[0] || 'B'}}  {name|${params.seriesName}} {val|${formatIDR(params.value, true)}}`;
           },
@@ -1885,29 +1924,33 @@
       });
     });
 
-    // Continuous percentage-based camera tracking for smooth sliding
-    const totalH = Math.max(1, allHours.length);
-    const startPct = (startIdx / totalH) * 100;
-    const endPct = (Math.min(totalH, endIdx + (windowSize < 24 ? 1.2 : 0)) / totalH) * 100;
+    const startHLabel = allHours[Math.max(0, Math.floor(camStart))] || `${String(Math.max(0, Math.floor(camStart))).padStart(2, '0')}:00`;
+    const endHLabel = allHours[Math.min(23, Math.ceil(curH))] || `${String(Math.min(23, Math.ceil(curH))).padStart(2, '0')}:00`;
 
     const option = {
       backgroundColor: 'transparent',
       title: {
-        text: `${metricTitle} Velocity Race (Timeframe: ${allHours[startIdx]} - ${allHours[endIdx]})`,
+        text: `${metricTitle} Velocity Race (Timeframe: ${startHLabel} - ${endHLabel})`,
         left: 20,
         top: 10,
         textStyle: { color: tc.titleColor, fontSize: 13, fontWeight: 700 }
       },
       tooltip: {
         trigger: 'axis',
+        axisPointer: { type: 'line', lineStyle: { color: tc.splitLineColor, type: 'dashed' } },
         backgroundColor: tc.tooltipBg,
         borderColor: tc.tooltipBorder,
         textStyle: { color: tc.textColor },
         formatter: function(params) {
-          let s = `<strong style="color:${tc.titleColor}">${params[0].axisValue}</strong><br/>`;
+          if (!params || params.length === 0) return '';
+          const xVal = params[0].value ? params[0].value[0] : 0;
+          const h = Math.round(xVal);
+          const hourStr = `${String(h).padStart(2, '0')}:00`;
+          let s = `<strong style="color:${tc.titleColor}">${hourStr}</strong><br/>`;
           params.forEach(p => {
-            if (p.value !== null && p.value !== undefined) {
-              s += `${p.marker} ${p.seriesName}: <strong>${formatIDR(p.value, true)}</strong><br/>`;
+            const yVal = Array.isArray(p.value) ? p.value[1] : p.value;
+            if (yVal !== null && yVal !== undefined) {
+              s += `${p.marker} ${p.seriesName}: <strong>${formatIDR(yVal, true)}</strong><br/>`;
             }
           });
           return s;
@@ -1922,19 +1965,28 @@
         top: 65,
         bottom: 35,
         left: 95,
-        right: 210 // Spacious right margin for logo + brand name + values
+        right: 215 // Spacious margin for gliding logos + brand names + values
       },
-      // FIXED X-Axis with all 24 hours: Never recreated, completely flicker-free!
+      // Continuous Value X-Axis: Enables true sub-step fluid drawing with zero jumps!
       xAxis: {
-        type: 'category',
-        data: allHours,
-        boundaryGap: false,
+        type: 'value',
+        min: camStart,
+        max: camEnd,
+        minInterval: 1,
+        maxInterval: 1,
+        splitNumber: Math.max(1, Math.round(camEnd - camStart)),
         axisLabel: {
           color: tc.textColor,
           fontWeight: 700,
-          fontSize: 12
+          fontSize: 12,
+          formatter: function(val) {
+            const h = Math.round(val);
+            if (h < 0 || h > 23) return '';
+            return `${String(h).padStart(2, '0')}:00`;
+          }
         },
-        axisLine: { lineStyle: { color: tc.splitLineColor } }
+        axisLine: { lineStyle: { color: tc.splitLineColor } },
+        splitLine: { lineStyle: { color: tc.splitLineColor } }
       },
       // Smooth dynamic auto-adjusting Y-Axis:
       yAxis: {
@@ -1948,48 +2000,42 @@
           fontWeight: 700,
           formatter: val => formatIDR(val, true)
         },
-        splitLine: { lineStyle: { color: tc.splitLineColor } },
-        animationDuration: 300,
-        animationDurationUpdate: stepDuration
+        splitLine: { lineStyle: { color: tc.splitLineColor } }
       },
-      // Smooth camera gliding via continuous percentage DataZoom:
-      dataZoom: [
-        {
-          type: 'inside',
-          xAxisIndex: 0,
-          start: startPct,
-          end: endPct,
-          zoomLock: true
-        }
-      ],
       series: series,
-      animation: true,
-      animationDuration: 0,
-      animationDurationUpdate: stepDuration,
-      animationEasing: 'linear',
-      animationEasingUpdate: 'linear'
+      animation: false // RAF drives 60FPS instantaneous Canvas repaint
     };
 
-    chartHourlyVelocity.setOption(option, { notMerge: false, lazyUpdate: false });
+    chartHourlyVelocity.setOption(option, { notMerge: false, lazyUpdate: true });
   }
 
   /* ─────────────────────────────────────────────────────────────
-     Line Chart Race Animation Controller
+     Line Chart Race 60FPS Animation Controller
   ───────────────────────────────────────────────────────────── */
-  function updateLineRaceHourLabel(h) {
+  function updateLineRaceHourLabel(p) {
     const badge = document.getElementById('lineRaceHourBadge');
     if (badge) {
       const hv = campaignData.hourly_velocity || {};
       const allHours = hv.hours || [];
       const windowSize = parseInt(lineRaceWindowSize, 10) || 6;
+      const curH = Math.min(lineRaceMaxHour, Math.floor(p));
       let startH = 0;
       if (windowSize < 24) {
-        startH = Math.max(0, h - windowSize + 1);
+        startH = Math.max(0, curH - windowSize + 1);
       }
       const startStr = allHours[startH] || `${String(startH).padStart(2, '0')}:00`;
-      const endStr = allHours[h] || `${String(h).padStart(2, '0')}:00`;
+      const endStr = allHours[curH] || `${String(curH).padStart(2, '0')}:00`;
       badge.textContent = `HOUR ${endStr} (${startStr} - ${endStr})`;
     }
+  }
+
+  function updateLineRaceUI(p) {
+    const curInt = Math.min(lineRaceMaxHour, Math.floor(p));
+    const slider = document.getElementById('lineRaceSlider');
+    if (slider) {
+      slider.value = curInt;
+    }
+    updateLineRaceHourLabel(p);
   }
 
   window.toggleLineRacePlay = function() {
@@ -2000,85 +2046,86 @@
     if (isLineRacePlaying) {
       btnIcon.className = 'bi bi-pause-fill';
       btnLabel.textContent = 'Pause';
-      startLineRacePlaybackLoop();
+      startLineRacePlayback();
     } else {
       btnIcon.className = 'bi bi-play-fill';
       btnLabel.textContent = 'Play Line Race';
-      stopLineRacePlaybackLoop();
+      stopLineRacePlayback();
     }
   };
 
-  function startLineRacePlaybackLoop() {
-    stopLineRacePlaybackLoop();
-    if (lineRaceCurrentHour >= lineRaceMaxHour) {
-      lineRaceCurrentHour = 0;
+  function startLineRacePlayback() {
+    stopLineRacePlayback();
+    if (lineRaceProgress >= lineRaceMaxHour) {
+      lineRaceProgress = 0.0;
       velocitySmoothedYMin = null;
       velocitySmoothedYMax = null;
     }
+    lineRaceLastTimestamp = performance.now();
 
-    // Immediately kick off current frame
-    const slider = document.getElementById('lineRaceSlider');
-    if (slider) slider.value = lineRaceCurrentHour;
-    updateLineRaceHourLabel(lineRaceCurrentHour);
-    renderHourlyVelocityChart(lineRaceCurrentHour);
-    lineRaceCurrentHour++;
+    function step(now) {
+      if (!isLineRacePlaying) return;
+      const dt = now - lineRaceLastTimestamp;
+      lineRaceLastTimestamp = now;
 
-    lineRaceTimer = setInterval(() => {
-      if (lineRaceCurrentHour > lineRaceMaxHour) {
+      // Progress forward smoothly based on lineRaceSpeedMs
+      const deltaH = dt / lineRaceSpeedMs;
+      lineRaceProgress += deltaH;
+
+      if (lineRaceProgress >= lineRaceMaxHour) {
+        lineRaceProgress = lineRaceMaxHour;
+        renderHourlyVelocityChart(lineRaceProgress);
+        updateLineRaceUI(lineRaceProgress);
         window.toggleLineRacePlay();
         return;
       }
-      const sl = document.getElementById('lineRaceSlider');
-      if (sl) sl.value = lineRaceCurrentHour;
-      updateLineRaceHourLabel(lineRaceCurrentHour);
-      renderHourlyVelocityChart(lineRaceCurrentHour);
-      lineRaceCurrentHour++;
-    }, lineRaceSpeedMs);
+
+      renderHourlyVelocityChart(lineRaceProgress);
+      updateLineRaceUI(lineRaceProgress);
+      lineRaceRafId = requestAnimationFrame(step);
+    }
+
+    lineRaceRafId = requestAnimationFrame(step);
   }
 
-  function stopLineRacePlaybackLoop() {
-    if (lineRaceTimer) {
-      clearInterval(lineRaceTimer);
-      lineRaceTimer = null;
+  function stopLineRacePlayback() {
+    if (lineRaceRafId) {
+      cancelAnimationFrame(lineRaceRafId);
+      lineRaceRafId = null;
     }
   }
 
   window.resetLineRaceTimeline = function() {
-    stopLineRacePlaybackLoop();
+    stopLineRacePlayback();
     isLineRacePlaying = false;
-    velocitySmoothedYMin = null;
-    velocitySmoothedYMax = null;
     document.getElementById('playLineRaceIcon').className = 'bi bi-play-fill';
     document.getElementById('playLineRaceLabel').textContent = 'Play Line Race';
-    lineRaceCurrentHour = 0;
-    const slider = document.getElementById('lineRaceSlider');
-    if (slider) slider.value = 0;
-    updateLineRaceHourLabel(0);
-    renderHourlyVelocityChart(0, 0);
+    lineRaceProgress = 0.0;
+    velocitySmoothedYMin = null;
+    velocitySmoothedYMax = null;
+    updateLineRaceUI(0);
+    renderHourlyVelocityChart(0);
   };
 
   window.onLineRaceSliderScrub = function(val) {
-    stopLineRacePlaybackLoop();
+    stopLineRacePlayback();
     isLineRacePlaying = false;
-    velocitySmoothedYMin = null;
-    velocitySmoothedYMax = null;
     document.getElementById('playLineRaceIcon').className = 'bi bi-play-fill';
     document.getElementById('playLineRaceLabel').textContent = 'Play Line Race';
-    lineRaceCurrentHour = parseInt(val, 10);
-    updateLineRaceHourLabel(lineRaceCurrentHour);
-    renderHourlyVelocityChart(lineRaceCurrentHour, 0);
+    lineRaceProgress = parseFloat(val);
+    velocitySmoothedYMin = null;
+    velocitySmoothedYMax = null;
+    updateLineRaceUI(lineRaceProgress);
+    renderHourlyVelocityChart(lineRaceProgress);
   };
 
   window.toggleLineRaceSpeed = function() {
-    if (lineRaceSpeedMs === 1000) {
-      lineRaceSpeedMs = 500;
+    if (lineRaceSpeedMs === 1200) {
+      lineRaceSpeedMs = 600;
       document.getElementById('lineRaceSpeedLabel').textContent = '2x';
     } else {
-      lineRaceSpeedMs = 1000;
+      lineRaceSpeedMs = 1200;
       document.getElementById('lineRaceSpeedLabel').textContent = '1x';
-    }
-    if (isLineRacePlaying) {
-      startLineRacePlaybackLoop();
     }
   };
 
@@ -2088,7 +2135,7 @@
     velocitySmoothedYMax = null;
     document.getElementById('btnMetricNmv').classList.toggle('active', metric === 'nmv');
     document.getElementById('btnMetricGmv').classList.toggle('active', metric === 'gmv');
-    renderHourlyVelocityChart(lineRaceCurrentHour, 0);
+    renderHourlyVelocityChart(lineRaceProgress);
   };
 
   window.setLineMode = function(mode) {
@@ -2097,13 +2144,13 @@
     velocitySmoothedYMax = null;
     document.getElementById('btnModeBrands').classList.toggle('active', mode === 'brands');
     document.getElementById('btnModeTotal').classList.toggle('active', mode === 'total');
-    renderHourlyVelocityChart(lineRaceCurrentHour, 0);
+    renderHourlyVelocityChart(lineRaceProgress);
   };
 
   window.onLineWindowSizeChanged = function(val) {
     lineRaceWindowSize = parseInt(val, 10);
-    updateLineRaceHourLabel(lineRaceCurrentHour);
-    renderHourlyVelocityChart(lineRaceCurrentHour, 0);
+    updateLineRaceHourLabel(lineRaceProgress);
+    renderHourlyVelocityChart(lineRaceProgress);
   };
 
   /* ── ECharts Tab 3: Traffic vs GMV Scatter Matrix ── */
@@ -2548,6 +2595,13 @@
 
   /* ── 6. Tab Switching with Auto-Resize ── */
   window.switchAnalyticsTab = function(tabName, btnEl) {
+    if (tabName !== 'hourly_velocity' && isLineRacePlaying) {
+      window.toggleLineRacePlay();
+    }
+    if (tabName !== 'bar_race' && isRacePlaying) {
+      window.toggleRacePlay();
+    }
+
     currentActiveTab = tabName;
     document.querySelectorAll('.dd-tabs-nav .dd-tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.dd-tab-pane').forEach(p => p.classList.remove('active'));

@@ -46,37 +46,226 @@
     max-width: 100% !important;
   }
 
-  /* ── Header Bar ── */
-  .dd-header {
+  /* ─────────────────────────────────────────────────────────────
+     FLOATING QUICK CONTROL DOCK & FLOATING FILTER MODAL
+  ───────────────────────────────────────────────────────────── */
+  .dd-floating-dock {
+    position: fixed;
+    top: 75px;
+    right: 24px;
+    z-index: 1040;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    background: var(--dd-surface);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--dd-border-h);
+    border-radius: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.16);
+    transition: all 0.25s ease;
+  }
+
+  body.tv-mode-active .dd-floating-dock {
+    top: 18px;
+    right: 18px;
+    opacity: 0.35;
+  }
+  body.tv-mode-active .dd-floating-dock:hover {
+    opacity: 1;
+  }
+
+  .dd-dock-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 0 8px 0 4px;
+    border-right: 1px solid var(--dd-border);
+  }
+
+  .dd-dock-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .dd-dock-btn:hover {
+    background: var(--dd-surface-hover);
+    color: var(--orange);
+    border-color: var(--dd-border);
+  }
+
+  .dd-dock-btn-primary {
+    background: var(--orange);
+    color: #FFFFFF !important;
+    border-color: var(--orange);
+    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
+  }
+
+  .dd-dock-btn-primary:hover {
+    background: var(--orange-bright);
+    color: #FFFFFF !important;
+  }
+
+  .dd-filter-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    background: #FFFFFF;
+    color: var(--orange);
+    margin-left: 5px;
+  }
+
+  /* Filter Modal & Backdrop */
+  .dd-filter-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1045;
+  }
+
+  .dd-filter-backdrop.active {
+    display: block;
+  }
+
+  .dd-filter-modal {
+    display: none;
+    position: fixed;
+    top: 75px;
+    right: 24px;
+    width: 360px;
+    max-width: calc(100vw - 32px);
+    background: var(--dd-surface);
+    border: 1px solid var(--dd-border-h);
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    z-index: 1050;
+    animation: ddModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  body.tv-mode-active .dd-filter-modal {
+    top: 20px;
+    right: 20px;
+  }
+
+  .dd-filter-modal.active {
+    display: flex;
+  }
+
+  @keyframes ddModalIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px) scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .dd-filter-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 20px;
-    padding: 16px 22px;
-    background: var(--dd-surface);
-    border: 1px solid var(--dd-border);
-    border-radius: var(--radius, 14px);
-    box-shadow: var(--dd-shadow);
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--dd-border);
+    background: var(--dd-surface-muted);
   }
 
-  .dd-title-group {
+  .dd-filter-modal-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .btn-close-filter {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    justify-content: center;
+  }
+  .btn-close-filter:hover {
+    color: var(--text-primary);
+    background: var(--dd-surface-hover);
+  }
+
+  .dd-filter-modal-body {
+    padding: 16px 18px;
+    overflow-y: auto;
+    max-height: calc(85vh - 120px);
+  }
+
+  .dd-form-label {
+    display: block;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .dd-filter-sync-info {
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: var(--dd-surface-hover);
+    border: 1px solid var(--dd-border);
+    margin-top: 10px;
+  }
+
+  .dd-filter-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-top: 1px solid var(--dd-border);
+    background: var(--dd-surface-muted);
   }
 
   .dd-live-badge {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    padding: 5px 12px;
+    padding: 4px 10px;
     border-radius: 20px;
     background: rgba(239, 68, 68, 0.12);
     border: 1px solid rgba(239, 68, 68, 0.35);
     color: #EF4444;
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -95,31 +284,6 @@
     0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
     70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
     100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-  }
-
-  .dd-title {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin: 0;
-    letter-spacing: -0.02em;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .dd-subtitle {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    margin: 3px 0 0 0;
-    font-family: 'JetBrains Mono', monospace;
-  }
-
-  .dd-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
   }
 
   .btn-dd {
@@ -314,6 +478,7 @@
   ───────────────────────────────────────────────────────────── */
   .dd-podium-section {
     margin-bottom: 24px;
+    padding-top: 4px;
   }
 
   .dd-section-header {
@@ -321,10 +486,12 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
   }
 
   .dd-section-title {
-    font-size: 1.05rem;
+    font-size: 1.12rem;
     font-weight: 800;
     color: var(--text-primary);
     margin: 0;
@@ -338,15 +505,15 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    gap: 16px;
-    padding: 30px 24px 0 24px;
+    gap: 20px;
+    padding: 32px 24px 0 24px;
     background: var(--dd-surface);
     border: 1px solid var(--dd-border);
     border-radius: var(--radius, 14px);
     box-shadow: var(--dd-shadow);
     position: relative;
     overflow: hidden;
-    background-image: radial-gradient(circle at 50% 0%, rgba(255, 107, 0, 0.05) 0%, transparent 70%);
+    background-image: radial-gradient(circle at 50% 0%, rgba(255, 107, 0, 0.06) 0%, transparent 70%);
   }
 
   .podium-pillar {
@@ -369,7 +536,7 @@
     align-items: center;
     text-align: center;
     width: 100%;
-    margin-bottom: -4px;
+    margin-bottom: 6px;
     z-index: 2;
     position: relative;
   }
@@ -378,8 +545,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     font-size: 1.15rem;
     margin-bottom: 8px;
@@ -427,67 +594,61 @@
   }
 
   .podium-avatar-stand.rank-1 .podium-logo-img {
-    width: 68px;
-    height: 68px;
+    width: 72px;
+    height: 72px;
     border-color: #EAB308;
     box-shadow: 0 0 20px rgba(234, 179, 8, 0.35);
   }
 
   .podium-avatar-stand.rank-2 .podium-logo-img {
-    width: 56px;
-    height: 56px;
+    width: 60px;
+    height: 60px;
     border-color: #94A3B8;
   }
 
   .podium-avatar-stand.rank-3 .podium-logo-img {
-    width: 52px;
-    height: 52px;
+    width: 56px;
+    height: 56px;
     border-color: #EA580C;
   }
 
   .podium-athlete-name {
-    font-size: 1.05rem;
+    font-size: 1.15rem;
     font-weight: 800;
     color: var(--text-primary);
-    margin: 0;
+    margin: 4px 0 2px 0;
     line-height: 1.2;
+    max-width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .podium-athlete-gmv {
+  .podium-athlete-nmv {
     font-size: 1.35rem;
     font-weight: 800;
     color: var(--text-primary);
     margin: 2px 0 6px 0;
   }
 
-  .podium-pillar.pos-1 .podium-athlete-gmv {
-    font-size: 1.6rem;
+  .podium-pillar.pos-1 .podium-athlete-nmv {
+    font-size: 1.65rem;
+    font-weight: 900;
     color: #EAB308;
-    text-shadow: 0 2px 8px rgba(234, 179, 8, 0.2);
-  }
-
-  .podium-stats-chip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 10px;
-    border-radius: 8px;
-    background: var(--dd-surface-hover);
-    border: 1px solid var(--dd-border);
-    font-size: 0.72rem;
-    margin-bottom: 8px;
+    text-shadow: 0 2px 8px rgba(234, 179, 8, 0.25);
   }
 
   /* The Literal Pedestal Step Block */
   .podium-block {
     width: 100%;
-    border-radius: 12px 12px 0 0;
+    border-radius: 14px 14px 0 0;
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    padding: 16px 10px 12px 10px;
+    box-sizing: border-box;
     box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.08);
   }
 
@@ -496,13 +657,13 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 10px;
-    background: rgba(255, 255, 255, 0.25);
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   }
 
   .podium-block.block-1 {
-    height: 180px;
+    height: 200px;
     background: linear-gradient(180deg, #F59E0B 0%, #D97706 50%, #B45309 100%);
     color: #FFFFFF;
     border-top: 1px solid #FDE047;
@@ -515,7 +676,7 @@
   }
 
   .podium-block.block-2 {
-    height: 125px;
+    height: 150px;
     background: linear-gradient(180deg, #94A3B8 0%, #64748B 50%, #475569 100%);
     color: #FFFFFF;
     border-top: 1px solid #CBD5E1;
@@ -528,7 +689,7 @@
   }
 
   .podium-block.block-3 {
-    height: 85px;
+    height: 115px;
     background: linear-gradient(180deg, #FB923C 0%, #EA580C 50%, #C2410C 100%);
     color: #FFFFFF;
     border-top: 1px solid #FDBA74;
@@ -541,31 +702,44 @@
   }
 
   .podium-step-num {
-    font-size: 3.5rem;
     font-weight: 900;
     line-height: 1;
     font-family: 'JetBrains Mono', monospace;
     opacity: 0.95;
     letter-spacing: -0.04em;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  .podium-pillar.pos-1 .podium-step-num {
+    font-size: 3.4rem;
+  }
+
+  .podium-pillar.pos-2 .podium-step-num {
+    font-size: 2.8rem;
+  }
+
+  .podium-pillar.pos-3 .podium-step-num {
+    font-size: 2.4rem;
   }
 
   .podium-step-lbl {
     font-size: 0.72rem;
     font-weight: 800;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     margin-top: 2px;
-    opacity: 0.9;
+    opacity: 0.92;
+    white-space: nowrap;
   }
 
   .podium-step-pct {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     margin-top: 4px;
     background: rgba(0, 0, 0, 0.22);
     padding: 2px 8px;
     border-radius: 4px;
+    white-space: nowrap;
   }
 
   .dd-momentum-pill {
@@ -870,159 +1044,125 @@
 {% block content %}
 <div class="dd-warroom">
 
-  <!-- Top Header & Live Pulse Bar -->
-  <div class="dd-header">
-    <div class="dd-title-group">
-      <div class="dd-live-badge">
-        <span class="dd-live-dot"></span>
-        <span>CAMPAIGN LIVE</span>
-      </div>
-      <div>
-        <h1 class="dd-title">
-          <i class="bi bi-trophy-fill text-warning"></i>
-          Double Date War Room & Leaderboard
-        </h1>
-        <p class="dd-subtitle">
-          <span id="headerSyncTime">Synced up to hour: --:00</span> • 
-          <span id="nextSyncTimer">Next auto-refresh in: 05:00</span>
-        </p>
-      </div>
+  <!-- Floating Quick Control & Filter Dock -->
+  <div class="dd-floating-dock" id="floatingDock">
+    <div class="dd-dock-status mono" id="dockStatusChip" title="Synced Hour">
+      <span class="dd-live-dot"></span>
+      <span id="headerSyncTime">--:00</span>
     </div>
 
-    <div class="dd-actions">
-      <button class="btn-dd" id="btnTvMode" onclick="toggleTvMode()" title="Toggle Fullscreen TV War Room Mode">
-        <i class="bi bi-fullscreen" id="tvModeIcon"></i>
-        <span id="tvModeLabel">TV Mode</span>
-      </button>
+    <button class="dd-dock-btn" id="btnManualRefresh" onclick="refreshCampaignData()" title="Fetch latest hourly data">
+      <i class="bi bi-arrow-repeat" id="refreshSpinIcon"></i>
+    </button>
 
-      <button class="btn-dd btn-dd-primary" id="btnManualRefresh" onclick="refreshCampaignData()" title="Fetch latest hourly data">
-        <i class="bi bi-arrow-repeat" id="refreshSpinIcon"></i>
-        <span>Refresh Now</span>
-      </button>
-    </div>
+    <button class="dd-dock-btn" id="btnTvMode" onclick="toggleTvMode()" title="Toggle Fullscreen TV War Room Mode">
+      <i class="bi bi-fullscreen" id="tvModeIcon"></i>
+      <span id="tvModeLabel" class="d-none">TV Mode</span>
+    </button>
+
+    <button class="dd-dock-btn dd-dock-btn-primary" id="btnFilterTrigger" onclick="toggleFloatingFilter()" title="Filter Campaign Data">
+      <i class="bi bi-funnel-fill"></i>
+      <span class="ms-1">Filters</span>
+      <span class="dd-filter-count-badge" id="filterCountBadge" style="display: none;">0</span>
+    </button>
   </div>
 
-  <!-- Filter Toolbar -->
-  <div class="dd-filter-bar">
-    <div class="dd-filter-item">
-      <label class="dd-filter-label" for="campaignDateSelect">Campaign Date:</label>
-      <select id="campaignDateSelect" class="dd-select" style="min-width: 260px;" onchange="onDateFilterChanged(this.value)">
-        {% for cd in campaign_dates %}
-          <option value="{{ cd.date }}" {% if cd.date == selected_date %}selected{% endif %}>
-            {{ cd.label }}
-          </option>
-        {% endfor %}
-      </select>
+  <!-- Floating Filter Backdrop & Modal -->
+  <div class="dd-filter-backdrop" id="filterBackdrop" onclick="toggleFloatingFilter(false)"></div>
+  <div class="dd-filter-modal" id="filterModal">
+    <div class="dd-filter-modal-header">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-sliders text-warning fs-5"></i>
+        <div>
+          <h5 class="dd-filter-modal-title">Campaign Filters</h5>
+          <span class="text-muted" style="font-size: 0.72rem;">Configure view scope & time</span>
+        </div>
+      </div>
+      <button type="button" class="btn-close-filter" onclick="toggleFloatingFilter(false)">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
 
-    <div class="dd-filter-item">
-      <label class="dd-filter-label">Platform:</label>
-      <div class="platform-pills">
-        <button class="platform-pill-btn {% if not selected_platforms %}active{% endif %}" onclick="setPlatformFilter('')">
-          <i class="bi bi-grid-fill"></i> All
-        </button>
-        {% for plat in available_platforms %}
-          <button class="platform-pill-btn {% if plat in selected_platforms %}active{% endif %}" onclick="setPlatformFilter('{{ plat }}')">
-            <span id="plat_icon_{{ plat }}"><i class="bi bi-shop"></i></span> {{ plat }}
+    <div class="dd-filter-modal-body">
+      <!-- Campaign Date Selector -->
+      <div class="mb-3">
+        <label class="dd-form-label" for="campaignDateSelect">
+          <i class="bi bi-calendar-event me-1 text-primary"></i> Campaign Date
+        </label>
+        <select id="campaignDateSelect" class="dd-select w-100" onchange="onDateFilterChanged(this.value)">
+          {% for cd in campaign_dates %}
+            <option value="{{ cd.date }}" {% if cd.date == selected_date %}selected{% endif %}>
+              {{ cd.label }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Platform Selector -->
+      <div class="mb-3">
+        <label class="dd-form-label">
+          <i class="bi bi-shop me-1 text-success"></i> Platform
+        </label>
+        <div class="platform-pills w-100">
+          <button type="button" class="platform-pill-btn {% if not selected_platforms %}active{% endif %}" data-platform="" onclick="setPlatformFilter('')">
+            <i class="bi bi-grid-fill"></i> All Platforms
           </button>
-        {% endfor %}
+          {% for plat in available_platforms %}
+            <button type="button" class="platform-pill-btn {% if plat in selected_platforms %}active{% endif %}" data-platform="{{ plat }}" onclick="setPlatformFilter('{{ plat }}')">
+              <span id="plat_icon_{{ plat }}"><i class="bi bi-shop"></i></span> {{ plat }}
+            </button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Brand Multi-Select -->
+      <div class="mb-3">
+        <label class="dd-form-label" for="brandSelect">
+          <i class="bi bi-tags me-1 text-warning"></i> Filter Brands
+        </label>
+        <select id="brandSelect" class="form-select form-select-sm w-100" multiple="multiple">
+          {% for b in user_brands %}
+            <option value="{{ b }}" {% if b in selected_brands %}selected{% endif %}>{{ b }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Auto-Sync Info -->
+      <div class="dd-filter-sync-info">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted" style="font-size: 0.74rem;">
+            <i class="bi bi-clock-history me-1"></i> Auto-refresh countdown:
+          </span>
+          <span class="mono fw-bold" id="nextSyncTimer" style="font-size: 0.76rem; color: var(--orange);">05:00</span>
+        </div>
       </div>
     </div>
 
-    <div class="dd-filter-item" style="min-width: 220px;">
-      <label class="dd-filter-label" for="brandSelect">Filter Brands:</label>
-      <select id="brandSelect" class="form-select form-select-sm" multiple="multiple" style="width: 240px;">
-        {% for b in user_brands %}
-          <option value="{{ b }}" {% if b in selected_brands %}selected{% endif %}>{{ b }}</option>
-        {% endfor %}
-      </select>
-    </div>
-  </div>
-
-  <!-- Zone 1: Macro Campaign Ticker (KPI Strip) -->
-  <div class="dd-kpi-grid" id="kpiStrip">
-    <div class="dd-kpi-card">
-      <div class="dd-kpi-header">
-        <span class="dd-kpi-title">Total GMV</span>
-        <i class="bi bi-cash-stack dd-kpi-icon"></i>
-      </div>
-      <div class="dd-kpi-value mono" id="kpiGmv">Rp 0</div>
-      <div class="dd-kpi-sub">
-        <i class="bi bi-shield-check text-success"></i>
-        <span>NMV: <strong id="kpiNmv" class="mono">Rp 0</strong></span>
-      </div>
-    </div>
-
-    <div class="dd-kpi-card">
-      <div class="dd-kpi-header">
-        <span class="dd-kpi-title">Net Orders</span>
-        <i class="bi bi-bag-check dd-kpi-icon"></i>
-      </div>
-      <div class="dd-kpi-value mono" id="kpiOrders">0</div>
-      <div class="dd-kpi-sub">
-        <i class="bi bi-box-seam"></i>
-        <span>Units: <strong id="kpiUnits" class="mono">0</strong></span>
-      </div>
-    </div>
-
-    <div class="dd-kpi-card">
-      <div class="dd-kpi-header">
-        <span class="dd-kpi-title">Traffic (Visitors)</span>
-        <i class="bi bi-people dd-kpi-icon"></i>
-      </div>
-      <div class="dd-kpi-value mono" id="kpiUv">0</div>
-      <div class="dd-kpi-sub">
-        <i class="bi bi-eye"></i>
-        <span>Pageviews: <strong id="kpiPv" class="mono">0</strong></span>
-      </div>
-    </div>
-
-    <div class="dd-kpi-card">
-      <div class="dd-kpi-header">
-        <span class="dd-kpi-title">Blended CVR</span>
-        <i class="bi bi-percent dd-kpi-icon"></i>
-      </div>
-      <div class="dd-kpi-value mono" id="kpiCvr">0.00%</div>
-      <div class="dd-kpi-sub">
-        <i class="bi bi-lightning-charge"></i>
-        <span>RPV: <strong id="kpiRpv" class="mono">Rp 0</strong></span>
-      </div>
-    </div>
-
-    <div class="dd-kpi-card">
-      <div class="dd-kpi-header">
-        <span class="dd-kpi-title">Avg Order Value</span>
-        <i class="bi bi-basket dd-kpi-icon"></i>
-      </div>
-      <div class="dd-kpi-value mono" id="kpiAov">Rp 0</div>
-      <div class="dd-kpi-sub">
-        <i class="bi bi-tags"></i>
-        <span>Discounts: <strong id="kpiDiscounts" class="mono">Rp 0</strong></span>
-      </div>
-    </div>
-
-    <div class="dd-kpi-card">
-      <div class="dd-kpi-header">
-        <span class="dd-kpi-title">Peak Rush Hour</span>
-        <i class="bi bi-fire text-danger" style="font-size: 1.1rem;"></i>
-      </div>
-      <div class="dd-kpi-value mono text-warning" id="kpiPeakHour">--:00</div>
-      <div class="dd-kpi-sub">
-        <i class="bi bi-graph-up-arrow"></i>
-        <span>GMV: <strong id="kpiPeakGmv" class="mono">Rp 0</strong></span>
-      </div>
+    <div class="dd-filter-modal-footer">
+      <button type="button" class="btn-dd" onclick="resetAllFilters()">
+        <i class="bi bi-arrow-counterclockwise"></i> Reset
+      </button>
+      <button type="button" class="btn-dd btn-dd-primary" onclick="toggleFloatingFilter(false)">
+        Apply & Close
+      </button>
     </div>
   </div>
 
-  <!-- Zone 2: The Stepped Winner's Podium (Olympic / Stepped Champions Stand) -->
+  <!-- Zone 1: The Stepped Winner's Podium (Top of Page) -->
   <div class="dd-podium-section">
     <div class="dd-section-header">
-      <h2 class="dd-section-title">
-        <i class="bi bi-trophy-fill text-warning"></i>
-        Campaign Podium (Top 3 Champions)
-      </h2>
+      <div class="d-flex align-items-center gap-2">
+        <div class="dd-live-badge me-1">
+          <span class="dd-live-dot"></span>
+          <span>LIVE</span>
+        </div>
+        <h2 class="dd-section-title">
+          <i class="bi bi-trophy-fill text-warning"></i>
+          Campaign Champions Podium
+        </h2>
+      </div>
       <span class="text-muted" style="font-size: 0.78rem; font-weight: 600;">
-        Ranked by Cumulative GMV
+        Top 3 Brands • Ranked by Cumulative NMV
       </span>
     </div>
 
@@ -1163,6 +1303,81 @@
     </div>
   </div>
 
+  <!-- Macro Campaign Ticker (KPI Strip below Race & Charts) -->
+  <div class="dd-kpi-grid my-4" id="kpiStrip">
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Total GMV</span>
+        <i class="bi bi-cash-stack dd-kpi-icon"></i>
+      </div>
+      <div class="dd-kpi-value mono" id="kpiGmv">Rp 0</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-shield-check text-success"></i>
+        <span>NMV: <strong id="kpiNmv" class="mono">Rp 0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Net Orders</span>
+        <i class="bi bi-bag-check dd-kpi-icon"></i>
+      </div>
+      <div class="dd-kpi-value mono" id="kpiOrders">0</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-box-seam"></i>
+        <span>Units: <strong id="kpiUnits" class="mono">0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Traffic (Visitors)</span>
+        <i class="bi bi-people dd-kpi-icon"></i>
+      </div>
+      <div class="dd-kpi-value mono" id="kpiUv">0</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-eye"></i>
+        <span>Pageviews: <strong id="kpiPv" class="mono">0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Blended CVR</span>
+        <i class="bi bi-percent dd-kpi-icon"></i>
+      </div>
+      <div class="dd-kpi-value mono" id="kpiCvr">0.00%</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-lightning-charge"></i>
+        <span>RPV: <strong id="kpiRpv" class="mono">Rp 0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Avg Order Value</span>
+        <i class="bi bi-basket dd-kpi-icon"></i>
+      </div>
+      <div class="dd-kpi-value mono" id="kpiAov">Rp 0</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-tags"></i>
+        <span>Discounts: <strong id="kpiDiscounts" class="mono">Rp 0</strong></span>
+      </div>
+    </div>
+
+    <div class="dd-kpi-card">
+      <div class="dd-kpi-header">
+        <span class="dd-kpi-title">Peak Rush Hour</span>
+        <i class="bi bi-fire text-danger" style="font-size: 1.1rem;"></i>
+      </div>
+      <div class="dd-kpi-value mono text-warning" id="kpiPeakHour">--:00</div>
+      <div class="dd-kpi-sub">
+        <i class="bi bi-graph-up-arrow"></i>
+        <span>GMV: <strong id="kpiPeakGmv" class="mono">Rp 0</strong></span>
+      </div>
+    </div>
+  </div>
+
   <!-- Zone 4: Full Interactive Leaderboard Table -->
   <div class="dd-card">
     <div class="dd-table-toolbar">
@@ -1276,6 +1491,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     initSelect2();
     initPlatformIcons();
+    if (window.updateFilterCountBadge) window.updateFilterCountBadge();
     // Reset dynamic caches & scaling memories for new dataset
     allRaceBrandsCache = null;
     velocitySmoothedYMin = null;
@@ -1313,9 +1529,11 @@
         placeholder: "All Brands",
         allowClear: true,
         closeOnSelect: false,
+        dropdownParent: $('#filterModal'),
         templateResult: window.formatBrandSelect2 || null,
         templateSelection: window.formatBrandSelect2 || null
       }).on('change', function() {
+        if (window.updateFilterCountBadge) window.updateFilterCountBadge();
         fetchFilteredData();
       });
     }
@@ -1469,8 +1687,6 @@
       }
 
       const brandLogoHtml = window.renderBrandIcon ? window.renderBrandIcon(p.brand, rank === 1 ? 52 : 44) : '';
-      const momentumClass = p.momentum >= 0 ? 'momentum-pos' : 'momentum-neg';
-      const momentumSign = p.momentum >= 0 ? '▲ +' : '▼ ';
 
       return `
         <div class="podium-pillar ${posClass}">
@@ -1483,18 +1699,8 @@
                 ${brandLogoHtml}
               </div>
             </div>
-            <h3 class="podium-athlete-name">${p.brand}</h3>
-            <div class="podium-athlete-gmv mono">${formatIDR(p.total_gmv, true)}</div>
-
-            <div class="podium-stats-chip mono">
-              <span>Orders: <strong>${formatNumber(p.total_orders)}</strong></span>
-              <span>•</span>
-              <span>CVR: <strong style="color: ${p.cvr > 3 ? '#10B981' : '#F59E0B'}">${p.cvr}%</strong></span>
-            </div>
-
-            <div class="dd-momentum-pill ${momentumClass} mono mb-2">
-              <span>${momentumSign}${Math.abs(p.momentum)}% vs last hr</span>
-            </div>
+            <h3 class="podium-athlete-name" title="${p.brand}">${p.brand}</h3>
+            <div class="podium-athlete-nmv mono">${formatIDR(p.total_nmv, true)}</div>
           </div>
 
           <div class="podium-block ${blockClass}">
@@ -1510,7 +1716,7 @@
     stageEl.innerHTML = `
       ${renderPillar(2, 'pos-2', 'block-2', 'badge-silver', 'bi bi-award-fill', '2ND PLACE')}
       ${renderPillar(1, 'pos-1', 'block-1', 'badge-gold', 'bi bi-trophy-fill', 'CHAMPION')}
-      ${renderPillar(3, 'pos-3', 'block-3', 'badge-bronze', 'bi bi-medal-fill', '3RD PLACE')}
+      ${renderPillar(3, 'pos-3', 'block-3', 'badge-bronze', 'bi bi-star-fill', '3RD PLACE')}
     `;
   }
 
@@ -2747,6 +2953,37 @@
   };
 
   /* ── 7. Filtering & API ── */
+  window.toggleFloatingFilter = function(forceState = null) {
+    const modal = document.getElementById('filterModal');
+    const backdrop = document.getElementById('filterBackdrop');
+    if (!modal) return;
+    const isCurrentlyActive = modal.classList.contains('active');
+    const newState = (forceState !== null) ? forceState : !isCurrentlyActive;
+    modal.classList.toggle('active', newState);
+    if (backdrop) backdrop.classList.toggle('active', newState);
+  };
+
+  window.resetAllFilters = function() {
+    if (window.jQuery && $.fn.select2) {
+      $('#brandSelect').val(null).trigger('change');
+    }
+    window.setPlatformFilter('');
+  };
+
+  window.updateFilterCountBadge = function() {
+    const badge = document.getElementById('filterCountBadge');
+    if (!badge) return;
+    const plats = getSelectedPlatforms();
+    const brands = getSelectedBrands();
+    const count = (plats.length > 0 ? 1 : 0) + (brands.length > 0 ? brands.length : 0);
+    if (count > 0) {
+      badge.textContent = count;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+  };
+
   window.onDateFilterChanged = function() {
     fetchFilteredData();
   };
@@ -2754,11 +2991,11 @@
   window.setPlatformFilter = function(plat) {
     const buttons = document.querySelectorAll('.platform-pill-btn');
     buttons.forEach(b => {
-      if (!plat && b.textContent.includes('All')) b.classList.add('active');
-      else if (plat && b.textContent.includes(plat)) b.classList.add('active');
-      else b.classList.remove('active');
+      const p = b.getAttribute('data-platform') !== null ? b.getAttribute('data-platform') : (b.textContent.includes('All') ? '' : b.textContent.trim());
+      b.classList.toggle('active', p === plat);
     });
 
+    window.updateFilterCountBadge();
     fetchFilteredData();
   };
 
@@ -2768,8 +3005,9 @@
 
   function getSelectedPlatforms() {
     const activeBtn = document.querySelector('.platform-pill-btn.active');
-    if (!activeBtn || activeBtn.textContent.includes('All')) return [];
-    return [activeBtn.textContent.trim()];
+    if (!activeBtn) return [];
+    const p = activeBtn.getAttribute('data-platform') !== null ? activeBtn.getAttribute('data-platform') : (activeBtn.textContent.includes('All') ? '' : activeBtn.textContent.trim());
+    return p ? [p] : [];
   }
 
   function getSelectedBrands() {

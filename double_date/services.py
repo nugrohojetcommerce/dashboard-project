@@ -73,16 +73,15 @@ def get_available_campaign_dates(user: User) -> list[dict[str, Any]]:
         year = d.year
         date_str = d.strftime("%Y-%m-%d")
 
-        # Determine campaign type badge & name
+        # Only allow Double Date (day == month) or Payday (day == 25)
         if day == month:
             label = f"{day}.{month} Mega Sale ({d.strftime('%d %b %Y')})"
             tag = f"{day}.{month}"
-        elif day in (24, 25, 26, 27, 28, 29, 30, 31):
+        elif day == 25:
             label = f"Payday Festival ({d.strftime('%d %b %Y')})"
             tag = "Payday"
         else:
-            label = f"Campaign ({d.strftime('%d %b %Y')})"
-            tag = "Campaign"
+            continue
 
         campaign_dates.append({
             "date": date_str,
@@ -156,11 +155,25 @@ def get_campaign_war_room_data(
     else:
         target_platforms = available_plats
 
-    # Parse date
-    try:
-        target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-    except (ValueError, TypeError):
-        target_date = OrderMartDDSummary.objects.filter(brand__in=target_brands).values_list("date", flat=True).order_by("-date").first()
+    # Parse date (strictly only Double Date or Payday)
+    target_date = None
+    if date_str:
+        try:
+            parsed = datetime.strptime(date_str, "%Y-%m-%d").date()
+            if parsed.day == parsed.month or parsed.day == 25:
+                target_date = parsed
+        except (ValueError, TypeError):
+            target_date = None
+
+    if not target_date:
+        all_dates = (
+            OrderMartDDSummary.objects.filter(brand__in=target_brands)
+            .exclude(date__isnull=True)
+            .values_list("date", flat=True)
+            .distinct()
+            .order_by("-date")
+        )
+        target_date = next((d for d in all_dates if d and (d.day == d.month or d.day == 25)), None)
         if not target_date:
             return {"error": "No campaign data available"}
         date_str = target_date.strftime("%Y-%m-%d")

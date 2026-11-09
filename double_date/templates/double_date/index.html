@@ -47,213 +47,172 @@
   }
 
   /* ─────────────────────────────────────────────────────────────
-     FLOATING QUICK CONTROL DOCK & FLOATING FILTER MODAL
+     TOP FILTER CONTROL DOCK (Standard Top Bar)
   ───────────────────────────────────────────────────────────── */
-  .dd-floating-dock {
-    position: fixed;
-    top: 75px;
-    right: 24px;
-    z-index: 1040;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 5px 8px;
-    background: var(--dd-surface);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--dd-border-h);
-    border-radius: 30px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.16);
-    transition: all 0.25s ease;
-  }
-
-  body.tv-mode-active .dd-floating-dock {
-    top: 18px;
-    right: 18px;
-    opacity: 0.35;
-  }
-  body.tv-mode-active .dd-floating-dock:hover {
-    opacity: 1;
-  }
-
-  .dd-dock-status {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    padding: 0 8px 0 4px;
-    border-right: 1px solid var(--dd-border);
-  }
-
-  .dd-dock-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 32px;
-    padding: 0 10px;
-    border-radius: 20px;
-    border: 1px solid transparent;
-    background: transparent;
-    color: var(--text-primary);
-    font-size: 0.78rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.18s ease;
-  }
-
-  .dd-dock-btn:hover {
-    background: var(--dd-surface-hover);
-    color: var(--orange);
-    border-color: var(--dd-border);
-  }
-
-  .dd-dock-btn-primary {
-    background: var(--orange);
-    color: #FFFFFF !important;
-    border-color: var(--orange);
-    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
-  }
-
-  .dd-dock-btn-primary:hover {
-    background: var(--orange-bright);
-    color: #FFFFFF !important;
-  }
-
-  .dd-filter-count-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 9px;
-    font-size: 0.65rem;
-    font-weight: 800;
-    background: #FFFFFF;
-    color: var(--orange);
-    margin-left: 5px;
-  }
-
-  /* Filter Modal & Backdrop */
-  .dd-filter-backdrop {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 1045;
-  }
-
-  .dd-filter-backdrop.active {
-    display: block;
-  }
-
-  .dd-filter-modal {
-    display: none;
-    position: fixed;
-    top: 75px;
-    right: 24px;
-    width: 360px;
-    max-width: calc(100vw - 32px);
-    background: var(--dd-surface);
-    border: 1px solid var(--dd-border-h);
-    border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
-    z-index: 1050;
-    animation: ddModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  body.tv-mode-active .dd-filter-modal {
-    top: 20px;
-    right: 20px;
-  }
-
-  .dd-filter-modal.active {
-    display: flex;
-  }
-
-  @keyframes ddModalIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px) scale(0.96);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  .dd-filter-modal-header {
+  .dd-top-dock {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--dd-border);
-    background: var(--dd-surface-muted);
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    padding: 10px 16px;
+    background: var(--dd-surface);
+    border: 1px solid var(--dd-border);
+    border-radius: var(--dd-radius);
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
   }
 
-  .dd-filter-modal-title {
-    font-size: 0.95rem;
-    font-weight: 800;
-    margin: 0;
-    color: var(--text-primary);
+  body.tv-mode-active .dd-top-dock {
+    padding: 6px 12px;
+    margin-bottom: 12px;
   }
 
-  .btn-close-filter {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 1rem;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 6px;
+  .dd-dock-left {
     display: flex;
     align-items: center;
-    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    flex: 1;
+    min-width: 0;
   }
-  .btn-close-filter:hover {
-    color: var(--text-primary);
+
+  .dd-dock-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .dd-dock-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 12px;
+    background: var(--dd-surface-muted);
+    border: 1px solid var(--dd-border);
+    border-radius: 8px;
+    transition: all 0.16s ease;
+  }
+  .dd-dock-control:hover,
+  .dd-dock-control:focus-within {
+    border-color: var(--orange);
     background: var(--dd-surface-hover);
   }
 
-  .dd-filter-modal-body {
-    padding: 16px 18px;
-    overflow-y: auto;
-    max-height: calc(85vh - 120px);
+  .dd-dock-select {
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding-right: 4px;
+  }
+  .dd-dock-select option {
+    background: var(--dd-surface);
+    color: var(--text-primary);
+    font-weight: 600;
   }
 
-  .dd-form-label {
-    display: block;
+  .dd-platform-group {
+    display: inline-flex;
+    align-items: center;
+    background: var(--dd-surface-muted);
+    border: 1px solid var(--dd-border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .dd-plat-btn {
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text-sub);
+    padding: 4px 10px;
+    border-radius: 6px;
     font-size: 0.76rem;
     font-weight: 700;
-    color: var(--text-sub);
-    margin-bottom: 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
   }
-
-  .dd-filter-sync-info {
-    padding: 10px 12px;
-    border-radius: 8px;
+  .dd-plat-btn:hover {
+    color: var(--text-primary);
     background: var(--dd-surface-hover);
-    border: 1px solid var(--dd-border);
-    margin-top: 10px;
+  }
+  .dd-plat-btn.active {
+    background: var(--orange);
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 6px rgba(255, 107, 0, 0.3);
   }
 
-  .dd-filter-modal-footer {
-    display: flex;
+  .dd-brand-wrap {
+    min-width: 220px;
+    max-width: 320px;
+    flex: 1;
+  }
+
+  .dd-brand-wrap .select2-container--default .select2-selection--multiple {
+    background-color: var(--dd-surface-muted);
+    border: 1px solid var(--dd-border);
+    border-radius: 8px;
+    min-height: 36px;
+    padding: 2px 6px;
+  }
+  .dd-brand-wrap .select2-container--default.select2-container--focus .select2-selection--multiple {
+    border-color: var(--orange);
+  }
+  .dd-brand-wrap .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: var(--dd-surface-hover);
+    border: 1px solid var(--dd-border);
+    border-radius: 5px;
+    color: var(--text-primary);
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 1px 6px;
+  }
+  .dd-brand-wrap .select2-container--default .select2-search--inline .select2-search__field {
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    margin-top: 4px;
+  }
+
+  .dd-dock-chip {
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 18px;
-    border-top: 1px solid var(--dd-border);
+    gap: 6px;
+    height: 36px;
+    padding: 0 10px;
     background: var(--dd-surface-muted);
+    border: 1px solid var(--dd-border);
+    border-radius: 8px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  .dd-dock-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--dd-border);
+    background: var(--dd-surface-muted);
+    color: var(--text-sub);
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.15s ease;
+  }
+  .dd-dock-action-btn:hover {
+    color: var(--orange);
+    border-color: var(--orange);
+    background: var(--dd-surface-hover);
   }
 
   .dd-live-badge {
@@ -1082,52 +1041,13 @@
 {% block content %}
 <div class="dd-warroom">
 
-  <!-- Floating Quick Control & Filter Dock -->
-  <div class="dd-floating-dock" id="floatingDock">
-    <div class="dd-dock-status mono" id="dockStatusChip" title="Synced Hour">
-      <span class="dd-live-dot"></span>
-      <span id="headerSyncTime">--:00</span>
-    </div>
-
-    <button class="dd-dock-btn" id="btnManualRefresh" onclick="refreshCampaignData()" title="Fetch latest hourly data">
-      <i class="bi bi-arrow-repeat" id="refreshSpinIcon"></i>
-    </button>
-
-    <button class="dd-dock-btn" id="btnTvMode" onclick="toggleTvMode()" title="Toggle Fullscreen TV War Room Mode">
-      <i class="bi bi-fullscreen" id="tvModeIcon"></i>
-      <span id="tvModeLabel" class="d-none">TV Mode</span>
-    </button>
-
-    <button class="dd-dock-btn dd-dock-btn-primary" id="btnFilterTrigger" onclick="toggleFloatingFilter()" title="Filter Campaign Data">
-      <i class="bi bi-funnel-fill"></i>
-      <span class="ms-1">Filters</span>
-      <span class="dd-filter-count-badge" id="filterCountBadge" style="display: none;">0</span>
-    </button>
-  </div>
-
-  <!-- Floating Filter Backdrop & Modal -->
-  <div class="dd-filter-backdrop" id="filterBackdrop" onclick="toggleFloatingFilter(false)"></div>
-  <div class="dd-filter-modal" id="filterModal">
-    <div class="dd-filter-modal-header">
-      <div class="d-flex align-items-center gap-2">
-        <i class="bi bi-sliders text-warning fs-5"></i>
-        <div>
-          <h5 class="dd-filter-modal-title">Campaign Filters</h5>
-          <span class="text-muted" style="font-size: 0.72rem;">Configure view scope & time</span>
-        </div>
-      </div>
-      <button type="button" class="btn-close-filter" onclick="toggleFloatingFilter(false)">
-        <i class="bi bi-x-lg"></i>
-      </button>
-    </div>
-
-    <div class="dd-filter-modal-body">
+  <!-- ── Top Filter Bar ── -->
+  <div class="dd-top-dock">
+    <div class="dd-dock-left">
       <!-- Campaign Date Selector -->
-      <div class="mb-3">
-        <label class="dd-form-label" for="campaignDateSelect">
-          <i class="bi bi-calendar-event me-1 text-primary"></i> Campaign Date
-        </label>
-        <select id="campaignDateSelect" class="dd-select w-100" onchange="onDateFilterChanged(this.value)">
+      <div class="dd-dock-control dd-date-control" title="Campaign Date">
+        <i class="bi bi-calendar-event text-primary"></i>
+        <select id="campaignDateSelect" class="dd-dock-select" onchange="onDateFilterChanged(this.value)">
           {% for cd in campaign_dates %}
             <option value="{{ cd.date }}" {% if cd.date == selected_date %}selected{% endif %}>
               {{ cd.label }}
@@ -1136,28 +1056,20 @@
         </select>
       </div>
 
-      <!-- Platform Selector -->
-      <div class="mb-3">
-        <label class="dd-form-label">
-          <i class="bi bi-shop me-1 text-success"></i> Platform
-        </label>
-        <div class="platform-pills w-100">
-          <button type="button" class="platform-pill-btn {% if not selected_platforms %}active{% endif %}" data-platform="" onclick="setPlatformFilter('')">
-            <i class="bi bi-grid-fill"></i> All Platforms
+      <!-- Platform Filter Pills -->
+      <div class="dd-platform-group" role="group" aria-label="Platform Filter">
+        <button type="button" class="dd-plat-btn platform-pill-btn {% if not selected_platforms %}active{% endif %}" data-platform="" onclick="setPlatformFilter('')">
+          All
+        </button>
+        {% for plat in available_platforms %}
+          <button type="button" class="dd-plat-btn platform-pill-btn {% if plat in selected_platforms %}active{% endif %}" data-platform="{{ plat }}" onclick="setPlatformFilter('{{ plat }}')">
+            {{ plat }}
           </button>
-          {% for plat in available_platforms %}
-            <button type="button" class="platform-pill-btn {% if plat in selected_platforms %}active{% endif %}" data-platform="{{ plat }}" onclick="setPlatformFilter('{{ plat }}')">
-              <span id="plat_icon_{{ plat }}"><i class="bi bi-shop"></i></span> {{ plat }}
-            </button>
-          {% endfor %}
-        </div>
+        {% endfor %}
       </div>
 
       <!-- Brand Multi-Select -->
-      <div class="mb-3">
-        <label class="dd-form-label" for="brandSelect">
-          <i class="bi bi-tags me-1 text-warning"></i> Filter Brands
-        </label>
+      <div class="dd-brand-wrap">
         <select id="brandSelect" class="form-select form-select-sm w-100" multiple="multiple">
           {% for b in user_brands %}
             <option value="{{ b }}" {% if b in selected_brands %}selected{% endif %}>{{ b }}</option>
@@ -1165,23 +1077,34 @@
         </select>
       </div>
 
-      <!-- Auto-Sync Info -->
-      <div class="dd-filter-sync-info">
-        <div class="d-flex justify-content-between align-items-center">
-          <span class="text-muted" style="font-size: 0.74rem;">
-            <i class="bi bi-clock-history me-1"></i> Auto-refresh countdown:
-          </span>
-          <span class="mono fw-bold" id="nextSyncTimer" style="font-size: 0.76rem; color: var(--orange);">05:00</span>
-        </div>
-      </div>
+      <!-- Reset Filters Button -->
+      <button type="button" class="dd-dock-action-btn" onclick="resetAllFilters()" title="Reset all filters">
+        <i class="bi bi-arrow-counterclockwise"></i>
+      </button>
     </div>
 
-    <div class="dd-filter-modal-footer">
-      <button type="button" class="btn-dd" onclick="resetAllFilters()">
-        <i class="bi bi-arrow-counterclockwise"></i> Reset
+    <div class="dd-dock-right">
+      <!-- Synced Hour Chip -->
+      <div class="dd-dock-chip mono" id="dockStatusChip" title="Synced Hour">
+        <span class="dd-live-dot"></span>
+        <span id="headerSyncTime">--:00</span>
+      </div>
+
+      <!-- Auto-Refresh Countdown Chip -->
+      <div class="dd-dock-chip mono text-muted" title="Auto-refresh countdown">
+        <i class="bi bi-clock-history"></i>
+        <span id="nextSyncTimer">05:00</span>
+      </div>
+
+      <!-- Refresh Button -->
+      <button type="button" class="dd-dock-action-btn" id="btnManualRefresh" onclick="refreshCampaignData()" title="Fetch latest hourly data">
+        <i class="bi bi-arrow-repeat" id="refreshSpinIcon"></i>
       </button>
-      <button type="button" class="btn-dd btn-dd-primary" onclick="toggleFloatingFilter(false)">
-        Apply & Close
+
+      <!-- TV Mode Button -->
+      <button type="button" class="dd-dock-action-btn" id="btnTvMode" onclick="toggleTvMode()" title="Toggle Fullscreen TV War Room Mode">
+        <i class="bi bi-fullscreen" id="tvModeIcon"></i>
+        <span id="tvModeLabel" class="d-none">TV Mode</span>
       </button>
     </div>
   </div>
@@ -1205,7 +1128,7 @@
             <i class="bi bi-currency-dollar"></i> NMV Rank
           </button>
           <button type="button" class="dd-metric-btn" id="btnPodiumModeTarget" onclick="setPodiumMetric('target')" title="Rank champions by % Target Achievement">
-            <i class="bi bi-bullseye"></i> 🎯 % Target Rank
+            <i class="bi bi-bullseye"></i> % Target Rank
           </button>
         </div>
         <button type="button" class="dd-race-btn active" id="btnPodiumRaceSync" onclick="togglePodiumRaceSync()" title="Synchronize podium in real-time with race playback">
@@ -1261,7 +1184,7 @@
           <div class="dd-metric-switcher ms-1">
             <button type="button" class="dd-metric-btn active" id="btnBarMetricGmv" onclick="setBarMetric('gmv')">GMV</button>
             <button type="button" class="dd-metric-btn" id="btnBarMetricNmv" onclick="setBarMetric('nmv')">NMV</button>
-            <button type="button" class="dd-metric-btn" id="btnBarMetricTarget" onclick="setBarMetric('target')" title="Race by % Target Achievement">🎯 % Target</button>
+            <button type="button" class="dd-metric-btn" id="btnBarMetricTarget" onclick="setBarMetric('target')" title="Race by % Target Achievement"><i class="bi bi-bullseye"></i> % Target</button>
           </div>
         </div>
 
@@ -1310,13 +1233,13 @@
           <div class="dd-metric-switcher ms-1">
             <button type="button" class="dd-metric-btn active" id="btnMetricNmv" onclick="setLineMetric('nmv')">NMV Scale</button>
             <button type="button" class="dd-metric-btn" id="btnMetricGmv" onclick="setLineMetric('gmv')">GMV Scale</button>
-            <button type="button" class="dd-metric-btn" id="btnMetricTarget" onclick="setLineMetric('target')" title="Race by % Target Achievement">🎯 % Target</button>
+            <button type="button" class="dd-metric-btn" id="btnMetricTarget" onclick="setLineMetric('target')" title="Race by % Target Achievement"><i class="bi bi-bullseye"></i> % Target</button>
           </div>
 
           <!-- Mode Switcher: Brands Battle vs With Total -->
           <div class="dd-metric-switcher ms-1">
-            <button type="button" class="dd-metric-btn active" id="btnModeBrands" onclick="setLineMode('brands')" title="Focus exclusively on the competing brands">⚔️ Brand Battle</button>
-            <button type="button" class="dd-metric-btn" id="btnModeTotal" onclick="setLineMode('total')" title="Include Total Campaign Line">📊 With Total</button>
+            <button type="button" class="dd-metric-btn active" id="btnModeBrands" onclick="setLineMode('brands')" title="Focus exclusively on the competing brands"><i class="bi bi-lightning-charge-fill"></i> Brand Battle</button>
+            <button type="button" class="dd-metric-btn" id="btnModeTotal" onclick="setLineMode('total')" title="Include Total Campaign Line"><i class="bi bi-bar-chart-fill"></i> With Total</button>
           </div>
         </div>
 
@@ -1607,7 +1530,6 @@
         placeholder: "All Brands",
         allowClear: true,
         closeOnSelect: false,
-        dropdownParent: $('#filterModal'),
         templateResult: window.formatBrandSelect2 || null,
         templateSelection: window.formatBrandSelect2 || null
       }).on('change', function() {
@@ -2024,7 +1946,7 @@
      ECharts Tab 1: Dynamic Bar Race Chart
      - Descending Order (Rank 1 at the top)
      - Brand Logos in Y-Axis labels
-     - Multi-Metric: GMV, NMV, and 🎯 % Target Racing Mode
+     - Multi-Metric: GMV, NMV, and % Target Racing Mode
   ───────────────────────────────────────────────────────────── */
   window.setBarMetric = function(metric) {
     barRaceMetric = metric;
@@ -2257,7 +2179,7 @@
                 label: {
                   show: true,
                   position: 'insideEndTop',
-                  formatter: '🎯 100% TARGET',
+                  formatter: '100% TARGET',
                   color: '#10B981',
                   fontWeight: 800,
                   fontSize: 11
@@ -2428,7 +2350,7 @@
           label: {
             show: true,
             position: 'insideEndTop',
-            formatter: '🎯 100% TARGET GOAL',
+            formatter: '100% TARGET GOAL',
             color: '#10B981',
             fontWeight: 800,
             fontSize: 11
@@ -3475,15 +3397,7 @@
   };
 
   /* ── 7. Filtering & API ── */
-  window.toggleFloatingFilter = function(forceState = null) {
-    const modal = document.getElementById('filterModal');
-    const backdrop = document.getElementById('filterBackdrop');
-    if (!modal) return;
-    const isCurrentlyActive = modal.classList.contains('active');
-    const newState = (forceState !== null) ? forceState : !isCurrentlyActive;
-    modal.classList.toggle('active', newState);
-    if (backdrop) backdrop.classList.toggle('active', newState);
-  };
+  window.toggleFloatingFilter = function() {};
 
   window.resetAllFilters = function() {
     if (window.jQuery && $.fn.select2) {
@@ -3611,7 +3525,7 @@
       const sec = refreshCountdown % 60;
       const el = document.getElementById('nextSyncTimer');
       if (el) {
-        el.textContent = `Next auto-refresh in: ${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        el.textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
       }
     }, 1000);
   }

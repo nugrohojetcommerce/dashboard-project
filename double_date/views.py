@@ -33,10 +33,11 @@ def index_view(request: HttpRequest) -> HttpResponse:
     available_platforms = get_available_platforms()
     user_brands = get_user_brands(user)
 
-    # Determine selected date
+    # Determine selected date (strictly Double Date or Payday)
+    valid_date_strings = {d["date"] for d in available_dates}
     selected_date = request.GET.get("date")
-    if not selected_date:
-        # Default to the most recent date
+    if not selected_date or selected_date not in valid_date_strings:
+        # Default to the most recent double date or payday
         selected_date = available_dates[0]["date"] if available_dates else ""
 
     # Parse platform filters

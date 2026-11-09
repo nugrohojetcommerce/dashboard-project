@@ -428,6 +428,9 @@
     height: 30px;
     line-height: 1;
   }
+  .bp2-btn.icon-only {
+    padding: 6px 9px;
+  }
 
   .bp2-btn:hover {
     border-color: var(--orange);
@@ -1083,6 +1086,9 @@
     border-color: var(--orange);
     color: var(--orange);
   }
+  .dd-race-btn.icon-only {
+    padding: 6px 9px;
+  }
 
   .dd-race-slider {
     flex: 1;
@@ -1365,28 +1371,21 @@
 
     <!-- Right Side Actions -->
     <div class="bp2-actions">
-      <!-- Synced Hour Chip -->
-      <div class="bp2-filter-pill mono" id="dockStatusChip" title="Synced Campaign Hour">
+      <!-- Synced Hour Chip with auto-refresh countdown -->
+      <div class="bp2-filter-pill mono" id="dockStatusChip" title="Synced Campaign Hour (Auto-refresh countdown)">
         <span class="dd-live-dot"></span>
         <span id="headerSyncTime">--:00</span>
-      </div>
-
-      <!-- Auto-Refresh Countdown Chip -->
-      <div class="bp2-filter-pill mono" title="Auto-refresh countdown">
-        <i class="bi bi-clock-history text-muted"></i>
-        <span id="nextSyncTimer">05:00</span>
+        <span class="text-muted ms-1" style="font-size: 0.68rem;" id="nextSyncTimer">(05:00)</span>
       </div>
 
       <!-- Refresh Button -->
-      <button type="button" class="bp2-btn" id="btnManualRefresh" onclick="refreshCampaignData()" title="Fetch latest hourly data">
+      <button type="button" class="bp2-btn icon-only" id="btnManualRefresh" onclick="refreshCampaignData()" title="Refresh data">
         <i class="bi bi-arrow-repeat" id="refreshSpinIcon"></i>
-        <span>Refresh</span>
       </button>
 
       <!-- TV Mode Button -->
-      <button type="button" class="bp2-btn" id="btnTvMode" onclick="toggleTvMode()" title="Toggle Fullscreen TV War Room Mode">
+      <button type="button" class="bp2-btn icon-only" id="btnTvMode" onclick="toggleTvMode()" title="Fullscreen TV Mode">
         <i class="bi bi-fullscreen" id="tvModeIcon"></i>
-        <span id="tvModeLabel">TV Mode</span>
       </button>
     </div>
   </div>
@@ -1395,30 +1394,23 @@
   <div class="dd-podium-section">
     <div class="dd-section-header">
       <div class="d-flex align-items-center gap-2">
-        <div class="dd-live-badge me-1">
-          <span class="dd-live-dot"></span>
-          <span>LIVE</span>
-        </div>
         <h2 class="dd-section-title">
           <i class="bi bi-trophy-fill text-warning"></i>
-          Campaign Champions Podium
+          Champions Podium
         </h2>
       </div>
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <div class="dd-metric-switcher">
           <button type="button" class="dd-metric-btn active" id="btnPodiumModeNmv" onclick="setPodiumMetric('nmv')">
-            <i class="bi bi-currency-dollar"></i> NMV Rank
+            NMV
           </button>
           <button type="button" class="dd-metric-btn" id="btnPodiumModeTarget" onclick="setPodiumMetric('target')" title="Rank champions by % Target Achievement">
-            <i class="bi bi-bullseye"></i> % Target Rank
+            % Target
           </button>
         </div>
         <button type="button" class="dd-race-btn active" id="btnPodiumRaceSync" onclick="togglePodiumRaceSync()" title="Synchronize podium in real-time with race playback">
-          <i class="bi bi-broadcast"></i> Live Race Sync: <span id="podiumSyncLabel">ON</span>
+          <i class="bi bi-broadcast"></i> Race Sync
         </button>
-        <span class="text-muted" style="font-size: 0.78rem; font-weight: 600;" id="podiumSubText">
-          Top 3 Brands • Ranked by Cumulative NMV
-        </span>
       </div>
     </div>
 
@@ -1431,114 +1423,106 @@
   <div class="dd-card">
     <div class="dd-tabs-nav">
       <button class="dd-tab-btn active" onclick="switchAnalyticsTab('bar_race', this)">
-        <i class="bi bi-flag-fill text-warning"></i> Dynamic Bar Chart Race
+        <i class="bi bi-bar-chart-fill text-warning"></i> Bar Race
       </button>
       <button class="dd-tab-btn" onclick="switchAnalyticsTab('hourly_velocity', this)">
-        <i class="bi bi-graph-up text-primary"></i> Animated Line Race & Velocity
+        <i class="bi bi-graph-up text-primary"></i> Line Race
       </button>
       <button class="dd-tab-btn" onclick="switchAnalyticsTab('scatter_matrix', this)">
-        <i class="bi bi-bullseye text-danger"></i> Traffic vs GMV Efficiency Matrix
+        <i class="bi bi-bullseye text-danger"></i> Traffic vs GMV
       </button>
       <button class="dd-tab-btn" onclick="switchAnalyticsTab('platform_cvr', this)">
-        <i class="bi bi-pie-chart text-success"></i> Platform Share & CVR Funnel
+        <i class="bi bi-pie-chart text-success"></i> Platform & CVR
       </button>
     </div>
 
     <!-- Tab 1: Bar Chart Race -->
     <div class="dd-tab-pane active" id="pane_bar_race">
       <div class="dd-race-bar">
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
           <button class="dd-race-btn" id="btnPlayRace" onclick="toggleRacePlay()">
             <i class="bi bi-play-fill" id="playRaceIcon"></i>
-            <span id="playRaceLabel">Play Race</span>
+            <span id="playRaceLabel">Play</span>
           </button>
-          <button class="dd-race-btn" onclick="resetRaceTimeline()">
-            <i class="bi bi-arrow-counterclockwise"></i> Reset
+          <button class="dd-race-btn icon-only" onclick="resetRaceTimeline()" title="Reset timeline">
+            <i class="bi bi-arrow-counterclockwise"></i>
           </button>
-          <button class="dd-race-btn" id="btnRaceSpeed" onclick="toggleRaceSpeed()">
-            Speed: <span id="raceSpeedLabel">1x</span>
+          <button class="dd-race-btn mono" id="btnRaceSpeed" onclick="toggleRaceSpeed()" title="Playback speed">
+            <span id="raceSpeedLabel">1x</span>
           </button>
-          <button class="dd-race-btn active" id="btnRaceLoop" onclick="toggleRaceLoop()" title="Toggle Infinite Loop Mode">
-            <i class="bi bi-repeat"></i> Loop: <span id="raceLoopLabel">ON</span>
+          <button class="dd-race-btn icon-only active" id="btnRaceLoop" onclick="toggleRaceLoop()" title="Toggle Infinite Loop">
+            <i class="bi bi-repeat"></i>
           </button>
 
           <!-- Metric Switcher for Bar Race -->
           <div class="dd-metric-switcher ms-1">
             <button type="button" class="dd-metric-btn active" id="btnBarMetricGmv" onclick="setBarMetric('gmv')">GMV</button>
             <button type="button" class="dd-metric-btn" id="btnBarMetricNmv" onclick="setBarMetric('nmv')">NMV</button>
-            <button type="button" class="dd-metric-btn" id="btnBarMetricTarget" onclick="setBarMetric('target')" title="Race by % Target Achievement"><i class="bi bi-bullseye"></i> % Target</button>
+            <button type="button" class="dd-metric-btn" id="btnBarMetricTarget" onclick="setBarMetric('target')" title="Race by % Target Achievement">% Target</button>
           </div>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 500px;">
-          <span class="text-muted" style="font-size: 0.75rem; font-weight: 700;">TIMELINE:</span>
+        <div style="display: flex; align-items: center; gap: 8px; flex: 1; max-width: 480px;">
           <input type="range" class="dd-race-slider" id="raceSlider" min="0" max="23" value="0" oninput="onRaceSliderScrub(this.value)">
         </div>
 
         <div>
-          <span class="dd-race-hour-badge mono" id="raceHourBadge">HOUR 00:00</span>
+          <span class="dd-race-hour-badge mono" id="raceHourBadge">00:00</span>
         </div>
       </div>
 
       <div id="chartBarRace" class="dd-chart-box"></div>
     </div>
 
-    <!-- Tab 2: Animated Line Race & Velocity (Smooth Zero-Flicker Camera Tracking) -->
+    <!-- Tab 2: Animated Line Race & Velocity -->
     <div class="dd-tab-pane" id="pane_hourly_velocity">
       <div class="dd-race-bar">
-        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
           <button class="dd-race-btn" id="btnPlayLineRace" onclick="toggleLineRacePlay()">
             <i class="bi bi-play-fill" id="playLineRaceIcon"></i>
-            <span id="playLineRaceLabel">Play Line Race</span>
+            <span id="playLineRaceLabel">Play</span>
           </button>
-          <button class="dd-race-btn" onclick="resetLineRaceTimeline()">
-            <i class="bi bi-arrow-counterclockwise"></i> Reset
+          <button class="dd-race-btn icon-only" onclick="resetLineRaceTimeline()" title="Reset timeline">
+            <i class="bi bi-arrow-counterclockwise"></i>
           </button>
-          <button class="dd-race-btn" id="btnLineRaceSpeed" onclick="toggleLineRaceSpeed()">
-            Speed: <span id="lineRaceSpeedLabel">1x</span>
+          <button class="dd-race-btn mono" id="btnLineRaceSpeed" onclick="toggleLineRaceSpeed()" title="Playback speed">
+            <span id="lineRaceSpeedLabel">1x</span>
           </button>
-          <button class="dd-race-btn active" id="btnLineRaceLoop" onclick="toggleLineRaceLoop()" title="Toggle Infinite Loop Mode">
-            <i class="bi bi-repeat"></i> Loop: <span id="lineRaceLoopLabel">ON</span>
+          <button class="dd-race-btn icon-only active" id="btnLineRaceLoop" onclick="toggleLineRaceLoop()" title="Toggle Infinite Loop">
+            <i class="bi bi-repeat"></i>
           </button>
 
-          <!-- View Accumulation Switcher: Hourly vs Cumulative -->
+          <!-- View Switcher: Hourly vs Cumulative -->
           <div class="dd-metric-switcher ms-1">
-            <button type="button" class="dd-metric-btn active" id="btnLineViewHourly" onclick="setLineView('hourly')" title="Hourly velocity (sales rate per hour)">
-              <i class="bi bi-clock-history"></i> Hourly
-            </button>
-            <button type="button" class="dd-metric-btn" id="btnLineViewCumulative" onclick="setLineView('cumulative')" title="Cumulative progress (accumulated total throughout the day)">
-              <i class="bi bi-graph-up-arrow"></i> Cumulative
-            </button>
+            <button type="button" class="dd-metric-btn active" id="btnLineViewHourly" onclick="setLineView('hourly')" title="Hourly velocity">Hourly</button>
+            <button type="button" class="dd-metric-btn" id="btnLineViewCumulative" onclick="setLineView('cumulative')" title="Cumulative progress">Cumulative</button>
           </div>
 
           <!-- Metric Switcher: NMV / GMV / % Target -->
           <div class="dd-metric-switcher ms-1">
-            <button type="button" class="dd-metric-btn active" id="btnMetricNmv" onclick="setLineMetric('nmv')">NMV Scale</button>
-            <button type="button" class="dd-metric-btn" id="btnMetricGmv" onclick="setLineMetric('gmv')">GMV Scale</button>
-            <button type="button" class="dd-metric-btn" id="btnMetricTarget" onclick="setLineMetric('target')" title="Race by % Target Achievement"><i class="bi bi-bullseye"></i> % Target</button>
+            <button type="button" class="dd-metric-btn active" id="btnMetricNmv" onclick="setLineMetric('nmv')">NMV</button>
+            <button type="button" class="dd-metric-btn" id="btnMetricGmv" onclick="setLineMetric('gmv')">GMV</button>
+            <button type="button" class="dd-metric-btn" id="btnMetricTarget" onclick="setLineMetric('target')" title="Race by % Target Achievement">% Target</button>
           </div>
 
-          <!-- Mode Switcher: Brands Battle vs With Total -->
-          <div class="dd-metric-switcher ms-1">
-            <button type="button" class="dd-metric-btn active" id="btnModeBrands" onclick="setLineMode('brands')" title="Focus exclusively on the competing brands"><i class="bi bi-lightning-charge-fill"></i> Brand Battle</button>
-            <button type="button" class="dd-metric-btn" id="btnModeTotal" onclick="setLineMode('total')" title="Include Total Campaign Line"><i class="bi bi-bar-chart-fill"></i> With Total</button>
-          </div>
+          <!-- Mode Toggle: Total Line -->
+          <button type="button" class="dd-race-btn ms-1" id="btnModeTotal" onclick="toggleLineTotal()" title="Toggle Total Campaign Line">
+            <i class="bi bi-bar-chart-fill"></i> Total Line
+          </button>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 360px;">
-          <span class="text-muted" style="font-size: 0.75rem; font-weight: 700;">TIMELINE:</span>
+        <div style="display: flex; align-items: center; gap: 8px; flex: 1; max-width: 320px;">
           <input type="range" class="dd-race-slider" id="lineRaceSlider" min="0" max="23" value="0" oninput="onLineRaceSliderScrub(this.value)">
         </div>
 
         <div style="display: flex; align-items: center; gap: 8px;">
-          <span class="text-muted" style="font-size: 0.72rem; font-weight: 700;">WINDOW:</span>
           <select class="dd-select" id="lineWindowSizeSelect" style="padding: 4px 8px; font-size: 0.75rem;" onchange="onLineWindowSizeChanged(this.value)">
-            <option value="6" selected>Sliding 6 Hours</option>
-            <option value="8">Sliding 8 Hours</option>
-            <option value="4">Sliding 4 Hours</option>
-            <option value="24">Full 24 Hours</option>
+            <option value="6" selected>6h Window</option>
+            <option value="8">8h Window</option>
+            <option value="4">4h Window</option>
+            <option value="24">24h Full</option>
           </select>
-          <span class="dd-race-hour-badge mono" id="lineRaceHourBadge">HOUR 00:00</span>
+          <span class="dd-race-hour-badge mono" id="lineRaceHourBadge">00:00</span>
         </div>
       </div>
 
@@ -1547,9 +1531,8 @@
 
     <!-- Tab 3: Traffic vs GMV Scatter -->
     <div class="dd-tab-pane" id="pane_scatter_matrix">
-      <div style="margin-bottom: 8px; font-size: 0.78rem; color: var(--text-muted);">
-        <i class="bi bi-info-circle"></i> 
-        <strong>Quadrant Guide:</strong> Top-Right = <em>Champions</em> (High Traffic, High GMV), Bottom-Right = <em>Traffic Leakers</em> (High Traffic, Low GMV), Top-Left = <em>High Converters</em>. Bubble size represents Order volume.
+      <div style="margin-bottom: 8px; font-size: 0.75rem; color: var(--text-muted);">
+        <i class="bi bi-info-circle me-1"></i> Bubble size = Orders • Top-Right = High Traffic & GMV • Top-Left = High CVR
       </div>
       <div id="chartScatterMatrix" class="dd-chart-box"></div>
     </div>
@@ -1576,7 +1559,6 @@
       </div>
       <div class="dd-kpi-value mono" id="kpiGmv">Rp 0</div>
       <div class="dd-kpi-sub">
-        <i class="bi bi-shield-check text-success"></i>
         <span>NMV: <strong id="kpiNmv" class="mono">Rp 0</strong></span>
       </div>
     </div>
@@ -1588,7 +1570,6 @@
       </div>
       <div class="dd-kpi-value mono text-primary" id="kpiTarget">Rp 0</div>
       <div class="dd-kpi-sub">
-        <i class="bi bi-trophy text-warning"></i>
         <span>NMV Achv: <strong id="kpiTargetAchieve" class="mono text-success">0.0%</strong></span>
       </div>
     </div>
@@ -1600,19 +1581,17 @@
       </div>
       <div class="dd-kpi-value mono" id="kpiOrders">0</div>
       <div class="dd-kpi-sub">
-        <i class="bi bi-box-seam"></i>
         <span>Units: <strong id="kpiUnits" class="mono">0</strong></span>
       </div>
     </div>
 
     <div class="dd-kpi-card">
       <div class="dd-kpi-header">
-        <span class="dd-kpi-title">Traffic (Visitors)</span>
+        <span class="dd-kpi-title">Traffic</span>
         <i class="bi bi-people dd-kpi-icon"></i>
       </div>
       <div class="dd-kpi-value mono" id="kpiUv">0</div>
       <div class="dd-kpi-sub">
-        <i class="bi bi-eye"></i>
         <span>Pageviews: <strong id="kpiPv" class="mono">0</strong></span>
       </div>
     </div>
@@ -1624,7 +1603,6 @@
       </div>
       <div class="dd-kpi-value mono" id="kpiCvr">0.00%</div>
       <div class="dd-kpi-sub">
-        <i class="bi bi-lightning-charge"></i>
         <span>RPV: <strong id="kpiRpv" class="mono">Rp 0</strong></span>
       </div>
     </div>
@@ -1636,7 +1614,6 @@
       </div>
       <div class="dd-kpi-value mono" id="kpiAov">Rp 0</div>
       <div class="dd-kpi-sub">
-        <i class="bi bi-tags"></i>
         <span>Discounts: <strong id="kpiDiscounts" class="mono">Rp 0</strong></span>
       </div>
     </div>
@@ -1648,7 +1625,6 @@
       </div>
       <div class="dd-kpi-value mono text-warning" id="kpiPeakHour">--:00</div>
       <div class="dd-kpi-sub">
-        <i class="bi bi-graph-up-arrow"></i>
         <span>GMV: <strong id="kpiPeakGmv" class="mono">Rp 0</strong></span>
       </div>
     </div>
@@ -1660,16 +1636,16 @@
       <div>
         <h2 class="dd-section-title">
           <i class="bi bi-list-ol text-warning"></i>
-          Campaign Leaderboard Standings
+          Brand Standings
         </h2>
         <span class="text-muted" style="font-size: 0.75rem;" id="leaderboardBrandCount">
-          Showing 0 brands
+          0 brands
         </span>
       </div>
 
       <div class="dd-search-box">
         <i class="bi bi-search"></i>
-        <input type="text" class="dd-search-input" id="tableSearchInput" placeholder="Search brand name..." oninput="filterLeaderboardTable(this.value)">
+        <input type="text" class="dd-search-input" id="tableSearchInput" placeholder="Search brand..." oninput="filterLeaderboardTable(this.value)">
       </div>
     </div>
 
@@ -2061,7 +2037,11 @@
 
     const syncEl = document.getElementById('headerSyncTime');
     if (syncEl) {
-      syncEl.textContent = `Synced up to hour: ${campaignData.latest_active_hour_label || '--:00'}`;
+      syncEl.textContent = campaignData.latest_active_hour_label || '--:00';
+    }
+    const chipEl = document.getElementById('dockStatusChip');
+    if (chipEl) {
+      chipEl.title = `Synced Campaign Hour: ${campaignData.latest_active_hour_label || '--:00'} (Auto-refresh countdown)`;
     }
 
     renderCurrentTabChart();
@@ -3137,15 +3117,9 @@
     if (badge) {
       const hv = campaignData.hourly_velocity || {};
       const allHours = hv.hours || [];
-      const windowSize = parseInt(lineRaceWindowSize, 10) || 6;
       const curH = Math.min(lineRaceMaxHour, Math.floor(p));
-      let startH = 0;
-      if (windowSize < 24) {
-        startH = Math.max(0, curH - windowSize + 1);
-      }
-      const startStr = allHours[startH] || `${String(startH).padStart(2, '0')}:00`;
       const endStr = allHours[curH] || `${String(curH).padStart(2, '0')}:00`;
-      badge.textContent = `HOUR ${endStr} (${startStr} - ${endStr})`;
+      badge.textContent = endStr;
     }
   }
 
@@ -3164,12 +3138,12 @@
     const btnLabel = document.getElementById('playLineRaceLabel');
 
     if (isLineRacePlaying) {
-      btnIcon.className = 'bi bi-pause-fill';
-      btnLabel.textContent = 'Pause';
+      if (btnIcon) btnIcon.className = 'bi bi-pause-fill';
+      if (btnLabel) btnLabel.textContent = 'Pause';
       startLineRacePlayback();
     } else {
-      btnIcon.className = 'bi bi-play-fill';
-      btnLabel.textContent = 'Play Line Race';
+      if (btnIcon) btnIcon.className = 'bi bi-play-fill';
+      if (btnLabel) btnLabel.textContent = 'Play';
       stopLineRacePlayback();
     }
   };
@@ -3237,15 +3211,20 @@
     isLineRaceLoop = !isLineRaceLoop;
     const btn = document.getElementById('btnLineRaceLoop');
     const lbl = document.getElementById('lineRaceLoopLabel');
-    if (btn) btn.classList.toggle('active', isLineRaceLoop);
+    if (btn) {
+      btn.classList.toggle('active', isLineRaceLoop);
+      btn.title = isLineRaceLoop ? 'Infinite Loop: ON' : 'Infinite Loop: OFF';
+    }
     if (lbl) lbl.textContent = isLineRaceLoop ? 'ON' : 'OFF';
   };
 
   window.resetLineRaceTimeline = function() {
     stopLineRacePlayback();
     isLineRacePlaying = false;
-    document.getElementById('playLineRaceIcon').className = 'bi bi-play-fill';
-    document.getElementById('playLineRaceLabel').textContent = 'Play Line Race';
+    const btnIcon = document.getElementById('playLineRaceIcon');
+    const btnLabel = document.getElementById('playLineRaceLabel');
+    if (btnIcon) btnIcon.className = 'bi bi-play-fill';
+    if (btnLabel) btnLabel.textContent = 'Play';
     lineRaceProgress = 0.0;
     velocitySmoothedYMin = null;
     velocitySmoothedYMax = null;
@@ -3256,8 +3235,10 @@
   window.onLineRaceSliderScrub = function(val) {
     stopLineRacePlayback();
     isLineRacePlaying = false;
-    document.getElementById('playLineRaceIcon').className = 'bi bi-play-fill';
-    document.getElementById('playLineRaceLabel').textContent = 'Play Line Race';
+    const btnIcon = document.getElementById('playLineRaceIcon');
+    const btnLabel = document.getElementById('playLineRaceLabel');
+    if (btnIcon) btnIcon.className = 'bi bi-play-fill';
+    if (btnLabel) btnLabel.textContent = 'Play';
     lineRaceProgress = parseFloat(val);
     velocitySmoothedYMin = null;
     velocitySmoothedYMax = null;
@@ -3312,9 +3293,16 @@
     lineRaceMode = mode;
     velocitySmoothedYMin = null;
     velocitySmoothedYMax = null;
-    document.getElementById('btnModeBrands').classList.toggle('active', mode === 'brands');
-    document.getElementById('btnModeTotal').classList.toggle('active', mode === 'total');
+    const btnBrands = document.getElementById('btnModeBrands');
+    const btnTotal = document.getElementById('btnModeTotal');
+    if (btnBrands) btnBrands.classList.toggle('active', mode === 'brands');
+    if (btnTotal) btnTotal.classList.toggle('active', mode === 'total');
     renderHourlyVelocityChart(lineRaceProgress);
+  };
+
+  window.toggleLineTotal = function() {
+    const newMode = (lineRaceMode === 'total') ? 'brands' : 'total';
+    setLineMode(newMode);
   };
 
   window.onLineWindowSizeChanged = function(val) {
@@ -3580,7 +3568,7 @@
       items = items.filter(x => x.brand.toLowerCase().includes(q));
     }
 
-    document.getElementById('leaderboardBrandCount').textContent = `Showing ${items.length} brand${items.length === 1 ? '' : 's'}`;
+    document.getElementById('leaderboardBrandCount').textContent = `${items.length} brand${items.length === 1 ? '' : 's'}`;
 
     if (items.length === 0) {
       tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted py-4">No matching brands found.</td></tr>`;
@@ -3680,7 +3668,7 @@
   function updateRaceHourLabel(h) {
     const badge = document.getElementById('raceHourBadge');
     if (badge) {
-      badge.textContent = `HOUR ${String(h).padStart(2, '0')}:00`;
+      badge.textContent = `${String(h).padStart(2, '0')}:00`;
     }
   }
 
@@ -3690,12 +3678,12 @@
     const btnLabel = document.getElementById('playRaceLabel');
 
     if (isRacePlaying) {
-      btnIcon.className = 'bi bi-pause-fill';
-      btnLabel.textContent = 'Pause';
+      if (btnIcon) btnIcon.className = 'bi bi-pause-fill';
+      if (btnLabel) btnLabel.textContent = 'Pause';
       startRacePlaybackLoop();
     } else {
-      btnIcon.className = 'bi bi-play-fill';
-      btnLabel.textContent = 'Play Race';
+      if (btnIcon) btnIcon.className = 'bi bi-play-fill';
+      if (btnLabel) btnLabel.textContent = 'Play';
       stopRacePlaybackLoop();
     }
   };
@@ -3752,15 +3740,20 @@
     isRaceLoop = !isRaceLoop;
     const btn = document.getElementById('btnRaceLoop');
     const lbl = document.getElementById('raceLoopLabel');
-    if (btn) btn.classList.toggle('active', isRaceLoop);
+    if (btn) {
+      btn.classList.toggle('active', isRaceLoop);
+      btn.title = isRaceLoop ? 'Infinite Loop: ON' : 'Infinite Loop: OFF';
+    }
     if (lbl) lbl.textContent = isRaceLoop ? 'ON' : 'OFF';
   };
 
   window.resetRaceTimeline = function() {
     stopRacePlaybackLoop();
     isRacePlaying = false;
-    document.getElementById('playRaceIcon').className = 'bi bi-play-fill';
-    document.getElementById('playRaceLabel').textContent = 'Play Race';
+    const btnIcon = document.getElementById('playRaceIcon');
+    const btnLabel = document.getElementById('playRaceLabel');
+    if (btnIcon) btnIcon.className = 'bi bi-play-fill';
+    if (btnLabel) btnLabel.textContent = 'Play';
     raceCurrentHour = 0;
     const slider = document.getElementById('raceSlider');
     if (slider) slider.value = 0;
@@ -3771,8 +3764,10 @@
   window.onRaceSliderScrub = function(val) {
     stopRacePlaybackLoop();
     isRacePlaying = false;
-    document.getElementById('playRaceIcon').className = 'bi bi-play-fill';
-    document.getElementById('playRaceLabel').textContent = 'Play Race';
+    const btnIcon = document.getElementById('playRaceIcon');
+    const btnLabel = document.getElementById('playRaceLabel');
+    if (btnIcon) btnIcon.className = 'bi bi-play-fill';
+    if (btnLabel) btnLabel.textContent = 'Play';
     raceCurrentHour = parseInt(val, 10);
     updateRaceHourLabel(raceCurrentHour);
     renderBarRaceChart(raceCurrentHour, 0);
@@ -3911,16 +3906,19 @@
 
     const icon = document.getElementById('tvModeIcon');
     const label = document.getElementById('tvModeLabel');
+    const btn = document.getElementById('btnTvMode');
 
     if (isTvMode) {
-      icon.className = 'bi bi-fullscreen-exit';
-      label.textContent = 'Exit TV';
+      if (icon) icon.className = 'bi bi-fullscreen-exit';
+      if (label) label.textContent = 'Exit TV';
+      if (btn) btn.title = 'Exit Fullscreen TV Mode';
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
       }
     } else {
-      icon.className = 'bi bi-fullscreen';
-      label.textContent = 'TV Mode';
+      if (icon) icon.className = 'bi bi-fullscreen';
+      if (label) label.textContent = 'TV Mode';
+      if (btn) btn.title = 'Fullscreen TV Mode';
       if (document.exitFullscreen && document.fullscreenElement) {
         document.exitFullscreen().catch(() => {});
       }
@@ -3944,7 +3942,7 @@
       const sec = refreshCountdown % 60;
       const el = document.getElementById('nextSyncTimer');
       if (el) {
-        el.textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        el.textContent = `(${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')})`;
       }
     }, 1000);
   }

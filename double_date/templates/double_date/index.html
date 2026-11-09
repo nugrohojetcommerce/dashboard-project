@@ -2840,7 +2840,120 @@
 
     const formatLineVal = (val) => isTarget ? `${Number(val || 0).toFixed(1)}%` : formatIDR(val, true);
 
-    const targetMarkLine = (isTarget && isCumulative) ? {
+    // Helper: calculate clean, executive-ready scale maximum with optimal +- padding
+    function calculateNiceScaleMax(maxVal, isTargetMetric, isCumulativeView) {
+      if (!maxVal || maxVal <= 0) {
+        return isTargetMetric ? 10 : 1000000;
+      }
+
+      if (isTargetMetric) {
+        // Headroom (+15% to +18%) so top line node badge and value label never touch canvas top border
+        const headRoom = isCumulativeView ? 1.15 : 1.18;
+        const target = Math.max(1, maxVal * headRoom);
+
+        let step = 5;
+        if (target <= 5) step = 1;
+        else if (target <= 15) step = 2;
+        else if (target <= 30) step = 5;
+        else if (target <= 100) step = 10;
+        else if (target <= 200) step = 20;
+        else step = 50;
+
+        return Math.max(5, Math.ceil(target / step) * step);
+      } else {
+        // NMV or GMV: Add headroom so top line and circular node badge have comfortable breathing room
+        const headRoom = isCumulativeView ? 1.15 : 1.18;
+        const target = maxVal * headRoom;
+        const exp = Math.floor(Math.log10(target));
+        const power = Math.pow(10, exp);
+        const fraction = target / power;
+
+        // Executive round step multipliers: 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.5, 8.0, 10.0
+        const niceSteps = [1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 7.5, 8.0, 10.0];
+        let niceFrac = 10.0;
+        for (let i = 0; i < niceSteps.length; i++) {
+          if (fraction <= niceSteps[i]) {
+            niceFrac = niceSteps[i];
+            break;
+          }
+        }
+        return Math.round(niceFrac * power);
+      }
+    }
+
+    const targetBrands = hv.brand_series || [];
+
+    // ── 1. Calculate Current Active Tip Node Values at curH ──
+    const activeTipPositions = [];
+    const activeTipVals = [];
+
+    // Measure current tip node values for all actively visible brand lines
+    targetBrands.forEach((b, idx) => {
+      const isVisible = (!lineRaceLegendSelected || lineRaceLegendSelected[b.name] !== false);
+      if (!isVisible) return;
+      const raw = getBrandData(b);
+      const pts = interpolateSeries(raw, curH);
+      const lastPt = pts.length > 0 ? pts[pts.length - 1] : [curH, 0];
+      const yVal = Number(lastPt[1] || 0);
+      if (!isNaN(yVal) && yVal >= 0) {
+        activeTipVals.push(yVal);
+      }
+      activeTipPositions.push({
+        name: b.name,
+        index: idx,
+        yVal: yVal,
+        pts: pts
+      });
+    });
+
+    let totalPts = null;
+    if (!isBrandBattle && (!lineRaceLegendSelected || lineRaceLegendSelected['Total Campaign'] !== false)) {
+      const totalRaw = getTotalData();
+      totalPts = interpolateSeries(totalRaw, curH);
+      const lastTotalPt = totalPts.length > 0 ? totalPts[totalPts.length - 1] : [curH, 0];
+      const totalY = Number(lastTotalPt[1] || 0);
+      if (!isNaN(totalY) && totalY >= 0) {
+        activeTipVals.push(totalY);
+      }
+      activeTipPositions.push({
+        name: 'Total Campaign',
+        isTotal: true,
+        yVal: totalY,
+        pts: totalPts
+      });
+    }
+
+    // Dynamic scale based strictly on the current max value of the active nodes at curH
+    const currentPeak = activeTipVals.length > 0 ? Math.max(...activeTipVals) : 0;
+    const targetMin = 0;
+    const targetMax = calculateNiceScaleMax(currentPeak, isTarget, isCumulative);
+
+    // Responsive smoothing: smoothly expands and contracts at 60FPS, or snaps immediately on scrub / pause
+    if (velocitySmoothedYMin === null || velocitySmoothedYMax === null || !isLineRacePlaying) {
+      velocitySmoothedYMin = targetMin;
+      velocitySmoothedYMax = targetMax;
+    } else {
+      velocitySmoothedYMin = targetMin;
+      if (isTarget) {
+        const diff = targetMax - velocitySmoothedYMax;
+        if (Math.abs(diff) < 0.2) {
+          velocitySmoothedYMax = targetMax;
+        } else {
+          velocitySmoothedYMax = Math.round((velocitySmoothedYMax * 0.88 + targetMax * 0.12) * 10) / 10;
+        }
+      } else {
+        const diff = targetMax - velocitySmoothedYMax;
+        if (Math.abs(diff) < 1000) {
+          velocitySmoothedYMax = targetMax;
+        } else {
+          velocitySmoothedYMax = Math.round(velocitySmoothedYMax * 0.88 + targetMax * 0.12);
+        }
+      }
+    }
+
+    // ── 2. Target Goal MarkLine (Show 100% Goal Line when Approaching or Reaching It) ──
+    const isTargetNearOrAboveGoal = (velocitySmoothedYMax >= 95 || targetMax >= 95);
+    const targetMarkLine = (isTarget && isCumulative && isTargetNearOrAboveGoal) ? {
       symbol: ['none', 'none'],
       lineStyle: {
         color: '#10B981',
@@ -2862,84 +2975,6 @@
       ]
     } : undefined;
 
-    // Helper: calculate clean, executive-ready scale maximum with optimal +- padding
-    function calculateNiceScaleMax(maxVal, isTargetMetric, isCumulativeView) {
-      if (!maxVal || maxVal <= 0) {
-        if (isTargetMetric) return isCumulativeView ? 100 : 50;
-        return 1000000;
-      }
-
-      if (isTargetMetric) {
-        if (isCumulativeView) {
-          // In Cumulative % Target: clearly display the 100% target goal line.
-          // If max is below 100% (e.g. 70%), scale comfortably shows 100% goal (100% or 105%).
-          // If max exceeds 100% (e.g. 180% or 230%), add +12% headroom so the leading badge has ample breathing room.
-          const base = Math.max(100, maxVal * 1.12);
-          const step = base > 100 ? 10 : 5;
-          return Math.ceil(base / step) * step;
-        } else {
-          // In Hourly % Target: hourly velocity rate per hour (e.g. 5% to 50%/hr).
-          // Scale should NOT force 100 or 120! Headroom +15%, rounded to multiple of 5 or 10.
-          const target = Math.max(10, maxVal * 1.15);
-          const step = target > 50 ? 10 : 5;
-          return Math.ceil(target / step) * step;
-        }
-      } else {
-        // NMV or GMV: Add headroom so top line and 26px node badge never touch canvas top border
-        const headRoom = isCumulativeView ? 1.12 : 1.15;
-        const target = maxVal * headRoom;
-        const exp = Math.floor(Math.log10(target));
-        const factor = Math.pow(10, Math.max(0, exp - 1));
-        let step = factor;
-        if (factor >= 10) {
-          step = (target / factor < 5) ? (factor / 2) : factor;
-        }
-        return Math.ceil(target / step) * step;
-      }
-    }
-
-    // Collect all data values of actively visible lines to determine exact scale from the beginning
-    const targetBrands = hv.brand_series || [];
-    const activeSeriesData = [];
-
-    targetBrands.forEach(b => {
-      // If user toggled off this brand in legend, do NOT include in scale
-      if (!lineRaceLegendSelected || lineRaceLegendSelected[b.name] !== false) {
-        activeSeriesData.push(getBrandData(b));
-      }
-    });
-
-    if (!isBrandBattle && (!lineRaceLegendSelected || lineRaceLegendSelected['Total Campaign'] !== false)) {
-      activeSeriesData.push(getTotalData());
-    }
-
-    let globalMax = 0;
-    let globalMin = Infinity;
-
-    activeSeriesData.forEach(rawArr => {
-      (rawArr || []).forEach(v => {
-        if (v !== undefined && v !== null && !isNaN(v)) {
-          const num = Number(v);
-          if (num > globalMax) globalMax = num;
-          if (num < globalMin && num >= 0) globalMin = num;
-        }
-      });
-    });
-
-    if (globalMin === Infinity) globalMin = 0;
-
-    const targetMin = 0;
-    const targetMax = calculateNiceScaleMax(globalMax, isTarget, isCumulative);
-
-    // Exponential smoothing when adapting to legend toggle or view switch
-    if (velocitySmoothedYMin === null || velocitySmoothedYMax === null || !isLineRacePlaying) {
-      velocitySmoothedYMin = targetMin;
-      velocitySmoothedYMax = targetMax;
-    } else {
-      velocitySmoothedYMin = targetMin;
-      velocitySmoothedYMax = Math.round(velocitySmoothedYMax * 0.90 + targetMax * 0.10);
-    }
-
     const series = [];
 
     // Track markLine assignment so it's always placed on the first visible series
@@ -2950,48 +2985,17 @@
       markLineAssigned = true;
     }
 
-    // ── Collision-Free Dynamic Node Sizing for Line Tips ──
+    // ── 3. Collision-Free Dynamic Node Sizing for Line Tips ──
     const ySpan = Math.max(1, (velocitySmoothedYMax || 100) - (velocitySmoothedYMin || 0));
     const plotHeightPx = 500; // approximate inner grid pixel height
 
-    const lineTipPositions = [];
-
-    // Measure screen Y coordinates of current tip values for all visible brand lines
-    targetBrands.forEach((b, idx) => {
-      const isVisible = (!lineRaceLegendSelected || lineRaceLegendSelected[b.name] !== false);
-      if (!isVisible) return;
-      const raw = getBrandData(b);
-      const pts = interpolateSeries(raw, curH);
-      const lastPt = pts.length > 0 ? pts[pts.length - 1] : [curH, 0];
-      const yVal = lastPt[1] || 0;
-      const screenY = plotHeightPx * (1 - (yVal - (velocitySmoothedYMin || 0)) / ySpan);
-      lineTipPositions.push({
-        name: b.name,
-        index: idx,
-        yVal: yVal,
-        screenY: screenY,
-        pts: pts
-      });
+    // Compute screen pixel Y coordinates
+    activeTipPositions.forEach(item => {
+      item.screenY = plotHeightPx * (1 - (item.yVal - (velocitySmoothedYMin || 0)) / ySpan);
     });
 
-    let totalPts = null;
-    if (!isBrandBattle && (!lineRaceLegendSelected || lineRaceLegendSelected['Total Campaign'] !== false)) {
-      const totalRaw = getTotalData();
-      totalPts = interpolateSeries(totalRaw, curH);
-      const lastTotalPt = totalPts.length > 0 ? totalPts[totalPts.length - 1] : [curH, 0];
-      const totalY = lastTotalPt[1] || 0;
-      const totalScreenY = plotHeightPx * (1 - (totalY - (velocitySmoothedYMin || 0)) / ySpan);
-      lineTipPositions.push({
-        name: 'Total Campaign',
-        isTotal: true,
-        yVal: totalY,
-        screenY: totalScreenY,
-        pts: totalPts
-      });
-    }
-
     // Sort by screenY to measure vertical gap to closest neighbor
-    const sortedLines = [...lineTipPositions].sort((a, b) => a.screenY - b.screenY);
+    const sortedLines = [...activeTipPositions].sort((a, b) => a.screenY - b.screenY);
     const dynamicNodeSizes = {};
 
     sortedLines.forEach((item, sIdx) => {
@@ -3027,7 +3031,7 @@
     });
 
     const brandTipMap = {};
-    lineTipPositions.forEach(item => {
+    activeTipPositions.forEach(item => {
       brandTipMap[item.name] = item;
     });
 

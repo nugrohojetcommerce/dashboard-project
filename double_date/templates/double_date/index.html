@@ -1089,6 +1089,11 @@
   .dd-race-btn.icon-only {
     padding: 6px 9px;
   }
+  .dd-race-btn.bp2-dropdown-trigger {
+    padding: 5px 10px;
+    height: 31px;
+    line-height: 1;
+  }
 
   .dd-race-slider {
     flex: 1;
@@ -1516,6 +1521,31 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 8px;">
+          <!-- Custom Multi-select Dropdown for Line Race Selection -->
+          <div class="bp2-dropdown-wrap" id="lineRaceDropdownWrap">
+            <button type="button" class="dd-race-btn bp2-dropdown-trigger" id="lineRaceDropdownTrigger"
+              aria-haspopup="true" aria-expanded="false" title="Filter visible lines in race"
+              style="padding: 5px 10px; font-size: 0.75rem;">
+              <i class="bi bi-layers"></i>
+              <span class="bp2-dropdown-label" id="lineRaceDropdownLabel" style="max-width: 80px;">Lines</span>
+              <span class="bp2-dropdown-badge" id="lineRaceDropdownBadge">All</span>
+              <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+            </button>
+            <div class="bp2-dropdown-menu" id="lineRaceDropdownMenu" style="right: 0; left: auto; min-width: 250px;">
+              <div class="bp2-dropdown-search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="lineRaceSearchInput" placeholder="Filter lines…" autocomplete="off">
+              </div>
+              <div class="bp2-dropdown-actions">
+                <button type="button" class="bp2-dropdown-action-btn" id="lineRaceSelectAll">Select all</button>
+                <button type="button" class="bp2-dropdown-action-btn" id="lineRaceClearAll">Clear</button>
+              </div>
+              <div class="bp2-dropdown-options" id="lineRaceOptionsList">
+                <!-- Dynamically populated from brand_series -->
+              </div>
+            </div>
+          </div>
+
           <select class="dd-select" id="lineWindowSizeSelect" style="padding: 4px 8px; font-size: 0.75rem;" onchange="onLineWindowSizeChanged(this.value)">
             <option value="6" selected>6h Window</option>
             <option value="8">8h Window</option>
@@ -1750,6 +1780,7 @@
   document.addEventListener('DOMContentLoaded', function() {
     initMultiSelect('platform');
     initMultiSelect('brand');
+    initLineRaceDropdown();
 
     // Reset dynamic caches & scaling memories for new dataset
     allRaceBrandsCache = null;
@@ -2048,6 +2079,209 @@
     }
   });
 
+  /* ── Line Race: Custom Dropdown for Line Selection ── */
+  function updateLineRaceDropdown() {
+    const optionsList = document.getElementById('lineRaceOptionsList');
+    if (!optionsList) return;
+
+    const hv = campaignData.hourly_velocity || {};
+    const brands = hv.brand_series || [];
+    const tc = (typeof getChartThemeColors === 'function') ? getChartThemeColors() : { palette: ['#FF6B00'] };
+    const palette = tc.palette || ['#FF6B00'];
+
+    const lines = [];
+
+    // 1. Optional Total Campaign Line if lineRaceMode === 'total'
+    if (lineRaceMode === 'total') {
+      lines.push({
+        name: 'Total Campaign',
+        color: tc.orange || '#FF6B00',
+        isTotal: true
+      });
+    }
+
+    // 2. Individual Brand Lines
+    brands.forEach((b, idx) => {
+      lines.push({
+        name: b.name,
+        color: palette[(idx + 1) % palette.length],
+        isTotal: false
+      });
+    });
+
+    let totalCount = lines.length;
+    let selectedCount = 0;
+    lines.forEach(line => {
+      if (lineRaceLegendSelected[line.name] !== false) {
+        selectedCount++;
+      }
+    });
+
+    const badge = document.getElementById('lineRaceDropdownBadge');
+    if (badge) {
+      if (selectedCount === totalCount && totalCount > 0) {
+        badge.textContent = 'All';
+      } else if (selectedCount === 0) {
+        badge.textContent = '0';
+      } else {
+        badge.textContent = `${selectedCount}/${totalCount}`;
+      }
+    }
+
+    let html = '';
+    lines.forEach(line => {
+      const isChecked = (lineRaceLegendSelected[line.name] !== false);
+      const logoUrl = (!line.isTotal && window.getBrandLogoUrl) ? window.getBrandLogoUrl(line.name) : null;
+      const indicatorHtml = line.isTotal
+        ? `<span style="width: 14px; height: 0; border-top: 2px dashed ${line.color}; display: inline-block; flex-shrink: 0;"></span>`
+        : `<span style="width: 10px; height: 10px; border-radius: 50%; background: ${line.color}; display: inline-block; flex-shrink: 0;"></span>`;
+
+      const logoHtml = logoUrl
+        ? `<img src="${logoUrl}" style="width: 18px; height: 18px; object-fit: contain; border-radius: 4px; background: #fff; padding: 1px;" alt="">`
+        : '';
+
+      html += `
+        <label class="bp2-dropdown-option ${isChecked ? 'selected' : ''}" data-value="${line.name}">
+          <input type="checkbox" value="${line.name}" class="line-race-check" ${isChecked ? 'checked' : ''}>
+          <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
+          ${indicatorHtml}
+          ${logoHtml}
+          <span class="bp2-option-text">${line.name}</span>
+        </label>
+      `;
+    });
+
+    optionsList.innerHTML = html;
+  }
+
+  function updateLineRaceDropdownBadge() {
+    const badge = document.getElementById('lineRaceDropdownBadge');
+    const optionsList = document.getElementById('lineRaceOptionsList');
+    if (!badge || !optionsList) return;
+
+    const options = optionsList.querySelectorAll('.bp2-dropdown-option');
+    const totalCount = options.length;
+    let selectedCount = 0;
+    options.forEach(opt => {
+      const val = opt.dataset.value;
+      if (lineRaceLegendSelected[val] !== false) selectedCount++;
+    });
+
+    if (selectedCount === totalCount && totalCount > 0) {
+      badge.textContent = 'All';
+    } else if (selectedCount === 0) {
+      badge.textContent = '0';
+    } else {
+      badge.textContent = `${selectedCount}/${totalCount}`;
+    }
+  }
+
+  function initLineRaceDropdown() {
+    const wrap = document.getElementById('lineRaceDropdownWrap');
+    const trigger = document.getElementById('lineRaceDropdownTrigger');
+    const menu = document.getElementById('lineRaceDropdownMenu');
+    const searchInput = document.getElementById('lineRaceSearchInput');
+    const selectAllBtn = document.getElementById('lineRaceSelectAll');
+    const clearAllBtn = document.getElementById('lineRaceClearAll');
+    const optionsList = document.getElementById('lineRaceOptionsList');
+
+    if (!wrap || !trigger || !menu || !optionsList) return;
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasOpen = wrap.classList.contains('open');
+      document.querySelectorAll('.bp2-dropdown-wrap.open').forEach(w => {
+        if (w !== wrap) {
+          w.classList.remove('open');
+          const tr = w.querySelector('.bp2-dropdown-trigger');
+          if (tr) tr.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (!wasOpen) {
+        wrap.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        if (searchInput) {
+          searchInput.value = '';
+          optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => opt.style.display = '');
+          setTimeout(() => searchInput.focus(), 60);
+        }
+      } else {
+        wrap.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    optionsList.addEventListener('change', (e) => {
+      const cb = e.target.closest('input[type="checkbox"]');
+      if (!cb) return;
+      const opt = cb.closest('.bp2-dropdown-option');
+      const lineName = cb.value;
+      lineRaceLegendSelected[lineName] = cb.checked;
+      if (opt) opt.classList.toggle('selected', cb.checked);
+
+      velocitySmoothedYMin = null;
+      velocitySmoothedYMax = null;
+
+      renderHourlyVelocityChart(lineRaceProgress);
+      if (isPodiumRaceSync && currentActiveTab === 'hourly_velocity') {
+        updateDynamicPodium(lineRaceProgress);
+      }
+      updateLineRaceDropdownBadge();
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const q = (e.target.value || '').trim().toLowerCase();
+        optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+          const text = (opt.dataset.value || '').toLowerCase();
+          opt.style.display = !q || text.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+          if (opt.style.display !== 'none') {
+            const val = opt.dataset.value;
+            lineRaceLegendSelected[val] = true;
+            const cb = opt.querySelector('input[type="checkbox"]');
+            if (cb) cb.checked = true;
+            opt.classList.add('selected');
+          }
+        });
+        velocitySmoothedYMin = null;
+        velocitySmoothedYMax = null;
+        renderHourlyVelocityChart(lineRaceProgress);
+        if (isPodiumRaceSync && currentActiveTab === 'hourly_velocity') {
+          updateDynamicPodium(lineRaceProgress);
+        }
+        updateLineRaceDropdownBadge();
+      });
+    }
+
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+          const val = opt.dataset.value;
+          lineRaceLegendSelected[val] = false;
+          const cb = opt.querySelector('input[type="checkbox"]');
+          if (cb) cb.checked = false;
+          opt.classList.remove('selected');
+        });
+        velocitySmoothedYMin = null;
+        velocitySmoothedYMax = null;
+        renderHourlyVelocityChart(lineRaceProgress);
+        if (isPodiumRaceSync && currentActiveTab === 'hourly_velocity') {
+          updateDynamicPodium(lineRaceProgress);
+        }
+        updateLineRaceDropdownBadge();
+      });
+    }
+  }
+
   /* ── Formatters ── */
   function formatIDR(val, compact = false) {
     if (!val || isNaN(val)) return 'Rp 0';
@@ -2102,6 +2336,7 @@
     lineRaceLegendSelected = {};
 
     preloadBrandLogos();
+    updateLineRaceDropdown();
     renderKpis();
     renderLeaderboardTable();
 
@@ -3052,6 +3287,7 @@
       });
 
       series.push({
+        id: 'Total Campaign',
         name: 'Total Campaign',
         type: 'line',
         smooth: 0.25,
@@ -3128,6 +3364,7 @@
       }
 
       series.push({
+        id: b.name,
         name: b.name,
         type: 'line',
         smooth: 0.25,
@@ -3205,13 +3442,11 @@
         }
       },
       legend: {
-        top: 10,
-        right: 30,
-        textStyle: { color: tc.textColor },
+        show: false,
         selected: lineRaceLegendSelected || {}
       },
       grid: {
-        top: 65,
+        top: 48,
         bottom: 35,
         left: 95,
         right: 215 // Spacious margin for gliding logos + brand names + values
@@ -3446,6 +3681,7 @@
     const btnTotal = document.getElementById('btnModeTotal');
     if (btnBrands) btnBrands.classList.toggle('active', mode === 'brands');
     if (btnTotal) btnTotal.classList.toggle('active', mode === 'total');
+    updateLineRaceDropdown();
     renderHourlyVelocityChart(lineRaceProgress);
   };
 

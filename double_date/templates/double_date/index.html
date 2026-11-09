@@ -1770,17 +1770,109 @@
     });
   });
 
-  // Preload all brand logo images into browser cache so Canvas can draw them instantly
-  function preloadBrandLogos() {
-    if (campaignData && campaignData.leaderboard) {
-      campaignData.leaderboard.forEach(b => {
-        const url = window.getBrandLogoUrl ? window.getBrandLogoUrl(b.brand) : null;
-        if (url) {
-          const img = new Image();
-          img.src = url;
-        }
-      });
+  // ── Preloaded Circular Brand Badges for Line Race End Nodes ──
+  const circularLogoBadgeCache = {};
+
+  function getCircularBrandBadge(brand, color = '#FF6B00') {
+    if (!brand) return null;
+    const rawUrl = window.getBrandLogoUrl ? window.getBrandLogoUrl(brand) : null;
+    if (!rawUrl) return null;
+
+    const cacheKey = `${brand}_${color}`;
+    if (circularLogoBadgeCache[cacheKey]) {
+      return circularLogoBadgeCache[cacheKey];
     }
+
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = rawUrl;
+      if (img.complete && img.naturalWidth > 0) {
+        const c = document.createElement('canvas');
+        c.width = 64;
+        c.height = 64;
+        const ctx = c.getContext('2d');
+        if (!ctx) return rawUrl;
+
+        // 1. White background circle
+        ctx.beginPath();
+        ctx.arc(32, 32, 30, 0, Math.PI * 2);
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fill();
+
+        // 2. Circular clip for inner logo image
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(32, 32, 26, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(img, 7, 7, 50, 50);
+        ctx.restore();
+
+        // 3. Colored ring matching brand line color
+        ctx.beginPath();
+        ctx.arc(32, 32, 28, 0, Math.PI * 2);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        const dataUri = c.toDataURL('image/png');
+        circularLogoBadgeCache[cacheKey] = dataUri;
+        return dataUri;
+      } else {
+        img.onload = () => {
+          try {
+            const c = document.createElement('canvas');
+            c.width = 64;
+            c.height = 64;
+            const ctx = c.getContext('2d');
+            if (ctx) {
+              ctx.beginPath();
+              ctx.arc(32, 32, 30, 0, Math.PI * 2);
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fill();
+
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(32, 32, 26, 0, Math.PI * 2);
+              ctx.clip();
+              ctx.drawImage(img, 7, 7, 50, 50);
+              ctx.restore();
+
+              ctx.beginPath();
+              ctx.arc(32, 32, 28, 0, Math.PI * 2);
+              ctx.strokeStyle = color;
+              ctx.lineWidth = 4;
+              ctx.stroke();
+
+              circularLogoBadgeCache[cacheKey] = c.toDataURL('image/png');
+            }
+          } catch (err) {}
+        };
+        return rawUrl;
+      }
+    } catch (e) {
+      return rawUrl;
+    }
+  }
+
+  // Preload all brand logo images and generate circular badges into cache
+  function preloadBrandLogos() {
+    const brands = new Set();
+    if (campaignData && campaignData.leaderboard) {
+      campaignData.leaderboard.forEach(b => brands.add(b.brand));
+    }
+    if (campaignData && campaignData.hourly_velocity && campaignData.hourly_velocity.brand_series) {
+      campaignData.hourly_velocity.brand_series.forEach(b => brands.add(b.name));
+    }
+    const tc = (typeof getChartThemeColors === 'function') ? getChartThemeColors() : { palette: ['#FF6B00'] };
+    const palette = tc.palette || ['#FF6B00'];
+
+    let idx = 0;
+    brands.forEach(brandName => {
+      const col = palette[(idx + 1) % palette.length];
+      idx++;
+      getCircularBrandBadge(brandName, col);
+    });
   }
 
   /* ── Multi-select Dropdown Controller (Brand & Platform) ── */
@@ -2770,32 +2862,6 @@
       ]
     } : undefined;
 
-    const richEndLabels = {
-      name: {
-        color: tc.titleColor,
-        fontWeight: 800,
-        fontSize: 12,
-        padding: [0, 4, 0, 4]
-      },
-      val: {
-        color: tc.textColor,
-        fontFamily: 'JetBrains Mono',
-        fontWeight: 700,
-        fontSize: 11
-      },
-      fallback: {
-        height: 22,
-        width: 22,
-        backgroundColor: tc.orange,
-        borderRadius: 11,
-        align: 'center',
-        color: '#FFFFFF',
-        fontSize: 10,
-        fontWeight: 'bold',
-        lineHeight: 22
-      }
-    };
-
     // Collect visible values in [camStart..curH] for dynamic Y-axis auto-scaling
     // Strictly considering ONLY lines that are actively selected/visible on canvas right now
     const targetBrands = hv.brand_series || [];
@@ -2888,48 +2954,129 @@
       markLineAssigned = true;
     }
 
+    // ── Collision-Free Dynamic Node Sizing for Line Tips ──
+    const ySpan = Math.max(1, (velocitySmoothedYMax || 100) - (velocitySmoothedYMin || 0));
+    const plotHeightPx = 500; // approximate inner grid pixel height
+
+    const lineTipPositions = [];
+
+    // Measure screen Y coordinates of current tip values for all visible brand lines
+    targetBrands.forEach((b, idx) => {
+      const isVisible = (!lineRaceLegendSelected || lineRaceLegendSelected[b.name] !== false);
+      if (!isVisible) return;
+      const raw = getBrandData(b);
+      const pts = interpolateSeries(raw, curH);
+      const lastPt = pts.length > 0 ? pts[pts.length - 1] : [curH, 0];
+      const yVal = lastPt[1] || 0;
+      const screenY = plotHeightPx * (1 - (yVal - (velocitySmoothedYMin || 0)) / ySpan);
+      lineTipPositions.push({
+        name: b.name,
+        index: idx,
+        yVal: yVal,
+        screenY: screenY,
+        pts: pts
+      });
+    });
+
+    let totalPts = null;
+    if (!isBrandBattle && (!lineRaceLegendSelected || lineRaceLegendSelected['Total Campaign'] !== false)) {
+      const totalRaw = getTotalData();
+      totalPts = interpolateSeries(totalRaw, curH);
+      const lastTotalPt = totalPts.length > 0 ? totalPts[totalPts.length - 1] : [curH, 0];
+      const totalY = lastTotalPt[1] || 0;
+      const totalScreenY = plotHeightPx * (1 - (totalY - (velocitySmoothedYMin || 0)) / ySpan);
+      lineTipPositions.push({
+        name: 'Total Campaign',
+        isTotal: true,
+        yVal: totalY,
+        screenY: totalScreenY,
+        pts: totalPts
+      });
+    }
+
+    // Sort by screenY to measure vertical gap to closest neighbor
+    const sortedLines = [...lineTipPositions].sort((a, b) => a.screenY - b.screenY);
+    const dynamicNodeSizes = {};
+
+    sortedLines.forEach((item, sIdx) => {
+      let dAbove = 999;
+      let dBelow = 999;
+      if (sIdx > 0) {
+        dAbove = Math.abs(item.screenY - sortedLines[sIdx - 1].screenY);
+      }
+      if (sIdx < sortedLines.length - 1) {
+        dBelow = Math.abs(sortedLines[sIdx + 1].screenY - item.screenY);
+      }
+      const minDistance = Math.min(dAbove, dBelow);
+
+      // Normal icon node size (26px) when line is spread out / top performers (>= 36px distance)
+      // Scaled-down icon node size (14px) when lines are clustered at bottom (<= 12px distance)
+      // Smooth linear interpolation in between
+      const minSize = 14;
+      const maxSize = 26;
+      const denseThreshold = 12;
+      const sparseThreshold = 36;
+
+      let size = maxSize;
+      if (minDistance <= denseThreshold) {
+        size = minSize;
+      } else if (minDistance >= sparseThreshold) {
+        size = maxSize;
+      } else {
+        const ratio = (minDistance - denseThreshold) / (sparseThreshold - denseThreshold);
+        size = Math.round(minSize + (maxSize - minSize) * ratio);
+      }
+
+      dynamicNodeSizes[item.name] = size;
+    });
+
+    const brandTipMap = {};
+    lineTipPositions.forEach(item => {
+      brandTipMap[item.name] = item;
+    });
+
     // 1. Optional Total Campaign Line
     if (!isBrandBattle) {
-      const totalRaw = getTotalData();
-      const totalPts = interpolateSeries(totalRaw, curH);
+      const totalPtsArr = totalPts || interpolateSeries(getTotalData(), curH);
+      const lastPt = totalPtsArr.length > 0 ? totalPtsArr[totalPtsArr.length - 1] : [curH, 0];
+
+      const totalDataFormatted = totalPtsArr.slice(0, -1).map(pt => ({
+        value: pt,
+        symbol: 'none'
+      }));
+      totalDataFormatted.push({
+        value: lastPt,
+        symbol: 'circle',
+        symbolSize: 8,
+        itemStyle: { color: tc.orange }
+      });
 
       series.push({
         name: 'Total Campaign',
         type: 'line',
         smooth: 0.25,
-        data: totalPts,
+        data: totalDataFormatted,
         lineStyle: { width: 3, color: tc.orange, type: 'dashed' },
         itemStyle: { color: tc.orange },
         showSymbol: true,
-        symbol: 'circle',
+        symbol: 'none',
         symbolSize: function(val, params) {
-          return params.dataIndex === totalPts.length - 1 ? 8 : 4;
+          return params.dataIndex === totalDataFormatted.length - 1 ? 8 : 0;
         },
         endLabel: {
           show: true,
           valueAnimation: false,
-          distance: 14,
+          distance: 12,
           formatter: function(params) {
             const yVal = Array.isArray(params.value) ? params.value[1] : params.value;
-            return `{flag|} {name|Total} {val|${formatLineVal(yVal)}}`;
+            return `{name|Total} {val|${formatLineVal(yVal)}}`;
           },
           rich: {
-            flag: {
-              height: 18,
-              width: 18,
-              backgroundColor: tc.orange,
-              borderRadius: 9,
-              align: 'center',
-              color: '#FFFFFF',
-              fontSize: 10,
-              fontWeight: 'bold',
-              lineHeight: 18
-            },
             name: {
               color: tc.orange,
               fontWeight: 800,
-              fontSize: 12,
-              padding: [0, 4, 0, 4]
+              fontSize: 11,
+              padding: [0, 4, 0, 0]
             },
             val: {
               color: tc.textColor,
@@ -2944,39 +3091,34 @@
       });
     }
 
-    // 2. Individual Top Brand Lines with 60FPS Fluid Tip Tracking
+    // 2. Individual Top Brand Lines: Brand Logo Icon on the Node itself!
     targetBrands.forEach((b, idx) => {
       const color = tc.palette[(idx + 1) % tc.palette.length];
       const rawData = getBrandData(b);
-      
-      // Interpolate coordinates smoothly: [0, y0] ... [curH, y_interpolated]
-      const brandPts = interpolateSeries(rawData, curH);
+      const tipInfo = brandTipMap[b.name];
+      const brandPts = tipInfo ? tipInfo.pts : interpolateSeries(rawData, curH);
+      const dynamicNodeSize = dynamicNodeSizes[b.name] || 24;
 
-      const safeKey = 'logo_' + b.name.replace(/[^a-zA-Z0-9]/g, '_');
-      const logoUrl = window.getBrandLogoUrl ? window.getBrandLogoUrl(b.name) : null;
+      const badgeUrl = getCircularBrandBadge(b.name, color);
 
-      if (logoUrl) {
-        richEndLabels[safeKey] = {
-          height: 24,
-          width: 24,
-          backgroundColor: { image: logoUrl },
-          borderRadius: 12,
+      // Intermediate points: no symbol (clean line flow)
+      const lastPt = brandPts.length > 0 ? brandPts[brandPts.length - 1] : [curH, 0];
+      const brandDataFormatted = brandPts.slice(0, -1).map(pt => ({
+        value: pt,
+        symbol: 'none'
+      }));
+
+      // Leading edge (tip point): Brand logo badge node!
+      brandDataFormatted.push({
+        value: lastPt,
+        symbol: badgeUrl ? ('image://' + badgeUrl) : 'circle',
+        symbolSize: dynamicNodeSize,
+        itemStyle: {
+          color: color,
           borderColor: color,
           borderWidth: 2
-        };
-      } else {
-        richEndLabels[safeKey] = {
-          height: 22,
-          width: 22,
-          backgroundColor: color,
-          borderRadius: 11,
-          align: 'center',
-          color: '#FFFFFF',
-          fontSize: 10,
-          fontWeight: 'bold',
-          lineHeight: 22
-        };
-      }
+        }
+      });
 
       const isBrandVisible = (!lineRaceLegendSelected || lineRaceLegendSelected[b.name] !== false);
       let brandMarkLine = undefined;
@@ -2989,29 +3131,36 @@
         name: b.name,
         type: 'line',
         smooth: 0.25,
-        data: brandPts,
+        data: brandDataFormatted,
         lineStyle: { width: 3, color: color },
         itemStyle: { color: color },
         showSymbol: true,
-        symbol: 'circle',
+        symbol: 'none',
         symbolSize: function(val, params) {
-          // Prominent dot traveling on the leading edge!
-          return params.dataIndex === brandPts.length - 1 ? 9 : 4;
+          return params.dataIndex === brandDataFormatted.length - 1 ? dynamicNodeSize : 0;
         },
         endLabel: {
           show: true,
-          valueAnimation: false, // Updated continuously at 60 FPS
-          distance: 14,
+          valueAnimation: false,
+          distance: Math.round(dynamicNodeSize / 2) + 6,
           formatter: function(params) {
-            const brandKey = 'logo_' + params.seriesName.replace(/[^a-zA-Z0-9]/g, '_');
             const yVal = Array.isArray(params.value) ? params.value[1] : params.value;
-            const hasLogo = window.getBrandLogoUrl ? window.getBrandLogoUrl(params.seriesName) : null;
-            if (hasLogo) {
-              return `{${brandKey}|}  {name|${params.seriesName}} {val|${formatLineVal(yVal)}}`;
-            }
-            return `{fallback|${params.seriesName[0] || 'B'}}  {name|${params.seriesName}} {val|${formatLineVal(yVal)}}`;
+            return `{name|${params.seriesName}} {val|${formatLineVal(yVal)}}`;
           },
-          rich: richEndLabels
+          rich: {
+            name: {
+              color: tc.titleColor,
+              fontWeight: 800,
+              fontSize: 11,
+              padding: [0, 4, 0, 0]
+            },
+            val: {
+              color: color,
+              fontFamily: 'JetBrains Mono',
+              fontWeight: 700,
+              fontSize: 11
+            }
+          }
         },
         markLine: brandMarkLine,
         labelLayout: { moveOverlap: 'shiftY' }

@@ -1,12 +1,9 @@
 {% extends "base.html" %}
-{% load static humanize %}
+{% load static humanize brand_tags %}
 
 {% block title %}Double Date War Room & Leaderboard — Jetcommerce{% endblock %}
 
 {% block extra_css %}
-<!-- Select2 CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
-
 <style>
   /* ─────────────────────────────────────────────────────────────
      DOUBLE DATE WAR ROOM & LEADERBOARD DESIGN SYSTEM (.dd-warroom)
@@ -47,170 +44,403 @@
   }
 
   /* ─────────────────────────────────────────────────────────────
-     TOP FILTER CONTROL DOCK (Standard Top Bar)
+     TOP FILTER CONTROL BAR & DROPDOWNS
+     Faithfully aligned with Sales Dashboard (Brand Performance v2)
   ───────────────────────────────────────────────────────────── */
-  .dd-top-dock {
+  .bp2-topbar {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    gap: 10px 16px;
     flex-wrap: wrap;
-    gap: 12px 16px;
-    padding: 10px 16px;
-    background: var(--dd-surface);
-    border: 1px solid var(--dd-border);
-    border-radius: var(--dd-radius);
-    margin-bottom: 20px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    margin-bottom: 18px;
   }
 
-  body.tv-mode-active .dd-top-dock {
-    padding: 6px 12px;
-    margin-bottom: 12px;
-  }
-
-  .dd-dock-left {
+  .bp2-topbar-left {
     display: flex;
     align-items: center;
+    gap: 10px;
     flex-wrap: wrap;
-    gap: 8px 12px;
     flex: 1;
     min-width: 0;
   }
 
-  .dd-dock-right {
+  .bp2-topbar-filters {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px;
+    gap: 4px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    flex-wrap: wrap;
+  }
+
+  .bp2-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    border-radius: 9px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    height: 30px;
+    font-size: .76rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: border-color .15s, box-shadow .15s;
+    user-select: none;
+  }
+
+  .bp2-filter-pill:focus-within {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 2px var(--orange-dim);
+  }
+
+  .bp2-filter-pill i {
+    font-size: .74rem;
+  }
+
+  .bp2-filter-pill select,
+  .bp2-filter-pill input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: .76rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 0;
+  }
+  .bp2-filter-pill select option {
+    background: var(--card-bg);
+    color: var(--text-primary);
+  }
+
+  .bp2-filter-reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+
+  .bp2-filter-reset:hover {
+    background: var(--card-bg);
+    color: var(--orange);
+  }
+
+  /* ── Custom Multi-select Dropdown Pills ── */
+  .bp2-dropdown-wrap {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .bp2-dropdown-trigger {
+    cursor: pointer;
+    border: 1px solid var(--glass-border);
+    outline: 0;
+    user-select: none;
+    gap: 6px;
+    padding: 0 10px;
+  }
+
+  .bp2-dropdown-trigger:hover {
+    border-color: color-mix(in srgb, var(--orange) 60%, var(--glass-border));
+    color: var(--text-primary);
+  }
+
+  .bp2-dropdown-wrap.open .bp2-dropdown-trigger {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 2px var(--orange-dim);
+    color: var(--text-primary);
+  }
+
+  .bp2-dropdown-label {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .bp2-dropdown-badge {
+    background: var(--orange);
+    color: #fff;
+    font-size: .62rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 999px;
+    line-height: 1.3;
+  }
+
+  .bp2-dropdown-caret {
+    font-size: .65rem;
+    color: var(--text-muted);
+    transition: transform .18s ease;
+    margin-left: 2px;
+  }
+
+  .bp2-dropdown-wrap.open .bp2-dropdown-caret {
+    transform: rotate(180deg);
+  }
+
+  .bp2-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 99999 !important;
+    min-width: 250px;
+    max-width: 320px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px -6px rgba(16, 24, 40, .22), 0 2px 6px rgba(16, 24, 40, .06);
+    display: none;
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .bp2-dropdown-wrap.open .bp2-dropdown-menu {
+    display: flex;
+    animation: bp2pop .15s ease-out;
+  }
+
+  @keyframes bp2pop {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .bp2-dropdown-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    margin-bottom: 6px;
+  }
+
+  .bp2-dropdown-search input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: .76rem;
+    font-weight: 600;
+    width: 100%;
+    font-family: inherit;
+  }
+
+  .bp2-dropdown-search i {
+    font-size: .72rem;
+    color: var(--text-muted);
+  }
+
+  .bp2-dropdown-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 2px 4px 6px;
+    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: 4px;
+  }
+
+  .bp2-dropdown-action-btn {
+    background: transparent;
+    border: 0;
+    color: var(--orange);
+    font-size: .7rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+
+  .bp2-dropdown-action-btn:hover {
+    text-decoration: underline;
+  }
+
+  .bp2-dropdown-options {
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-right: 2px;
+  }
+
+  .bp2-dropdown-options::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .bp2-dropdown-options::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--text-muted) 30%, transparent);
+    border-radius: 4px;
+  }
+
+  .bp2-dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: .76rem;
+    font-weight: 600;
+    color: var(--text-sub);
+    transition: background .12s, color .12s;
+    user-select: none;
+  }
+
+  .bp2-dropdown-option:hover {
+    background: var(--surface-muted);
+    color: var(--text-primary);
+  }
+
+  .platform-logo-icon {
+    width: 15px;
+    height: 15px;
+    object-fit: contain;
+    flex-shrink: 0;
+    vertical-align: middle;
+    display: inline-block;
+  }
+
+  .platform-logo-fallback {
+    font-size: 13px;
+    opacity: .75;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+
+  .brand-logo-icon {
+    object-fit: cover;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+
+  .brand-logo-fallback {
+    opacity: .75;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+
+  .bp2-dropdown-option input {
+    display: none;
+  }
+
+  .bp2-custom-check {
+    width: 16px;
+    height: 16px;
+    border-radius: 5px;
+    border: 1.5px solid color-mix(in srgb, var(--text-muted) 40%, transparent);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    transition: all .15s ease;
+    background: var(--card-bg);
+  }
+
+  .bp2-custom-check i {
+    font-size: .72rem;
+    color: #fff;
+    transform: scale(0);
+    transition: transform .12s ease;
+    font-weight: 900;
+  }
+
+  .bp2-dropdown-option input:checked + .bp2-custom-check {
+    background: var(--orange);
+    border-color: var(--orange);
+  }
+
+  .bp2-dropdown-option input:checked + .bp2-custom-check i {
+    transform: scale(1);
+  }
+
+  .bp2-dropdown-option.selected {
+    color: var(--text-primary);
+  }
+
+  .bp2-dropdown-footer {
+    padding-top: 8px;
+    margin-top: 4px;
+    border-top: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .bp2-dropdown-apply-btn {
+    background: var(--orange);
+    color: #fff;
+    border: 0;
+    border-radius: 7px;
+    padding: 5px 14px;
+    font-size: .72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+
+  .bp2-dropdown-apply-btn:hover {
+    opacity: .9;
+  }
+
+  .bp2-actions {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
   }
 
-  .dd-dock-control {
+  .bp2-btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    height: 36px;
-    padding: 0 12px;
-    background: var(--dd-surface-muted);
-    border: 1px solid var(--dd-border);
-    border-radius: 8px;
-    transition: all 0.16s ease;
-  }
-  .dd-dock-control:hover,
-  .dd-dock-control:focus-within {
-    border-color: var(--orange);
-    background: var(--dd-surface-hover);
-  }
-
-  .dd-dock-select {
-    border: none;
-    outline: none;
-    background: transparent;
-    color: var(--text-primary);
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    padding-right: 4px;
-  }
-  .dd-dock-select option {
-    background: var(--dd-surface);
-    color: var(--text-primary);
+    gap: 7px;
+    padding: 6px 12px;
+    border-radius: 9px;
+    font-size: .76rem;
     font-weight: 600;
-  }
-
-  .dd-platform-group {
-    display: inline-flex;
-    align-items: center;
-    background: var(--dd-surface-muted);
-    border: 1px solid var(--dd-border);
-    border-radius: 8px;
-    padding: 3px;
-    gap: 2px;
-  }
-
-  .dd-plat-btn {
-    border: none;
-    outline: none;
-    background: transparent;
-    color: var(--text-sub);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.76rem;
-    font-weight: 700;
     cursor: pointer;
-    transition: all 0.15s ease;
-    white-space: nowrap;
-  }
-  .dd-plat-btn:hover {
-    color: var(--text-primary);
-    background: var(--dd-surface-hover);
-  }
-  .dd-plat-btn.active {
-    background: var(--orange);
-    color: #FFFFFF !important;
-    box-shadow: 0 2px 6px rgba(255, 107, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-sub);
+    transition: all .15s ease;
+    height: 30px;
+    line-height: 1;
   }
 
-  .dd-brand-wrap {
-    min-width: 220px;
-    max-width: 320px;
-    flex: 1;
-  }
-
-  .dd-brand-wrap .select2-container--default .select2-selection--multiple {
-    background-color: var(--dd-surface-muted);
-    border: 1px solid var(--dd-border);
-    border-radius: 8px;
-    min-height: 36px;
-    padding: 2px 6px;
-  }
-  .dd-brand-wrap .select2-container--default.select2-container--focus .select2-selection--multiple {
+  .bp2-btn:hover {
     border-color: var(--orange);
-  }
-  .dd-brand-wrap .select2-container--default .select2-selection--multiple .select2-selection__choice {
-    background-color: var(--dd-surface-hover);
-    border: 1px solid var(--dd-border);
-    border-radius: 5px;
-    color: var(--text-primary);
-    font-size: 0.74rem;
-    font-weight: 600;
-    padding: 1px 6px;
-  }
-  .dd-brand-wrap .select2-container--default .select2-search--inline .select2-search__field {
-    color: var(--text-primary);
-    font-size: 0.78rem;
-    margin-top: 4px;
-  }
-
-  .dd-dock-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 36px;
-    padding: 0 10px;
-    background: var(--dd-surface-muted);
-    border: 1px solid var(--dd-border);
-    border-radius: 8px;
-    font-size: 0.76rem;
-    font-weight: 700;
-    color: var(--text-primary);
-  }
-
-  .dd-dock-action-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1px solid var(--dd-border);
-    background: var(--dd-surface-muted);
-    color: var(--text-sub);
-    cursor: pointer;
-    font-size: 0.95rem;
-    transition: all 0.15s ease;
-  }
-  .dd-dock-action-btn:hover {
     color: var(--orange);
+  }
+
+  body.tv-mode-active .bp2-topbar {
+    margin-bottom: 12px;
+  }
+  body.tv-mode-active .bp2-filter-pill,
+  body.tv-mode-active .bp2-btn {
+    height: 28px;
+  }
     border-color: var(--orange);
     background: var(--dd-surface-hover);
   }
@@ -1041,70 +1271,122 @@
 {% block content %}
 <div class="dd-warroom">
 
-  <!-- ── Top Filter Bar ── -->
-  <div class="dd-top-dock">
-    <div class="dd-dock-left">
-      <!-- Campaign Date Selector -->
-      <div class="dd-dock-control dd-date-control" title="Campaign Date">
-        <i class="bi bi-calendar-event text-primary"></i>
-        <select id="campaignDateSelect" class="dd-dock-select" onchange="onDateFilterChanged(this.value)">
-          {% for cd in campaign_dates %}
-            <option value="{{ cd.date }}" {% if cd.date == selected_date %}selected{% endif %}>
-              {{ cd.label }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+  <!-- ── Top bar: filters & actions (Sales Dashboard / Brand Performance v2 style) ── -->
+  <div class="bp2-topbar">
+    <div class="bp2-topbar-left">
+      <!-- Slim Topbar Filters -->
+      <div class="bp2-topbar-filters">
+        <!-- Campaign Date Filter Pill -->
+        <div class="bp2-filter-pill" title="Campaign Date">
+          <i class="bi bi-calendar3"></i>
+          <select id="campaignDateSelect" onchange="onDateFilterChanged(this.value)">
+            {% for cd in campaign_dates %}
+              <option value="{{ cd.date }}" {% if cd.date == selected_date %}selected{% endif %}>
+                {{ cd.label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
 
-      <!-- Platform Filter Pills -->
-      <div class="dd-platform-group" role="group" aria-label="Platform Filter">
-        <button type="button" class="dd-plat-btn platform-pill-btn {% if not selected_platforms %}active{% endif %}" data-platform="" onclick="setPlatformFilter('')">
-          All
-        </button>
-        {% for plat in available_platforms %}
-          <button type="button" class="dd-plat-btn platform-pill-btn {% if plat in selected_platforms %}active{% endif %}" data-platform="{{ plat }}" onclick="setPlatformFilter('{{ plat }}')">
-            {{ plat }}
+        <!-- Custom Multi-select Dropdown: Platform -->
+        <div class="bp2-dropdown-wrap" id="platformDropdownWrap">
+          <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="platformDropdownTrigger"
+            aria-haspopup="true" aria-expanded="false" title="Filter platforms">
+            <i class="bi bi-shop"></i>
+            <span class="bp2-dropdown-label" id="platformDropdownLabel">All platforms</span>
+            <span class="bp2-dropdown-badge" id="platformDropdownBadge" style="display:none">0</span>
+            <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
           </button>
-        {% endfor %}
-      </div>
+          <div class="bp2-dropdown-menu" id="platformDropdownMenu">
+            <div class="bp2-dropdown-search">
+              <i class="bi bi-search"></i>
+              <input type="text" id="platformSearchInput" placeholder="Search platforms…" autocomplete="off">
+            </div>
+            <div class="bp2-dropdown-actions">
+              <button type="button" class="bp2-dropdown-action-btn" id="platformSelectAll">Select all</button>
+              <button type="button" class="bp2-dropdown-action-btn" id="platformClearAll">Clear</button>
+            </div>
+            <div class="bp2-dropdown-options" id="platformOptionsList">
+              {% for p in available_platforms %}
+              <label class="bp2-dropdown-option" data-value="{{ p }}">
+                <input type="checkbox" value="{{ p }}" class="platform-check" {% if p in selected_platforms %}checked{% endif %}>
+                <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
+                {% render_platform_logo p 15 %}
+                <span class="bp2-option-text">{{ p }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <div class="bp2-dropdown-footer">
+              <button type="button" class="bp2-dropdown-apply-btn" id="platformApplyBtn">Apply</button>
+            </div>
+          </div>
+        </div>
 
-      <!-- Brand Multi-Select -->
-      <div class="dd-brand-wrap">
-        <select id="brandSelect" class="form-select form-select-sm w-100" multiple="multiple">
-          {% for b in user_brands %}
-            <option value="{{ b }}" {% if b in selected_brands %}selected{% endif %}>{{ b }}</option>
-          {% endfor %}
-        </select>
-      </div>
+        <!-- Custom Multi-select Dropdown: Brand -->
+        <div class="bp2-dropdown-wrap" id="brandDropdownWrap">
+          <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="brandDropdownTrigger"
+            aria-haspopup="true" aria-expanded="false" title="Filter brands">
+            <i class="bi bi-tag"></i>
+            <span class="bp2-dropdown-label" id="brandDropdownLabel">All brands</span>
+            <span class="bp2-dropdown-badge" id="brandDropdownBadge" style="display:none">0</span>
+            <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+          </button>
+          <div class="bp2-dropdown-menu" id="brandDropdownMenu">
+            <div class="bp2-dropdown-search">
+              <i class="bi bi-search"></i>
+              <input type="text" id="brandSearchInput" placeholder="Search brands…" autocomplete="off">
+            </div>
+            <div class="bp2-dropdown-actions">
+              <button type="button" class="bp2-dropdown-action-btn" id="brandSelectAll">Select all</button>
+              <button type="button" class="bp2-dropdown-action-btn" id="brandClearAll">Clear</button>
+            </div>
+            <div class="bp2-dropdown-options" id="brandOptionsList">
+              {% for b in user_brands %}
+              <label class="bp2-dropdown-option" data-value="{{ b }}">
+                <input type="checkbox" value="{{ b }}" class="brand-check" {% if b in selected_brands %}checked{% endif %}>
+                <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
+                {% render_brand_logo b 22 %}
+                <span class="bp2-option-text">{{ b }}</span>
+              </label>
+              {% endfor %}
+            </div>
+            <div class="bp2-dropdown-footer">
+              <button type="button" class="bp2-dropdown-apply-btn" id="brandApplyBtn">Apply</button>
+            </div>
+          </div>
+        </div>
 
-      <!-- Reset Filters Button -->
-      <button type="button" class="dd-dock-action-btn" onclick="resetAllFilters()" title="Reset all filters">
-        <i class="bi bi-arrow-counterclockwise"></i>
-      </button>
+        <!-- Reset Button -->
+        <button type="button" class="bp2-filter-reset" onclick="resetAllFilters()" title="Reset all filters">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+      </div>
     </div>
 
-    <div class="dd-dock-right">
+    <!-- Right Side Actions -->
+    <div class="bp2-actions">
       <!-- Synced Hour Chip -->
-      <div class="dd-dock-chip mono" id="dockStatusChip" title="Synced Hour">
+      <div class="bp2-filter-pill mono" id="dockStatusChip" title="Synced Campaign Hour">
         <span class="dd-live-dot"></span>
         <span id="headerSyncTime">--:00</span>
       </div>
 
       <!-- Auto-Refresh Countdown Chip -->
-      <div class="dd-dock-chip mono text-muted" title="Auto-refresh countdown">
-        <i class="bi bi-clock-history"></i>
+      <div class="bp2-filter-pill mono" title="Auto-refresh countdown">
+        <i class="bi bi-clock-history text-muted"></i>
         <span id="nextSyncTimer">05:00</span>
       </div>
 
       <!-- Refresh Button -->
-      <button type="button" class="dd-dock-action-btn" id="btnManualRefresh" onclick="refreshCampaignData()" title="Fetch latest hourly data">
+      <button type="button" class="bp2-btn" id="btnManualRefresh" onclick="refreshCampaignData()" title="Fetch latest hourly data">
         <i class="bi bi-arrow-repeat" id="refreshSpinIcon"></i>
+        <span>Refresh</span>
       </button>
 
       <!-- TV Mode Button -->
-      <button type="button" class="dd-dock-action-btn" id="btnTvMode" onclick="toggleTvMode()" title="Toggle Fullscreen TV War Room Mode">
+      <button type="button" class="bp2-btn" id="btnTvMode" onclick="toggleTvMode()" title="Toggle Fullscreen TV War Room Mode">
         <i class="bi bi-fullscreen" id="tvModeIcon"></i>
-        <span id="tvModeLabel" class="d-none">TV Mode</span>
+        <span id="tvModeLabel">TV Mode</span>
       </button>
     </div>
   </div>
@@ -1420,9 +1702,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- jQuery & Select2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <!-- ECharts 5.5 -->
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
 
@@ -1436,6 +1715,10 @@
   let campaignData = {{ initial_data_json|safe }};
   let currentActiveTab = 'bar_race';
   let isTvMode = false;
+
+  // Multi-select dropdown state (Platform & Brand)
+  const selectedPlatforms = new Set();
+  const selectedBrands = new Set();
 
   // Chart instances
   let chartBarRace = null;
@@ -1489,9 +1772,9 @@
   let countdownTimer = null;
 
   document.addEventListener('DOMContentLoaded', function() {
-    initSelect2();
-    initPlatformIcons();
-    if (window.updateFilterCountBadge) window.updateFilterCountBadge();
+    initMultiSelect('platform');
+    initMultiSelect('brand');
+
     // Reset dynamic caches & scaling memories for new dataset
     allRaceBrandsCache = null;
     velocitySmoothedYMin = null;
@@ -1524,30 +1807,178 @@
     }
   }
 
-  function initSelect2() {
-    if (window.jQuery && $.fn.select2) {
-      $('#brandSelect').select2({
-        placeholder: "All Brands",
-        allowClear: true,
-        closeOnSelect: false,
-        templateResult: window.formatBrandSelect2 || null,
-        templateSelection: window.formatBrandSelect2 || null
-      }).on('change', function() {
-        if (window.updateFilterCountBadge) window.updateFilterCountBadge();
+  /* ── Multi-select Dropdown Controller (Brand & Platform) ── */
+  function getPlatformLogoUrl(platform) {
+    if (!platform) return null;
+    const pl = String(platform).trim().toLowerCase();
+    if (pl.includes('shopee')) return '/static/logos/shopee.svg';
+    if (pl.includes('tokopedia') || pl.includes('toped')) return '/static/logos/tokopedia.svg';
+    if (pl.includes('tiktok')) return '/static/logos/tiktok_shop.svg';
+    if (pl.includes('lazada')) return '/static/logos/lazada.svg';
+    return null;
+  }
+
+  function renderPlatformIcon(platform, size = 15) {
+    const url = getPlatformLogoUrl(platform);
+    if (!url) {
+      if (platform === 'All' || !platform) {
+        return `<i class="bi bi-grid-fill platform-logo-fallback" style="font-size:${size - 1}px;"></i>`;
+      }
+      return `<i class="bi bi-shop platform-logo-fallback" style="font-size:${size - 1}px;"></i>`;
+    }
+    return `<img src="${url}" alt="${platform}" class="platform-logo-icon" style="width:${size}px; height:${size}px; object-fit: contain;">`;
+  }
+
+  function initMultiSelect(type) {
+    const wrap = document.getElementById(type + 'DropdownWrap');
+    const trigger = document.getElementById(type + 'DropdownTrigger');
+    const menu = document.getElementById(type + 'DropdownMenu');
+    const label = document.getElementById(type + 'DropdownLabel');
+    const badge = document.getElementById(type + 'DropdownBadge');
+    const searchInput = document.getElementById(type + 'SearchInput');
+    const selectAllBtn = document.getElementById(type + 'SelectAll');
+    const clearAllBtn = document.getElementById(type + 'ClearAll');
+    const applyBtn = document.getElementById(type + 'ApplyBtn');
+    const optionsList = document.getElementById(type + 'OptionsList');
+
+    if (!wrap || !trigger || !menu || !optionsList) return;
+
+    const stateSet = (type === 'brand') ? selectedBrands : selectedPlatforms;
+    const typeName = (type === 'brand') ? 'brand' : 'platform';
+
+    // Read initial selections from checked inputs if any
+    optionsList.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+      stateSet.add(cb.value);
+    });
+
+    function updateUI() {
+      const count = stateSet.size;
+      if (count === 0) {
+        label.textContent = `All ${typeName}s`;
+        if (badge) badge.style.display = 'none';
+      } else if (count === 1) {
+        const singleVal = Array.from(stateSet)[0];
+        if (typeName === 'platform') {
+          label.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;">${renderPlatformIcon(singleVal, 16)} <span>${singleVal}</span></span>`;
+        } else if (typeName === 'brand') {
+          label.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;">${window.renderBrandIcon ? window.renderBrandIcon(singleVal, 18) : ''} <span>${singleVal}</span></span>`;
+        } else {
+          label.textContent = singleVal;
+        }
+        if (badge) badge.style.display = 'none';
+      } else {
+        label.textContent = `${count} ${typeName}s`;
+        if (badge) {
+          badge.textContent = count;
+          badge.style.display = 'inline-block';
+        }
+      }
+
+      optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+        const val = opt.dataset.value;
+        const isChecked = stateSet.has(val);
+        const cb = opt.querySelector('input[type="checkbox"]');
+        if (cb) cb.checked = isChecked;
+        opt.classList.toggle('selected', isChecked);
+      });
+    }
+
+    // Toggle dropdown open
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasOpen = wrap.classList.contains('open');
+      document.querySelectorAll('.bp2-dropdown-wrap.open').forEach(w => {
+        if (w !== wrap) {
+          w.classList.remove('open');
+          const tr = w.querySelector('.bp2-dropdown-trigger');
+          if (tr) tr.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (!wasOpen) {
+        wrap.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        if (searchInput) {
+          searchInput.value = '';
+          optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => opt.style.display = '');
+          setTimeout(() => searchInput.focus(), 60);
+        }
+      } else {
+        wrap.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Option checkbox toggle
+    optionsList.addEventListener('change', (e) => {
+      const cb = e.target.closest('input[type="checkbox"]');
+      if (!cb) return;
+      const opt = cb.closest('.bp2-dropdown-option');
+      const val = opt.dataset.value;
+      if (cb.checked) {
+        stateSet.add(val);
+      } else {
+        stateSet.delete(val);
+      }
+      updateUI();
+    });
+
+    // Real-time search filter
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const q = (e.target.value || '').trim().toLowerCase();
+        optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+          const text = (opt.dataset.value || '').toLowerCase();
+          opt.style.display = !q || text.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    // Select all action
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+          if (opt.style.display !== 'none') {
+            stateSet.add(opt.dataset.value);
+          }
+        });
+        updateUI();
+      });
+    }
+
+    // Clear all action
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        stateSet.clear();
+        updateUI();
+      });
+    }
+
+    // Apply button action
+    if (applyBtn) {
+      applyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        wrap.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
         fetchFilteredData();
       });
     }
+
+    // Initial sync
+    updateUI();
   }
 
-  function initPlatformIcons() {
-    const plats = ['Shopee', 'TikTok', 'Tokopedia', 'Lazada'];
-    plats.forEach(p => {
-      const el = document.getElementById(`plat_icon_${p}`);
-      if (el && window.renderPlatformIcon) {
-        el.innerHTML = window.renderPlatformIcon(p, 16);
-      }
-    });
-  }
+  // Global click outside to close dropdowns
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.bp2-dropdown-wrap')) {
+      document.querySelectorAll('.bp2-dropdown-wrap.open').forEach(wrap => {
+        wrap.classList.remove('open');
+        const trigger = wrap.querySelector('.bp2-dropdown-trigger');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
 
   /* ── Formatters ── */
   function formatIDR(val, compact = false) {
@@ -3397,41 +3828,35 @@
   };
 
   /* ── 7. Filtering & API ── */
-  window.toggleFloatingFilter = function() {};
-
   window.resetAllFilters = function() {
-    if (window.jQuery && $.fn.select2) {
-      $('#brandSelect').val(null).trigger('change');
-    }
-    window.setPlatformFilter('');
-  };
+    selectedPlatforms.clear();
+    selectedBrands.clear();
 
-  window.updateFilterCountBadge = function() {
-    const badge = document.getElementById('filterCountBadge');
-    if (!badge) return;
-    const plats = getSelectedPlatforms();
-    const brands = getSelectedBrands();
-    const count = (plats.length > 0 ? 1 : 0) + (brands.length > 0 ? brands.length : 0);
-    if (count > 0) {
-      badge.textContent = count;
-      badge.style.display = 'inline-flex';
-    } else {
-      badge.style.display = 'none';
-    }
-  };
+    ['platform', 'brand'].forEach(type => {
+      const label = document.getElementById(type + 'DropdownLabel');
+      const badge = document.getElementById(type + 'DropdownBadge');
+      const optionsList = document.getElementById(type + 'OptionsList');
+      const search = document.getElementById(type + 'SearchInput');
 
-  window.onDateFilterChanged = function() {
+      if (label) label.textContent = `All ${type}s`;
+      if (badge) badge.style.display = 'none';
+      if (search) search.value = '';
+      if (optionsList) {
+        optionsList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+          cb.checked = false;
+        });
+        optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+          opt.classList.remove('selected');
+          opt.style.display = '';
+        });
+      }
+    });
+
+    document.querySelectorAll('.bp2-dropdown-wrap.open').forEach(w => w.classList.remove('open'));
     fetchFilteredData();
   };
 
-  window.setPlatformFilter = function(plat) {
-    const buttons = document.querySelectorAll('.platform-pill-btn');
-    buttons.forEach(b => {
-      const p = b.getAttribute('data-platform') !== null ? b.getAttribute('data-platform') : (b.textContent.includes('All') ? '' : b.textContent.trim());
-      b.classList.toggle('active', p === plat);
-    });
-
-    window.updateFilterCountBadge();
+  window.onDateFilterChanged = function() {
     fetchFilteredData();
   };
 
@@ -3440,17 +3865,11 @@
   };
 
   function getSelectedPlatforms() {
-    const activeBtn = document.querySelector('.platform-pill-btn.active');
-    if (!activeBtn) return [];
-    const p = activeBtn.getAttribute('data-platform') !== null ? activeBtn.getAttribute('data-platform') : (activeBtn.textContent.includes('All') ? '' : activeBtn.textContent.trim());
-    return p ? [p] : [];
+    return Array.from(selectedPlatforms);
   }
 
   function getSelectedBrands() {
-    if (window.jQuery && $.fn.select2) {
-      return $('#brandSelect').val() || [];
-    }
-    return [];
+    return Array.from(selectedBrands);
   }
 
   function fetchFilteredData() {

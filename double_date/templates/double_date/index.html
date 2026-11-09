@@ -2840,7 +2840,7 @@
 
     const formatLineVal = (val) => isTarget ? `${Number(val || 0).toFixed(1)}%` : formatIDR(val, true);
 
-    const targetMarkLine = isTarget ? {
+    const targetMarkLine = (isTarget && isCumulative) ? {
       symbol: ['none', 'none'],
       lineStyle: {
         color: '#10B981',
@@ -2862,85 +2862,81 @@
       ]
     } : undefined;
 
-    // Collect visible values in [camStart..curH] for dynamic Y-axis auto-scaling
-    // Strictly considering ONLY lines that are actively selected/visible on canvas right now
+    // Helper: calculate clean, executive-ready scale maximum with optimal +- padding
+    function calculateNiceScaleMax(maxVal, isTargetMetric, isCumulativeView) {
+      if (!maxVal || maxVal <= 0) {
+        if (isTargetMetric) return isCumulativeView ? 100 : 50;
+        return 1000000;
+      }
+
+      if (isTargetMetric) {
+        if (isCumulativeView) {
+          // In Cumulative % Target: clearly display the 100% target goal line.
+          // If max is below 100% (e.g. 70%), scale comfortably shows 100% goal (100% or 105%).
+          // If max exceeds 100% (e.g. 180% or 230%), add +12% headroom so the leading badge has ample breathing room.
+          const base = Math.max(100, maxVal * 1.12);
+          const step = base > 100 ? 10 : 5;
+          return Math.ceil(base / step) * step;
+        } else {
+          // In Hourly % Target: hourly velocity rate per hour (e.g. 5% to 50%/hr).
+          // Scale should NOT force 100 or 120! Headroom +15%, rounded to multiple of 5 or 10.
+          const target = Math.max(10, maxVal * 1.15);
+          const step = target > 50 ? 10 : 5;
+          return Math.ceil(target / step) * step;
+        }
+      } else {
+        // NMV or GMV: Add headroom so top line and 26px node badge never touch canvas top border
+        const headRoom = isCumulativeView ? 1.12 : 1.15;
+        const target = maxVal * headRoom;
+        const exp = Math.floor(Math.log10(target));
+        const factor = Math.pow(10, Math.max(0, exp - 1));
+        let step = factor;
+        if (factor >= 10) {
+          step = (target / factor < 5) ? (factor / 2) : factor;
+        }
+        return Math.ceil(target / step) * step;
+      }
+    }
+
+    // Collect all data values of actively visible lines to determine exact scale from the beginning
     const targetBrands = hv.brand_series || [];
-    let visibleVals = [];
+    const activeSeriesData = [];
 
     targetBrands.forEach(b => {
-      // If user toggled off this brand in legend, do NOT include in Y-scale!
-      if (lineRaceLegendSelected && lineRaceLegendSelected[b.name] === false) {
-        return;
-      }
-
-      const raw = getBrandData(b);
-      const s = Math.max(0, Math.floor(camStart));
-      const curInt = Math.floor(curH);
-      const frac = curH - curInt;
-
-      for (let i = s; i <= curInt && i < raw.length; i++) {
-        const v = raw[i];
-        if (v !== undefined && v !== null && v > 0) {
-          visibleVals.push(v);
-        }
-      }
-      if (frac > 0.001 && curInt + 1 < raw.length) {
-        const vPrev = raw[curInt] || 0;
-        const vNext = raw[curInt + 1] || 0;
-        const interpVal = vPrev + (vNext - vPrev) * frac;
-        if (interpVal > 0) visibleVals.push(interpVal);
+      // If user toggled off this brand in legend, do NOT include in scale
+      if (!lineRaceLegendSelected || lineRaceLegendSelected[b.name] !== false) {
+        activeSeriesData.push(getBrandData(b));
       }
     });
 
-    if (!isBrandBattle) {
-      if (!lineRaceLegendSelected || lineRaceLegendSelected['Total Campaign'] !== false) {
-        const totalRaw = getTotalData();
-        const s = Math.max(0, Math.floor(camStart));
-        const curInt = Math.floor(curH);
-        const frac = curH - curInt;
-
-        for (let i = s; i <= curInt && i < totalRaw.length; i++) {
-          const v = totalRaw[i];
-          if (v !== undefined && v !== null && v > 0) visibleVals.push(v);
-        }
-        if (frac > 0.001 && curInt + 1 < totalRaw.length) {
-          const vPrev = totalRaw[curInt] || 0;
-          const vNext = totalRaw[curInt + 1] || 0;
-          const interpVal = vPrev + (vNext - vPrev) * frac;
-          if (interpVal > 0) visibleVals.push(interpVal);
-        }
-      }
+    if (!isBrandBattle && (!lineRaceLegendSelected || lineRaceLegendSelected['Total Campaign'] !== false)) {
+      activeSeriesData.push(getTotalData());
     }
 
-    // Dynamic, smoothly-damped Y-axis boundaries based strictly on visible lines
-    let targetMin = 0;
-    let targetMax = isTarget ? 120 : 100000;
+    let globalMax = 0;
+    let globalMin = Infinity;
 
-    if (visibleVals.length > 0) {
-      const vMin = Math.min(...visibleVals);
-      const vMax = Math.max(...visibleVals);
-      const span = Math.max(1, vMax - vMin);
-
-      if (isTarget) {
-        targetMin = 0;
-        targetMax = Math.max(120, Math.ceil(vMax * 1.15));
-      } else {
-        // In hourly rate mode, if all brands are racing high above zero, lift floor gently
-        if (!isCumulative && vMin > vMax * 0.4) {
-          targetMin = Math.max(0, Math.floor(vMin - span * 0.2));
-        } else {
-          targetMin = 0;
+    activeSeriesData.forEach(rawArr => {
+      (rawArr || []).forEach(v => {
+        if (v !== undefined && v !== null && !isNaN(v)) {
+          const num = Number(v);
+          if (num > globalMax) globalMax = num;
+          if (num < globalMin && num >= 0) globalMin = num;
         }
-        targetMax = Math.ceil(vMax + Math.max(span * 0.15, vMax * 0.1));
-      }
-    }
+      });
+    });
 
-    // Exponential smoothing so Y boundaries glide continuously without sudden leaps
-    if (velocitySmoothedYMin === null || !isLineRacePlaying) {
+    if (globalMin === Infinity) globalMin = 0;
+
+    const targetMin = 0;
+    const targetMax = calculateNiceScaleMax(globalMax, isTarget, isCumulative);
+
+    // Exponential smoothing when adapting to legend toggle or view switch
+    if (velocitySmoothedYMin === null || velocitySmoothedYMax === null || !isLineRacePlaying) {
       velocitySmoothedYMin = targetMin;
       velocitySmoothedYMax = targetMax;
     } else {
-      velocitySmoothedYMin = Math.round(velocitySmoothedYMin * 0.90 + targetMin * 0.10);
+      velocitySmoothedYMin = targetMin;
       velocitySmoothedYMax = Math.round(velocitySmoothedYMax * 0.90 + targetMax * 0.10);
     }
 

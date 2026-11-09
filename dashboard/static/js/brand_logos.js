@@ -10,6 +10,8 @@
     'dove': 'Dove.png',
     'ace kid': 'Acekid.png',
     'acekid': 'Acekid.png',
+    'babyboo': 'Makuku.png',
+    'baby boo': 'Makuku.png',
     'barbie': 'Barbie.png',
     'bayer': 'Bayer.png',
     'biolage': 'Biolage.png',

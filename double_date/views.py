@@ -14,6 +14,7 @@ from .services import (
     get_available_platforms,
     get_campaign_war_room_data,
     get_user_brands,
+    standardize_brand_name,
 )
 
 
@@ -52,7 +53,9 @@ def index_view(request: HttpRequest) -> HttpResponse:
     raw_brands = request.GET.getlist("brand")
     selected_brands = []
     for b in raw_brands:
-        selected_brands.extend([x.strip() for x in b.split(",") if x.strip()])
+        selected_brands.extend([standardize_brand_name(x) for x in b.split(",") if x.strip()])
+    # Remove duplicates preserving order
+    selected_brands = list(dict.fromkeys(selected_brands))
 
     # Fetch initial payload so SSR renders initial charts & tables immediately
     initial_data = {}
@@ -92,7 +95,8 @@ def api_campaign_data(request: HttpRequest) -> JsonResponse:
     raw_brands = request.GET.getlist("brand")
     selected_brands = []
     for b in raw_brands:
-        selected_brands.extend([x.strip() for x in b.split(",") if x.strip()])
+        selected_brands.extend([standardize_brand_name(x) for x in b.split(",") if x.strip()])
+    selected_brands = list(dict.fromkeys(selected_brands))
 
     data = get_campaign_war_room_data(
         date_str=date_str,

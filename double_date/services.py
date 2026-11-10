@@ -13,6 +13,76 @@ from dashboard.models import User, UserBrand
 from .models import DailyTargetMart, OrderMartDDSummary, TrafficMartDD, TrafficMartDWDDF
 
 
+# Canonical mapping for normalizing brand names and variations
+CANONICAL_BRAND_MAP: dict[str, str] = {
+    # Acronyms & special casing
+    "adlv": "ADLV",
+    "bdl": "BDL",
+    "uhbs": "UHBS",
+    # Known variations and casing issues
+    "makuku official": "Makuku Official",
+    "makuku family": "Makuku Family",
+    "makuku": "Makuku",
+    "babyboo": "Babyboo",
+    "baby boo": "Babyboo",
+    "pilihan mamaku": "Pilihan Mamaku",
+    "pilihanmamaku": "Pilihan Mamaku",
+    "oppo": "Oppo",
+    "pedigree": "Pedigree",
+    "senka": "Senka",
+    "bayer": "Bayer",
+    "biolage": "Biolage",
+    "colgate": "Colgate",
+    "colgatepalmolive": "Colgate",
+    "comfee": "Comfee",
+    "finetoday": "Finetoday",
+    "fino": "Fino",
+    "fisher price": "Fisher Price",
+    "flacenta": "Flacenta",
+    "gaabor official": "Gaabor Official",
+    "gaabor socmed": "Gaabor Socmed",
+    "hot wheels": "Hot Wheels",
+    "imou": "Imou",
+    "jlife": "Jlife",
+    "ladis": "Ladis",
+    "loreal": "Loreal",
+    "mars wrigley": "Mars Wrigley",
+    "mattel": "Mattel",
+    "national geographic": "National Geographic",
+    "nosy": "Nosy",
+    "parenty": "Parenty",
+    "realme": "Realme",
+    "shiseido": "Shiseido",
+    "sparindo": "Sparindo",
+    "super mild": "Super Mild",
+    "thomas & friends": "Thomas & Friends",
+    "tsubaki": "Tsubaki",
+    "whiskas": "Whiskas",
+    "yoboo": "Yoboo",
+}
+
+
+def standardize_brand_name(brand: Optional[str]) -> str:
+    """
+    Standardizes inconsistent brand casing and naming variations to their canonical form.
+    e.g. 'mAKUKU oFFICIAL' / 'makuku official' -> 'Makuku Official'
+         'bAYER' -> 'Bayer'
+         'bdl' -> 'BDL'
+         'colgatepalmolive' -> 'Colgate'
+    """
+    if not brand:
+        return ""
+    clean = brand.strip()
+    clean_lower = clean.lower()
+    if clean_lower in CANONICAL_BRAND_MAP:
+        return CANONICAL_BRAND_MAP[clean_lower]
+    # Check if short acronym (e.g. BDL, ADLV)
+    if clean.isupper() and len(clean) <= 4:
+        return clean
+    # Fallback title casing for words
+    return " ".join(word.capitalize() for word in clean.split())
+
+
 @lru_cache(maxsize=256)
 def get_user_brands_cached(user_id: int) -> tuple[str, ...]:
     return tuple(
@@ -23,13 +93,14 @@ def get_user_brands_cached(user_id: int) -> tuple[str, ...]:
 
 @lru_cache(maxsize=1)
 def get_all_order_brands() -> list[str]:
-    return list(
+    raw_brands = (
         OrderMartDDSummary.objects.exclude(brand__isnull=True)
         .exclude(brand="")
         .values_list("brand", flat=True)
         .distinct()
-        .order_by("brand")
     )
+    standardized = {standardize_brand_name(b) for b in raw_brands if b and b.strip()}
+    return sorted(standardized)
 
 
 def get_user_brands(user: User) -> list[str]:
@@ -57,7 +128,13 @@ def get_available_campaign_dates(user: User) -> list[dict[str, Any]]:
     if not authorized_brands:
         return []
 
-    qs = OrderMartDDSummary.objects.filter(brand__in=authorized_brands).exclude(date__isnull=True)
+    target_brands_set = set(authorized_brands)
+    query_brands = set(authorized_brands)
+    for variant_lower, canon in CANONICAL_BRAND_MAP.items():
+        if canon in target_brands_set:
+            query_brands.add(variant_lower)
+
+    qs = OrderMartDDSummary.objects.filter(brand__in=query_brands).exclude(date__isnull=True)
     raw_dates = (
         qs.values_list("date", flat=True)
         .distinct()
@@ -140,11 +217,19 @@ def get_campaign_war_room_data(
 
     # Filter brands to subset of authorized brands
     if selected_brands:
-        target_brands = [b for b in selected_brands if b in authorized_brands]
+        clean_selected = [standardize_brand_name(b) for b in selected_brands if b]
+        target_brands = [b for b in clean_selected if b in authorized_brands]
         if not target_brands:
             target_brands = authorized_brands
     else:
         target_brands = authorized_brands
+
+    # Build expanded query brands to match any potential raw DB variations
+    target_brands_set = set(target_brands)
+    query_brands = set(target_brands)
+    for variant_lower, canon in CANONICAL_BRAND_MAP.items():
+        if canon in target_brands_set:
+            query_brands.add(variant_lower)
 
     # Filter platforms
     available_plats = get_available_platforms()
@@ -167,7 +252,7 @@ def get_campaign_war_room_data(
 
     if not target_date:
         all_dates = (
-            OrderMartDDSummary.objects.filter(brand__in=target_brands)
+            OrderMartDDSummary.objects.filter(brand__in=query_brands)
             .exclude(date__isnull=True)
             .values_list("date", flat=True)
             .distinct()
@@ -184,7 +269,7 @@ def get_campaign_war_room_data(
     order_qs = (
         OrderMartDDSummary.objects.filter(
             date=target_date,
-            brand__in=target_brands,
+            brand__in=query_brands,
             platform__in=target_platforms,
         )
         .values("brand", "platform", "hour")
@@ -219,7 +304,7 @@ def get_campaign_war_room_data(
     # Index traffic by (brand_lower, platform_lower, hour_int)
     traffic_map = defaultdict(lambda: {"uv": 0, "pv": 0})
     for t in traffic_qs:
-        b_name = (t["brand"] or "").strip().lower()
+        b_name = standardize_brand_name(t["brand"]).strip().lower()
         p_name = (t["platform"] or "").strip().lower()
         h_val = _to_int(t["hour"])
         traffic_map[(b_name, p_name, h_val)]["uv"] += _to_int(t["uv"])
@@ -244,7 +329,7 @@ def get_campaign_war_room_data(
         bp_hourly_orders = defaultdict(lambda: [0] * 24)
         bp_total_orders = defaultdict(int)
         for o in order_qs:
-            b_n = (o["brand"] or "").strip().lower()
+            b_n = standardize_brand_name(o["brand"]).strip().lower()
             p_n = (o["platform"] or "").strip().lower()
             h_n = _to_int(o["hour"])
             cnt = _to_int(o["orders"])
@@ -252,7 +337,7 @@ def get_campaign_war_room_data(
             bp_total_orders[(b_n, p_n)] += cnt
 
         for dt in dwd_traffic_qs:
-            b_name = (dt["brand"] or "").strip().lower()
+            b_name = standardize_brand_name(dt["brand"]).strip().lower()
             p_name = (dt["platform"] or "").strip().lower()
             if p_name not in target_platforms_lower:
                 continue
@@ -335,7 +420,7 @@ def get_campaign_war_room_data(
 
     # Populate orders data
     for o in order_qs:
-        b = o["brand"]
+        b = standardize_brand_name(o["brand"])
         p = o["platform"]
         h = o["hour"] if (o["hour"] is not None and 0 <= o["hour"] <= 23) else 0
 
@@ -352,7 +437,9 @@ def get_campaign_war_room_data(
             + _to_float(o["total_seller_voucher"])
         )
 
-        b_entry = brand_summary[b]
+        b_entry = brand_summary.get(b)
+        if not b_entry:
+            continue
         b_entry["gmv"] += gmv
         b_entry["nmv"] += nmv
         b_entry["orders"] += orders
@@ -379,7 +466,7 @@ def get_campaign_war_room_data(
     # Populate traffic data into matching brands and platforms
     # We match target brands
     for b in target_brands:
-        b_lower = b.strip().lower()
+        b_lower = standardize_brand_name(b).strip().lower()
         b_entry = brand_summary[b]
         for p in target_platforms:
             p_lower = p.strip().lower()

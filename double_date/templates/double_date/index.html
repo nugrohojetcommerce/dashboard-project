@@ -379,6 +379,18 @@
 
   .bp2-dropdown-option.selected {
     color: var(--text-primary);
+    background: color-mix(in srgb, var(--orange) 10%, transparent);
+  }
+
+  .bp2-date-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--orange) 14%, transparent);
+    color: var(--orange);
+    flex-shrink: 0;
+    letter-spacing: 0.2px;
   }
 
   .bp2-dropdown-footer {
@@ -1288,16 +1300,34 @@
     <div class="bp2-topbar-left">
       <!-- Slim Topbar Filters -->
       <div class="bp2-topbar-filters">
-        <!-- Campaign Date Filter Pill -->
-        <div class="bp2-filter-pill" title="Campaign Date">
-          <i class="bi bi-calendar3"></i>
-          <select id="campaignDateSelect" onchange="onDateFilterChanged(this.value)">
-            {% for cd in campaign_dates %}
-              <option value="{{ cd.date }}" {% if cd.date == selected_date %}selected{% endif %}>
-                {{ cd.label }}
-              </option>
-            {% endfor %}
-          </select>
+        <!-- Custom Single-select Dropdown: Campaign Date -->
+        <div class="bp2-dropdown-wrap" id="dateDropdownWrap">
+          <button type="button" class="bp2-filter-pill bp2-dropdown-trigger" id="dateDropdownTrigger"
+            aria-haspopup="true" aria-expanded="false" title="Filter campaign date">
+            <i class="bi bi-calendar3"></i>
+            <span class="bp2-dropdown-label" id="dateDropdownLabel" style="max-width: 220px;">
+              {% for cd in campaign_dates %}{% if cd.date == selected_date %}{{ cd.label }}{% endif %}{% empty %}No campaign dates{% endfor %}
+            </span>
+            <i class="bi bi-chevron-down bp2-dropdown-caret"></i>
+          </button>
+          <div class="bp2-dropdown-menu" id="dateDropdownMenu" style="min-width: 290px;">
+            <div class="bp2-dropdown-search">
+              <i class="bi bi-search"></i>
+              <input type="text" id="dateSearchInput" placeholder="Search campaign date…" autocomplete="off">
+            </div>
+            <div class="bp2-dropdown-options" id="dateOptionsList" style="max-height: 240px;">
+              {% for cd in campaign_dates %}
+              <label class="bp2-dropdown-option {% if cd.date == selected_date %}selected{% endif %}" data-value="{{ cd.date }}" data-label="{{ cd.label }}">
+                <input type="radio" name="campaignDateRadio" value="{{ cd.date }}" class="date-radio" {% if cd.date == selected_date %}checked{% endif %}>
+                <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
+                <span class="bp2-date-tag">{{ cd.tag }}</span>
+                <span class="bp2-option-text" style="font-weight: 600;">{{ cd.label }}</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          <!-- Hidden input keeping campaignDateSelect compatibility for API & scripts -->
+          <input type="hidden" id="campaignDateSelect" value="{{ selected_date }}">
         </div>
 
         <!-- Custom Multi-select Dropdown: Platform -->
@@ -1871,6 +1901,7 @@
   let countdownTimer = null;
 
   document.addEventListener('DOMContentLoaded', function() {
+    initDateDropdown();
     initMultiSelect('platform');
     initMultiSelect('brand');
     initLineRaceDropdown();
@@ -1996,6 +2027,77 @@
       const col = palette[(idx + 1) % palette.length];
       idx++;
       getCircularBrandBadge(brandName, col);
+    });
+  }
+
+  /* ── Campaign Date Dropdown Controller (Sales Dashboard / BP2 Style) ── */
+  function initDateDropdown() {
+    const wrap = document.getElementById('dateDropdownWrap');
+    const trigger = document.getElementById('dateDropdownTrigger');
+    const label = document.getElementById('dateDropdownLabel');
+    const searchInput = document.getElementById('dateSearchInput');
+    const optionsList = document.getElementById('dateOptionsList');
+    const hiddenInput = document.getElementById('campaignDateSelect');
+
+    if (!wrap || !trigger || !optionsList) return;
+
+    // Toggle dropdown open/close
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasOpen = wrap.classList.contains('open');
+      document.querySelectorAll('.bp2-dropdown-wrap.open').forEach(w => {
+        if (w !== wrap) {
+          w.classList.remove('open');
+          const tr = w.querySelector('.bp2-dropdown-trigger');
+          if (tr) tr.setAttribute('aria-expanded', 'false');
+        }
+      });
+      if (!wasOpen) {
+        wrap.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        if (searchInput) {
+          searchInput.value = '';
+          optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => opt.style.display = '');
+          setTimeout(() => searchInput.focus(), 60);
+        }
+      } else {
+        wrap.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Real-time search filter
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const q = (e.target.value || '').trim().toLowerCase();
+        optionsList.querySelectorAll('.bp2-dropdown-option').forEach(opt => {
+          const text = (opt.textContent || '').toLowerCase();
+          opt.style.display = !q || text.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    // Select date option
+    optionsList.addEventListener('click', (e) => {
+      const opt = e.target.closest('.bp2-dropdown-option');
+      if (!opt) return;
+      const dateVal = opt.dataset.value;
+      const textVal = opt.dataset.label || opt.querySelector('.bp2-option-text')?.textContent?.trim() || dateVal;
+
+      if (hiddenInput) hiddenInput.value = dateVal;
+      if (label) label.textContent = textVal;
+
+      optionsList.querySelectorAll('.bp2-dropdown-option').forEach(o => {
+        const isMatch = (o === opt);
+        o.classList.toggle('selected', isMatch);
+        const radio = o.querySelector('input[type="radio"]');
+        if (radio) radio.checked = isMatch;
+      });
+
+      wrap.classList.remove('open');
+      trigger.setAttribute('aria-expanded', 'false');
+
+      onDateFilterChanged(dateVal);
     });
   }
 
@@ -4776,6 +4878,8 @@
         campaignData = data;
         renderAll();
         refreshCountdown = refreshIntervalSec;
+        const newUrl = window.location.pathname + '?' + params.toString();
+        window.history.replaceState({ path: newUrl }, '', newUrl);
       })
       .catch(err => {
         console.error("Error fetching campaign data:", err);

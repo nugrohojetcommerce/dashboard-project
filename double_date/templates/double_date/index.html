@@ -4099,6 +4099,7 @@
     const elRev = document.getElementById('rebateKpiRevenue') || document.getElementById('chipInKpiRevenue');
     const elSubRev = document.getElementById('rebateKpiSubRevenue') || document.getElementById('chipInKpiSubRevenue');
     const elRatio = document.getElementById('rebateKpiRatio') || document.getElementById('chipInKpiRatio');
+    const elSubRatio = document.getElementById('rebateKpiSubRatio') || document.getElementById('chipInKpiSubRatio');
     const elPeak = document.getElementById('rebateKpiPeak') || document.getElementById('chipInKpiPeak');
     const elSubPeak = document.getElementById('rebateKpiSubPeak') || document.getElementById('chipInKpiSubPeak');
 
@@ -4178,6 +4179,7 @@
           name: 'Seller Discount',
           type: 'bar',
           stack: 'rebate',
+          yAxisIndex: 0,
           barMaxWidth: 30,
           itemStyle: { color: '#F59E0B' },
           data: sDisc
@@ -4186,6 +4188,7 @@
           name: 'Platform Discount',
           type: 'bar',
           stack: 'rebate',
+          yAxisIndex: 0,
           barMaxWidth: 30,
           itemStyle: { color: '#EA580C' },
           data: pDisc
@@ -4194,6 +4197,7 @@
           name: 'Seller Voucher',
           type: 'bar',
           stack: 'rebate',
+          yAxisIndex: 0,
           barMaxWidth: 30,
           itemStyle: { color: '#8B5CF6' },
           data: sVouch
@@ -4202,6 +4206,7 @@
           name: 'Platform Voucher',
           type: 'bar',
           stack: 'rebate',
+          yAxisIndex: 0,
           barMaxWidth: 30,
           itemStyle: {
             color: '#4F46E5',
@@ -4217,6 +4222,7 @@
           name: 'Seller Rebate',
           type: 'bar',
           stack: 'rebate',
+          yAxisIndex: 0,
           barMaxWidth: 30,
           itemStyle: { color: '#F59E0B' },
           data: sRebates
@@ -4225,6 +4231,7 @@
           name: 'Platform Rebate',
           type: 'bar',
           stack: 'rebate',
+          yAxisIndex: 0,
           barMaxWidth: 30,
           itemStyle: {
             color: '#3B82F6',
@@ -4241,6 +4248,7 @@
           name: 'Discounts',
           type: 'bar',
           stack: 'rebate',
+          yAxisIndex: 0,
           barMaxWidth: 30,
           itemStyle: { color: '#F59E0B' },
           data: discounts
@@ -4249,6 +4257,7 @@
           name: 'Vouchers',
           type: 'bar',
           stack: 'rebate',
+          yAxisIndex: 0,
           barMaxWidth: 30,
           itemStyle: {
             color: '#8B5CF6',
@@ -4263,6 +4272,7 @@
       name: lineName,
       type: 'line',
       yAxisIndex: 1,
+      z: 5,
       smooth: true,
       showSymbol: true,
       symbol: 'circle',

@@ -1290,7 +1290,7 @@
     vertical-align: middle;
   }
 
-  /* ── Leaderboard Hourly Expandable Sub-Table ── */
+  /* ── Leaderboard Hourly Child Rows ── */
   .dd-expand-btn {
     width: 24px;
     height: 24px;
@@ -1311,68 +1311,56 @@
     border-color: var(--orange);
     color: var(--orange);
   }
-  .dd-hourly-container {
-    padding: 12px 18px 16px;
-    background: color-mix(in srgb, var(--text-muted) 5%, transparent);
-    border-top: 1px dashed var(--glass-border);
-    border-bottom: 2px solid var(--glass-border);
+  tr.dd-brand-row.expanded {
+    background: color-mix(in srgb, var(--orange) 5%, var(--card-bg));
   }
-  .dd-hourly-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid var(--glass-border);
+  tr.dd-hourly-row {
+    background: color-mix(in srgb, var(--text-muted) 3.5%, var(--card-bg));
+    border-bottom: 1px solid color-mix(in srgb, var(--glass-border) 45%, transparent);
+    transition: background 0.12s ease;
   }
-  .dd-hourly-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.82rem;
-    color: var(--text-title);
+  tr.dd-hourly-row:hover {
+    background: color-mix(in srgb, var(--orange) 7%, var(--card-bg)) !important;
   }
-  .dd-hourly-badge {
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--card-bg);
-    border: 1px solid var(--glass-border);
-    color: var(--text-muted);
-  }
-  .dd-hourly-subtable {
-    font-size: 0.78rem;
-    background: var(--card-bg);
-    border: none;
-    margin: 0;
-    width: 100%;
-  }
-  .dd-hourly-subtable thead th {
-    font-size: 0.70rem;
-    padding: 8px 12px;
-    background: color-mix(in srgb, var(--text-muted) 8%, transparent);
-    color: var(--text-muted);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    border-bottom: 1px solid var(--glass-border);
-  }
-  .dd-hourly-subtable tbody td {
+  tr.dd-hourly-row td {
     padding: 7px 12px;
-    border-bottom: 1px solid color-mix(in srgb, var(--glass-border) 60%, transparent);
-  }
-  .dd-hourly-subtable tbody tr:hover {
-    background: var(--surface-muted);
+    font-size: 0.78rem;
+    vertical-align: middle;
   }
   .dd-hour-tag {
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     font-weight: 700;
     padding: 2px 7px;
-    border-radius: 5px;
+    border-radius: 4px;
     background: color-mix(in srgb, var(--orange) 12%, transparent);
     color: var(--orange);
     display: inline-block;
+  }
+  .dd-contrib-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-width: 80px;
+    max-width: 95px;
+  }
+  .dd-contrib-track {
+    flex: 1;
+    height: 5px;
+    background: color-mix(in srgb, var(--text-muted) 20%, transparent);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .dd-contrib-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FF6B00, #FFA048);
+    border-radius: 999px;
+  }
+  .dd-contrib-val {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    min-width: 32px;
+    text-align: right;
   }
 </style>
 {% endblock %}
@@ -1892,7 +1880,7 @@
             <th class="text-right">Traffic (UV)</th>
             <th class="text-center">CVR %</th>
             <th class="text-right">AOV</th>
-            <th class="text-center" style="width: 90px;">24h Trend</th>
+            <th class="text-center" style="width: 105px;" title="24h Trend / % Contribution">24h Trend</th>
             <th class="text-center">Momentum</th>
           </tr>
         </thead>
@@ -4621,6 +4609,8 @@
   const renderChipInImpactChart = renderRebateImpactChart;
 
   /* ── 4. Leaderboard Table ── */
+  const expandedBrandRanks = new Set();
+
   function renderLeaderboardTable(filterText = '') {
     const tbody = document.getElementById('leaderboardTableBody');
     if (!tbody) return;
@@ -4681,64 +4671,17 @@
         else { achvColor = '#EF4444'; }
       }
 
-      // Generate nested hourly breakdown rows (ordered descending)
-      let hourlyRowsHtml = '';
-      if (!b.hourly_breakdown || b.hourly_breakdown.length === 0) {
-        hourlyRowsHtml = `<tr><td colspan="10" class="text-center text-muted py-3">No hourly data available for this campaign date.</td></tr>`;
-      } else {
-        b.hourly_breakdown.forEach(hItem => {
-          let hPlatPill = `<div class="dd-platform-bar" title="Hourly Platform Breakdown">`;
-          (hItem.platforms || []).forEach(p => {
-            if (p.pct > 0) {
-              let col = '#FF6B00';
-              if (p.platform.toLowerCase().includes('shopee')) col = '#EE4D2D';
-              else if (p.platform.toLowerCase().includes('tiktok')) col = '#000000';
-              else if (p.platform.toLowerCase().includes('tokopedia')) col = '#03AC0E';
-              else if (p.platform.toLowerCase().includes('lazada')) col = '#0F146D';
-              hPlatPill += `<span style="width:${p.pct}%; background:${col}; height:100%;" title="${p.platform}: ${p.pct}% (${formatIDR(p.gmv, true)})"></span>`;
-            }
-          });
-          hPlatPill += `</div>`;
-
-          let hCvrClass = 'cvr-low';
-          if (hItem.cvr >= 5.0) hCvrClass = 'cvr-high';
-          else if (hItem.cvr >= 2.0) hCvrClass = 'cvr-mid';
-
-          const hMomSign = hItem.momentum >= 0 ? '▲ +' : '▼ ';
-          const hMomClass = hItem.momentum >= 0 ? 'momentum-pos' : 'momentum-neg';
-
-          hourlyRowsHtml += `
-            <tr>
-              <td class="text-center mono">
-                <span class="dd-hour-tag">${hItem.hour_label}</span>
-              </td>
-              <td class="text-right">
-                <strong class="mono">${formatIDR(hItem.gmv, true)}</strong>
-              </td>
-              <td>${hPlatPill}</td>
-              <td class="text-right text-muted mono">${hItem.share_pct}%</td>
-              <td class="text-right mono">${formatNumber(hItem.orders)}</td>
-              <td class="text-right text-muted mono">${formatNumber(hItem.units)}</td>
-              <td class="text-right mono">${formatNumber(hItem.uv)}</td>
-              <td class="text-center">
-                <span class="dd-cvr-badge ${hCvrClass} mono">${hItem.cvr}%</span>
-              </td>
-              <td class="text-right mono">${formatIDR(hItem.aov, true)}</td>
-              <td class="text-center">
-                <span class="dd-momentum-pill ${hMomClass} mono" style="font-size: 0.68rem; padding: 1px 6px;">
-                  ${hMomSign}${Math.abs(hItem.momentum)}%
-                </span>
-              </td>
-            </tr>
-          `;
-        });
-      }
+      const isExpanded = expandedBrandRanks.has(b.rank);
+      const childDisplay = isExpanded ? 'table-row' : 'none';
+      const iconClass = isExpanded ? 'bi bi-chevron-down' : 'bi bi-chevron-right';
+      const btnActiveClass = isExpanded ? 'active' : '';
+      const rowExpandedClass = isExpanded ? 'expanded' : '';
 
       html += `
-        <tr class="dd-brand-row" id="brand_row_${b.rank}">
+        <tr class="dd-brand-row ${rowExpandedClass}" id="brand_row_${b.rank}">
           <td class="text-center" style="vertical-align: middle;">
-            <button type="button" class="dd-expand-btn" id="expand_btn_${b.rank}" onclick="toggleHourlyRow(${b.rank})" title="Expand hourly breakdown">
-              <i class="bi bi-chevron-right" id="expand_icon_${b.rank}"></i>
+            <button type="button" class="dd-expand-btn ${btnActiveClass}" id="expand_btn_${b.rank}" onclick="toggleHourlyRow(${b.rank})" title="Expand hourly breakdown">
+              <i class="bi ${iconClass}" id="expand_icon_${b.rank}"></i>
             </button>
           </td>
           <td class="text-center">
@@ -4775,65 +4718,116 @@
             </span>
           </td>
         </tr>
-        <tr class="dd-hourly-expand-row" id="hourly_expand_${b.rank}" style="display: none;">
-          <td colspan="15" style="padding: 0; background: color-mix(in srgb, var(--text-muted) 3%, transparent);">
-            <div class="dd-hourly-container">
-              <div class="dd-hourly-header">
-                <div class="dd-hourly-title">
-                  <i class="bi bi-clock-history text-warning"></i>
-                  <span>Hourly Breakdown: <strong>${b.brand}</strong></span>
-                  <span class="dd-hourly-badge">${(b.hourly_breakdown || []).length} Hours</span>
-                </div>
-                <div style="font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
-                  <i class="bi bi-sort-down text-warning"></i>
-                  <span>Ordered by Hour (Descending)</span>
-                </div>
-              </div>
-              <div class="dd-table-wrap" style="margin: 0; border: 1px solid var(--glass-border); border-radius: 8px; overflow-x: auto;">
-                <table class="dd-table dd-hourly-subtable">
-                  <thead>
-                    <tr>
-                      <th class="text-center" style="width: 75px;"><i class="bi bi-clock me-1"></i>Hour</th>
-                      <th class="text-right">Hourly GMV</th>
-                      <th>Platform Split</th>
-                      <th class="text-right" title="Share of daily brand GMV">Share %</th>
-                      <th class="text-right">Net Orders</th>
-                      <th class="text-right">Units</th>
-                      <th class="text-right">Traffic (UV)</th>
-                      <th class="text-center">CVR %</th>
-                      <th class="text-right">AOV</th>
-                      <th class="text-center">Momentum</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${hourlyRowsHtml}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </td>
-        </tr>
       `;
+
+      // Seamless Hourly Child Rows (aligned directly with the 15 columns)
+      if (!b.hourly_breakdown || b.hourly_breakdown.length === 0) {
+        html += `
+          <tr class="dd-hourly-row dd-hourly-brand-${b.rank}" style="display: ${childDisplay};">
+            <td class="text-center text-muted" style="vertical-align: middle;">
+              <span style="opacity: 0.35; font-size: 0.75rem;">↳</span>
+            </td>
+            <td class="text-center text-muted mono">-</td>
+            <td colspan="13" class="text-muted" style="padding-left: 8px; font-size: 0.78rem;">
+              No hourly data available for this campaign date.
+            </td>
+          </tr>
+        `;
+      } else {
+        b.hourly_breakdown.forEach(hItem => {
+          let hPlatPill = `<div class="dd-platform-bar" title="Hourly Platform Breakdown">`;
+          (hItem.platforms || []).forEach(p => {
+            if (p.pct > 0) {
+              let col = '#FF6B00';
+              if (p.platform.toLowerCase().includes('shopee')) col = '#EE4D2D';
+              else if (p.platform.toLowerCase().includes('tiktok')) col = '#000000';
+              else if (p.platform.toLowerCase().includes('tokopedia')) col = '#03AC0E';
+              else if (p.platform.toLowerCase().includes('lazada')) col = '#0F146D';
+              hPlatPill += `<span style="width:${p.pct}%; background:${col}; height:100%;" title="${p.platform}: ${p.pct}% (${formatIDR(p.gmv, true)})"></span>`;
+            }
+          });
+          hPlatPill += `</div>`;
+
+          let hCvrClass = 'cvr-low';
+          if (hItem.cvr >= 5.0) hCvrClass = 'cvr-high';
+          else if (hItem.cvr >= 2.0) hCvrClass = 'cvr-mid';
+
+          const hMomSign = hItem.momentum >= 0 ? '▲ +' : '▼ ';
+          const hMomClass = hItem.momentum >= 0 ? 'momentum-pos' : 'momentum-neg';
+          const contribPct = (hItem.contribution_pct !== undefined) ? hItem.contribution_pct : (hItem.share_pct || 0);
+          const sharePct = (hItem.share_pct !== undefined) ? hItem.share_pct : contribPct;
+
+          html += `
+            <tr class="dd-hourly-row dd-hourly-brand-${b.rank}" style="display: ${childDisplay};">
+              <td class="text-center text-muted" style="vertical-align: middle;">
+                <span style="opacity: 0.4; font-size: 0.75rem;">↳</span>
+              </td>
+              <td class="text-center text-muted mono" style="font-size: 0.72rem;">-</td>
+              <td style="vertical-align: middle;">
+                <div class="dd-brand-cell" style="padding-left: 4px;">
+                  <span class="dd-hour-tag mono">${hItem.hour_label}</span>
+                </div>
+              </td>
+              <td class="text-right text-muted mono">-</td>
+              <td class="text-center text-muted mono">-</td>
+              <td class="text-right">
+                <strong class="mono" style="font-weight: 600;">${formatIDR(hItem.gmv, true)}</strong>
+              </td>
+              <td>${hPlatPill}</td>
+              <td class="text-right text-muted mono" title="${sharePct}% market share in this hour">${sharePct}%</td>
+              <td class="text-right mono">${formatNumber(hItem.orders)}</td>
+              <td class="text-right text-muted mono">${formatNumber(hItem.units)}</td>
+              <td class="text-right mono">${formatNumber(hItem.uv)}</td>
+              <td class="text-center">
+                <span class="dd-cvr-badge ${hCvrClass} mono">${hItem.cvr}%</span>
+              </td>
+              <td class="text-right mono">${formatIDR(hItem.aov, true)}</td>
+              <td class="text-center" style="vertical-align: middle;">
+                <div class="dd-contrib-wrap" title="${contribPct}% contribution to ${b.brand}'s daily GMV">
+                  <div class="dd-contrib-track">
+                    <div class="dd-contrib-fill" style="width: ${Math.min(contribPct, 100)}%;"></div>
+                  </div>
+                  <span class="dd-contrib-val mono">${contribPct}%</span>
+                </div>
+              </td>
+              <td class="text-center">
+                <span class="dd-momentum-pill ${hMomClass} mono" style="font-size: 0.68rem; padding: 1px 6px;">
+                  ${hMomSign}${Math.abs(hItem.momentum)}%
+                </span>
+              </td>
+            </tr>
+          `;
+        });
+      }
     });
 
     tbody.innerHTML = html;
   }
 
   window.toggleHourlyRow = function(rank) {
-    const expandRow = document.getElementById(`hourly_expand_${rank}`);
+    const rows = document.querySelectorAll(`.dd-hourly-brand-${rank}`);
     const icon = document.getElementById(`expand_icon_${rank}`);
     const btn = document.getElementById(`expand_btn_${rank}`);
-    if (!expandRow) return;
+    const parentRow = document.getElementById(`brand_row_${rank}`);
+    if (!rows || rows.length === 0) return;
 
-    const isOpen = (expandRow.style.display !== 'none');
-    if (isOpen) {
-      expandRow.style.display = 'none';
+    const isCurrentlyOpen = (rows[0].style.display !== 'none');
+    const newDisplay = isCurrentlyOpen ? 'none' : 'table-row';
+
+    rows.forEach(r => {
+      r.style.display = newDisplay;
+    });
+
+    if (isCurrentlyOpen) {
+      expandedBrandRanks.delete(rank);
       if (icon) icon.className = 'bi bi-chevron-right';
       if (btn) btn.classList.remove('active');
+      if (parentRow) parentRow.classList.remove('expanded');
     } else {
-      expandRow.style.display = 'table-row';
+      expandedBrandRanks.add(rank);
       if (icon) icon.className = 'bi bi-chevron-down';
       if (btn) btn.classList.add('active');
+      if (parentRow) parentRow.classList.add('expanded');
     }
   };
 

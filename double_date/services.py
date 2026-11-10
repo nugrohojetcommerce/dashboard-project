@@ -657,6 +657,8 @@ def get_campaign_war_room_data(
             h_cvr = (h_orders / h_uv * 100.0) if h_uv > 0 else 0.0
             h_aov = (h_gmv / h_orders) if h_orders > 0 else 0.0
             h_share = (h_gmv / b_gmv * 100.0) if b_gmv > 0 else 0.0
+            camp_hour_gmv = hourly_totals[h]["gmv"]
+            camp_share = (h_gmv / camp_hour_gmv * 100.0) if camp_hour_gmv > 0 else 0.0
 
             # Momentum vs previous hour (h - 1)
             prev_h_gmv = b["hourly_gmv"][h - 1] if h > 0 else 0.0
@@ -687,7 +689,8 @@ def get_campaign_war_room_data(
                 "uv": h_uv,
                 "cvr": round(h_cvr, 2),
                 "aov": round(h_aov, 0),
-                "share_pct": round(h_share, 1),
+                "share_pct": round(camp_share, 1),
+                "contribution_pct": round(h_share, 1),
                 "platforms": h_platforms,
                 "momentum": h_momentum,
             })

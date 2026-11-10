@@ -1508,6 +1508,20 @@
     min-width: 32px;
     text-align: right;
   }
+  .dd-share-val {
+    color: var(--text-title, #F8FAFC);
+    font-weight: 600;
+  }
+  .dd-plat-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ffffff !important;
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
 </style>
 {% endblock %}
 
@@ -1993,14 +2007,25 @@
   <!-- Zone 4: Full Interactive Leaderboard Table -->
   <div class="dd-card">
     <div class="dd-table-toolbar">
-      <div>
-        <h2 class="dd-section-title">
-          <i class="bi bi-list-ol text-warning"></i>
-          Brand Standings
-        </h2>
-        <span class="text-muted" style="font-size: 0.75rem;" id="leaderboardBrandCount">
-          0 brands
-        </span>
+      <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+        <div>
+          <h2 class="dd-section-title">
+            <i class="bi bi-list-ol text-warning"></i>
+            Brand Standings
+          </h2>
+          <span class="text-muted" style="font-size: 0.75rem;" id="leaderboardBrandCount">
+            0 brands
+          </span>
+        </div>
+
+        <!-- Table Platform Toggle Group -->
+        <div class="platform-pills" id="tablePlatformPills" style="margin-left: 4px;">
+          <button type="button" class="platform-pill-btn active" data-platform="all" onclick="setLeaderboardPlatform('all')">All Platform</button>
+          <button type="button" class="platform-pill-btn" data-platform="Shopee" onclick="setLeaderboardPlatform('Shopee')">Shopee</button>
+          <button type="button" class="platform-pill-btn" data-platform="TikTok" onclick="setLeaderboardPlatform('TikTok')">TikTok</button>
+          <button type="button" class="platform-pill-btn" data-platform="Tokopedia" onclick="setLeaderboardPlatform('Tokopedia')">Tokopedia</button>
+          <button type="button" class="platform-pill-btn" data-platform="Lazada" onclick="setLeaderboardPlatform('Lazada')">Lazada</button>
+        </div>
       </div>
 
       <div class="dd-search-box">
@@ -2017,7 +2042,7 @@
             <th class="text-center" style="width: 50px;">Rank</th>
             <th>Brand</th>
             <th class="text-right">Total GMV</th>
-            <th>Platform Split</th>
+            <th id="thPlatformCol">Platform Split</th>
             <th class="text-right">Share %</th>
             <th class="text-right">Net Orders</th>
             <th class="text-right">Units</th>
@@ -2025,7 +2050,8 @@
             <th class="text-center">CVR %</th>
             <th class="text-right">AOV</th>
             <th class="text-center" style="width: 105px;" title="24h Trend / % Contribution">24h Trend</th>
-            <th class="text-center">Momentum</th>
+            <th class="text-center" style="width: 80px;" id="thMomCol" title="Month-over-Month vs previous campaign">MoM</th>
+            <th class="text-center" style="width: 80px;" id="thYoyCol" title="Year-over-Year vs same campaign last year">YoY</th>
             <th class="text-right">Target</th>
             <th class="text-center">% Ach</th>
           </tr>
@@ -4797,6 +4823,41 @@
   /* ── 4. Leaderboard Table ── */
   const expandedBrandRanks = new Set();
   window.platformDetailRegistry = {};
+  let currentTablePlatform = 'all';
+
+  function getPlatformColor(plat) {
+    const pl = (plat || '').toLowerCase();
+    if (pl.includes('shopee')) return '#EE4D2D';
+    if (pl.includes('tiktok')) return '#000000';
+    if (pl.includes('tokopedia')) return '#03AC0E';
+    if (pl.includes('lazada')) return '#0F146D';
+    return '#FF6B00';
+  }
+
+  function renderGrowthPill(val, title) {
+    if (val === null || val === undefined || isNaN(val)) {
+      return '<span class="text-muted mono">-</span>';
+    }
+    const sign = val >= 0 ? '▲ +' : '▼ ';
+    const cls = val >= 0 ? 'momentum-pos' : 'momentum-neg';
+    return `<span class="dd-momentum-pill ${cls} mono" style="font-size: 0.68rem; padding: 1px 6px;" title="${title || ''}">${sign}${Math.abs(val)}%</span>`;
+  }
+
+  window.setLeaderboardPlatform = function(platform) {
+    currentTablePlatform = platform || 'all';
+
+    document.querySelectorAll('#tablePlatformPills .platform-pill-btn').forEach(btn => {
+      const btnPlat = btn.getAttribute('data-platform') || 'all';
+      btn.classList.toggle('active', btnPlat.toLowerCase() === currentTablePlatform.toLowerCase());
+    });
+
+    const thPlatformCol = document.getElementById('thPlatformCol');
+    if (thPlatformCol) {
+      thPlatformCol.textContent = (currentTablePlatform.toLowerCase() === 'all') ? 'Platform Split' : 'Platform';
+    }
+
+    renderLeaderboardTable(document.getElementById('tableSearchInput')?.value || '');
+  };
 
   function renderLeaderboardTable(filterText = '') {
     const tbody = document.getElementById('leaderboardTableBody');
@@ -4804,29 +4865,94 @@
 
     window.platformDetailRegistry = {};
 
-    let items = campaignData.leaderboard || [];
+    // Update MoM & YoY column tooltips if comparison_meta is present
+    const meta = campaignData.comparison_meta || {};
+    const thMom = document.getElementById('thMomCol');
+    const thYoy = document.getElementById('thYoyCol');
+    if (thMom && meta.mom_label) thMom.title = `Month-over-Month vs previous campaign (${meta.mom_label})`;
+    if (thYoy && meta.yoy_label) thYoy.title = `Year-over-Year vs same campaign last year (${meta.yoy_label})`;
+
+    let rawItems = campaignData.leaderboard || [];
     if (filterText) {
       const q = filterText.toLowerCase().trim();
-      items = items.filter(x => x.brand.toLowerCase().includes(q));
+      rawItems = rawItems.filter(x => x.brand.toLowerCase().includes(q));
+    }
+
+    const isAllPlatform = (currentTablePlatform.toLowerCase() === 'all');
+    const selPlatLower = currentTablePlatform.toLowerCase();
+    const platBadgeColor = getPlatformColor(currentTablePlatform);
+
+    // Compute active metrics per brand based on currentTablePlatform
+    let items = rawItems.map(b => {
+      if (isAllPlatform) {
+        return {
+          ...b,
+          active_gmv: b.total_gmv,
+          active_orders: b.total_orders,
+          active_units: b.total_units,
+          active_share_pct: b.share_pct,
+          active_aov: b.aov,
+          active_mom: b.mom,
+          active_yoy: b.yoy,
+        };
+      } else {
+        const pData = (b.platforms || []).find(p => p.platform.toLowerCase() === selPlatLower);
+        const pGmv = pData ? (pData.gmv || 0) : 0;
+        const pOrders = pData ? (pData.orders || 0) : 0;
+        const pUnits = pData ? (pData.units || 0) : 0;
+        const pAov = (pOrders > 0) ? Math.round(pGmv / pOrders) : 0;
+
+        // Platform MoM / YoY
+        const pMomGmv = b.mom_platform_gmv ? (b.mom_platform_gmv[currentTablePlatform] || 0) : 0;
+        const pYoyGmv = b.yoy_platform_gmv ? (b.yoy_platform_gmv[currentTablePlatform] || 0) : 0;
+
+        const pMom = (pMomGmv > 0) ? Math.round(((pGmv - pMomGmv) / pMomGmv) * 1000) / 10 : ((pGmv > 0 && meta.has_mom_data) ? 100.0 : null);
+        const pYoy = (pYoyGmv > 0) ? Math.round(((pGmv - pYoyGmv) / pYoyGmv) * 1000) / 10 : ((pGmv > 0 && meta.has_yoy_data) ? 100.0 : null);
+
+        return {
+          ...b,
+          active_gmv: pGmv,
+          active_orders: pOrders,
+          active_units: pUnits,
+          active_aov: pAov,
+          active_mom: pMom,
+          active_yoy: pYoy,
+        };
+      }
+    });
+
+    if (!isAllPlatform) {
+      // Sort brands by active platform GMV descending
+      items.sort((a, b) => b.active_gmv - a.active_gmv);
+      const totalPlatGmv = items.reduce((acc, x) => acc + x.active_gmv, 0);
+      items.forEach((b, idx) => {
+        b.active_rank = idx + 1;
+        b.active_share_pct = (totalPlatGmv > 0) ? Math.round((b.active_gmv / totalPlatGmv) * 1000) / 10 : 0.0;
+      });
+    } else {
+      items.forEach(b => {
+        b.active_rank = b.rank;
+        b.active_share_pct = b.share_pct;
+      });
     }
 
     document.getElementById('leaderboardBrandCount').textContent = `${items.length} brand${items.length === 1 ? '' : 's'}`;
 
     if (items.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="15" class="text-center text-muted py-4">No matching brands found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="16" class="text-center text-muted py-4">No matching brands found.</td></tr>`;
       return;
     }
 
     let html = '';
     items.forEach(b => {
       let rankBadgeClass = 'dd-rank-n';
-      if (b.rank === 1) rankBadgeClass = 'dd-rank-1';
-      else if (b.rank === 2) rankBadgeClass = 'dd-rank-2';
-      else if (b.rank === 3) rankBadgeClass = 'dd-rank-3';
+      if (b.active_rank === 1) rankBadgeClass = 'dd-rank-1';
+      else if (b.active_rank === 2) rankBadgeClass = 'dd-rank-2';
+      else if (b.active_rank === 3) rankBadgeClass = 'dd-rank-3';
 
       const logoHtml = window.renderBrandIcon ? window.renderBrandIcon(b.brand, 24) : '';
 
-      const brandRegKey = `brand_${b.rank}`;
+      const brandRegKey = `brand_${b.active_rank}`;
       window.platformDetailRegistry[brandRegKey] = {
         brand: b.brand,
         period: 'Full Day (Campaign Total)',
@@ -4837,25 +4963,24 @@
         platforms: b.platforms || []
       };
 
-      let platformPill = `<div class="dd-platform-bar" onclick="openPlatformDetailModal('${brandRegKey}')" title="Click to view Platform NMV, Orders & Units breakdown">`;
-      (b.platforms || []).forEach(p => {
-        if (p.pct > 0) {
-          let col = '#FF6B00';
-          if (p.platform.toLowerCase().includes('shopee')) col = '#EE4D2D';
-          else if (p.platform.toLowerCase().includes('tiktok')) col = '#000000';
-          else if (p.platform.toLowerCase().includes('tokopedia')) col = '#03AC0E';
-          else if (p.platform.toLowerCase().includes('lazada')) col = '#0F146D';
-          platformPill += `<span style="width:${p.pct}%; background:${col}; height:100%;"></span>`;
-        }
-      });
-      platformPill += `</div>`;
+      let platformCellHtml = '';
+      if (isAllPlatform) {
+        platformCellHtml = `<div class="dd-platform-bar" onclick="openPlatformDetailModal('${brandRegKey}')" title="Click to view Platform NMV, Orders & Units breakdown">`;
+        (b.platforms || []).forEach(p => {
+          if (p.pct > 0) {
+            let col = getPlatformColor(p.platform);
+            platformCellHtml += `<span style="width:${p.pct}%; background:${col}; height:100%;"></span>`;
+          }
+        });
+        platformCellHtml += `</div>`;
+      } else {
+        platformCellHtml = `<span class="dd-plat-badge" style="background:${platBadgeColor};">${currentTablePlatform}</span>`;
+      }
 
       let cvrClass = 'cvr-low';
       if (b.cvr >= 5.0) cvrClass = 'cvr-high';
       else if (b.cvr >= 2.0) cvrClass = 'cvr-mid';
 
-      const momentumSign = b.momentum >= 0 ? '▲ +' : '▼ ';
-      const momentumClass = b.momentum >= 0 ? 'momentum-pos' : 'momentum-neg';
       const sparklineSvg = generateSparklineSvg(b.hourly_gmv || []);
 
       const hasTarget = (b.target && b.target > 0);
@@ -4871,21 +4996,21 @@
         else { achvColor = '#EF4444'; }
       }
 
-      const isExpanded = expandedBrandRanks.has(b.rank);
+      const isExpanded = expandedBrandRanks.has(b.active_rank);
       const childDisplay = isExpanded ? 'table-row' : 'none';
       const iconClass = isExpanded ? 'bi bi-chevron-down' : 'bi bi-chevron-right';
       const btnActiveClass = isExpanded ? 'active' : '';
       const rowExpandedClass = isExpanded ? 'expanded' : '';
 
       html += `
-        <tr class="dd-brand-row ${rowExpandedClass}" id="brand_row_${b.rank}">
+        <tr class="dd-brand-row ${rowExpandedClass}" id="brand_row_${b.active_rank}">
           <td class="text-center" style="vertical-align: middle;">
-            <button type="button" class="dd-expand-btn ${btnActiveClass}" id="expand_btn_${b.rank}" onclick="toggleHourlyRow(${b.rank})" title="Expand hourly breakdown">
-              <i class="bi ${iconClass}" id="expand_icon_${b.rank}"></i>
+            <button type="button" class="dd-expand-btn ${btnActiveClass}" id="expand_btn_${b.active_rank}" onclick="toggleHourlyRow(${b.active_rank})" title="Expand hourly breakdown">
+              <i class="bi ${iconClass}" id="expand_icon_${b.active_rank}"></i>
             </button>
           </td>
           <td class="text-center">
-            <span class="dd-rank-badge ${rankBadgeClass}">${b.rank}</span>
+            <span class="dd-rank-badge ${rankBadgeClass}">${b.active_rank}</span>
           </td>
           <td>
             <div class="dd-brand-cell">
@@ -4894,22 +5019,25 @@
             </div>
           </td>
           <td class="text-right">
-            <strong class="mono">${formatIDR(b.total_gmv, true)}</strong>
+            <strong class="mono">${formatIDR(b.active_gmv, true)}</strong>
           </td>
-          <td>${platformPill}</td>
-          <td class="text-right text-muted mono">${b.share_pct}%</td>
-          <td class="text-right mono">${formatNumber(b.total_orders)}</td>
-          <td class="text-right text-muted mono">${formatNumber(b.total_units)}</td>
+          <td>${platformCellHtml}</td>
+          <td class="text-right mono">
+            <span class="dd-share-val">${b.active_share_pct}%</span>
+          </td>
+          <td class="text-right mono">${formatNumber(b.active_orders)}</td>
+          <td class="text-right mono">${formatNumber(b.active_units)}</td>
           <td class="text-right mono">${formatNumber(b.total_uv)}</td>
           <td class="text-center">
             <span class="dd-cvr-badge ${cvrClass} mono">${b.cvr}%</span>
           </td>
-          <td class="text-right mono">${formatIDR(b.aov, true)}</td>
+          <td class="text-right mono">${formatIDR(b.active_aov, true)}</td>
           <td class="text-center">${sparklineSvg}</td>
           <td class="text-center">
-            <span class="dd-momentum-pill ${momentumClass} mono">
-              ${momentumSign}${Math.abs(b.momentum)}%
-            </span>
+            ${renderGrowthPill(b.active_mom, `MoM vs ${meta.mom_label || 'prev campaign'}`)}
+          </td>
+          <td class="text-center">
+            ${renderGrowthPill(b.active_yoy, `YoY vs ${meta.yoy_label || 'prev year'}`)}
           </td>
           <td class="text-right mono">
             ${hasTarget ? formatIDR(b.target, true) : '<span class="text-muted">-</span>'}
@@ -4923,53 +5051,65 @@
       // Seamless Hourly Child Rows (ascending order 00:00 to 23:00)
       if (!b.hourly_breakdown || b.hourly_breakdown.length === 0) {
         html += `
-          <tr class="dd-hourly-row dd-hourly-brand-${b.rank}" style="display: ${childDisplay};">
+          <tr class="dd-hourly-row dd-hourly-brand-${b.active_rank}" style="display: ${childDisplay};">
             <td class="text-center text-muted" style="vertical-align: middle;">
               <span style="opacity: 0.35; font-size: 0.75rem;">-</span>
             </td>
             <td class="text-center text-muted mono">-</td>
-            <td colspan="13" class="text-muted" style="padding-left: 8px; font-size: 0.78rem;">
+            <td colspan="14" class="text-muted" style="padding-left: 8px; font-size: 0.78rem;">
               No hourly data available for this campaign date.
             </td>
           </tr>
         `;
       } else {
         b.hourly_breakdown.forEach(hItem => {
-          const hourlyRegKey = `hourly_${b.rank}_${hItem.hour}`;
-          window.platformDetailRegistry[hourlyRegKey] = {
-            brand: b.brand,
-            period: `Hour ${hItem.hour_label}`,
-            total_gmv: hItem.gmv,
-            total_nmv: hItem.nmv,
-            total_orders: hItem.orders,
-            total_units: hItem.units,
-            platforms: hItem.platforms || []
-          };
+          let hGmv = hItem.gmv;
+          let hOrders = hItem.orders;
+          let hUnits = hItem.units;
+          let hAov = hItem.aov;
+          let hShare = hItem.share_pct;
+          let hContrib = hItem.contribution_pct;
+          let hMom = hItem.mom;
+          let hYoy = hItem.yoy;
+          let hPlatHtml = '';
 
-          let hPlatPill = `<div class="dd-platform-bar" onclick="openPlatformDetailModal('${hourlyRegKey}')" title="Click to view Platform NMV, Orders & Units breakdown">`;
-          (hItem.platforms || []).forEach(p => {
-            if (p.pct > 0) {
-              let col = '#FF6B00';
-              if (p.platform.toLowerCase().includes('shopee')) col = '#EE4D2D';
-              else if (p.platform.toLowerCase().includes('tiktok')) col = '#000000';
-              else if (p.platform.toLowerCase().includes('tokopedia')) col = '#03AC0E';
-              else if (p.platform.toLowerCase().includes('lazada')) col = '#0F146D';
-              hPlatPill += `<span style="width:${p.pct}%; background:${col}; height:100%;"></span>`;
-            }
-          });
-          hPlatPill += `</div>`;
+          if (isAllPlatform) {
+            const hourlyRegKey = `hourly_${b.active_rank}_${hItem.hour}`;
+            window.platformDetailRegistry[hourlyRegKey] = {
+              brand: b.brand,
+              period: `Hour ${hItem.hour_label}`,
+              total_gmv: hItem.gmv,
+              total_nmv: hItem.nmv,
+              total_orders: hItem.orders,
+              total_units: hItem.units,
+              platforms: hItem.platforms || []
+            };
+
+            hPlatHtml = `<div class="dd-platform-bar" onclick="openPlatformDetailModal('${hourlyRegKey}')" title="Click to view Platform NMV, Orders & Units breakdown">`;
+            (hItem.platforms || []).forEach(p => {
+              if (p.pct > 0) {
+                let col = getPlatformColor(p.platform);
+                hPlatHtml += `<span style="width:${p.pct}%; background:${col}; height:100%;"></span>`;
+              }
+            });
+            hPlatHtml += `</div>`;
+          } else {
+            const hPData = (hItem.platforms || []).find(p => p.platform.toLowerCase() === selPlatLower);
+            hGmv = hPData ? (hPData.gmv || 0) : 0;
+            hOrders = hPData ? (hPData.orders || 0) : 0;
+            hUnits = hPData ? (hPData.units || 0) : 0;
+            hAov = (hOrders > 0) ? Math.round(hGmv / hOrders) : 0;
+            hContrib = (b.active_gmv > 0) ? Math.round((hGmv / b.active_gmv) * 1000) / 10 : 0.0;
+            hShare = hPData ? hPData.pct : 0.0;
+            hPlatHtml = `<span class="dd-plat-badge" style="background:${platBadgeColor}; font-size:0.68rem; padding:2px 7px;">${currentTablePlatform}</span>`;
+          }
 
           let hCvrClass = 'cvr-low';
           if (hItem.cvr >= 5.0) hCvrClass = 'cvr-high';
           else if (hItem.cvr >= 2.0) hCvrClass = 'cvr-mid';
 
-          const hMomSign = hItem.momentum >= 0 ? '▲ +' : '▼ ';
-          const hMomClass = hItem.momentum >= 0 ? 'momentum-pos' : 'momentum-neg';
-          const contribPct = (hItem.contribution_pct !== undefined) ? hItem.contribution_pct : (hItem.share_pct || 0);
-          const sharePct = (hItem.share_pct !== undefined) ? hItem.share_pct : contribPct;
-
           html += `
-            <tr class="dd-hourly-row dd-hourly-brand-${b.rank}" style="display: ${childDisplay};">
+            <tr class="dd-hourly-row dd-hourly-brand-${b.active_rank}" style="display: ${childDisplay};">
               <td class="text-center mono" style="vertical-align: middle;">
                 <span class="dd-hour-tag">${hItem.hour_label}</span>
               </td>
@@ -4983,29 +5123,32 @@
                 </div>
               </td>
               <td class="text-right">
-                <strong class="mono" style="font-weight: 600;">${formatIDR(hItem.gmv, true)}</strong>
+                <strong class="mono" style="font-weight: 600;">${formatIDR(hGmv, true)}</strong>
               </td>
-              <td>${hPlatPill}</td>
-              <td class="text-right text-muted mono" title="${sharePct}% market share in this hour">${sharePct}%</td>
-              <td class="text-right mono">${formatNumber(hItem.orders)}</td>
-              <td class="text-right text-muted mono">${formatNumber(hItem.units)}</td>
+              <td>${hPlatHtml}</td>
+              <td class="text-right mono" title="${hShare}% share">
+                <span class="dd-share-val">${hShare}%</span>
+              </td>
+              <td class="text-right mono">${formatNumber(hOrders)}</td>
+              <td class="text-right mono">${formatNumber(hUnits)}</td>
               <td class="text-right mono">${formatNumber(hItem.uv)}</td>
               <td class="text-center">
                 <span class="dd-cvr-badge ${hCvrClass} mono">${hItem.cvr}%</span>
               </td>
-              <td class="text-right mono">${formatIDR(hItem.aov, true)}</td>
+              <td class="text-right mono">${formatIDR(hAov, true)}</td>
               <td class="text-center" style="vertical-align: middle;">
-                <div class="dd-contrib-wrap" title="${contribPct}% contribution to ${b.brand}'s daily GMV">
+                <div class="dd-contrib-wrap" title="${hContrib}% contribution to ${b.brand}'s ${currentTablePlatform === 'all' ? 'daily GMV' : currentTablePlatform + ' GMV'}">
                   <div class="dd-contrib-track">
-                    <div class="dd-contrib-fill" style="width: ${Math.min(contribPct, 100)}%;"></div>
+                    <div class="dd-contrib-fill" style="width: ${Math.min(hContrib, 100)}%;"></div>
                   </div>
-                  <span class="dd-contrib-val mono">${contribPct}%</span>
+                  <span class="dd-contrib-val mono">${hContrib}%</span>
                 </div>
               </td>
               <td class="text-center">
-                <span class="dd-momentum-pill ${hMomClass} mono" style="font-size: 0.68rem; padding: 1px 6px;">
-                  ${hMomSign}${Math.abs(hItem.momentum)}%
-                </span>
+                ${renderGrowthPill(hMom, `MoM vs ${meta.mom_label || 'prev campaign'}`)}
+              </td>
+              <td class="text-center">
+                ${renderGrowthPill(hYoy, `YoY vs ${meta.yoy_label || 'prev year'}`)}
               </td>
               <td class="text-right text-muted mono">-</td>
               <td class="text-center text-muted mono">-</td>

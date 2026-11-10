@@ -265,6 +265,68 @@ def get_campaign_war_room_data(
 
     traffic_date_str = target_date.strftime("%Y%m%d")
 
+    # Determine MoM and YoY comparison dates
+    mom_date = None
+    yoy_date = None
+    if target_date.day == target_date.month:
+        # Double Date: MoM is previous double date (e.g. 10.10 vs 9.9, or 1.1 vs 12.12 previous year)
+        if target_date.month > 1:
+            pm = target_date.month - 1
+            mom_date = datetime(target_date.year, pm, pm).date()
+        else:
+            mom_date = datetime(target_date.year - 1, 12, 12).date()
+        yoy_date = datetime(target_date.year - 1, target_date.month, target_date.day).date()
+    elif target_date.day == 25:
+        # Payday: MoM is previous month's Payday (25th)
+        if target_date.month > 1:
+            mom_date = datetime(target_date.year, target_date.month - 1, 25).date()
+        else:
+            mom_date = datetime(target_date.year - 1, 12, 25).date()
+        yoy_date = datetime(target_date.year - 1, target_date.month, 25).date()
+
+    comparison_dates = [d for d in [mom_date, yoy_date] if d is not None]
+    brand_mom_gmv = defaultdict(float)
+    brand_yoy_gmv = defaultdict(float)
+    brand_mom_hourly_gmv = defaultdict(lambda: [0.0] * 24)
+    brand_yoy_hourly_gmv = defaultdict(lambda: [0.0] * 24)
+    brand_mom_platform_gmv = defaultdict(lambda: defaultdict(float))
+    brand_yoy_platform_gmv = defaultdict(lambda: defaultdict(float))
+    brand_mom_hourly_plat_gmv = defaultdict(lambda: [defaultdict(float) for _ in range(24)])
+    brand_yoy_hourly_plat_gmv = defaultdict(lambda: [defaultdict(float) for _ in range(24)])
+
+    has_mom_data = False
+    has_yoy_data = False
+
+    if comparison_dates:
+        comp_rows = (
+            OrderMartDDSummary.objects.filter(
+                date__in=comparison_dates,
+                brand__in=query_brands
+            )
+            .values("date", "brand", "platform", "hour")
+            .annotate(gmv=Sum("total_gmv"))
+        )
+        for r in comp_rows:
+            r_date = r["date"]
+            b_raw = r["brand"] or ""
+            b_canon = CANONICAL_BRAND_MAP.get(b_raw.lower().strip(), b_raw)
+            p_val = (r["platform"] or "").strip()
+            h_val = r["hour"] if (r["hour"] is not None and 0 <= r["hour"] <= 23) else 0
+            val_gmv = _to_float(r["gmv"])
+
+            if r_date == mom_date:
+                has_mom_data = True
+                brand_mom_gmv[b_canon] += val_gmv
+                brand_mom_hourly_gmv[b_canon][h_val] += val_gmv
+                brand_mom_platform_gmv[b_canon][p_val] += val_gmv
+                brand_mom_hourly_plat_gmv[b_canon][h_val][p_val] += val_gmv
+            elif r_date == yoy_date:
+                has_yoy_data = True
+                brand_yoy_gmv[b_canon] += val_gmv
+                brand_yoy_hourly_gmv[b_canon][h_val] += val_gmv
+                brand_yoy_platform_gmv[b_canon][p_val] += val_gmv
+                brand_yoy_hourly_plat_gmv[b_canon][h_val][p_val] += val_gmv
+
     # 1. Query Orders aggregated by (brand, platform, hour)
     order_qs = (
         OrderMartDDSummary.objects.filter(
@@ -658,9 +720,25 @@ def get_campaign_war_room_data(
                 "pct": round(p_pct, 1),
             })
 
+        b_name = b["brand"]
         b_target = b.get("target", 0.0)
         gmv_achieve_pct = round((b_gmv / b_target * 100.0), 1) if b_target > 0 else 0.0
         nmv_achieve_pct = round((b["nmv"] / b_target * 100.0), 1) if b_target > 0 else 0.0
+
+        b_mom_gmv = brand_mom_gmv.get(b_name, 0.0)
+        b_yoy_gmv = brand_yoy_gmv.get(b_name, 0.0)
+
+        mom_growth = None
+        if b_mom_gmv > 0:
+            mom_growth = round(((b_gmv - b_mom_gmv) / b_mom_gmv) * 100.0, 1)
+        elif b_gmv > 0 and has_mom_data:
+            mom_growth = 100.0
+
+        yoy_growth = None
+        if b_yoy_gmv > 0:
+            yoy_growth = round(((b_gmv - b_yoy_gmv) / b_yoy_gmv) * 100.0, 1)
+        elif b_gmv > 0 and has_yoy_data:
+            yoy_growth = 100.0
 
         # Hourly breakdown ordered ascending (from 0 up to latest active hour)
         hourly_breakdown = []
@@ -684,6 +762,21 @@ def get_campaign_war_room_data(
                 h_momentum = 100.0
             else:
                 h_momentum = 0.0
+
+            # Hourly MoM & YoY
+            h_mom_gmv = brand_mom_hourly_gmv[b_name][h]
+            h_yoy_gmv = brand_yoy_hourly_gmv[b_name][h]
+            h_mom = None
+            if h_mom_gmv > 0:
+                h_mom = round(((h_gmv - h_mom_gmv) / h_mom_gmv) * 100.0, 1)
+            elif h_gmv > 0 and has_mom_data:
+                h_mom = 100.0
+
+            h_yoy = None
+            if h_yoy_gmv > 0:
+                h_yoy = round(((h_gmv - h_yoy_gmv) / h_yoy_gmv) * 100.0, 1)
+            elif h_gmv > 0 and has_yoy_data:
+                h_yoy = 100.0
 
             h_platforms = []
             for p in target_platforms:
@@ -715,11 +808,13 @@ def get_campaign_war_room_data(
                 "contribution_pct": round(h_share, 1),
                 "platforms": h_platforms,
                 "momentum": h_momentum,
+                "mom": h_mom,
+                "yoy": h_yoy,
             })
 
         leaderboard.append({
             "rank": rank,
-            "brand": b["brand"],
+            "brand": b_name,
             "total_gmv": b_gmv,
             "total_nmv": b["nmv"],
             "target": b_target,
@@ -740,6 +835,12 @@ def get_campaign_war_room_data(
             "hourly_uv": b["hourly_uv"],
             "hourly_breakdown": hourly_breakdown,
             "momentum": round(momentum, 1),
+            "mom": mom_growth,
+            "yoy": yoy_growth,
+            "mom_gmv": round(b_mom_gmv, 2),
+            "yoy_gmv": round(b_yoy_gmv, 2),
+            "mom_platform_gmv": {p: round(brand_mom_platform_gmv[b_name].get(p, 0.0), 2) for p in target_platforms},
+            "yoy_platform_gmv": {p: round(brand_yoy_platform_gmv[b_name].get(p, 0.0), 2) for p in target_platforms},
         })
 
     # Podium: Top 3 Brands
@@ -970,6 +1071,14 @@ def get_campaign_war_room_data(
             "peak_hour_label": f"{peak_hour:02d}:00",
             "peak_hour_gmv": peak_hour_gmv,
             "active_brands_count": len(leaderboard),
+        },
+        "comparison_meta": {
+            "mom_date": mom_date.strftime("%Y-%m-%d") if mom_date else None,
+            "mom_label": f"{mom_date.day}.{mom_date.month}" if (mom_date and mom_date.day == mom_date.month) else (mom_date.strftime("%d %b %Y") if mom_date else "-"),
+            "yoy_date": yoy_date.strftime("%Y-%m-%d") if yoy_date else None,
+            "yoy_label": f"{yoy_date.day}.{yoy_date.month} {yoy_date.year}" if (yoy_date and yoy_date.day == yoy_date.month) else (yoy_date.strftime("%d %b %Y") if yoy_date else "-"),
+            "has_mom_data": has_mom_data,
+            "has_yoy_data": has_yoy_data,
         },
         "podium": podium,
         "leaderboard": leaderboard,

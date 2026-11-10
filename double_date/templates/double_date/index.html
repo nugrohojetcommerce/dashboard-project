@@ -17,6 +17,7 @@
     --dd-surface-muted: var(--surface-muted);
     --dd-shadow: var(--shadow-sm);
     --dd-shadow-md: var(--shadow-md);
+    --text-title: var(--text-primary);
     color: var(--text-primary);
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
@@ -1207,15 +1208,15 @@
   .dd-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.82rem;
+    font-size: 0.74rem;
   }
 
   .dd-table th {
-    padding: 12px 14px;
-    font-size: 0.72rem;
+    padding: 7px 9px;
+    font-size: 0.67rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     color: var(--text-muted);
     background: var(--dd-surface-hover);
     border-bottom: 1px solid var(--dd-border);
@@ -1226,10 +1227,11 @@
   .dd-table th.text-center, .dd-table td.text-center { text-align: center; }
 
   .dd-table td {
-    padding: 12px 14px;
+    padding: 7px 9px;
     border-bottom: 1px solid var(--dd-border);
     color: var(--text-primary);
     vertical-align: middle;
+    white-space: nowrap;
   }
 
   .dd-table tbody tr {
@@ -1243,11 +1245,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     font-weight: 800;
-    font-size: 0.74rem;
+    font-size: 0.68rem;
     font-family: 'JetBrains Mono', monospace;
   }
   .dd-rank-1 { background: #FEF08A; color: #854D0E; border: 1px solid #EAB308; }
@@ -1258,17 +1260,19 @@
   .dd-brand-cell {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 7px;
     font-weight: 700;
     color: var(--text-primary);
+    white-space: nowrap;
+    font-size: 0.77rem;
   }
 
   .dd-cvr-badge {
     display: inline-block;
-    padding: 2px 7px;
-    border-radius: 5px;
+    padding: 1px 5px;
+    border-radius: 4px;
     font-weight: 700;
-    font-size: 0.75rem;
+    font-size: 0.70rem;
   }
   .cvr-high { background: rgba(16, 185, 129, 0.12); color: #10B981; }
   .cvr-mid { background: rgba(245, 158, 11, 0.12); color: #F59E0B; }
@@ -1276,8 +1280,8 @@
 
   .dd-platform-bar {
     display: inline-flex;
-    height: 8px;
-    width: 95px;
+    height: 7px;
+    width: 80px;
     border-radius: 999px;
     overflow: hidden;
     background: color-mix(in srgb, var(--text-muted) 15%, transparent);
@@ -1291,8 +1295,8 @@
   }
 
   .dd-mini-sparkline {
-    width: 70px;
-    height: 20px;
+    width: 60px;
+    height: 18px;
     display: inline-block;
     vertical-align: middle;
   }
@@ -1438,15 +1442,15 @@
 
   /* ── Leaderboard Hourly Child Rows ── */
   .dd-expand-btn {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--glass-border);
     background: var(--card-bg);
     color: var(--text-muted);
-    border-radius: 6px;
+    border-radius: 5px;
     cursor: pointer;
     padding: 0;
     transition: all 0.15s ease;
@@ -1469,14 +1473,15 @@
     background: color-mix(in srgb, var(--orange) 7%, var(--card-bg)) !important;
   }
   tr.dd-hourly-row td {
-    padding: 7px 12px;
-    font-size: 0.78rem;
+    padding: 5px 9px;
+    font-size: 0.71rem;
     vertical-align: middle;
+    white-space: nowrap;
   }
   .dd-hour-tag {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    padding: 2px 7px;
+    padding: 1px 6px;
     border-radius: 4px;
     background: color-mix(in srgb, var(--orange) 12%, transparent);
     color: var(--orange);
@@ -1485,14 +1490,14 @@
   .dd-contrib-wrap {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     width: 100%;
-    min-width: 80px;
-    max-width: 95px;
+    min-width: 72px;
+    max-width: 82px;
   }
   .dd-contrib-track {
     flex: 1;
-    height: 5px;
+    height: 4px;
     background: color-mix(in srgb, var(--text-muted) 20%, transparent);
     border-radius: 999px;
     overflow: hidden;
@@ -1503,24 +1508,51 @@
     border-radius: 999px;
   }
   .dd-contrib-val {
-    font-size: 0.68rem;
-    color: var(--text-muted);
-    min-width: 32px;
+    font-size: 0.66rem;
+    color: var(--text-primary);
+    min-width: 26px;
     text-align: right;
+    font-weight: 600;
   }
   .dd-share-val {
-    color: var(--text-title, #F8FAFC);
-    font-weight: 600;
+    color: var(--text-primary) !important;
+    font-weight: 700;
   }
   .dd-plat-badge {
     display: inline-block;
-    padding: 3px 8px;
-    border-radius: 5px;
-    font-size: 0.72rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.70rem;
     font-weight: 700;
     color: #ffffff !important;
     letter-spacing: 0.3px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+  }
+  .dd-growth-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 0.73rem;
+    cursor: pointer;
+    padding: 1px 3px;
+    border-radius: 3px;
+    display: inline-block;
+    transition: all 0.15s ease;
+    text-decoration: underline dotted color-mix(in srgb, currentColor 40%, transparent);
+    white-space: nowrap;
+  }
+  .dd-growth-text:hover {
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    text-decoration: underline;
+  }
+  .growth-pos {
+    color: var(--success, #10B981) !important;
+  }
+  .growth-neg {
+    color: var(--danger, #F43F5E) !important;
+  }
+  .growth-neutral {
+    color: var(--text-muted, #64748B) !important;
   }
 </style>
 {% endblock %}
@@ -2099,6 +2131,58 @@
           <tfoot id="pmModalTfoot">
           </tfoot>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Growth Detail Modal (MoM & YoY Calculation Breakdown) -->
+  <div id="growthDetailModal" class="dd-modal-backdrop" style="display: none;" onclick="closeGrowthDetailModal(event)">
+    <div class="dd-modal-dialog" style="max-width: 540px;" onclick="event.stopPropagation()">
+      <div class="dd-modal-header">
+        <div class="dd-modal-title-group">
+          <div class="dd-modal-icon" style="background: color-mix(in srgb, var(--accent-2, #0284C7) 14%, transparent); color: var(--accent-2, #0284C7);">
+            <i class="bi bi-graph-up-arrow"></i>
+          </div>
+          <div>
+            <h5 class="dd-modal-title" id="growthModalTitle">Growth Calculation Detail</h5>
+            <span class="dd-modal-subtitle" id="growthModalSubtitle">Brand & Period</span>
+          </div>
+        </div>
+        <button type="button" class="dd-modal-close" onclick="closeGrowthDetailModal()" title="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <!-- Values Comparison Cards -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+        <div style="background: color-mix(in srgb, var(--text-primary) 4%, var(--card-bg)); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Value Saat Ini (Current)</div>
+          <div style="font-size: 0.74rem; color: var(--text-sub); margin-bottom: 6px;" id="growthModalCurrentLabel">Current Campaign</div>
+          <div class="mono" style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary);" id="growthModalCurrentVal">Rp 0</div>
+        </div>
+        <div style="background: color-mix(in srgb, var(--text-primary) 4%, var(--card-bg)); border: 1px solid var(--glass-border); border-radius: 10px; padding: 12px 14px;">
+          <div style="font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Value Pembanding (Comparison)</div>
+          <div style="font-size: 0.74rem; color: var(--text-sub); margin-bottom: 6px;" id="growthModalCompareLabel">Comparison Campaign</div>
+          <div class="mono" style="font-size: 1.05rem; font-weight: 800; color: var(--text-primary);" id="growthModalCompareVal">Rp 0</div>
+        </div>
+      </div>
+
+      <!-- Step-by-Step Breakdown Card -->
+      <div style="background: color-mix(in srgb, var(--orange) 5%, var(--card-bg)); border: 1px solid color-mix(in srgb, var(--orange) 25%, var(--glass-border)); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--orange); letter-spacing: 0.5px;">Rumus & Perhitungan</span>
+          <span id="growthModalDiffBadge" class="mono" style="font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;"></span>
+        </div>
+        <div style="font-size: 0.76rem; color: var(--text-sub); margin-bottom: 6px;">
+          <code>Growth % = ((Saat Ini - Pembanding) / Pembanding) × 100%</code>
+        </div>
+        <div class="mono" style="font-size: 0.82rem; color: var(--text-primary); margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--glass-border);" id="growthModalFormulaSteps">
+          <!-- Dynamic formula steps -->
+        </div>
+      </div>
+
+      <!-- Result Summary Banner -->
+      <div id="growthModalResultBanner" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 8px;">
+        <span style="font-size: 0.80rem; font-weight: 600;">Pertumbuhan:</span>
+        <span class="mono" style="font-size: 1.15rem; font-weight: 800;" id="growthModalResultVal">+0.0%</span>
       </div>
     </div>
   </div>
@@ -4834,13 +4918,14 @@
     return '#FF6B00';
   }
 
-  function renderGrowthPill(val, title) {
+  function renderGrowthText(val, regKey, tooltip) {
     if (val === null || val === undefined || isNaN(val)) {
-      return '<span class="text-muted mono">-</span>';
+      return `<span class="dd-growth-text growth-neutral mono" onclick="openGrowthDetailModal('${regKey}')" title="${tooltip || 'Click to view calculation breakdown'}">-</span>`;
     }
-    const sign = val >= 0 ? '▲ +' : '▼ ';
-    const cls = val >= 0 ? 'momentum-pos' : 'momentum-neg';
-    return `<span class="dd-momentum-pill ${cls} mono" style="font-size: 0.68rem; padding: 1px 6px;" title="${title || ''}">${sign}${Math.abs(val)}%</span>`;
+    const sign = val > 0 ? '+' : '';
+    const arrow = val > 0 ? '▲ ' : (val < 0 ? '▼ ' : '');
+    const cls = val > 0 ? 'growth-pos' : (val < 0 ? 'growth-neg' : 'growth-neutral');
+    return `<span class="dd-growth-text ${cls} mono" onclick="openGrowthDetailModal('${regKey}')" title="${tooltip || 'Click to view calculation breakdown'}">${arrow}${sign}${val}%</span>`;
   }
 
   window.setLeaderboardPlatform = function(platform) {
@@ -4864,6 +4949,7 @@
     if (!tbody) return;
 
     window.platformDetailRegistry = {};
+    window.growthDetailRegistry = {};
 
     // Update MoM & YoY column tooltips if comparison_meta is present
     const meta = campaignData.comparison_meta || {};
@@ -4881,6 +4967,7 @@
     const isAllPlatform = (currentTablePlatform.toLowerCase() === 'all');
     const selPlatLower = currentTablePlatform.toLowerCase();
     const platBadgeColor = getPlatformColor(currentTablePlatform);
+    const currentCampLabel = document.getElementById('dateDropdownLabel')?.textContent?.trim() || campaignData.date || 'Current Campaign';
 
     // Compute active metrics per brand based on currentTablePlatform
     let items = rawItems.map(b => {
@@ -4894,6 +4981,8 @@
           active_aov: b.aov,
           active_mom: b.mom,
           active_yoy: b.yoy,
+          active_mom_gmv: b.mom_gmv || 0,
+          active_yoy_gmv: b.yoy_gmv || 0,
         };
       } else {
         const pData = (b.platforms || []).find(p => p.platform.toLowerCase() === selPlatLower);
@@ -4917,6 +5006,8 @@
           active_aov: pAov,
           active_mom: pMom,
           active_yoy: pYoy,
+          active_mom_gmv: pMomGmv,
+          active_yoy_gmv: pYoyGmv,
         };
       }
     });
@@ -4961,6 +5052,33 @@
         total_orders: b.total_orders,
         total_units: b.total_units,
         platforms: b.platforms || []
+      };
+
+      const brandMomKey = `brand_${b.active_rank}_mom`;
+      const brandYoyKey = `brand_${b.active_rank}_yoy`;
+
+      window.growthDetailRegistry[brandMomKey] = {
+        metric: 'MoM',
+        brand: b.brand,
+        period: 'Full Day (Campaign Total)',
+        platform: isAllPlatform ? 'All Platforms' : currentTablePlatform,
+        currentLabel: `${currentCampLabel} (Saat Ini)`,
+        currentVal: b.active_gmv,
+        compareLabel: meta.mom_label ? `${meta.mom_label} (Pembanding)` : 'Previous Campaign',
+        compareVal: b.active_mom_gmv,
+        growthPct: b.active_mom,
+      };
+
+      window.growthDetailRegistry[brandYoyKey] = {
+        metric: 'YoY',
+        brand: b.brand,
+        period: 'Full Day (Campaign Total)',
+        platform: isAllPlatform ? 'All Platforms' : currentTablePlatform,
+        currentLabel: `${currentCampLabel} (Saat Ini)`,
+        currentVal: b.active_gmv,
+        compareLabel: meta.yoy_label ? `${meta.yoy_label} (Pembanding)` : 'Previous Year',
+        compareVal: b.active_yoy_gmv,
+        growthPct: b.active_yoy,
       };
 
       let platformCellHtml = '';
@@ -5034,10 +5152,10 @@
           <td class="text-right mono">${formatIDR(b.active_aov, true)}</td>
           <td class="text-center">${sparklineSvg}</td>
           <td class="text-center">
-            ${renderGrowthPill(b.active_mom, `MoM vs ${meta.mom_label || 'prev campaign'}`)}
+            ${renderGrowthText(b.active_mom, brandMomKey, `MoM vs ${meta.mom_label || 'prev campaign'} - click for calculation detail`)}
           </td>
           <td class="text-center">
-            ${renderGrowthPill(b.active_yoy, `YoY vs ${meta.yoy_label || 'prev year'}`)}
+            ${renderGrowthText(b.active_yoy, brandYoyKey, `YoY vs ${meta.yoy_label || 'prev year'} - click for calculation detail`)}
           </td>
           <td class="text-right mono">
             ${hasTarget ? formatIDR(b.target, true) : '<span class="text-muted">-</span>'}
@@ -5071,6 +5189,8 @@
           let hContrib = hItem.contribution_pct;
           let hMom = hItem.mom;
           let hYoy = hItem.yoy;
+          let hMomGmv = hItem.mom_gmv || 0;
+          let hYoyGmv = hItem.yoy_gmv || 0;
           let hPlatHtml = '';
 
           if (isAllPlatform) {
@@ -5102,7 +5222,39 @@
             hContrib = (b.active_gmv > 0) ? Math.round((hGmv / b.active_gmv) * 1000) / 10 : 0.0;
             hShare = hPData ? hPData.pct : 0.0;
             hPlatHtml = `<span class="dd-plat-badge" style="background:${platBadgeColor}; font-size:0.68rem; padding:2px 7px;">${currentTablePlatform}</span>`;
+
+            hMomGmv = hItem.mom_platform_gmv ? (hItem.mom_platform_gmv[currentTablePlatform] || 0) : 0;
+            hYoyGmv = hItem.yoy_platform_gmv ? (hItem.yoy_platform_gmv[currentTablePlatform] || 0) : 0;
+            hMom = (hMomGmv > 0) ? Math.round(((hGmv - hMomGmv) / hMomGmv) * 1000) / 10 : ((hGmv > 0 && meta.has_mom_data) ? 100.0 : null);
+            hYoy = (hYoyGmv > 0) ? Math.round(((hGmv - hYoyGmv) / hYoyGmv) * 1000) / 10 : ((hGmv > 0 && meta.has_yoy_data) ? 100.0 : null);
           }
+
+          const hMomKey = `hourly_${b.active_rank}_${hItem.hour}_mom`;
+          const hYoyKey = `hourly_${b.active_rank}_${hItem.hour}_yoy`;
+
+          window.growthDetailRegistry[hMomKey] = {
+            metric: 'MoM',
+            brand: b.brand,
+            period: `Hour ${hItem.hour_label}`,
+            platform: isAllPlatform ? 'All Platforms' : currentTablePlatform,
+            currentLabel: `${currentCampLabel} (Saat Ini)`,
+            currentVal: hGmv,
+            compareLabel: meta.mom_label ? `${meta.mom_label} (Pembanding)` : 'Previous Campaign',
+            compareVal: hMomGmv,
+            growthPct: hMom,
+          };
+
+          window.growthDetailRegistry[hYoyKey] = {
+            metric: 'YoY',
+            brand: b.brand,
+            period: `Hour ${hItem.hour_label}`,
+            platform: isAllPlatform ? 'All Platforms' : currentTablePlatform,
+            currentLabel: `${currentCampLabel} (Saat Ini)`,
+            currentVal: hGmv,
+            compareLabel: meta.yoy_label ? `${meta.yoy_label} (Pembanding)` : 'Previous Year',
+            compareVal: hYoyGmv,
+            growthPct: hYoy,
+          };
 
           let hCvrClass = 'cvr-low';
           if (hItem.cvr >= 5.0) hCvrClass = 'cvr-high';
@@ -5145,10 +5297,10 @@
                 </div>
               </td>
               <td class="text-center">
-                ${renderGrowthPill(hMom, `MoM vs ${meta.mom_label || 'prev campaign'}`)}
+                ${renderGrowthText(hMom, hMomKey, `MoM vs ${meta.mom_label || 'prev campaign'} - click for calculation detail`)}
               </td>
               <td class="text-center">
-                ${renderGrowthPill(hYoy, `YoY vs ${meta.yoy_label || 'prev year'}`)}
+                ${renderGrowthText(hYoy, hYoyKey, `YoY vs ${meta.yoy_label || 'prev year'} - click for calculation detail`)}
               </td>
               <td class="text-right text-muted mono">-</td>
               <td class="text-center text-muted mono">-</td>
@@ -5275,11 +5427,131 @@
     if (modal) modal.style.display = 'none';
   };
 
+  /* ── Growth Detail Modal Controller (MoM & YoY Breakdown) ── */
+  window.openGrowthDetailModal = function(regKey) {
+    const data = window.growthDetailRegistry ? window.growthDetailRegistry[regKey] : null;
+    if (!data) return;
+
+    const titleEl = document.getElementById('growthModalTitle');
+    const subEl = document.getElementById('growthModalSubtitle');
+    const curLabelEl = document.getElementById('growthModalCurrentLabel');
+    const curValEl = document.getElementById('growthModalCurrentVal');
+    const compLabelEl = document.getElementById('growthModalCompareLabel');
+    const compValEl = document.getElementById('growthModalCompareVal');
+    const diffBadgeEl = document.getElementById('growthModalDiffBadge');
+    const formulaStepsEl = document.getElementById('growthModalFormulaSteps');
+    const resultBannerEl = document.getElementById('growthModalResultBanner');
+    const resultValEl = document.getElementById('growthModalResultVal');
+
+    if (titleEl) titleEl.textContent = `${data.metric} Growth Calculation Detail`;
+    if (subEl) subEl.textContent = `${data.brand} • ${data.period} • ${data.platform}`;
+
+    if (curLabelEl) curLabelEl.textContent = data.currentLabel;
+    if (curValEl) curValEl.textContent = formatIDR(data.currentVal || 0, false);
+
+    if (compLabelEl) compLabelEl.textContent = data.compareLabel;
+    if (compValEl) compValEl.textContent = formatIDR(data.compareVal || 0, false);
+
+    const cur = Number(data.currentVal || 0);
+    const comp = Number(data.compareVal || 0);
+    const diff = cur - comp;
+    const growth = data.growthPct;
+
+    const isPos = (growth !== null && growth > 0);
+    const isNeg = (growth !== null && growth < 0);
+    const diffSign = diff > 0 ? '+' : (diff < 0 ? '-' : '');
+    const diffFormatted = `${diffSign}${formatIDR(Math.abs(diff), false)}`;
+
+    if (diffBadgeEl) {
+      if (comp <= 0 && cur > 0) {
+        diffBadgeEl.textContent = 'New / First Data';
+        diffBadgeEl.style.background = 'color-mix(in srgb, #10B981 15%, transparent)';
+        diffBadgeEl.style.color = '#10B981';
+      } else if (comp <= 0 && cur <= 0) {
+        diffBadgeEl.textContent = 'Zero GMV';
+        diffBadgeEl.style.background = 'color-mix(in srgb, var(--text-muted) 15%, transparent)';
+        diffBadgeEl.style.color = 'var(--text-muted)';
+      } else {
+        diffBadgeEl.textContent = `Selisih: ${diffFormatted}`;
+        diffBadgeEl.style.background = isPos
+          ? 'color-mix(in srgb, #10B981 15%, transparent)'
+          : (isNeg ? 'color-mix(in srgb, #EF4444 15%, transparent)' : 'color-mix(in srgb, var(--text-muted) 15%, transparent)');
+        diffBadgeEl.style.color = isPos ? '#10B981' : (isNeg ? '#EF4444' : 'var(--text-muted)');
+      }
+    }
+
+    let stepsHtml = '';
+    if (comp > 0) {
+      stepsHtml = `
+        <div style="display: flex; flex-direction: column; gap: 7px; font-size: 0.77rem;">
+          <div><strong style="color: var(--orange);">1. Hitung Selisih GMV (Saat Ini - Pembanding):</strong></div>
+          <div style="padding-left: 12px; color: var(--text-sub);">
+            ${formatIDR(cur, false)} - ${formatIDR(comp, false)} = <strong style="color: var(--text-primary);">${diffFormatted}</strong>
+          </div>
+          <div style="margin-top: 2px;"><strong style="color: var(--orange);">2. Bagi Selisih dengan Nilai Pembanding:</strong></div>
+          <div style="padding-left: 12px; color: var(--text-sub);">
+            (${diffFormatted} ÷ ${formatIDR(comp, false)}) × 100%
+          </div>
+          <div style="margin-top: 2px;"><strong style="color: var(--orange);">3. Hasil Pertumbuhan (${data.metric}):</strong></div>
+          <div style="padding-left: 12px; font-size: 0.90rem;">
+            = <strong style="color: ${isPos ? '#10B981' : (isNeg ? '#EF4444' : 'var(--text-primary)')};">${growth !== null ? (growth > 0 ? '+' : '') + growth + '%' : '-'}</strong>
+          </div>
+        </div>
+      `;
+    } else if (comp === 0 && cur > 0) {
+      stepsHtml = `
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.77rem;">
+          <div style="color: var(--text-sub);">Nilai GMV periode pembanding (${data.compareLabel}) bernilai <strong>Rp 0</strong> atau belum tercatat data pada periode tersebut.</div>
+          <div style="color: var(--text-primary); margin-top: 2px;">Karena GMV baru tercatat pada periode saat ini sebesar <strong>${formatIDR(cur, false)}</strong>, maka pertumbuhan dihitung sebagai pencapaian awal (+100.0%).</div>
+        </div>
+      `;
+    } else {
+      stepsHtml = `
+        <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.77rem;">
+          <div style="color: var(--text-sub);">Tidak ditemukan transaksi (GMV Rp 0) pada periode saat ini maupun periode pembanding (${data.compareLabel}).</div>
+          <div style="color: var(--text-muted); margin-top: 2px;">Pertumbuhan tidak dapat dihitung (-).</div>
+        </div>
+      `;
+    }
+    if (formulaStepsEl) formulaStepsEl.innerHTML = stepsHtml;
+
+    if (resultBannerEl && resultValEl) {
+      if (growth !== null && !isNaN(growth)) {
+        resultValEl.textContent = `${growth > 0 ? '▲ +' : (growth < 0 ? '▼ ' : '')}${growth}%`;
+        resultBannerEl.style.background = isPos
+          ? 'color-mix(in srgb, #10B981 12%, transparent)'
+          : (isNeg ? 'color-mix(in srgb, #EF4444 12%, transparent)' : 'color-mix(in srgb, var(--text-muted) 12%, transparent)');
+        resultBannerEl.style.border = isPos
+          ? '1px solid color-mix(in srgb, #10B981 30%, transparent)'
+          : (isNeg ? '1px solid color-mix(in srgb, #EF4444 30%, transparent)' : '1px solid var(--glass-border)');
+        resultBannerEl.style.color = isPos ? '#10B981' : (isNeg ? '#EF4444' : 'var(--text-muted)');
+      } else {
+        resultValEl.textContent = '-';
+        resultBannerEl.style.background = 'color-mix(in srgb, var(--text-muted) 10%, transparent)';
+        resultBannerEl.style.border = '1px solid var(--glass-border)';
+        resultBannerEl.style.color = 'var(--text-muted)';
+      }
+    }
+
+    const modal = document.getElementById('growthDetailModal');
+    if (modal) modal.style.display = 'flex';
+  };
+
+  window.closeGrowthDetailModal = function(e) {
+    if (e && e.target && e.target.id !== 'growthDetailModal') return;
+    const modal = document.getElementById('growthDetailModal');
+    if (modal) modal.style.display = 'none';
+  };
+
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-      const modal = document.getElementById('platformDetailModal');
-      if (modal && modal.style.display !== 'none') {
-        modal.style.display = 'none';
+      const pModal = document.getElementById('platformDetailModal');
+      if (pModal && pModal.style.display !== 'none') {
+        pModal.style.display = 'none';
+      }
+      const gModal = document.getElementById('growthDetailModal');
+      if (gModal && gModal.style.display !== 'none') {
+        gModal.style.display = 'none';
       }
     }
   });

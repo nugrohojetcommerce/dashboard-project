@@ -794,6 +794,9 @@ def get_campaign_war_room_data(
                     "pct": round(p_pct, 1),
                 })
 
+            h_mom_plat_gmv = {p: round(brand_mom_hourly_plat_gmv[b_name][h].get(p, 0.0), 2) for p in target_platforms}
+            h_yoy_plat_gmv = {p: round(brand_yoy_hourly_plat_gmv[b_name][h].get(p, 0.0), 2) for p in target_platforms}
+
             hourly_breakdown.append({
                 "hour": h,
                 "hour_label": f"{h:02d}:00",
@@ -810,6 +813,10 @@ def get_campaign_war_room_data(
                 "momentum": h_momentum,
                 "mom": h_mom,
                 "yoy": h_yoy,
+                "mom_gmv": round(h_mom_gmv, 2),
+                "yoy_gmv": round(h_yoy_gmv, 2),
+                "mom_platform_gmv": h_mom_plat_gmv,
+                "yoy_platform_gmv": h_yoy_plat_gmv,
             })
 
         leaderboard.append({

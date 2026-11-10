@@ -10,7 +10,7 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from dashboard.models import User, UserBrand
-from .models import DailyTargetMart, OrderMartDDSummary, TrafficMartDD
+from .models import DailyTargetMart, OrderMartDDSummary, TrafficMartDD, TrafficMartDWDDF
 
 
 @lru_cache(maxsize=256)
@@ -203,6 +203,7 @@ def get_campaign_war_room_data(
     )
 
     # 2. Query Traffic aggregated by (brand, platform, hour)
+    # First attempt: query hourly traffic mart (postgre_traffic_mart_DD)
     traffic_qs = (
         TrafficMartDD.objects.filter(
             date=traffic_date_str,
@@ -223,6 +224,67 @@ def get_campaign_war_room_data(
         h_val = _to_int(t["hour"])
         traffic_map[(b_name, p_name, h_val)]["uv"] += _to_int(t["uv"])
         traffic_map[(b_name, p_name, h_val)]["pv"] += _to_int(t["pv"])
+
+    # Fallback: if hourly table lacks records for this campaign date (e.g. 2026 campaigns),
+    # query the daily traffic mart (postgre_traffic_mart_dwd_df)
+    if not traffic_map:
+        target_platforms_lower = {p.strip().lower() for p in target_platforms}
+        dwd_traffic_qs = (
+            TrafficMartDWDDF.objects.filter(
+                date__date=target_date,
+            )
+            .values("brand", "platform")
+            .annotate(
+                uv=Sum("visitors"),
+                pv=Sum("page_views"),
+            )
+        )
+
+        # Index hourly orders per (brand, platform) to pace daily traffic proportionally across 24 hours
+        bp_hourly_orders = defaultdict(lambda: [0] * 24)
+        bp_total_orders = defaultdict(int)
+        for o in order_qs:
+            b_n = (o["brand"] or "").strip().lower()
+            p_n = (o["platform"] or "").strip().lower()
+            h_n = _to_int(o["hour"])
+            cnt = _to_int(o["orders"])
+            bp_hourly_orders[(b_n, p_n)][h_n] += cnt
+            bp_total_orders[(b_n, p_n)] += cnt
+
+        for dt in dwd_traffic_qs:
+            b_name = (dt["brand"] or "").strip().lower()
+            p_name = (dt["platform"] or "").strip().lower()
+            if p_name not in target_platforms_lower:
+                continue
+            tot_uv = _to_int(dt["uv"])
+            tot_pv = _to_int(dt["pv"])
+            if tot_uv <= 0 and tot_pv <= 0:
+                continue
+
+            tot_o = bp_total_orders.get((b_name, p_name), 0)
+            h_orders = bp_hourly_orders.get((b_name, p_name), [0] * 24)
+
+            if tot_o > 0:
+                uv_rem = tot_uv
+                pv_rem = tot_pv
+                for h in range(24):
+                    ratio = h_orders[h] / tot_o if tot_o > 0 else 0
+                    if h == 23:
+                        h_uv = uv_rem
+                        h_pv = pv_rem
+                    else:
+                        h_uv = min(uv_rem, round(tot_uv * ratio))
+                        h_pv = min(pv_rem, round(tot_pv * ratio))
+                        uv_rem -= h_uv
+                        pv_rem -= h_pv
+                    traffic_map[(b_name, p_name, h)]["uv"] += h_uv
+                    traffic_map[(b_name, p_name, h)]["pv"] += h_pv
+            else:
+                h_uv = round(tot_uv / 24)
+                h_pv = round(tot_pv / 24)
+                for h in range(24):
+                    traffic_map[(b_name, p_name, h)]["uv"] += h_uv if h < 23 else (tot_uv - h_uv * 23)
+                    traffic_map[(b_name, p_name, h)]["pv"] += h_pv if h < 23 else (tot_pv - h_pv * 23)
 
     # Build joined dataset by (brand, hour) and (brand, platform)
     # brand_summary: { brand: { gmv, nmv, orders, units, uv, pv, discounts, platform_gmv: {}, hourly_gmv: [24], hourly_orders: [24], hourly_uv: [24] } }

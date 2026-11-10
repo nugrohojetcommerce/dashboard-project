@@ -46,6 +46,25 @@ class TrafficMartDD(models.Model):
         return f"{self.brand} - {self.platform} - {self.date} {self.hour}:00 (UV: {self.uv})"
 
 
+class TrafficMartDWDDF(models.Model):
+    key_id = models.BigIntegerField(primary_key=True)
+    platform = models.TextField(null=True, blank=True)
+    brand = models.TextField(null=True, blank=True)
+    category = models.TextField(null=True, blank=True)
+    brand_group = models.TextField(null=True, blank=True)
+    date = models.DateTimeField(null=True, blank=True)
+    visitors = models.BigIntegerField(null=True, blank=True)
+    page_views = models.BigIntegerField(null=True, blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'postgre_traffic_mart_dwd_df'
+        ordering = ['date', 'brand', 'platform']
+
+    def __str__(self):
+        return f"{self.brand} - {self.platform} - {self.date} (Visitors: {self.visitors})"
+
+
 class DailyTargetMart(models.Model):
     key_id = models.BigIntegerField(primary_key=True)
     date = models.DateField(null=True, blank=True)

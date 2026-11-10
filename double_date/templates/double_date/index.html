@@ -1044,6 +1044,7 @@
   .dd-tab-pane {
     padding: 18px 20px;
     display: none;
+    min-height: 590px;
   }
   .dd-tab-pane.active {
     display: block;
@@ -1115,12 +1116,12 @@
 
   .dd-chart-box {
     width: 100%;
-    height: 500px;
+    height: 520px;
   }
 
   .dd-chart-box-lg {
     width: 100%;
-    height: 600px;
+    height: 520px;
   }
 
   /* ── Metric Switcher Pills ── */
@@ -1433,8 +1434,8 @@
       <button class="dd-tab-btn" onclick="switchAnalyticsTab('hourly_velocity', this)">
         <i class="bi bi-graph-up text-primary"></i> Line Race
       </button>
-      <button class="dd-tab-btn" onclick="switchAnalyticsTab('chip_in_impact', this)">
-        <i class="bi bi-tags-fill text-info"></i> Chip-in Impact
+      <button class="dd-tab-btn" onclick="switchAnalyticsTab('rebate_impact', this)">
+        <i class="bi bi-tags-fill text-info"></i> Rebate Impact
       </button>
       <button class="dd-tab-btn" onclick="switchAnalyticsTab('scatter_matrix', this)">
         <i class="bi bi-bullseye text-danger"></i> Traffic vs GMV
@@ -1574,79 +1575,89 @@
     <div class="dd-tab-pane" id="pane_platform_cvr">
       <div class="row g-3">
         <div class="col-lg-5">
-          <div id="chartPlatformDoughnut" style="width: 100%; height: 460px;"></div>
+          <div id="chartPlatformDoughnut" class="dd-chart-box"></div>
         </div>
         <div class="col-lg-7">
-          <div id="chartCvrFunnel" style="width: 100%; height: 460px;"></div>
+          <div id="chartCvrFunnel" class="dd-chart-box"></div>
         </div>
       </div>
     </div>
 
-    <!-- Tab 5: Chip-in Impact (Hourly Voucher & Discount vs Revenue) -->
-    <div class="dd-tab-pane" id="pane_chip_in_impact">
+    <!-- Tab 5: Rebate Impact (Hourly Voucher & Discount vs Revenue) -->
+    <div class="dd-tab-pane" id="pane_rebate_impact">
       <div class="dd-race-bar" style="margin-bottom: 12px; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
           <!-- Platform Filter Pills -->
           <div style="display: flex; align-items: center; gap: 6px;">
             <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Platform:</span>
-            <div class="dd-metric-switcher" id="chipInPlatformSwitcher">
-              <button type="button" class="dd-metric-btn active" onclick="setChipInPlatform('all')">All Platforms</button>
-              <button type="button" class="dd-metric-btn" onclick="setChipInPlatform('Shopee')">Shopee</button>
-              <button type="button" class="dd-metric-btn" onclick="setChipInPlatform('TikTok')">TikTok</button>
-              <button type="button" class="dd-metric-btn" onclick="setChipInPlatform('Tokopedia')">Tokopedia</button>
-              <button type="button" class="dd-metric-btn" onclick="setChipInPlatform('Lazada')">Lazada</button>
+            <div class="dd-metric-switcher" id="rebatePlatformSwitcher">
+              <button type="button" class="dd-metric-btn active" onclick="setRebatePlatform('all')">All Platforms</button>
+              <button type="button" class="dd-metric-btn" onclick="setRebatePlatform('Shopee')">Shopee</button>
+              <button type="button" class="dd-metric-btn" onclick="setRebatePlatform('TikTok')">TikTok</button>
+              <button type="button" class="dd-metric-btn" onclick="setRebatePlatform('Tokopedia')">Tokopedia</button>
+              <button type="button" class="dd-metric-btn" onclick="setRebatePlatform('Lazada')">Lazada</button>
+            </div>
+          </div>
+
+          <!-- Breakdown Mode Switcher: 4-Way vs Type vs Source -->
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Breakdown:</span>
+            <div class="dd-metric-switcher" id="rebateBreakdownSwitcher">
+              <button type="button" class="dd-metric-btn active" id="btnRebateMode4Way" onclick="setRebateBreakdown('4way')" title="Breakdown into Seller Disc, Platform Disc, Seller Vouch, Platform Vouch">4-Way Detail</button>
+              <button type="button" class="dd-metric-btn" id="btnRebateModeType" onclick="setRebateBreakdown('type')" title="Breakdown into Discounts vs Vouchers">Disc vs Vouch</button>
+              <button type="button" class="dd-metric-btn" id="btnRebateModeSource" onclick="setRebateBreakdown('source')" title="Breakdown into Seller vs Platform Rebate">Seller vs Platform</button>
             </div>
           </div>
 
           <!-- Line Metric Switcher: NMV vs Orders -->
           <div style="display: flex; align-items: center; gap: 6px;">
-            <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Line Metric:</span>
+            <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Line:</span>
             <div class="dd-metric-switcher">
-              <button type="button" class="dd-metric-btn active" id="btnChipInMetricNmv" onclick="setChipInMetric('nmv')">NMV (Rp)</button>
-              <button type="button" class="dd-metric-btn" id="btnChipInMetricOrders" onclick="setChipInMetric('orders')">Net Orders</button>
+              <button type="button" class="dd-metric-btn active" id="btnRebateMetricNmv" onclick="setRebateMetric('nmv')">NMV (Rp)</button>
+              <button type="button" class="dd-metric-btn" id="btnRebateMetricOrders" onclick="setRebateMetric('orders')">Net Orders</button>
             </div>
           </div>
         </div>
 
         <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
           <i class="bi bi-info-circle text-info"></i>
-          <span>Stacked Bar = Total Chip-in (Discount + Voucher) • Line = Revenue/Orders</span>
+          <span>Stacked Bar = Total Rebate • Line = Revenue or Orders</span>
         </div>
       </div>
 
-      <!-- Compact Chip-in Impact KPI Summary -->
-      <div class="row g-2 mb-3" id="chipInKpiGrid">
+      <!-- Compact Rebate Impact KPI Summary -->
+      <div class="row g-2 mb-3" id="rebateKpiGrid">
         <div class="col-6 col-md-3">
           <div style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;">
-            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Total Chip-in</div>
-            <div class="mono" id="chipInKpiTotal" style="font-size: 1.15rem; font-weight: 800; color: #8B5CF6;">Rp 0</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted);" id="chipInKpiSubPromo">Disc: Rp 0 • Vouch: Rp 0</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Total Rebate</div>
+            <div class="mono" id="rebateKpiTotal" style="font-size: 1.15rem; font-weight: 800; color: #8B5CF6;">Rp 0</div>
+            <div style="font-size: 0.68rem; color: var(--text-muted);" id="rebateKpiSubPromo">Seller: Rp 0 • Platform: Rp 0</div>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;">
-            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;" id="chipInKpiRevenueLabel">Revenue Generated (NMV)</div>
-            <div class="mono" id="chipInKpiRevenue" style="font-size: 1.15rem; font-weight: 800; color: #10B981;">Rp 0</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted);" id="chipInKpiSubRevenue">Orders: 0</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;" id="rebateKpiRevenueLabel">Revenue Generated (NMV)</div>
+            <div class="mono" id="rebateKpiRevenue" style="font-size: 1.15rem; font-weight: 800; color: #10B981;">Rp 0</div>
+            <div style="font-size: 0.68rem; color: var(--text-muted);" id="rebateKpiSubRevenue">Orders: 0</div>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;">
-            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Chip-in Intensity</div>
-            <div class="mono" id="chipInKpiRatio" style="font-size: 1.15rem; font-weight: 800; color: #F59E0B;">0.0%</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted);" id="chipInKpiSubRatio">Promo-to-NMV Ratio</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Rebate Intensity</div>
+            <div class="mono" id="rebateKpiRatio" style="font-size: 1.15rem; font-weight: 800; color: #F59E0B;">0.0%</div>
+            <div style="font-size: 0.68rem; color: var(--text-muted);" id="rebateKpiSubRatio">Rebate-to-NMV Ratio</div>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div style="background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 14px;">
-            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Peak Promo Hour</div>
-            <div class="mono" id="chipInKpiPeak" style="font-size: 1.15rem; font-weight: 800; color: var(--text-title);">00:00</div>
-            <div style="font-size: 0.68rem; color: var(--text-muted);" id="chipInKpiSubPeak">Rp 0 promo • Peak NMV: 00:00</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Peak Rebate Hour</div>
+            <div class="mono" id="rebateKpiPeak" style="font-size: 1.15rem; font-weight: 800; color: var(--text-title);">00:00</div>
+            <div style="font-size: 0.68rem; color: var(--text-muted);" id="rebateKpiSubPeak">Rp 0 rebate • Peak NMV: 00:00</div>
           </div>
         </div>
       </div>
 
-      <div id="chartChipInImpact" class="dd-chart-box-lg"></div>
+      <div id="chartRebateImpact" class="dd-chart-box"></div>
     </div>
   </div>
 
@@ -1755,8 +1766,10 @@
           <tr>
             <th class="text-center" style="width: 50px;">Rank</th>
             <th>Brand</th>
-            <th>Platform Split</th>
+            <th class="text-right">Target</th>
+            <th class="text-center">% Ach</th>
             <th class="text-right">Total GMV</th>
+            <th>Platform Split</th>
             <th class="text-right">Share %</th>
             <th class="text-right">Net Orders</th>
             <th class="text-right">Units</th>
@@ -1802,14 +1815,19 @@
   let chartScatterMatrix = null;
   let chartPlatformDoughnut = null;
   let chartCvrFunnel = null;
-  let chartChipInImpact = null;
+  let chartRebateImpact = null;
+  let chartChipInImpact = null; // Alias for backward compatibility
 
-  let chipInPlatform = 'all';
-  let chipInMetric = 'nmv'; // 'nmv' or 'orders'
+  let rebatePlatform = 'all';
+  let rebateMetric = 'nmv'; // 'nmv' or 'orders'
+  let rebateBreakdown = '4way'; // '4way', 'type', or 'source'
+  let chipInPlatform = 'all'; // Alias
+  let chipInMetric = 'nmv'; // Alias
 
   const initializedCharts = {
     bar_race: false,
     hourly_velocity: false,
+    rebate_impact: false,
     chip_in_impact: false,
     scatter_matrix: false,
     platform_cvr: false
@@ -2446,7 +2464,7 @@
       chipEl.title = `Synced Campaign Hour: ${campaignData.latest_active_hour_label || '--:00'} (Auto-refresh countdown)`;
     }
 
-    updateChipInPlatformButtons();
+    updateRebatePlatformButtons();
     renderCurrentTabChart();
   }
 
@@ -2748,8 +2766,8 @@
       renderBarRaceChart(raceCurrentHour);
     } else if (currentActiveTab === 'hourly_velocity') {
       renderHourlyVelocityChart(lineRaceProgress);
-    } else if (currentActiveTab === 'chip_in_impact') {
-      renderChipInImpactChart();
+    } else if (currentActiveTab === 'rebate_impact' || currentActiveTab === 'chip_in_impact') {
+      renderRebateImpactChart();
     } else if (currentActiveTab === 'scatter_matrix') {
       renderScatterMatrixChart();
     } else if (currentActiveTab === 'platform_cvr') {
@@ -4020,58 +4038,78 @@
     chartCvrFunnel.setOption(option);
   }
 
-  /* ── ECharts Tab 5: Chip-in Impact (Hourly Voucher & Discount vs Revenue) ── */
-  function updateChipInPlatformButtons() {
-    const container = document.getElementById('chipInPlatformSwitcher');
+  /* ── ECharts Tab 5: Rebate Impact (Hourly Voucher & Discount vs Revenue) ── */
+  function updateRebatePlatformButtons() {
+    const container = document.getElementById('rebatePlatformSwitcher') || document.getElementById('chipInPlatformSwitcher');
     if (!container) return;
-    const ci = campaignData.chip_in_impact;
+    const ci = campaignData.rebate_impact || campaignData.chip_in_impact;
     if (!ci) return;
     const plats = ci.available_platforms || ['Shopee', 'TikTok', 'Tokopedia', 'Lazada'];
 
-    let html = `<button type="button" class="dd-metric-btn ${chipInPlatform === 'all' ? 'active' : ''}" onclick="setChipInPlatform('all')">All Platforms</button>`;
+    let html = `<button type="button" class="dd-metric-btn ${rebatePlatform === 'all' ? 'active' : ''}" onclick="setRebatePlatform('all')">All Platforms</button>`;
     plats.forEach(p => {
-      const activeCls = (chipInPlatform.toLowerCase() === p.toLowerCase()) ? 'active' : '';
-      html += `<button type="button" class="dd-metric-btn ${activeCls}" onclick="setChipInPlatform('${p}')">${p}</button>`;
+      const activeCls = (rebatePlatform.toLowerCase() === p.toLowerCase()) ? 'active' : '';
+      html += `<button type="button" class="dd-metric-btn ${activeCls}" onclick="setRebatePlatform('${p}')">${p}</button>`;
     });
     container.innerHTML = html;
   }
+  const updateChipInPlatformButtons = updateRebatePlatformButtons;
 
-  window.setChipInPlatform = function(platform) {
+  window.setRebatePlatform = function(platform) {
+    rebatePlatform = platform;
     chipInPlatform = platform;
-    const btns = document.querySelectorAll('#chipInPlatformSwitcher .dd-metric-btn');
+    const btns = document.querySelectorAll('#rebatePlatformSwitcher .dd-metric-btn, #chipInPlatformSwitcher .dd-metric-btn');
     btns.forEach(b => {
       const isMatch = (b.textContent.trim().toLowerCase() === 'all platforms' && platform === 'all') ||
                       (b.textContent.trim().toLowerCase() === platform.toLowerCase());
       b.classList.toggle('active', isMatch);
     });
-    renderChipInImpactChart();
+    renderRebateImpactChart();
+  };
+  window.setChipInPlatform = window.setRebatePlatform;
+
+  window.setRebateBreakdown = function(mode) {
+    rebateBreakdown = mode;
+    const b4Way = document.getElementById('btnRebateMode4Way');
+    const bType = document.getElementById('btnRebateModeType');
+    const bSource = document.getElementById('btnRebateModeSource');
+    if (b4Way) b4Way.classList.toggle('active', mode === '4way');
+    if (bType) bType.classList.toggle('active', mode === 'type');
+    if (bSource) bSource.classList.toggle('active', mode === 'source');
+    renderRebateImpactChart();
   };
 
-  window.setChipInMetric = function(metric) {
+  window.setRebateMetric = function(metric) {
+    rebateMetric = metric;
     chipInMetric = metric;
-    const bNmv = document.getElementById('btnChipInMetricNmv');
-    const bOrders = document.getElementById('btnChipInMetricOrders');
+    const bNmv = document.getElementById('btnRebateMetricNmv') || document.getElementById('btnChipInMetricNmv');
+    const bOrders = document.getElementById('btnRebateMetricOrders') || document.getElementById('btnChipInMetricOrders');
     if (bNmv) bNmv.classList.toggle('active', metric === 'nmv');
     if (bOrders) bOrders.classList.toggle('active', metric === 'orders');
-    renderChipInImpactChart();
+    renderRebateImpactChart();
   };
+  window.setChipInMetric = window.setRebateMetric;
 
-  function updateChipInKpis(bucket) {
+  function updateRebateKpis(bucket) {
     if (!bucket || !bucket.summary) return;
     const s = bucket.summary;
-    const elTotal = document.getElementById('chipInKpiTotal');
-    const elSubPromo = document.getElementById('chipInKpiSubPromo');
-    const elRevLabel = document.getElementById('chipInKpiRevenueLabel');
-    const elRev = document.getElementById('chipInKpiRevenue');
-    const elSubRev = document.getElementById('chipInKpiSubRevenue');
-    const elRatio = document.getElementById('chipInKpiRatio');
-    const elPeak = document.getElementById('chipInKpiPeak');
-    const elSubPeak = document.getElementById('chipInKpiSubPeak');
+    const elTotal = document.getElementById('rebateKpiTotal') || document.getElementById('chipInKpiTotal');
+    const elSubPromo = document.getElementById('rebateKpiSubPromo') || document.getElementById('chipInKpiSubPromo');
+    const elRevLabel = document.getElementById('rebateKpiRevenueLabel') || document.getElementById('chipInKpiRevenueLabel');
+    const elRev = document.getElementById('rebateKpiRevenue') || document.getElementById('chipInKpiRevenue');
+    const elSubRev = document.getElementById('rebateKpiSubRevenue') || document.getElementById('chipInKpiSubRevenue');
+    const elRatio = document.getElementById('rebateKpiRatio') || document.getElementById('chipInKpiRatio');
+    const elPeak = document.getElementById('rebateKpiPeak') || document.getElementById('chipInKpiPeak');
+    const elSubPeak = document.getElementById('rebateKpiSubPeak') || document.getElementById('chipInKpiSubPeak');
 
-    if (elTotal) elTotal.textContent = formatIDR(s.total_chip_in, true);
-    if (elSubPromo) elSubPromo.textContent = `Disc: ${formatIDR(s.total_discount, true)} • Vouch: ${formatIDR(s.total_voucher, true)}`;
+    const totRebate = (s.total_rebate !== undefined) ? s.total_rebate : (s.total_chip_in || 0);
+    const sellerRebate = (s.total_seller_rebate !== undefined) ? s.total_seller_rebate : ((s.total_seller_discount || 0) + (s.total_seller_voucher || 0));
+    const platRebate = (s.total_platform_rebate !== undefined) ? s.total_platform_rebate : ((s.total_platform_discount || 0) + (s.total_platform_voucher || 0));
 
-    if (chipInMetric === 'nmv') {
+    if (elTotal) elTotal.textContent = formatIDR(totRebate, true);
+    if (elSubPromo) elSubPromo.textContent = `Seller: ${formatIDR(sellerRebate, true)} • Platform: ${formatIDR(platRebate, true)}`;
+
+    if (rebateMetric === 'nmv') {
       if (elRevLabel) elRevLabel.textContent = 'Revenue Generated (NMV)';
       if (elRev) elRev.textContent = formatIDR(s.total_nmv, true);
       if (elSubRev) elSubRev.textContent = `Net Orders: ${formatNumber(s.total_orders)}`;
@@ -4081,37 +4119,179 @@
       if (elSubRev) elSubRev.textContent = `NMV: ${formatIDR(s.total_nmv, true)}`;
     }
 
-    if (elRatio) elRatio.textContent = `${s.chip_in_ratio}%`;
-    if (elPeak) elPeak.textContent = s.peak_chip_in_label || '00:00';
-    if (elSubPeak) elSubPeak.textContent = `${formatIDR(s.peak_chip_in_value, true)} promo • Peak NMV: ${s.peak_nmv_label}`;
+    const ratio = (s.rebate_ratio !== undefined) ? s.rebate_ratio : (s.chip_in_ratio || 0);
+    if (elRatio) elRatio.textContent = `${ratio}%`;
+    if (elPeak) elPeak.textContent = s.peak_rebate_label || s.peak_chip_in_label || '00:00';
+    const peakVal = (s.peak_rebate_value !== undefined) ? s.peak_rebate_value : (s.peak_chip_in_value || 0);
+    if (elSubPeak) elSubPeak.textContent = `${formatIDR(peakVal, true)} rebate • Peak NMV: ${s.peak_nmv_label || '--:00'}`;
   }
+  const updateChipInKpis = updateRebateKpis;
 
-  function renderChipInImpactChart() {
-    const el = document.getElementById('chartChipInImpact');
+  function renderRebateImpactChart() {
+    const el = document.getElementById('chartRebateImpact') || document.getElementById('chartChipInImpact');
     if (!el) return;
 
-    if (!chartChipInImpact) {
-      chartChipInImpact = echarts.init(el);
+    if (!chartRebateImpact) {
+      chartRebateImpact = echarts.init(el);
+      chartChipInImpact = chartRebateImpact;
+      initializedCharts.rebate_impact = true;
       initializedCharts.chip_in_impact = true;
     }
 
-    const ci = campaignData.chip_in_impact;
+    const ci = campaignData.rebate_impact || campaignData.chip_in_impact;
     if (!ci) return;
 
     const tc = getChartThemeColors();
     const hours = ci.hours || [];
-    const bucket = (chipInPlatform === 'all')
+    const bucket = (rebatePlatform === 'all')
       ? ci.all
-      : ((ci.platforms && ci.platforms[chipInPlatform]) ? ci.platforms[chipInPlatform] : ci.all);
+      : ((ci.platforms && ci.platforms[rebatePlatform]) ? ci.platforms[rebatePlatform] : ci.all);
 
     if (!bucket) return;
-    updateChipInKpis(bucket);
+    updateRebateKpis(bucket);
 
+    const sDisc = bucket.seller_discounts || [];
+    const pDisc = bucket.platform_discounts || [];
+    const sVouch = bucket.seller_vouchers || [];
+    const pVouch = bucket.platform_vouchers || [];
     const discounts = bucket.discounts || [];
     const vouchers = bucket.vouchers || [];
-    const lineData = (chipInMetric === 'nmv') ? (bucket.nmv || []) : (bucket.orders || []);
-    const lineName = (chipInMetric === 'nmv') ? 'NMV (Rp)' : 'Net Orders';
+    const sRebates = bucket.seller_rebates || [];
+    const pRebates = bucket.platform_rebates || [];
+
+    const lineData = (rebateMetric === 'nmv') ? (bucket.nmv || []) : (bucket.orders || []);
+    const lineName = (rebateMetric === 'nmv') ? 'NMV (Rp)' : 'Net Orders';
     const isDark = getTheme() === 'dark';
+
+    // Build series based on rebateBreakdown
+    let barSeries = [];
+    let legendNames = [];
+
+    if (rebateBreakdown === '4way') {
+      legendNames = ['Seller Discount', 'Platform Discount', 'Seller Voucher', 'Platform Voucher', lineName];
+      barSeries = [
+        {
+          name: 'Seller Discount',
+          type: 'bar',
+          stack: 'rebate',
+          barMaxWidth: 30,
+          itemStyle: { color: '#F59E0B' },
+          data: sDisc
+        },
+        {
+          name: 'Platform Discount',
+          type: 'bar',
+          stack: 'rebate',
+          barMaxWidth: 30,
+          itemStyle: { color: '#EA580C' },
+          data: pDisc
+        },
+        {
+          name: 'Seller Voucher',
+          type: 'bar',
+          stack: 'rebate',
+          barMaxWidth: 30,
+          itemStyle: { color: '#8B5CF6' },
+          data: sVouch
+        },
+        {
+          name: 'Platform Voucher',
+          type: 'bar',
+          stack: 'rebate',
+          barMaxWidth: 30,
+          itemStyle: {
+            color: '#4F46E5',
+            borderRadius: [4, 4, 0, 0]
+          },
+          data: pVouch
+        }
+      ];
+    } else if (rebateBreakdown === 'source') {
+      legendNames = ['Seller Rebate', 'Platform Rebate', lineName];
+      barSeries = [
+        {
+          name: 'Seller Rebate',
+          type: 'bar',
+          stack: 'rebate',
+          barMaxWidth: 30,
+          itemStyle: { color: '#F59E0B' },
+          data: sRebates
+        },
+        {
+          name: 'Platform Rebate',
+          type: 'bar',
+          stack: 'rebate',
+          barMaxWidth: 30,
+          itemStyle: {
+            color: '#3B82F6',
+            borderRadius: [4, 4, 0, 0]
+          },
+          data: pRebates
+        }
+      ];
+    } else {
+      // 'type' breakdown: Discounts vs Vouchers
+      legendNames = ['Discounts', 'Vouchers', lineName];
+      barSeries = [
+        {
+          name: 'Discounts',
+          type: 'bar',
+          stack: 'rebate',
+          barMaxWidth: 30,
+          itemStyle: { color: '#F59E0B' },
+          data: discounts
+        },
+        {
+          name: 'Vouchers',
+          type: 'bar',
+          stack: 'rebate',
+          barMaxWidth: 30,
+          itemStyle: {
+            color: '#8B5CF6',
+            borderRadius: [4, 4, 0, 0]
+          },
+          data: vouchers
+        }
+      ];
+    }
+
+    const lineSeries = {
+      name: lineName,
+      type: 'line',
+      yAxisIndex: 1,
+      smooth: true,
+      showSymbol: true,
+      symbol: 'circle',
+      symbolSize: 6,
+      itemStyle: {
+        color: (rebateMetric === 'nmv') ? '#10B981' : '#06B6D4',
+        borderWidth: 2,
+        borderColor: isDark ? '#141B28' : '#FFFFFF'
+      },
+      lineStyle: {
+        width: 3.2,
+        color: (rebateMetric === 'nmv') ? '#10B981' : '#06B6D4',
+        shadowColor: (rebateMetric === 'nmv') ? 'rgba(16, 185, 129, 0.3)' : 'rgba(6, 182, 212, 0.3)',
+        shadowBlur: 8
+      },
+      areaStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: (rebateMetric === 'nmv') ? 'rgba(16, 185, 129, 0.20)' : 'rgba(6, 182, 212, 0.20)' },
+          { offset: 1, color: (rebateMetric === 'nmv') ? 'rgba(16, 185, 129, 0.01)' : 'rgba(6, 182, 212, 0.01)' }
+        ])
+      },
+      markPoint: {
+        symbol: 'pin',
+        symbolSize: 40,
+        itemStyle: {
+          color: (rebateMetric === 'nmv') ? '#10B981' : '#06B6D4'
+        },
+        data: [
+          { type: 'max', name: 'Peak' }
+        ]
+      },
+      data: lineData
+    };
 
     const option = {
       backgroundColor: 'transparent',
@@ -4128,49 +4308,54 @@
           if (!params || !params.length) return '';
           const hourLabel = params[0].axisValueLabel || params[0].name || '';
           const idx = params[0].dataIndex;
-          const disc = discounts[idx] || 0;
-          const vouch = vouchers[idx] || 0;
-          const totChip = disc + vouch;
+          const sd = sDisc[idx] || 0;
+          const pd = pDisc[idx] || 0;
+          const totD = sd + pd;
+          const sv = sVouch[idx] || 0;
+          const pv = pVouch[idx] || 0;
+          const totV = sv + pv;
+          const totS = sd + sv;
+          const totP = pd + pv;
+          const totR = totD + totV;
           const nmvVal = (bucket.nmv && bucket.nmv[idx]) || 0;
           const ordersVal = (bucket.orders && bucket.orders[idx]) || 0;
-          const sDisc = (bucket.seller_discounts && bucket.seller_discounts[idx]) || 0;
-          const pDisc = (bucket.platform_discounts && bucket.platform_discounts[idx]) || 0;
-          const sVouch = (bucket.seller_vouchers && bucket.seller_vouchers[idx]) || 0;
-          const pVouch = (bucket.platform_vouchers && bucket.platform_vouchers[idx]) || 0;
-          const ratio = (nmvVal > 0) ? ((totChip / nmvVal) * 100).toFixed(1) : '0.0';
+          const ratio = (nmvVal > 0) ? ((totR / nmvVal) * 100).toFixed(1) : '0.0';
 
           return `
-            <div style="font-weight:700; color:${tc.titleColor}; margin-bottom:5px; font-size:0.92rem; border-bottom:1px solid ${tc.splitLineColor}; padding-bottom:4px;">
+            <div style="font-weight:700; color:${tc.titleColor}; margin-bottom:6px; font-size:0.92rem; border-bottom:1px solid ${tc.splitLineColor}; padding-bottom:4px;">
               Campaign Hour ${hourLabel}
             </div>
             <div style="display:flex; justify-content:space-between; gap:16px; margin:3px 0;">
-              <span style="color:#F59E0B;">🏷️ Discounts:</span>
-              <strong>${formatIDR(disc)}</strong>
+              <span style="color:#F59E0B; font-weight:600;">Discounts:</span>
+              <strong>${formatIDR(totD)}</strong>
             </div>
-            <div style="font-size:0.7rem; color:var(--text-muted); margin-left:14px; margin-bottom:2px;">
-              Seller: ${formatIDR(sDisc, true)} • Platform: ${formatIDR(pDisc, true)}
-            </div>
-            <div style="display:flex; justify-content:space-between; gap:16px; margin:3px 0;">
-              <span style="color:#8B5CF6;">🎟️ Vouchers:</span>
-              <strong>${formatIDR(vouch)}</strong>
-            </div>
-            <div style="font-size:0.7rem; color:var(--text-muted); margin-left:14px; margin-bottom:4px;">
-              Seller: ${formatIDR(sVouch, true)} • Platform: ${formatIDR(pVouch, true)}
-            </div>
-            <div style="display:flex; justify-content:space-between; gap:16px; margin:4px 0 6px 0; border-top:1px dashed ${tc.splitLineColor}; padding-top:4px;">
-              <span style="font-weight:700; color:${tc.titleColor};">💰 Total Chip-in:</span>
-              <strong style="color:${tc.orange}; font-size:0.95rem;">${formatIDR(totChip)}</strong>
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-left:10px; margin-bottom:4px;">
+              Seller: ${formatIDR(sd, true)} • Platform: ${formatIDR(pd, true)}
             </div>
             <div style="display:flex; justify-content:space-between; gap:16px; margin:3px 0;">
-              <span style="color:#10B981;">📈 Net Merchandise (NMV):</span>
+              <span style="color:#8B5CF6; font-weight:600;">Vouchers:</span>
+              <strong>${formatIDR(totV)}</strong>
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-left:10px; margin-bottom:4px;">
+              Seller: ${formatIDR(sv, true)} • Platform: ${formatIDR(pv, true)}
+            </div>
+            <div style="display:flex; justify-content:space-between; gap:16px; margin:4px 0 3px 0; border-top:1px dashed ${tc.splitLineColor}; padding-top:4px;">
+              <span style="font-weight:700; color:${tc.titleColor};">Total Rebate:</span>
+              <strong style="color:${tc.orange}; font-size:0.95rem;">${formatIDR(totR)}</strong>
+            </div>
+            <div style="font-size:0.7rem; color:var(--text-muted); margin-left:10px; margin-bottom:4px;">
+              Seller: ${formatIDR(totS, true)} • Platform: ${formatIDR(totP, true)}
+            </div>
+            <div style="display:flex; justify-content:space-between; gap:16px; margin:4px 0 2px 0; border-top:1px solid ${tc.splitLineColor}; padding-top:4px;">
+              <span style="color:#10B981; font-weight:600;">Net Merchandise (NMV):</span>
               <strong>${formatIDR(nmvVal)}</strong>
             </div>
-            <div style="display:flex; justify-content:space-between; gap:16px; margin:3px 0;">
-              <span style="color:#3B82F6;">📦 Net Orders:</span>
+            <div style="display:flex; justify-content:space-between; gap:16px; margin:2px 0;">
+              <span style="color:#06B6D4; font-weight:600;">Net Orders:</span>
               <strong>${formatNumber(ordersVal)}</strong>
             </div>
             <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid ${tc.splitLineColor}; font-size:0.75rem;">
-              <span>Chip-in Intensity:</span>
+              <span>Rebate Intensity:</span>
               <strong style="color:${ratio > 50 ? '#EF4444' : '#10B981'}">${ratio}% of NMV</strong>
             </div>
           `;
@@ -4180,7 +4365,7 @@
         top: 6,
         left: 'center',
         textStyle: { color: tc.textColor, fontSize: 12 },
-        data: ['Discounts', 'Vouchers', lineName]
+        data: legendNames
       },
       grid: {
         top: 55,
@@ -4197,7 +4382,7 @@
       yAxis: [
         {
           type: 'value',
-          name: 'Chip-in (Rp)',
+          name: 'Rebate (Rp)',
           nameTextStyle: { color: tc.textColor, fontWeight: 700, padding: [0, 0, 6, 0] },
           axisLabel: {
             color: tc.textColor,
@@ -4207,80 +4392,21 @@
         },
         {
           type: 'value',
-          name: (chipInMetric === 'nmv') ? 'NMV (Rp)' : 'Orders',
+          name: (rebateMetric === 'nmv') ? 'NMV (Rp)' : 'Orders',
           nameTextStyle: { color: tc.textColor, fontWeight: 700, padding: [0, 0, 6, 0] },
           axisLabel: {
             color: tc.textColor,
-            formatter: (chipInMetric === 'nmv') ? (val => formatIDR(val, true)) : (val => formatNumber(val))
+            formatter: (rebateMetric === 'nmv') ? (val => formatIDR(val, true)) : (val => formatNumber(val))
           },
           splitLine: { show: false }
         }
       ],
-      series: [
-        {
-          name: 'Discounts',
-          type: 'bar',
-          stack: 'chip_in',
-          barMaxWidth: 32,
-          itemStyle: {
-            color: '#F59E0B',
-            borderRadius: [0, 0, 2, 2]
-          },
-          data: discounts
-        },
-        {
-          name: 'Vouchers',
-          type: 'bar',
-          stack: 'chip_in',
-          barMaxWidth: 32,
-          itemStyle: {
-            color: '#8B5CF6',
-            borderRadius: [4, 4, 0, 0]
-          },
-          data: vouchers
-        },
-        {
-          name: lineName,
-          type: 'line',
-          yAxisIndex: 1,
-          smooth: true,
-          showSymbol: true,
-          symbol: 'circle',
-          symbolSize: 6,
-          itemStyle: {
-            color: (chipInMetric === 'nmv') ? '#10B981' : '#3B82F6',
-            borderWidth: 2,
-            borderColor: isDark ? '#141B28' : '#FFFFFF'
-          },
-          lineStyle: {
-            width: 3.2,
-            color: (chipInMetric === 'nmv') ? '#10B981' : '#3B82F6',
-            shadowColor: (chipInMetric === 'nmv') ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)',
-            shadowBlur: 8
-          },
-          areaStyle: {
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: (chipInMetric === 'nmv') ? 'rgba(16, 185, 129, 0.22)' : 'rgba(59, 130, 246, 0.22)' },
-              { offset: 1, color: (chipInMetric === 'nmv') ? 'rgba(16, 185, 129, 0.01)' : 'rgba(59, 130, 246, 0.01)' }
-            ])
-          },
-          markPoint: {
-            symbol: 'pin',
-            symbolSize: 40,
-            itemStyle: {
-              color: (chipInMetric === 'nmv') ? '#10B981' : '#3B82F6'
-            },
-            data: [
-              { type: 'max', name: 'Peak' }
-            ]
-          },
-          data: lineData
-        }
-      ]
+      series: [...barSeries, lineSeries]
     };
 
-    chartChipInImpact.setOption(option, true);
+    chartRebateImpact.setOption(option, true);
   }
+  const renderChipInImpactChart = renderRebateImpactChart;
 
   /* ── 4. Leaderboard Table ── */
   function renderLeaderboardTable(filterText = '') {
@@ -4296,7 +4422,7 @@
     document.getElementById('leaderboardBrandCount').textContent = `${items.length} brand${items.length === 1 ? '' : 's'}`;
 
     if (items.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted py-4">No matching brands found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted py-4">No matching brands found.</td></tr>`;
       return;
     }
 
@@ -4330,6 +4456,19 @@
       const momentumClass = b.momentum >= 0 ? 'momentum-pos' : 'momentum-neg';
       const sparklineSvg = generateSparklineSvg(b.hourly_gmv || []);
 
+      const hasTarget = (b.target && b.target > 0);
+      const achvPct = (b.target_achieve_nmv !== undefined && b.target_achieve_nmv !== null && b.target_achieve_nmv > 0)
+        ? b.target_achieve_nmv
+        : (b.target_achieve_gmv || 0);
+
+      let achvColor = 'var(--text-muted)';
+      let achvWeight = '500';
+      if (hasTarget) {
+        if (achvPct >= 100) { achvColor = '#10B981'; achvWeight = '700'; }
+        else if (achvPct >= 70) { achvColor = '#F59E0B'; achvWeight = '700'; }
+        else { achvColor = '#EF4444'; }
+      }
+
       html += `
         <tr>
           <td class="text-center">
@@ -4338,18 +4477,19 @@
           <td>
             <div class="dd-brand-cell">
               ${logoHtml}
-              <div>
-                <span style="font-weight: 700;">${b.brand}</span>
-                <div style="font-size: 0.70rem; color: var(--text-muted); line-height: 1.2;">
-                  Target: ${formatIDR(b.target, true)} • <span class="${(b.target_achieve_nmv || 0) >= 100 ? 'text-success font-weight-bold' : ''}">${(b.target_achieve_nmv || 0).toFixed(1)}% Achv</span>
-                </div>
-              </div>
+              <span style="font-weight: 700;">${b.brand}</span>
             </div>
           </td>
-          <td>${platformPill}</td>
+          <td class="text-right mono">
+            ${hasTarget ? formatIDR(b.target, true) : '<span class="text-muted">-</span>'}
+          </td>
+          <td class="text-center mono" style="color: ${achvColor}; font-weight: ${achvWeight};">
+            ${hasTarget ? achvPct.toFixed(1) + '%' : '<span class="text-muted">-</span>'}
+          </td>
           <td class="text-right">
             <strong class="mono">${formatIDR(b.total_gmv, true)}</strong>
           </td>
+          <td>${platformPill}</td>
           <td class="text-right text-muted mono">${b.share_pct}%</td>
           <td class="text-right mono">${formatNumber(b.total_orders)}</td>
           <td class="text-right text-muted mono">${formatNumber(b.total_units)}</td>
@@ -4538,7 +4678,7 @@
     }
 
     setTimeout(() => {
-      updateChipInPlatformButtons();
+      updateRebatePlatformButtons();
       renderCurrentTabChart();
       resizeActiveChart();
       if (isPodiumRaceSync) {
@@ -4677,7 +4817,9 @@
   function resizeActiveChart() {
     if (currentActiveTab === 'bar_race' && chartBarRace) chartBarRace.resize();
     else if (currentActiveTab === 'hourly_velocity' && chartHourlyVelocity) chartHourlyVelocity.resize();
-    else if (currentActiveTab === 'chip_in_impact' && chartChipInImpact) chartChipInImpact.resize();
+    else if ((currentActiveTab === 'rebate_impact' || currentActiveTab === 'chip_in_impact') && (chartRebateImpact || chartChipInImpact)) {
+      (chartRebateImpact || chartChipInImpact).resize();
+    }
     else if (currentActiveTab === 'scatter_matrix' && chartScatterMatrix) chartScatterMatrix.resize();
     else if (currentActiveTab === 'platform_cvr') {
       if (chartPlatformDoughnut) chartPlatformDoughnut.resize();
@@ -4688,7 +4830,7 @@
   function rethemeAllCharts() {
     if (chartBarRace) renderBarRaceChart(raceCurrentHour);
     if (chartHourlyVelocity) renderHourlyVelocityChart(lineRaceProgress);
-    if (chartChipInImpact) renderChipInImpactChart();
+    if (chartRebateImpact || chartChipInImpact) renderRebateImpactChart();
     if (chartScatterMatrix) renderScatterMatrixChart();
     if (chartPlatformDoughnut) renderPlatformDoughnutChart();
     if (chartCvrFunnel) renderCvrFunnelChart();

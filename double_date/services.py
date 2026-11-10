@@ -781,43 +781,71 @@ def get_campaign_war_room_data(
             "uv_share": round((p_uv / total_uv * 100.0) if total_uv > 0 else 0.0, 1),
         })
 
-    # Finalize Chip-in Impact dataset
+    # Finalize Rebate (Chip-in) Impact dataset
     def _finalize_chip_in_bucket(bucket: dict[str, Any], limit: int) -> dict[str, Any]:
+        s_disc = [round(x, 2) for x in bucket["seller_discounts"][:limit]]
+        p_disc = [round(x, 2) for x in bucket["platform_discounts"][:limit]]
+        s_vouch = [round(x, 2) for x in bucket["seller_vouchers"][:limit]]
+        p_vouch = [round(x, 2) for x in bucket["platform_vouchers"][:limit]]
+        discs = [round(x, 2) for x in bucket["discounts"][:limit]]
+        vouchs = [round(x, 2) for x in bucket["vouchers"][:limit]]
+        tot_rebates = [round(x, 2) for x in bucket["total_chip_in"][:limit]]
+        s_rebates = [round(s_disc[i] + s_vouch[i], 2) for i in range(limit)]
+        p_rebates = [round(p_disc[i] + p_vouch[i], 2) for i in range(limit)]
+
         sliced = {
-            "discounts": [round(x, 2) for x in bucket["discounts"][:limit]],
-            "vouchers": [round(x, 2) for x in bucket["vouchers"][:limit]],
-            "total_chip_in": [round(x, 2) for x in bucket["total_chip_in"][:limit]],
-            "seller_discounts": [round(x, 2) for x in bucket["seller_discounts"][:limit]],
-            "platform_discounts": [round(x, 2) for x in bucket["platform_discounts"][:limit]],
-            "seller_vouchers": [round(x, 2) for x in bucket["seller_vouchers"][:limit]],
-            "platform_vouchers": [round(x, 2) for x in bucket["platform_vouchers"][:limit]],
+            "discounts": discs,
+            "vouchers": vouchs,
+            "total_chip_in": tot_rebates,
+            "total_rebate": tot_rebates,
+            "seller_discounts": s_disc,
+            "platform_discounts": p_disc,
+            "seller_vouchers": s_vouch,
+            "platform_vouchers": p_vouch,
+            "seller_rebates": s_rebates,
+            "platform_rebates": p_rebates,
             "nmv": [round(x, 2) for x in bucket["nmv"][:limit]],
             "orders": bucket["orders"][:limit],
             "gmv": [round(x, 2) for x in bucket["gmv"][:limit]],
         }
-        tot_disc = sum(sliced["discounts"])
-        tot_vouch = sum(sliced["vouchers"])
-        tot_chip = sum(sliced["total_chip_in"])
+        tot_s_disc = sum(s_disc)
+        tot_p_disc = sum(p_disc)
+        tot_s_vouch = sum(s_vouch)
+        tot_p_vouch = sum(p_vouch)
+        tot_disc = sum(discs)
+        tot_vouch = sum(vouchs)
+        tot_rebate = sum(tot_rebates)
         tot_nmv = sum(sliced["nmv"])
         tot_orders = sum(sliced["orders"])
-        ratio = round((tot_chip / tot_nmv * 100.0), 2) if tot_nmv > 0 else 0.0
+        ratio = round((tot_rebate / tot_nmv * 100.0), 2) if tot_nmv > 0 else 0.0
 
-        peak_h = max(range(limit), key=lambda idx: sliced["total_chip_in"][idx], default=0) if limit > 0 else 0
-        peak_chip = sliced["total_chip_in"][peak_h] if limit > 0 else 0.0
+        peak_h = max(range(limit), key=lambda idx: tot_rebates[idx], default=0) if limit > 0 else 0
+        peak_rebate = tot_rebates[peak_h] if limit > 0 else 0.0
 
         peak_nmv_h = max(range(limit), key=lambda idx: sliced["nmv"][idx], default=0) if limit > 0 else 0
         peak_nmv_val = sliced["nmv"][peak_nmv_h] if limit > 0 else 0.0
 
         sliced["summary"] = {
+            "total_seller_discount": round(tot_s_disc, 2),
+            "total_platform_discount": round(tot_p_disc, 2),
+            "total_seller_voucher": round(tot_s_vouch, 2),
+            "total_platform_voucher": round(tot_p_vouch, 2),
+            "total_seller_rebate": round(tot_s_disc + tot_s_vouch, 2),
+            "total_platform_rebate": round(tot_p_disc + tot_p_vouch, 2),
             "total_discount": round(tot_disc, 2),
             "total_voucher": round(tot_vouch, 2),
-            "total_chip_in": round(tot_chip, 2),
+            "total_rebate": round(tot_rebate, 2),
+            "total_chip_in": round(tot_rebate, 2),
             "total_nmv": round(tot_nmv, 2),
             "total_orders": tot_orders,
+            "rebate_ratio": ratio,
             "chip_in_ratio": ratio,
+            "peak_rebate_hour": peak_h,
+            "peak_rebate_label": f"{peak_h:02d}:00",
+            "peak_rebate_value": round(peak_rebate, 2),
             "peak_chip_in_hour": peak_h,
             "peak_chip_in_label": f"{peak_h:02d}:00",
-            "peak_chip_in_value": round(peak_chip, 2),
+            "peak_chip_in_value": round(peak_rebate, 2),
             "peak_nmv_hour": peak_nmv_h,
             "peak_nmv_label": f"{peak_nmv_h:02d}:00",
             "peak_nmv_value": round(peak_nmv_val, 2),
@@ -881,6 +909,7 @@ def get_campaign_war_room_data(
             "avg_gmv": (total_gmv / len(leaderboard)) if leaderboard else 0,
         },
         "platform_breakdown": platform_data,
+        "rebate_impact": chip_in_impact_final,
         "chip_in_impact": chip_in_impact_final,
         "hourly_totals": hourly_totals[: latest_active_hour + 1],
     }

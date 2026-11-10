@@ -394,8 +394,10 @@ def get_campaign_war_room_data(
             "hourly_gmv": [0.0] * 24,
             "hourly_nmv": [0.0] * 24,
             "hourly_orders": [0] * 24,
+            "hourly_units": [0.0] * 24,
             "hourly_uv": [0] * 24,
             "hourly_pv": [0] * 24,
+            "hourly_platform_gmv": [defaultdict(float) for _ in range(24)],
         }
 
     # Hourly campaign totals across all brands
@@ -500,6 +502,8 @@ def get_campaign_war_room_data(
         b_entry["hourly_gmv"][h] += gmv
         b_entry["hourly_nmv"][h] += nmv
         b_entry["hourly_orders"][h] += orders
+        b_entry["hourly_units"][h] += units
+        b_entry["hourly_platform_gmv"][h][p] += gmv
 
         hourly_totals[h]["gmv"] += gmv
         hourly_totals[h]["nmv"] += nmv
@@ -642,6 +646,52 @@ def get_campaign_war_room_data(
         gmv_achieve_pct = round((b_gmv / b_target * 100.0), 1) if b_target > 0 else 0.0
         nmv_achieve_pct = round((b["nmv"] / b_target * 100.0), 1) if b_target > 0 else 0.0
 
+        # Hourly breakdown ordered descending (from latest active hour down to 0)
+        hourly_breakdown = []
+        for h in range(latest_active_hour, -1, -1):
+            h_gmv = b["hourly_gmv"][h]
+            h_nmv = b["hourly_nmv"][h]
+            h_orders = b["hourly_orders"][h]
+            h_units = b["hourly_units"][h]
+            h_uv = b["hourly_uv"][h]
+            h_cvr = (h_orders / h_uv * 100.0) if h_uv > 0 else 0.0
+            h_aov = (h_gmv / h_orders) if h_orders > 0 else 0.0
+            h_share = (h_gmv / b_gmv * 100.0) if b_gmv > 0 else 0.0
+
+            # Momentum vs previous hour (h - 1)
+            prev_h_gmv = b["hourly_gmv"][h - 1] if h > 0 else 0.0
+            if prev_h_gmv > 0:
+                h_momentum = round(((h_gmv - prev_h_gmv) / prev_h_gmv) * 100.0, 1)
+            elif h_gmv > 0:
+                h_momentum = 100.0
+            else:
+                h_momentum = 0.0
+
+            h_platforms = []
+            for p in target_platforms:
+                p_gmv = b["hourly_platform_gmv"][h].get(p, 0.0)
+                p_pct = (p_gmv / h_gmv * 100.0) if h_gmv > 0 else 0.0
+                h_platforms.append({
+                    "platform": p,
+                    "gmv": round(p_gmv, 2),
+                    "pct": round(p_pct, 1),
+                })
+
+            hourly_breakdown.append({
+                "hour": h,
+                "hour_label": f"{h:02d}:00",
+                "gmv": round(h_gmv, 2),
+                "nmv": round(h_nmv, 2),
+                "orders": h_orders,
+                "units": int(h_units),
+                "uv": h_uv,
+                "cvr": round(h_cvr, 2),
+                "aov": round(h_aov, 0),
+                "share_pct": round(h_share, 1),
+                "platforms": h_platforms,
+                "momentum": h_momentum,
+            })
+
         leaderboard.append({
             "rank": rank,
             "brand": b["brand"],
@@ -663,6 +713,7 @@ def get_campaign_war_room_data(
             "hourly_gmv": b["hourly_gmv"],
             "hourly_nmv": b["hourly_nmv"],
             "hourly_uv": b["hourly_uv"],
+            "hourly_breakdown": hourly_breakdown,
             "momentum": round(momentum, 1),
         })
 

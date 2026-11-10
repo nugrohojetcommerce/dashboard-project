@@ -1289,6 +1289,91 @@
     display: inline-block;
     vertical-align: middle;
   }
+
+  /* ── Leaderboard Hourly Expandable Sub-Table ── */
+  .dd-expand-btn {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-muted);
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.15s ease;
+  }
+  .dd-expand-btn:hover,
+  .dd-expand-btn.active {
+    background: color-mix(in srgb, var(--orange) 14%, transparent);
+    border-color: var(--orange);
+    color: var(--orange);
+  }
+  .dd-hourly-container {
+    padding: 12px 18px 16px;
+    background: color-mix(in srgb, var(--text-muted) 5%, transparent);
+    border-top: 1px dashed var(--glass-border);
+    border-bottom: 2px solid var(--glass-border);
+  }
+  .dd-hourly-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .dd-hourly-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--text-title);
+  }
+  .dd-hourly-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+  }
+  .dd-hourly-subtable {
+    font-size: 0.78rem;
+    background: var(--card-bg);
+    border: none;
+    margin: 0;
+    width: 100%;
+  }
+  .dd-hourly-subtable thead th {
+    font-size: 0.70rem;
+    padding: 8px 12px;
+    background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .dd-hourly-subtable tbody td {
+    padding: 7px 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--glass-border) 60%, transparent);
+  }
+  .dd-hourly-subtable tbody tr:hover {
+    background: var(--surface-muted);
+  }
+  .dd-hour-tag {
+    font-size: 0.74rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: color-mix(in srgb, var(--orange) 12%, transparent);
+    color: var(--orange);
+    display: inline-block;
+  }
 </style>
 {% endblock %}
 
@@ -1794,6 +1879,7 @@
       <table class="dd-table" id="leaderboardTable">
         <thead>
           <tr>
+            <th class="text-center" style="width: 38px;" title="Expand hourly breakdown"></th>
             <th class="text-center" style="width: 50px;">Rank</th>
             <th>Brand</th>
             <th class="text-right">Target</th>
@@ -4548,7 +4634,7 @@
     document.getElementById('leaderboardBrandCount').textContent = `${items.length} brand${items.length === 1 ? '' : 's'}`;
 
     if (items.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted py-4">No matching brands found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="15" class="text-center text-muted py-4">No matching brands found.</td></tr>`;
       return;
     }
 
@@ -4595,8 +4681,66 @@
         else { achvColor = '#EF4444'; }
       }
 
+      // Generate nested hourly breakdown rows (ordered descending)
+      let hourlyRowsHtml = '';
+      if (!b.hourly_breakdown || b.hourly_breakdown.length === 0) {
+        hourlyRowsHtml = `<tr><td colspan="10" class="text-center text-muted py-3">No hourly data available for this campaign date.</td></tr>`;
+      } else {
+        b.hourly_breakdown.forEach(hItem => {
+          let hPlatPill = `<div class="dd-platform-bar" title="Hourly Platform Breakdown">`;
+          (hItem.platforms || []).forEach(p => {
+            if (p.pct > 0) {
+              let col = '#FF6B00';
+              if (p.platform.toLowerCase().includes('shopee')) col = '#EE4D2D';
+              else if (p.platform.toLowerCase().includes('tiktok')) col = '#000000';
+              else if (p.platform.toLowerCase().includes('tokopedia')) col = '#03AC0E';
+              else if (p.platform.toLowerCase().includes('lazada')) col = '#0F146D';
+              hPlatPill += `<span style="width:${p.pct}%; background:${col}; height:100%;" title="${p.platform}: ${p.pct}% (${formatIDR(p.gmv, true)})"></span>`;
+            }
+          });
+          hPlatPill += `</div>`;
+
+          let hCvrClass = 'cvr-low';
+          if (hItem.cvr >= 5.0) hCvrClass = 'cvr-high';
+          else if (hItem.cvr >= 2.0) hCvrClass = 'cvr-mid';
+
+          const hMomSign = hItem.momentum >= 0 ? '▲ +' : '▼ ';
+          const hMomClass = hItem.momentum >= 0 ? 'momentum-pos' : 'momentum-neg';
+
+          hourlyRowsHtml += `
+            <tr>
+              <td class="text-center mono">
+                <span class="dd-hour-tag">${hItem.hour_label}</span>
+              </td>
+              <td class="text-right">
+                <strong class="mono">${formatIDR(hItem.gmv, true)}</strong>
+              </td>
+              <td>${hPlatPill}</td>
+              <td class="text-right text-muted mono">${hItem.share_pct}%</td>
+              <td class="text-right mono">${formatNumber(hItem.orders)}</td>
+              <td class="text-right text-muted mono">${formatNumber(hItem.units)}</td>
+              <td class="text-right mono">${formatNumber(hItem.uv)}</td>
+              <td class="text-center">
+                <span class="dd-cvr-badge ${hCvrClass} mono">${hItem.cvr}%</span>
+              </td>
+              <td class="text-right mono">${formatIDR(hItem.aov, true)}</td>
+              <td class="text-center">
+                <span class="dd-momentum-pill ${hMomClass} mono" style="font-size: 0.68rem; padding: 1px 6px;">
+                  ${hMomSign}${Math.abs(hItem.momentum)}%
+                </span>
+              </td>
+            </tr>
+          `;
+        });
+      }
+
       html += `
-        <tr>
+        <tr class="dd-brand-row" id="brand_row_${b.rank}">
+          <td class="text-center" style="vertical-align: middle;">
+            <button type="button" class="dd-expand-btn" id="expand_btn_${b.rank}" onclick="toggleHourlyRow(${b.rank})" title="Expand hourly breakdown">
+              <i class="bi bi-chevron-right" id="expand_icon_${b.rank}"></i>
+            </button>
+          </td>
           <td class="text-center">
             <span class="dd-rank-badge ${rankBadgeClass}">${b.rank}</span>
           </td>
@@ -4631,11 +4775,67 @@
             </span>
           </td>
         </tr>
+        <tr class="dd-hourly-expand-row" id="hourly_expand_${b.rank}" style="display: none;">
+          <td colspan="15" style="padding: 0; background: color-mix(in srgb, var(--text-muted) 3%, transparent);">
+            <div class="dd-hourly-container">
+              <div class="dd-hourly-header">
+                <div class="dd-hourly-title">
+                  <i class="bi bi-clock-history text-warning"></i>
+                  <span>Hourly Breakdown: <strong>${b.brand}</strong></span>
+                  <span class="dd-hourly-badge">${(b.hourly_breakdown || []).length} Hours</span>
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                  <i class="bi bi-sort-down text-warning"></i>
+                  <span>Ordered by Hour (Descending)</span>
+                </div>
+              </div>
+              <div class="dd-table-wrap" style="margin: 0; border: 1px solid var(--glass-border); border-radius: 8px; overflow-x: auto;">
+                <table class="dd-table dd-hourly-subtable">
+                  <thead>
+                    <tr>
+                      <th class="text-center" style="width: 75px;"><i class="bi bi-clock me-1"></i>Hour</th>
+                      <th class="text-right">Hourly GMV</th>
+                      <th>Platform Split</th>
+                      <th class="text-right" title="Share of daily brand GMV">Share %</th>
+                      <th class="text-right">Net Orders</th>
+                      <th class="text-right">Units</th>
+                      <th class="text-right">Traffic (UV)</th>
+                      <th class="text-center">CVR %</th>
+                      <th class="text-right">AOV</th>
+                      <th class="text-center">Momentum</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${hourlyRowsHtml}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </td>
+        </tr>
       `;
     });
 
     tbody.innerHTML = html;
   }
+
+  window.toggleHourlyRow = function(rank) {
+    const expandRow = document.getElementById(`hourly_expand_${rank}`);
+    const icon = document.getElementById(`expand_icon_${rank}`);
+    const btn = document.getElementById(`expand_btn_${rank}`);
+    if (!expandRow) return;
+
+    const isOpen = (expandRow.style.display !== 'none');
+    if (isOpen) {
+      expandRow.style.display = 'none';
+      if (icon) icon.className = 'bi bi-chevron-right';
+      if (btn) btn.classList.remove('active');
+    } else {
+      expandRow.style.display = 'table-row';
+      if (icon) icon.className = 'bi bi-chevron-down';
+      if (btn) btn.classList.add('active');
+    }
+  };
 
   function generateSparklineSvg(values) {
     if (!values || values.length === 0) return '';

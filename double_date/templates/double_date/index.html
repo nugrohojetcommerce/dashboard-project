@@ -4120,7 +4120,11 @@
     }
 
     const ratio = (s.rebate_ratio !== undefined) ? s.rebate_ratio : (s.chip_in_ratio || 0);
+    const platRatio = (s.platform_chip_in_ratio !== undefined)
+      ? s.platform_chip_in_ratio
+      : ((platRebate && s.total_nmv > 0) ? ((platRebate / s.total_nmv) * 100).toFixed(1) : '0.0');
     if (elRatio) elRatio.textContent = `${ratio}%`;
+    if (elSubRatio) elSubRatio.textContent = `Platform Chip-in: ${platRatio}% of NMV`;
     if (elPeak) elPeak.textContent = s.peak_rebate_label || s.peak_chip_in_label || '00:00';
     const peakVal = (s.peak_rebate_value !== undefined) ? s.peak_rebate_value : (s.peak_chip_in_value || 0);
     if (elSubPeak) elSubPeak.textContent = `${formatIDR(peakVal, true)} rebate • Peak NMV: ${s.peak_nmv_label || '--:00'}`;
@@ -4320,6 +4324,8 @@
           const nmvVal = (bucket.nmv && bucket.nmv[idx]) || 0;
           const ordersVal = (bucket.orders && bucket.orders[idx]) || 0;
           const ratio = (nmvVal > 0) ? ((totR / nmvVal) * 100).toFixed(1) : '0.0';
+          const platChipInRatio = (nmvVal > 0) ? ((totP / nmvVal) * 100).toFixed(1) : '0.0';
+          const sellerRebateRatio = (nmvVal > 0) ? ((totS / nmvVal) * 100).toFixed(1) : '0.0';
 
           return `
             <div style="font-weight:700; color:${tc.titleColor}; margin-bottom:6px; font-size:0.92rem; border-bottom:1px solid ${tc.splitLineColor}; padding-bottom:4px;">
@@ -4355,8 +4361,16 @@
               <strong>${formatNumber(ordersVal)}</strong>
             </div>
             <div style="display:flex; justify-content:space-between; gap:16px; margin-top:5px; padding-top:4px; border-top:1px solid ${tc.splitLineColor}; font-size:0.75rem;">
-              <span>Rebate Intensity:</span>
+              <span>Total Rebate Intensity:</span>
               <strong style="color:${ratio > 50 ? '#EF4444' : '#10B981'}">${ratio}% of NMV</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px; font-size:0.75rem;">
+              <span style="color:#3B82F6; font-weight:600;">Platform Chip-in:</span>
+              <strong style="color:#3B82F6;">${platChipInRatio}% of NMV (${formatIDR(totP, true)})</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; gap:16px; margin-top:2px; font-size:0.75rem;">
+              <span style="color:#F59E0B; font-weight:600;">Seller Rebate:</span>
+              <strong style="color:#F59E0B;">${sellerRebateRatio}% of NMV (${formatIDR(totS, true)})</strong>
             </div>
           `;
         }

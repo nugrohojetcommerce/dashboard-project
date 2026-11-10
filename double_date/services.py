@@ -817,6 +817,11 @@ def get_campaign_war_room_data(
         tot_rebate = sum(tot_rebates)
         tot_nmv = sum(sliced["nmv"])
         tot_orders = sum(sliced["orders"])
+        tot_plat_rebate = tot_p_disc + tot_p_vouch
+        plat_chip_in_ratio = round((tot_plat_rebate / tot_nmv * 100.0), 2) if tot_nmv > 0 else 0.0
+        tot_seller_rebate = tot_s_disc + tot_s_vouch
+        seller_rebate_ratio = round((tot_seller_rebate / tot_nmv * 100.0), 2) if tot_nmv > 0 else 0.0
+
         ratio = round((tot_rebate / tot_nmv * 100.0), 2) if tot_nmv > 0 else 0.0
 
         peak_h = max(range(limit), key=lambda idx: tot_rebates[idx], default=0) if limit > 0 else 0
@@ -830,8 +835,8 @@ def get_campaign_war_room_data(
             "total_platform_discount": round(tot_p_disc, 2),
             "total_seller_voucher": round(tot_s_vouch, 2),
             "total_platform_voucher": round(tot_p_vouch, 2),
-            "total_seller_rebate": round(tot_s_disc + tot_s_vouch, 2),
-            "total_platform_rebate": round(tot_p_disc + tot_p_vouch, 2),
+            "total_seller_rebate": round(tot_seller_rebate, 2),
+            "total_platform_rebate": round(tot_plat_rebate, 2),
             "total_discount": round(tot_disc, 2),
             "total_voucher": round(tot_vouch, 2),
             "total_rebate": round(tot_rebate, 2),
@@ -840,6 +845,9 @@ def get_campaign_war_room_data(
             "total_orders": tot_orders,
             "rebate_ratio": ratio,
             "chip_in_ratio": ratio,
+            "platform_chip_in_ratio": plat_chip_in_ratio,
+            "platform_rebate_ratio": plat_chip_in_ratio,
+            "seller_rebate_ratio": seller_rebate_ratio,
             "peak_rebate_hour": peak_h,
             "peak_rebate_label": f"{peak_h:02d}:00",
             "peak_rebate_value": round(peak_rebate, 2),

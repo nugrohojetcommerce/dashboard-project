@@ -418,6 +418,26 @@ def get_campaign_war_room_data(
         for p in target_platforms
     }
 
+    # Hourly Chip-in Impact structures for 'all' and per platform
+    def _create_chip_in_bucket():
+        return {
+            "discounts": [0.0] * 24,
+            "vouchers": [0.0] * 24,
+            "seller_discounts": [0.0] * 24,
+            "platform_discounts": [0.0] * 24,
+            "seller_vouchers": [0.0] * 24,
+            "platform_vouchers": [0.0] * 24,
+            "total_chip_in": [0.0] * 24,
+            "nmv": [0.0] * 24,
+            "orders": [0] * 24,
+            "gmv": [0.0] * 24,
+        }
+
+    chip_in_all = _create_chip_in_bucket()
+    chip_in_by_platform: dict[str, dict[str, Any]] = {
+        p: _create_chip_in_bucket() for p in target_platforms
+    }
+
     # Populate orders data
     for o in order_qs:
         b = standardize_brand_name(o["brand"])
@@ -430,12 +450,40 @@ def get_campaign_war_room_data(
         gross_orders = _to_int(o["gross_orders"])
         units = _to_float(o["units"])
         gross_units = _to_float(o["gross_units"])
-        discounts = (
-            _to_float(o["platform_discount"])
-            + _to_float(o["seller_discount"])
-            + _to_float(o["total_platform_voucher"])
-            + _to_float(o["total_seller_voucher"])
-        )
+
+        p_disc = _to_float(o["platform_discount"])
+        s_disc = _to_float(o["seller_discount"])
+        p_vouch = _to_float(o["total_platform_voucher"])
+        s_vouch = _to_float(o["total_seller_voucher"])
+        disc_val = p_disc + s_disc
+        vouch_val = p_vouch + s_vouch
+        tot_chip_in = disc_val + vouch_val
+        discounts = tot_chip_in
+
+        # Accumulate into Chip-in hourly datasets
+        chip_in_all["discounts"][h] += disc_val
+        chip_in_all["vouchers"][h] += vouch_val
+        chip_in_all["seller_discounts"][h] += s_disc
+        chip_in_all["platform_discounts"][h] += p_disc
+        chip_in_all["seller_vouchers"][h] += s_vouch
+        chip_in_all["platform_vouchers"][h] += p_vouch
+        chip_in_all["total_chip_in"][h] += tot_chip_in
+        chip_in_all["nmv"][h] += nmv
+        chip_in_all["orders"][h] += orders
+        chip_in_all["gmv"][h] += gmv
+
+        if p in chip_in_by_platform:
+            p_b = chip_in_by_platform[p]
+            p_b["discounts"][h] += disc_val
+            p_b["vouchers"][h] += vouch_val
+            p_b["seller_discounts"][h] += s_disc
+            p_b["platform_discounts"][h] += p_disc
+            p_b["seller_vouchers"][h] += s_vouch
+            p_b["platform_vouchers"][h] += p_vouch
+            p_b["total_chip_in"][h] += tot_chip_in
+            p_b["nmv"][h] += nmv
+            p_b["orders"][h] += orders
+            p_b["gmv"][h] += gmv
 
         b_entry = brand_summary.get(b)
         if not b_entry:
@@ -733,6 +781,60 @@ def get_campaign_war_room_data(
             "uv_share": round((p_uv / total_uv * 100.0) if total_uv > 0 else 0.0, 1),
         })
 
+    # Finalize Chip-in Impact dataset
+    def _finalize_chip_in_bucket(bucket: dict[str, Any], limit: int) -> dict[str, Any]:
+        sliced = {
+            "discounts": [round(x, 2) for x in bucket["discounts"][:limit]],
+            "vouchers": [round(x, 2) for x in bucket["vouchers"][:limit]],
+            "total_chip_in": [round(x, 2) for x in bucket["total_chip_in"][:limit]],
+            "seller_discounts": [round(x, 2) for x in bucket["seller_discounts"][:limit]],
+            "platform_discounts": [round(x, 2) for x in bucket["platform_discounts"][:limit]],
+            "seller_vouchers": [round(x, 2) for x in bucket["seller_vouchers"][:limit]],
+            "platform_vouchers": [round(x, 2) for x in bucket["platform_vouchers"][:limit]],
+            "nmv": [round(x, 2) for x in bucket["nmv"][:limit]],
+            "orders": bucket["orders"][:limit],
+            "gmv": [round(x, 2) for x in bucket["gmv"][:limit]],
+        }
+        tot_disc = sum(sliced["discounts"])
+        tot_vouch = sum(sliced["vouchers"])
+        tot_chip = sum(sliced["total_chip_in"])
+        tot_nmv = sum(sliced["nmv"])
+        tot_orders = sum(sliced["orders"])
+        ratio = round((tot_chip / tot_nmv * 100.0), 2) if tot_nmv > 0 else 0.0
+
+        peak_h = max(range(limit), key=lambda idx: sliced["total_chip_in"][idx], default=0) if limit > 0 else 0
+        peak_chip = sliced["total_chip_in"][peak_h] if limit > 0 else 0.0
+
+        peak_nmv_h = max(range(limit), key=lambda idx: sliced["nmv"][idx], default=0) if limit > 0 else 0
+        peak_nmv_val = sliced["nmv"][peak_nmv_h] if limit > 0 else 0.0
+
+        sliced["summary"] = {
+            "total_discount": round(tot_disc, 2),
+            "total_voucher": round(tot_vouch, 2),
+            "total_chip_in": round(tot_chip, 2),
+            "total_nmv": round(tot_nmv, 2),
+            "total_orders": tot_orders,
+            "chip_in_ratio": ratio,
+            "peak_chip_in_hour": peak_h,
+            "peak_chip_in_label": f"{peak_h:02d}:00",
+            "peak_chip_in_value": round(peak_chip, 2),
+            "peak_nmv_hour": peak_nmv_h,
+            "peak_nmv_label": f"{peak_nmv_h:02d}:00",
+            "peak_nmv_value": round(peak_nmv_val, 2),
+        }
+        return sliced
+
+    active_limit = latest_active_hour + 1
+    chip_in_impact_final = {
+        "hours": [f"{h:02d}:00" for h in range(active_limit)],
+        "available_platforms": target_platforms,
+        "all": _finalize_chip_in_bucket(chip_in_all, active_limit),
+        "platforms": {
+            p: _finalize_chip_in_bucket(chip_in_by_platform[p], active_limit)
+            for p in target_platforms
+        },
+    }
+
     return {
         "date": date_str,
         "traffic_date": traffic_date_str,
@@ -779,6 +881,7 @@ def get_campaign_war_room_data(
             "avg_gmv": (total_gmv / len(leaderboard)) if leaderboard else 0,
         },
         "platform_breakdown": platform_data,
+        "chip_in_impact": chip_in_impact_final,
         "hourly_totals": hourly_totals[: latest_active_hour + 1],
     }
 

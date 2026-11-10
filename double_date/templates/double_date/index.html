@@ -2883,7 +2883,11 @@
       tooltipBg: isDark ? 'rgba(15, 23, 42, 0.96)' : 'rgba(255, 255, 255, 0.98)',
       tooltipBorder: isDark ? '#334155' : '#E2E8F0',
       orange: '#FF6B00',
-      palette: ['#FF6B00', '#3B82F6', '#10B981', '#EC4899', '#8B5CF6', '#F59E0B', '#06B6D4', '#6366F1']
+      palette: [
+        '#FF6B00', '#3B82F6', '#10B981', '#EC4899', '#8B5CF6', '#F59E0B', '#06B6D4', '#6366F1',
+        '#14B8A6', '#E11D48', '#84CC16', '#A855F7', '#F97316', '#0EA5E9', '#EAB308', '#D946EF',
+        '#22C55E', '#4F46E5', '#F43F5E', '#2DD4BF', '#FB923C', '#38BDF8', '#C084FC', '#A3E635'
+      ]
     };
   }
 
@@ -2983,6 +2987,8 @@
     // In Line Race Hourly view, we track hourly velocity; otherwise cumulative progression
     const isCumulative = (currentActiveTab === 'hourly_velocity' ? (lineRaceView === 'cumulative') : true);
     const isTargetMode = (podiumMetric === 'target');
+    const activeRaceMetric = (currentActiveTab === 'hourly_velocity') ? lineRaceMetric : barRaceMetric;
+    const isGmv = (activeRaceMetric === 'gmv');
 
     const brandValues = [];
     let totalSum = 0;
@@ -2993,7 +2999,7 @@
         return;
       }
 
-      const raw = b.hourly_nmv || [];
+      const raw = isGmv ? (b.hourly_gmv || []) : (b.hourly_nmv || []);
       let val = 0;
 
       if (isCumulative) {
@@ -3063,7 +3069,9 @@
         const targetPillHtml = isTarget
           ? `<div class="podium-target-pill ${isOver ? 'target-over' : 'target-under'}"><i class="bi bi-bullseye"></i> Target: ${formatIDR(p.target, true)}</div>`
           : `<div class="podium-target-pill ${isOver ? 'target-over' : 'target-under'}"><i class="bi bi-bullseye"></i> ${(p.achieve_pct || 0).toFixed(1)}% of Target</div>`;
-        const stepPctHtml = isTarget ? `${formatIDR(p.total_nmv, true)} NMV` : `${p.share_pct}% Share`;
+        const activeRaceMetric = (currentActiveTab === 'hourly_velocity') ? lineRaceMetric : barRaceMetric;
+        const metricLabel = (activeRaceMetric === 'gmv') ? 'GMV' : 'NMV';
+        const stepPctHtml = isTarget ? `${formatIDR(p.total_nmv, true)} ${metricLabel}` : `${p.share_pct}% Share`;
 
         return `
           <div class="podium-pillar ${posClass}" data-rank="${rank}" data-brand="${p.brand}">
@@ -3146,7 +3154,9 @@
           : `<i class="bi bi-bullseye"></i> ${(p.achieve_pct || 0).toFixed(1)}% of Target`;
       }
       if (pctEl) {
-        pctEl.textContent = isTarget ? `${formatIDR(p.total_nmv, true)} NMV` : `${p.share_pct}% Share`;
+        const activeRaceMetric = (currentActiveTab === 'hourly_velocity') ? lineRaceMetric : barRaceMetric;
+        const metricLabel = (activeRaceMetric === 'gmv') ? 'GMV' : 'NMV';
+        pctEl.textContent = isTarget ? `${formatIDR(p.total_nmv, true)} ${metricLabel}` : `${p.share_pct}% Share`;
       }
     });
   }
@@ -3162,7 +3172,9 @@
       const hStr = `${String(curH).padStart(2, '0')}:00`;
       const isTarget = (podiumMetric === 'target');
       const isCumulative = (currentActiveTab === 'hourly_velocity' ? (lineRaceView === 'cumulative') : true);
-      const modeStr = isTarget ? '% Target Achieve' : (isCumulative ? 'Cumulative NMV' : 'Hourly NMV');
+      const activeRaceMetric = (currentActiveTab === 'hourly_velocity') ? lineRaceMetric : barRaceMetric;
+      const metricLabel = (activeRaceMetric === 'gmv') ? 'GMV' : 'NMV';
+      const modeStr = isTarget ? '% Target Achieve' : (isCumulative ? `Cumulative ${metricLabel}` : `Hourly ${metricLabel}`);
       subEl.textContent = `Live Race Sync • Hour ${hStr} (${modeStr})`;
     }
   }
@@ -3300,7 +3312,7 @@
         });
       });
       if (allRaceBrandsCache.length === 0) {
-        allRaceBrandsCache = (campaignData.leaderboard || []).slice(0, 15).map(b => b.brand);
+        allRaceBrandsCache = (campaignData.leaderboard || []).map(b => b.brand);
       }
     }
 

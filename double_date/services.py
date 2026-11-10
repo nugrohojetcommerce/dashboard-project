@@ -859,7 +859,7 @@ def get_campaign_war_room_data(
     race_timeline = []
 
     # Calculate cumulative GMV & NMV for each brand hour by hour
-    top_race_brands = [b["brand"] for b in active_brands[:20]]  # Top 20 brands in race
+    top_race_brands = [b["brand"] for b in active_brands]
     brand_cumulative_gmv = {b: 0.0 for b in top_race_brands}
     brand_cumulative_nmv = {b: 0.0 for b in top_race_brands}
 
@@ -902,7 +902,7 @@ def get_campaign_war_room_data(
             res.append(round(c, 2))
         return res
 
-    velocity_top_brands = leaderboard[:12]
+    velocity_top_brands = leaderboard
     velocity_brand_series = []
     for b in velocity_top_brands:
         b_target = b.get("target", 0.0)

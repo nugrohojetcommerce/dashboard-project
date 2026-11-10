@@ -1275,12 +1275,19 @@
   .cvr-low { background: rgba(244, 63, 94, 0.12); color: #F43F5E; }
 
   .dd-platform-bar {
-    display: flex;
-    height: 6px;
-    width: 100px;
-    border-radius: 3px;
+    display: inline-flex;
+    height: 8px;
+    width: 95px;
+    border-radius: 999px;
     overflow: hidden;
-    background: var(--dd-border);
+    background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+    cursor: pointer;
+    vertical-align: middle;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .dd-platform-bar:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--orange) 45%, transparent);
   }
 
   .dd-mini-sparkline {
@@ -1288,6 +1295,145 @@
     height: 20px;
     display: inline-block;
     vertical-align: middle;
+  }
+
+  /* ── Platform Detail Modal ── */
+  .dd-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: ddFadeIn 0.15s ease-out;
+  }
+  @keyframes ddFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .dd-modal-dialog {
+    width: 100%;
+    max-width: 640px;
+    background: var(--card-bg, #11141D);
+    border: 1px solid var(--glass-border);
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    padding: 22px 24px;
+    color: var(--text-title);
+  }
+  .dd-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .dd-modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .dd-modal-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--orange) 14%, transparent);
+    color: var(--orange);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+  .dd-modal-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-title);
+  }
+  .dd-modal-subtitle {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+  }
+  .dd-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+  }
+  .dd-modal-close:hover {
+    color: var(--text-title);
+    background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+  }
+  .dd-modal-bar-wrap {
+    margin-bottom: 16px;
+  }
+  .dd-modal-bar {
+    height: 12px;
+    border-radius: 999px;
+    display: flex;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+    margin-bottom: 8px;
+  }
+  .dd-modal-bar-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 0.74rem;
+  }
+  .dd-modal-bar-label-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text-muted);
+  }
+  .dd-modal-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .dd-modal-table-wrap {
+    overflow-x: auto;
+  }
+  .dd-modal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .dd-modal-table th {
+    font-size: 0.70rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    font-weight: 700;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  .dd-modal-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid color-mix(in srgb, var(--glass-border) 50%, transparent);
+  }
+  .dd-modal-table tbody tr:hover {
+    background: color-mix(in srgb, var(--text-muted) 6%, transparent);
+  }
+  .dd-modal-table tfoot td {
+    padding: 10px 10px;
+    font-weight: 700;
+    border-top: 2px solid var(--glass-border);
+    border-bottom: none;
+    background: color-mix(in srgb, var(--text-muted) 4%, transparent);
   }
 
   /* ── Leaderboard Hourly Child Rows ── */
@@ -1867,11 +2013,9 @@
       <table class="dd-table" id="leaderboardTable">
         <thead>
           <tr>
-            <th class="text-center" style="width: 38px;" title="Expand hourly breakdown"></th>
+            <th class="text-center" style="width: 65px;" title="Hour / Expand"><i class="bi bi-clock me-1"></i>Hour</th>
             <th class="text-center" style="width: 50px;">Rank</th>
             <th>Brand</th>
-            <th class="text-right">Target</th>
-            <th class="text-center">% Ach</th>
             <th class="text-right">Total GMV</th>
             <th>Platform Split</th>
             <th class="text-right">Share %</th>
@@ -1882,12 +2026,54 @@
             <th class="text-right">AOV</th>
             <th class="text-center" style="width: 105px;" title="24h Trend / % Contribution">24h Trend</th>
             <th class="text-center">Momentum</th>
+            <th class="text-right">Target</th>
+            <th class="text-center">% Ach</th>
           </tr>
         </thead>
         <tbody id="leaderboardTableBody">
           <!-- Populated by renderLeaderboardTable() -->
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- Platform Detail Modal -->
+  <div id="platformDetailModal" class="dd-modal-backdrop" style="display: none;" onclick="closePlatformDetailModal(event)">
+    <div class="dd-modal-dialog" onclick="event.stopPropagation()">
+      <div class="dd-modal-header">
+        <div class="dd-modal-title-group">
+          <div class="dd-modal-icon"><i class="bi bi-pie-chart-fill"></i></div>
+          <div>
+            <h5 class="dd-modal-title" id="pmModalBrand">Brand Name</h5>
+            <span class="dd-modal-subtitle" id="pmModalPeriod">Period</span>
+          </div>
+        </div>
+        <button type="button" class="dd-modal-close" onclick="closePlatformDetailModal()" title="Close"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <div class="dd-modal-bar-wrap">
+        <div class="dd-modal-bar" id="pmModalBar"></div>
+        <div class="dd-modal-bar-labels" id="pmModalBarLabels"></div>
+      </div>
+
+      <div class="dd-modal-table-wrap">
+        <table class="dd-modal-table">
+          <thead>
+            <tr>
+              <th>Platform</th>
+              <th class="text-right">GMV (Rp)</th>
+              <th class="text-right">Share</th>
+              <th class="text-right">NMV (Rp)</th>
+              <th class="text-right">Net Orders</th>
+              <th class="text-right">Units</th>
+            </tr>
+          </thead>
+          <tbody id="pmModalTbody">
+          </tbody>
+          <tfoot id="pmModalTfoot">
+          </tfoot>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -4610,10 +4796,13 @@
 
   /* ── 4. Leaderboard Table ── */
   const expandedBrandRanks = new Set();
+  window.platformDetailRegistry = {};
 
   function renderLeaderboardTable(filterText = '') {
     const tbody = document.getElementById('leaderboardTableBody');
     if (!tbody) return;
+
+    window.platformDetailRegistry = {};
 
     let items = campaignData.leaderboard || [];
     if (filterText) {
@@ -4637,7 +4826,18 @@
 
       const logoHtml = window.renderBrandIcon ? window.renderBrandIcon(b.brand, 24) : '';
 
-      let platformPill = `<div class="dd-platform-bar" title="Shopee / TikTok / Toped / Lazada">`;
+      const brandRegKey = `brand_${b.rank}`;
+      window.platformDetailRegistry[brandRegKey] = {
+        brand: b.brand,
+        period: 'Full Day (Campaign Total)',
+        total_gmv: b.total_gmv,
+        total_nmv: b.total_nmv,
+        total_orders: b.total_orders,
+        total_units: b.total_units,
+        platforms: b.platforms || []
+      };
+
+      let platformPill = `<div class="dd-platform-bar" onclick="openPlatformDetailModal('${brandRegKey}')" title="Click to view Platform NMV, Orders & Units breakdown">`;
       (b.platforms || []).forEach(p => {
         if (p.pct > 0) {
           let col = '#FF6B00';
@@ -4645,7 +4845,7 @@
           else if (p.platform.toLowerCase().includes('tiktok')) col = '#000000';
           else if (p.platform.toLowerCase().includes('tokopedia')) col = '#03AC0E';
           else if (p.platform.toLowerCase().includes('lazada')) col = '#0F146D';
-          platformPill += `<span style="width:${p.pct}%; background:${col}; height:100%;" title="${p.platform}: ${p.pct}%"></span>`;
+          platformPill += `<span style="width:${p.pct}%; background:${col}; height:100%;"></span>`;
         }
       });
       platformPill += `</div>`;
@@ -4693,12 +4893,6 @@
               <span style="font-weight: 700;">${b.brand}</span>
             </div>
           </td>
-          <td class="text-right mono">
-            ${hasTarget ? formatIDR(b.target, true) : '<span class="text-muted">-</span>'}
-          </td>
-          <td class="text-center mono" style="color: ${achvColor}; font-weight: ${achvWeight};">
-            ${hasTarget ? achvPct.toFixed(1) + '%' : '<span class="text-muted">-</span>'}
-          </td>
           <td class="text-right">
             <strong class="mono">${formatIDR(b.total_gmv, true)}</strong>
           </td>
@@ -4717,15 +4911,21 @@
               ${momentumSign}${Math.abs(b.momentum)}%
             </span>
           </td>
+          <td class="text-right mono">
+            ${hasTarget ? formatIDR(b.target, true) : '<span class="text-muted">-</span>'}
+          </td>
+          <td class="text-center mono" style="color: ${achvColor}; font-weight: ${achvWeight};">
+            ${hasTarget ? achvPct.toFixed(1) + '%' : '<span class="text-muted">-</span>'}
+          </td>
         </tr>
       `;
 
-      // Seamless Hourly Child Rows (aligned directly with the 15 columns)
+      // Seamless Hourly Child Rows (ascending order 00:00 to 23:00)
       if (!b.hourly_breakdown || b.hourly_breakdown.length === 0) {
         html += `
           <tr class="dd-hourly-row dd-hourly-brand-${b.rank}" style="display: ${childDisplay};">
             <td class="text-center text-muted" style="vertical-align: middle;">
-              <span style="opacity: 0.35; font-size: 0.75rem;">↳</span>
+              <span style="opacity: 0.35; font-size: 0.75rem;">-</span>
             </td>
             <td class="text-center text-muted mono">-</td>
             <td colspan="13" class="text-muted" style="padding-left: 8px; font-size: 0.78rem;">
@@ -4735,7 +4935,18 @@
         `;
       } else {
         b.hourly_breakdown.forEach(hItem => {
-          let hPlatPill = `<div class="dd-platform-bar" title="Hourly Platform Breakdown">`;
+          const hourlyRegKey = `hourly_${b.rank}_${hItem.hour}`;
+          window.platformDetailRegistry[hourlyRegKey] = {
+            brand: b.brand,
+            period: `Hour ${hItem.hour_label}`,
+            total_gmv: hItem.gmv,
+            total_nmv: hItem.nmv,
+            total_orders: hItem.orders,
+            total_units: hItem.units,
+            platforms: hItem.platforms || []
+          };
+
+          let hPlatPill = `<div class="dd-platform-bar" onclick="openPlatformDetailModal('${hourlyRegKey}')" title="Click to view Platform NMV, Orders & Units breakdown">`;
           (hItem.platforms || []).forEach(p => {
             if (p.pct > 0) {
               let col = '#FF6B00';
@@ -4743,7 +4954,7 @@
               else if (p.platform.toLowerCase().includes('tiktok')) col = '#000000';
               else if (p.platform.toLowerCase().includes('tokopedia')) col = '#03AC0E';
               else if (p.platform.toLowerCase().includes('lazada')) col = '#0F146D';
-              hPlatPill += `<span style="width:${p.pct}%; background:${col}; height:100%;" title="${p.platform}: ${p.pct}% (${formatIDR(p.gmv, true)})"></span>`;
+              hPlatPill += `<span style="width:${p.pct}%; background:${col}; height:100%;"></span>`;
             }
           });
           hPlatPill += `</div>`;
@@ -4759,17 +4970,18 @@
 
           html += `
             <tr class="dd-hourly-row dd-hourly-brand-${b.rank}" style="display: ${childDisplay};">
-              <td class="text-center text-muted" style="vertical-align: middle;">
-                <span style="opacity: 0.4; font-size: 0.75rem;">↳</span>
+              <td class="text-center mono" style="vertical-align: middle;">
+                <span class="dd-hour-tag">${hItem.hour_label}</span>
               </td>
-              <td class="text-center text-muted mono" style="font-size: 0.72rem;">-</td>
+              <td class="text-center text-muted" style="vertical-align: middle;">
+                <span style="opacity: 0.35; font-size: 0.72rem;">↳</span>
+              </td>
               <td style="vertical-align: middle;">
-                <div class="dd-brand-cell" style="padding-left: 4px;">
-                  <span class="dd-hour-tag mono">${hItem.hour_label}</span>
+                <div class="dd-brand-cell" style="padding-left: 2px;">
+                  ${logoHtml}
+                  <span style="font-weight: 500; font-size: 0.8rem; opacity: 0.88;">${b.brand}</span>
                 </div>
               </td>
-              <td class="text-right text-muted mono">-</td>
-              <td class="text-center text-muted mono">-</td>
               <td class="text-right">
                 <strong class="mono" style="font-weight: 600;">${formatIDR(hItem.gmv, true)}</strong>
               </td>
@@ -4795,6 +5007,8 @@
                   ${hMomSign}${Math.abs(hItem.momentum)}%
                 </span>
               </td>
+              <td class="text-right text-muted mono">-</td>
+              <td class="text-center text-muted mono">-</td>
             </tr>
           `;
         });
@@ -4830,6 +5044,102 @@
       if (parentRow) parentRow.classList.add('expanded');
     }
   };
+
+  /* ── Platform Detail Modal Controller ── */
+  window.openPlatformDetailModal = function(regKey) {
+    const data = window.platformDetailRegistry ? window.platformDetailRegistry[regKey] : null;
+    if (!data) return;
+
+    document.getElementById('pmModalBrand').textContent = data.brand;
+    document.getElementById('pmModalPeriod').textContent = data.period;
+
+    const modalBar = document.getElementById('pmModalBar');
+    const modalLabels = document.getElementById('pmModalBarLabels');
+    const tbody = document.getElementById('pmModalTbody');
+    const tfoot = document.getElementById('pmModalTfoot');
+
+    let barHtml = '';
+    let labelsHtml = '';
+    let tbodyHtml = '';
+
+    let sumGmv = 0;
+    let sumNmv = 0;
+    let sumOrders = 0;
+    let sumUnits = 0;
+
+    (data.platforms || []).forEach(p => {
+      let col = '#FF6B00';
+      const pl = p.platform.toLowerCase();
+      if (pl.includes('shopee')) col = '#EE4D2D';
+      else if (pl.includes('tiktok')) col = '#000000';
+      else if (pl.includes('tokopedia')) col = '#03AC0E';
+      else if (pl.includes('lazada')) col = '#0F146D';
+
+      if (p.pct > 0) {
+        barHtml += `<span style="width: ${p.pct}%; background: ${col};" title="${p.platform}: ${p.pct}%"></span>`;
+        labelsHtml += `
+          <span class="dd-modal-bar-label-item">
+            <span class="dd-modal-dot" style="background: ${col};"></span>
+            <span>${p.platform}: <strong>${p.pct}%</strong></span>
+          </span>
+        `;
+      }
+
+      sumGmv += (p.gmv || 0);
+      sumNmv += (p.nmv || 0);
+      sumOrders += (p.orders || 0);
+      sumUnits += (p.units || 0);
+
+      tbodyHtml += `
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 7px;">
+              <span class="dd-modal-dot" style="background: ${col};"></span>
+              <strong style="color: var(--text-title);">${p.platform}</strong>
+            </div>
+          </td>
+          <td class="text-right mono">${formatIDR(p.gmv, true)}</td>
+          <td class="text-right mono text-muted">${p.pct}%</td>
+          <td class="text-right mono"><strong style="color: #10B981;">${formatIDR(p.nmv, true)}</strong></td>
+          <td class="text-right mono">${formatNumber(p.orders)}</td>
+          <td class="text-right mono">${formatNumber(p.units)}</td>
+        </tr>
+      `;
+    });
+
+    modalBar.innerHTML = barHtml || '<span style="width:100%; background:var(--glass-border);"></span>';
+    modalLabels.innerHTML = labelsHtml || '<span class="text-muted">No platform GMV recorded.</span>';
+    tbody.innerHTML = tbodyHtml;
+
+    tfoot.innerHTML = `
+      <tr>
+        <td><strong>Total</strong></td>
+        <td class="text-right mono"><strong>${formatIDR(sumGmv, true)}</strong></td>
+        <td class="text-right mono">100%</td>
+        <td class="text-right mono"><strong style="color: #10B981;">${formatIDR(sumNmv, true)}</strong></td>
+        <td class="text-right mono"><strong>${formatNumber(sumOrders)}</strong></td>
+        <td class="text-right mono"><strong>${formatNumber(sumUnits)}</strong></td>
+      </tr>
+    `;
+
+    const modal = document.getElementById('platformDetailModal');
+    if (modal) modal.style.display = 'flex';
+  };
+
+  window.closePlatformDetailModal = function(e) {
+    if (e && e.target && e.target.id !== 'platformDetailModal') return;
+    const modal = document.getElementById('platformDetailModal');
+    if (modal) modal.style.display = 'none';
+  };
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('platformDetailModal');
+      if (modal && modal.style.display !== 'none') {
+        modal.style.display = 'none';
+      }
+    }
+  });
 
   function generateSparklineSvg(values) {
     if (!values || values.length === 0) return '';

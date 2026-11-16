@@ -1616,7 +1616,10 @@
         backgroundColor: themeColors.tooltipBg,
         borderColor: themeColors.tooltipBorder,
         textStyle: { color: themeColors.tooltipBody, fontSize: 12 },
-        formatter: '{b}: <br/><b>Rp {c}</b> ({d}%)'
+        formatter: function (params) {
+          const val = Math.round(params.value || 0).toLocaleString('id-ID');
+          return `${params.name}: <br/><b>Rp ${val}</b> (${params.percent}%)`;
+        }
       },
       legend: {
         bottom: 0,

@@ -1,0 +1,675 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="{% static 'jetcommerce.svg' %}?v=2">
+    <title>Sign In · Jetcommerce Dashboard</title>
+
+    <link rel="stylesheet" href="{% static 'adminlte/dist/css/adminlte.min.css' %}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+      :root, [data-theme="light"] {
+        --bg-page:        #F8FAFC;
+        --card-bg:        #FFFFFF;
+        --brand-pane-bg:  #0F172A;
+        --glass-border:   #E2E8F0;
+        --glass-border-h: #FF6B00;
+        --orange:         #FF6B00;
+        --orange-bright:  #E05300;
+        --orange-dim:     rgba(255, 107, 0, 0.08);
+        --orange-glow:    rgba(255, 107, 0, 0.18);
+        --text-primary:   #0F172A;
+        --text-sub:       #334155;
+        --text-muted:     #64748B;
+        --surface-muted:  #F1F5F9;
+        --shadow-subtle:  0 10px 30px -4px rgba(15, 23, 42, 0.06);
+      }
+
+      [data-theme="dark"] {
+        --bg-page:        #0D111A;
+        --card-bg:        #141B28;
+        --brand-pane-bg:  #080C14;
+        --glass-border:   rgba(255, 255, 255, 0.08);
+        --glass-border-h: rgba(255, 107, 0, 0.55);
+        --orange:         #FF6B00;
+        --orange-bright:  #FF7D1A;
+        --orange-dim:     rgba(255, 107, 0, 0.14);
+        --orange-glow:    rgba(255, 107, 0, 0.28);
+        --text-primary:   #F8FAFC;
+        --text-sub:       #94A3B8;
+        --text-muted:     #64748B;
+        --surface-muted:  #172030;
+        --shadow-subtle:  0 16px 40px -4px rgba(0, 0, 0, 0.55);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: var(--bg-page);
+        color: var(--text-primary);
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .login-split-container {
+        display: flex;
+        min-height: 100vh;
+        width: 100%;
+      }
+
+      /* ========================================================
+         LEFT SIDE: BRAND SHOWCASE & COMPANY IDENTITY
+         ======================================================== */
+      .brand-showcase-pane {
+        flex: 1.15;
+        position: relative;
+        background: var(--brand-pane-bg);
+        color: #F8FAFC;
+        padding: 64px 72px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+      }
+
+      /* Ambient Background Glows */
+      .ambient-glow-orange {
+        position: absolute;
+        top: -15%;
+        left: -10%;
+        width: 600px;
+        height: 600px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(255, 107, 0, 0.18) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .ambient-glow-blue {
+        position: absolute;
+        bottom: -20%;
+        right: -10%;
+        width: 650px;
+        height: 650px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(2, 132, 199, 0.12) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* Subtle Grid Background Pattern */
+      .brand-grid-pattern {
+        position: absolute;
+        inset: 0;
+        background-image: 
+          linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* Jetcommerce Watermark Silhouette (from dashboard sidebar) */
+      .brand-watermark {
+        position: absolute;
+        right: -100px;
+        bottom: -80px;
+        width: 520px;
+        height: 520px;
+        opacity: 0.05;
+        pointer-events: none;
+        user-select: none;
+        z-index: 0;
+      }
+      .brand-watermark img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .brand-pane-content {
+        position: relative;
+        z-index: 2;
+        max-width: 580px;
+        margin: auto 0;
+      }
+
+      /* Top Brand Header */
+      .brand-top-bar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .brand-logo-img {
+        width: 42px;
+        height: 42px;
+        object-fit: contain;
+        filter: drop-shadow(0 4px 10px rgba(255, 107, 0, 0.3));
+      }
+
+      .brand-identity-text {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .brand-main-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: -0.3px;
+        line-height: 1.2;
+        color: #FFFFFF;
+      }
+
+      .brand-tagline {
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: #94A3B8;
+        font-family: 'JetBrains Mono', monospace;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      /* Middle Hero Section */
+      .brand-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 12px;
+        background: rgba(255, 107, 0, 0.12);
+        border: 1px solid rgba(255, 107, 0, 0.28);
+        border-radius: 999px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: #FF9447;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 22px;
+      }
+
+      .brand-hero-heading {
+        font-size: 2.2rem;
+        font-weight: 800;
+        line-height: 1.25;
+        letter-spacing: -0.6px;
+        color: #FFFFFF;
+        margin-bottom: 20px;
+      }
+
+      .brand-hero-heading span.accent {
+        background: linear-gradient(135deg, #FF6B00 0%, #FFA05C 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .brand-hero-description {
+        font-size: 0.96rem;
+        line-height: 1.7;
+        color: #94A3B8;
+        margin-bottom: 40px;
+      }
+
+      /* Highlighted Metrics / Overview */
+      .brand-stats-row {
+        display: flex;
+        align-items: center;
+        gap: 40px;
+        padding-top: 28px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .stat-value {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #F8FAFC;
+        letter-spacing: -0.2px;
+      }
+      .stat-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        color: #64748B;
+        letter-spacing: 0.06em;
+        font-weight: 600;
+      }
+
+      .brand-pane-footer {
+        position: relative;
+        z-index: 2;
+        font-size: 0.75rem;
+        color: #64748B;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      /* ========================================================
+         RIGHT SIDE: AUTHENTICATION PANEL
+         ======================================================== */
+      .auth-form-pane {
+        flex: 0.95;
+        background: var(--bg-page);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 48px 36px;
+        position: relative;
+        transition: background .2s ease;
+      }
+
+      /* Top Theme Toggle in Auth Pane */
+      .theme-btn-corner {
+        position: absolute;
+        top: 28px;
+        right: 28px;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        border: 1px solid var(--glass-border);
+        background: var(--card-bg);
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all .18s ease;
+        z-index: 10;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+      }
+      .theme-btn-corner:hover {
+        color: var(--orange);
+        border-color: var(--orange);
+        transform: translateY(-1px);
+      }
+
+      .auth-box {
+        width: 100%;
+        max-width: 390px;
+      }
+
+      .auth-mobile-brand {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
+      .auth-mobile-logo {
+        width: 36px;
+        height: 36px;
+      }
+
+      .auth-heading {
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        color: var(--text-primary);
+        margin: 0 0 6px 0;
+      }
+
+      .auth-subheading {
+        font-size: 0.84rem;
+        color: var(--text-muted);
+        margin: 0 0 28px 0;
+      }
+
+      .form-label-custom {
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        display: block;
+      }
+
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+
+      .input-icon {
+        position: absolute;
+        left: 14px;
+        color: var(--text-muted);
+        font-size: 1rem;
+        pointer-events: none;
+      }
+
+      .form-control-custom {
+        width: 100%;
+        background: var(--surface-muted);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        padding: 12px 14px 12px 42px;
+        transition: border-color .18s, box-shadow .18s, background .18s;
+      }
+
+      .form-control-custom:focus {
+        outline: none;
+        background: var(--card-bg);
+        border-color: var(--orange);
+        box-shadow: 0 0 0 3px var(--orange-glow);
+      }
+
+      .password-toggle-btn {
+        position: absolute;
+        right: 12px;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+      }
+      .password-toggle-btn:hover { color: var(--orange); }
+
+      .btn-login-submit {
+        width: 100%;
+        background: var(--orange);
+        border: 1px solid var(--orange);
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 0.94rem;
+        padding: 12px 18px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.18s ease;
+        margin-top: 26px;
+        box-shadow: 0 4px 14px var(--orange-dim);
+      }
+      .btn-login-submit:hover {
+        background: var(--orange-bright);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px var(--orange-glow);
+      }
+
+      .security-footer-note {
+        margin-top: 32px;
+        padding-top: 20px;
+        border-top: 1px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.74rem;
+        color: var(--text-muted);
+        line-height: 1.45;
+      }
+      .security-footer-note i {
+        font-size: 1.1rem;
+        color: var(--orange);
+        flex-shrink: 0;
+      }
+
+      /* ========================================================
+         RESPONSIVE BREAKPOINTS
+         ======================================================== */
+      @media (max-width: 1080px) {
+        .brand-showcase-pane {
+          padding: 48px 40px;
+        }
+        .brand-hero-heading {
+          font-size: 1.9rem;
+        }
+        .brand-stats-row {
+          gap: 24px;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .login-split-container {
+          flex-direction: column;
+        }
+        .brand-showcase-pane {
+          flex: none;
+          padding: 36px 24px 28px;
+        }
+        .brand-watermark {
+          display: none;
+        }
+        .brand-pane-content {
+          margin: 20px 0;
+        }
+        .brand-hero-heading {
+          font-size: 1.55rem;
+        }
+        .brand-hero-description {
+          font-size: 0.88rem;
+          margin-bottom: 20px;
+        }
+        .brand-stats-row {
+          padding-top: 16px;
+          gap: 20px;
+        }
+        .auth-form-pane {
+          flex: 1;
+          padding: 36px 24px;
+        }
+        .theme-btn-corner {
+          top: 18px;
+          right: 18px;
+        }
+      }
+    </style>
+</head>
+<body>
+
+    <!-- Main Split Screen Layout -->
+    <div class="login-split-container">
+
+        <!-- ==================================================== -->
+        <!-- LEFT: COMPANY IDENTITY & EXCELLENCE SHOWCASE         -->
+        <!-- ==================================================== -->
+        <section class="brand-showcase-pane" aria-label="Jetcommerce Brand Overview">
+            <div class="ambient-glow-orange"></div>
+            <div class="ambient-glow-blue"></div>
+            <div class="brand-grid-pattern"></div>
+
+            <div class="brand-watermark" aria-hidden="true">
+                <img src="{% static 'jetcommerce.svg' %}?v=2" alt="">
+            </div>
+
+            <!-- Top Brand Identity Header -->
+            <div class="brand-top-bar">
+                <img src="{% static 'jetcommerce.svg' %}?v=2" alt="Jetcommerce Logo" class="brand-logo-img">
+                <div class="brand-identity-text">
+                    <span class="brand-main-title">Jetcommerce</span>
+                    <span class="brand-tagline">Business Intelligence Portal</span>
+                </div>
+            </div>
+
+            <!-- Center Content: Mission & Excellence -->
+            <div class="brand-pane-content">
+                
+                <h1 class="brand-hero-heading">
+                    Consolidated performance tracking and <span class="accent">sales insights</span> across your portfolio.
+                </h1>
+
+                <p class="brand-hero-description">
+                    A centralized hub for Jetcommerce—bringing together multi-platform marketplace metrics, product-level indicators, and scheduled analytical updates into a unified workspace.
+                </p>
+
+                <!-- Overview Metrics -->
+                <div class="brand-stats-row">
+                    <div class="stat-item">
+                        <span class="stat-value">Multi-Channel</span>
+                        <span class="stat-label">Analytical Views</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">Periodic Tracking</span>
+                        <span class="stat-label">Growth Metrics</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">Role-Based</span>
+                        <span class="stat-label">Brand Scope</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Meta -->
+            <div class="brand-pane-footer">
+                <span>© {% now "Y" %} Jetcommerce Business Intelligence.</span>
+                <span class="d-none d-sm-inline">Analytics Platform</span>
+            </div>
+        </section>
+
+
+        <!-- ==================================================== -->
+        <!-- RIGHT: AUTHENTICATION PANEL                          -->
+        <!-- ==================================================== -->
+        <main class="auth-form-pane">
+
+            <!-- Theme Toggle Button -->
+            <button type="button" class="theme-btn-corner" id="themeToggleBtn" title="Toggle Light/Dark Theme" onclick="toggleTheme()" aria-label="Toggle theme">
+                <i id="themeIcon" class="bi bi-moon-stars-fill"></i>
+            </button>
+
+            <div class="auth-box">
+
+                <div class="auth-mobile-brand">
+                    <img src="{% static 'jetcommerce.svg' %}?v=2" alt="Jetcommerce Logo" class="auth-mobile-logo">
+                    <div>
+                        <div style="font-weight: 800; font-size: 1.1rem; line-height: 1.2;">Jetcommerce</div>
+                        <div style="font-size: 0.72rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">BI PORTAL</div>
+                    </div>
+                </div>
+
+                <h2 class="auth-heading">Sign in</h2>
+                <p class="auth-subheading">Welcome back. Enter your credentials to access your assigned brands.</p>
+
+                <!-- Authentication Errors -->
+                {% if form.errors %}
+                    <div class="alert alert-danger py-2 px-3 mb-3 d-flex align-items-center gap-2" role="alert"
+                         style="font-size: 0.82rem; border-radius: 8px; background: rgba(244, 63, 94, 0.12); color: #F43F5E; border: 1px solid rgba(244, 63, 94, 0.25);">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                        <div>
+                            {% for error in form.non_field_errors %}
+                                <div>{{ error }}</div>
+                            {% empty %}
+                                <div>Invalid username or password. Please verify your credentials.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Standard Django Login Form -->
+                <form method="post" action="{% url 'login' %}">
+                    {% csrf_token %}
+
+                    {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}">
+                    {% elif request.GET.next %}
+                        <input type="hidden" name="next" value="{{ request.GET.next }}">
+                    {% endif %}
+
+                    <!-- Username -->
+                    <div class="mb-3">
+                        <label class="form-label-custom" for="id_username">Username</label>
+                        <div class="input-wrapper">
+                            <i class="bi bi-person input-icon"></i>
+                            <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username"
+                                   maxlength="150" required id="id_username" class="form-control-custom"
+                                   value="{{ form.username.value|default:'' }}" placeholder="Enter username">
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-2">
+                        <label class="form-label-custom" for="id_password">Password</label>
+                        <div class="input-wrapper">
+                            <i class="bi bi-lock input-icon"></i>
+                            <input type="password" name="password" autocomplete="current-password"
+                                   required id="id_password" class="form-control-custom" placeholder="Enter password">
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility" tabindex="-1">
+                                <i id="passwordEyeIcon" class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn-login-submit">
+                        <span>Sign In</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                </form>
+
+                <!-- Security Assurance Footer -->
+                <div class="security-footer-note">
+                    <i class="bi bi-shield-check"></i>
+                    <span>Access is restricted to authorized personnel. Data and brand visibility are configured per user account.</span>
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Theme and Form Interaction Logic -->
+    <script>
+      function togglePasswordVisibility() {
+        const input = document.getElementById('id_password');
+        const icon = document.getElementById('passwordEyeIcon');
+        if (!input || !icon) return;
+        if (input.type === 'password') {
+          input.type = 'text';
+          icon.className = 'bi bi-eye-slash';
+        } else {
+          input.type = 'password';
+          icon.className = 'bi bi-eye';
+        }
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('jetcommerce-bi-theme', theme);
+        const icon = document.getElementById('themeIcon');
+        if (icon) {
+          icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+          icon.style.color = theme === 'dark' ? '#F59E0B' : '#64748B';
+        }
+      }
+
+      function toggleTheme() {
+        const cur = document.documentElement.getAttribute('data-theme') || localStorage.getItem('jetcommerce-bi-theme') || 'light';
+        applyTheme(cur === 'dark' ? 'light' : 'dark');
+      }
+
+      (function () {
+        // Keep the address bar clean as /login/ (removes ?next=... from the URL bar)
+        if (window.location.search) {
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        const saved = localStorage.getItem('jetcommerce-bi-theme') || 'light';
+        applyTheme(saved);
+      })();
+    </script>
+</body>
+</html>

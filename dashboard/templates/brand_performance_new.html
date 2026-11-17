@@ -105,11 +105,15 @@
     $("#brandSelect").select2({
       width: "100%",
       closeOnSelect: false,
+      templateResult: formatBrandSelect2,
+      templateSelection: formatBrandSelect2
     });
 
     $("#platformSelect").select2({
       width: "100%",
       closeOnSelect: false,
+      templateResult: formatPlatformSelect2,
+      templateSelection: formatPlatformSelect2
     });
 
     initializeChart();

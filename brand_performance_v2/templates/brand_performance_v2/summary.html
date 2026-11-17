@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize static %}
+{% load humanize static brand_tags %}
 
 {% block title %}Brand Performance v2 — Executive Summary{% endblock %}
 
@@ -898,14 +898,15 @@
   }
 
   .bp2-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 9px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50% !important;
+    overflow: hidden;
     flex-shrink: 0;
     display: grid;
     place-items: center;
     font-weight: 800;
-    font-size: .84rem;
+    font-size: 1rem;
     color: #fff;
   }
 
@@ -3330,6 +3331,7 @@
               <label class="bp2-dropdown-option" data-value="{{ b }}">
                 <input type="checkbox" value="{{ b }}" {% if bg == selected_brand %}checked{% endif %}>
                 <span class="bp2-custom-check"><i class="bi bi-check-lg"></i></span>
+                {% render_brand_logo b 26 %}
                 <span class="bp2-option-text">{{ b }}</span>
               </label>
               {% endfor %}
@@ -4379,7 +4381,17 @@
       if (!tp) return;
       [['top', tp.top], ['bottom', tp.bottom]].forEach(([k, p]) => {
         p = p || {};
-        $(`${k}PerformerAvatar`).textContent = initials(p.brand);
+        const logoUrl = getBrandLogoUrl(p.brand);
+        const avatarEl = $(`${k}PerformerAvatar`);
+        if (avatarEl) {
+          if (logoUrl) {
+            avatarEl.innerHTML = `<img src="${logoUrl}" alt="${esc(p.brand)}" class="brand-logo-icon" style="width:44px; height:44px; aspect-ratio:1/1; border-radius:50%; object-fit:cover;">`;
+            avatarEl.style.background = 'transparent';
+          } else {
+            avatarEl.textContent = initials(p.brand);
+            avatarEl.style.background = '';
+          }
+        }
         $(`${k}PerformerBrand`).textContent = p.brand || '—';
         $(`${k}PerformerValue`).textContent = 'GMV ' + fmtCurr(p.today_gmv);
         setChip($(`${k}PerformerChip`), p.growth);
@@ -4456,8 +4468,8 @@
           return `
           <tr>
             <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${idx + 1}</td>
-            <td><strong style="color: var(--text-primary); font-weight: 700;">${esc(item.brand)}</strong></td>
-            <td><span class="bp2-tag" style="--t:${hashColor(item.brand_group)}">${esc(item.brand_group)}</span></td>
+            <td><span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(item.brand, 24)} <strong style="color: var(--text-primary); font-weight: 700;">${esc(item.brand)}</strong></span></td>
+            <td><span class="bp2-tag" style="--t:${hashColor(item.brand_group)}"><span>${esc(item.brand_group)}</span></span></td>
             <td class="num mono">${fmtCurr(item.actual_nmv)}</td>
             <td class="num mono" style="color: var(--text-muted);">${fmtCurr(item.target_nmv)}</td>
             <td>
@@ -4490,8 +4502,8 @@
           return `
           <tr>
             <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${idx + 1}</td>
-            <td><strong style="color: var(--text-primary); font-weight: 700;">${esc(item.brand)}</strong></td>
-            <td><span class="bp2-tag" style="--t:${hashColor(item.brand_group)}">${esc(item.brand_group)}</span></td>
+            <td><span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(item.brand, 24)} <strong style="color: var(--text-primary); font-weight: 700;">${esc(item.brand)}</strong></span></td>
+            <td><span class="bp2-tag" style="--t:${hashColor(item.brand_group)}"><span>${esc(item.brand_group)}</span></span></td>
             <td class="num mono">${fmtPct(item.today_cvr)}</td>
             <td class="num mono" style="color: var(--text-muted);">${fmtPct(item.prev_cvr)}</td>
             <td style="text-align: center;">${chip(item.delta_cvr, { suffix: 'pp', sm: true })}</td>
@@ -4519,8 +4531,8 @@
           return `
           <tr>
             <td style="text-align: center; color: var(--text-muted); font-weight: 600;">${idx + 1}</td>
-            <td><strong style="color: var(--text-primary); font-weight: 700;">${esc(item.brand)}</strong></td>
-            <td><span class="bp2-tag" style="--t:${hashColor(item.brand_group)}">${esc(item.brand_group)}</span></td>
+            <td><span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(item.brand, 24)} <strong style="color: var(--text-primary); font-weight: 700;">${esc(item.brand)}</strong></span></td>
+            <td><span class="bp2-tag" style="--t:${hashColor(item.brand_group)}"><span>${esc(item.brand_group)}</span></span></td>
             <td style="text-align: center;"><span class="chip down sm">▲ ${fmtPct(item.cr_pct)}</span></td>
             <td class="num mono">${fmtNum(item.gross_orders)}</td>
             <td class="num mono">${fmtNum(item.net_orders)}</td>
@@ -4554,7 +4566,7 @@
       state.selectedBrands.add(brandName);
       const label = $('brandDropdownLabel');
       const badge = $('brandDropdownBadge');
-      if (label) label.textContent = brandName;
+      if (label) label.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(brandName, 20)} <span>${esc(brandName)}</span></span>`;
       if (badge) badge.style.display = 'none';
       const optionsList = $('brandOptionsList');
       if (optionsList) {
@@ -5254,9 +5266,9 @@
       $('pivotTableBody').innerHTML = rows.map(r => {
         const search = isBg ? (r.brand_group || '').toLowerCase() : `${r.brand_group} ${r.brand}`.toLowerCase();
         const stickyColsHtml = isBg
-          ? stickyTd(`<span class="bp2-brandcell">${esc(r.brand_group)}</span>`, 0, 200, true)
-          : stickyTd(`<span class="bp2-tag" style="--t:${hashColor(r.brand_group)}">${esc(r.brand_group)}</span>`, 0, 120) +
-          stickyTd(`<span class="bp2-brandcell">${esc(r.brand)}</span>`, 120, 150, true);
+          ? stickyTd(`<span class="bp2-brandcell"><span>${esc(r.brand_group)}</span></span>`, 0, 200, true)
+          : stickyTd(`<span class="bp2-tag" style="--t:${hashColor(r.brand_group)}"><span>${esc(r.brand_group)}</span></span>`, 0, 120) +
+          stickyTd(`<span class="bp2-brandcell" style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(r.brand, 24)} <span>${esc(r.brand)}</span></span>`, 120, 150, true);
         return `<tr data-search="${esc(search)}">
         ${stickyColsHtml}
         ${metricCells(r.metrics, metrics)}
@@ -5363,7 +5375,7 @@
       <div class="bp2-pod r${rk}">
         <div class="bp2-medal">${icon}</div>
         <div>
-          <div class="bp2-pod-name"><span class="bp2-pod-rank">#${rk}</span>${esc(displayName)}</div>
+          <div class="bp2-pod-name"><span class="bp2-pod-rank">#${rk}</span>${!isBg ? renderBrandIcon(displayName, 28) : ''} <span>${esc(displayName)}</span></div>
           <div class="bp2-pod-meta">${metaHtml}</div>
         </div>
       </div>`;
@@ -5406,11 +5418,11 @@
 
         const stickyColsHtml = isBg
           ? stickyTd(`<span class="bp2-rank ${rankBadgeCls}">${rk}</span>`, 0, 48) +
-          stickyTd(`<span class="bp2-brandcell">${esc(r.brand_group)}</span>`, 48, 180) +
+          stickyTd(`<span class="bp2-brandcell"><span>${esc(r.brand_group)}</span></span>`, 48, 180) +
           stickyTd(col4Html, 228, 130, true)
           : stickyTd(`<span class="bp2-rank ${rankBadgeCls}">${rk}</span>`, 0, 48) +
-          stickyTd(`<span class="bp2-brandcell">${esc(r.brand)}</span>`, 48, 140) +
-          stickyTd(`<span class="bp2-tag" style="--t:${hashColor(r.brand_group)}">${esc(r.brand_group)}</span>`, 188, 110) +
+          stickyTd(`<span class="bp2-brandcell" style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(r.brand, 24)} <span>${esc(r.brand)}</span></span>`, 48, 140) +
+          stickyTd(`<span class="bp2-tag" style="--t:${hashColor(r.brand_group)}"><span>${esc(r.brand_group)}</span></span>`, 188, 110) +
           stickyTd(col4Html, 298, 130, true);
 
         return `<tr data-search="${esc(search)}">
@@ -5620,7 +5632,9 @@
         } else if (count === 1) {
           const singleVal = Array.from(stateSet)[0];
           if (typeName === 'platform') {
-            label.innerHTML = `<span style="display:inline-flex; align-items:center; gap:5px;">${renderPlatformIcon(singleVal, 14)} <span>${esc(singleVal)}</span></span>`;
+            label.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;">${renderPlatformIcon(singleVal, 18)} <span>${esc(singleVal)}</span></span>`;
+          } else if (typeName === 'brand') {
+            label.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(singleVal, 20)} <span>${esc(singleVal)}</span></span>`;
           } else {
             label.textContent = singleVal;
           }

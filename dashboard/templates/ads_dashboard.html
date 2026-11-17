@@ -554,8 +554,18 @@
 
 <script>
 $(document).ready(function () {
-  $('#brandSelect').select2({ width: '100%', placeholder: 'Select brands' });
-  $('#platformSelect').select2({ width: '100%', placeholder: 'Select platforms' });
+  $('#brandSelect').select2({ 
+    width: '100%', 
+    placeholder: 'Select brands',
+    templateResult: formatBrandSelect2,
+    templateSelection: formatBrandSelect2
+  });
+  $('#platformSelect').select2({ 
+    width: '100%', 
+    placeholder: 'Select platforms',
+    templateResult: formatPlatformSelect2,
+    templateSelection: formatPlatformSelect2
+  });
   $('#adsTypeSelect').select2({ width: '100%', placeholder: 'Select ads type' });
 });
 
@@ -919,7 +929,20 @@ function initChart() {
       data: [],
       scrollX: true,
       columns: [
-        { data: groupKey },
+        { 
+          data: groupKey,
+          render: (v, t) => {
+            if (t === "display" && v) {
+              if (groupKey === "brand") {
+                return `<span class="brand-with-logo">${renderBrandIcon(v, 24)} <span>${v}</span></span>`;
+              }
+              if (groupKey === "platform") {
+                return `<span class="brand-with-logo">${renderPlatformIcon(v, 18)} <span>${v}</span></span>`;
+              }
+            }
+            return v;
+          }
+        },
         { data: "impression", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : Number(v || 0).toLocaleString() },
         { data: "clicks", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : Number(v || 0).toLocaleString() },
         { data: "ctr", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtPct(v) },

@@ -29,7 +29,7 @@ DATABASES = {
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-LOGIN_URL = '/admin/login/'
+LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'brand_performance_v2'
 
 # Quick-start development settings - unsuitable for production
@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'order_mart',
     'brand_performance_v2',
     'data_management',
+    'double_date',
     # "debug_toolbar",
 ]
 
@@ -71,6 +72,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'dashboard.middleware.UserActivityMiddleware',
     # "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
 

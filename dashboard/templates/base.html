@@ -661,7 +661,89 @@
           background: var(--surface-muted);
           border-radius: 6px;
       }
+
+      /* ── Brand & Platform Logo Global Tokens ── */
+      .brand-logo-icon {
+        width: 24px;
+        height: 24px;
+        aspect-ratio: 1 / 1;
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        flex-shrink: 0;
+        vertical-align: middle;
+        display: inline-block;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+
+      .brand-logo-fallback {
+        font-size: 16px;
+        opacity: .75;
+        flex-shrink: 0;
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      .brand-with-logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        vertical-align: middle;
+      }
+
+      .platform-logo-icon {
+        width: 18px;
+        height: 18px;
+        object-fit: contain;
+        flex-shrink: 0;
+        vertical-align: middle;
+        display: inline-block;
+      }
+
+      .platform-logo-fallback {
+        font-size: 14px;
+        opacity: .75;
+        flex-shrink: 0;
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      /* Dropdown brand options */
+      .bp2-dropdown-option .brand-logo-icon,
+      .bp2-dropdown-item .brand-logo-icon,
+      .pr-dropdown-option .brand-logo-icon {
+        width: 26px;
+        height: 26px;
+        margin-right: 8px;
+        flex-shrink: 0;
+      }
+
+      .bp2-dropdown-option .brand-logo-fallback,
+      .bp2-dropdown-item .brand-logo-fallback,
+      .pr-dropdown-option .brand-logo-fallback {
+        font-size: 18px;
+        margin-right: 8px;
+        flex-shrink: 0;
+      }
+
+      /* Select2 choices and options with brand logo */
+      .select2-container--default .select2-selection--multiple .select2-selection__choice .brand-logo-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+
+      .select2-container--default .select2-results__option .brand-logo-icon {
+        width: 26px;
+        height: 26px;
+        margin-right: 10px;
+        vertical-align: middle;
+      }
     </style>
+
+    <script src="{% static 'js/brand_logos.js' %}"></script>
 
     {% block extra_css %}
     {% endblock %}

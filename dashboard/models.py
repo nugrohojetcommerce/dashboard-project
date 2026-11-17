@@ -203,3 +203,19 @@ class ProductInsight(models.Model):
         managed = False  # WAJIB: Biar Django ga bikin file migrasi/ngubah isi database asli
         db_table = 'postgre_product_insight_mart_dwd_df' # Nama tabel asli di PostgreSQL
 
+
+class UserActivityLog(models.Model):
+    username = models.CharField(max_length=150)
+    url = models.TextField()
+    ip_address = models.CharField(max_length=50, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = 'User Activity Log'
+        verbose_name_plural = 'User Activity Logs'
+
+    def __str__(self):
+        return f"{self.username} -> {self.url} [{self.timestamp}]"
+
+

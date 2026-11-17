@@ -836,8 +836,18 @@
 
 <script>
 $(document).ready(function () {
-  $('#brandSelect').select2({ width: '100%', placeholder: 'Select brands' });
-  $('#platformSelect').select2({ width: '100%', placeholder: 'Select platforms' });
+  $('#brandSelect').select2({ 
+    width: '100%', 
+    placeholder: 'Select brands',
+    templateResult: formatBrandSelect2,
+    templateSelection: formatBrandSelect2
+  });
+  $('#platformSelect').select2({ 
+    width: '100%', 
+    placeholder: 'Select platforms',
+    templateResult: formatPlatformSelect2,
+    templateSelection: formatPlatformSelect2
+  });
   $('#categorySelect').select2({ width: '100%', placeholder: 'Select categories' });
 });
 
@@ -1387,7 +1397,20 @@ function initChart() {
       data: [],
       scrollX: true,
       columns: [
-        { data: groupKey },
+        { 
+          data: groupKey,
+          render: (v, t) => {
+            if (t === 'display' && v) {
+              if (groupKey === 'brand') {
+                return `<span class="brand-with-logo">${renderBrandIcon(v, 24)} <span>${v}</span></span>`;
+              }
+              if (groupKey === 'platform') {
+                return `<span class="brand-with-logo">${renderPlatformIcon(v, 18)} <span>${v}</span></span>`;
+              }
+            }
+            return v;
+          }
+        },
         { data: "page_views", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
         { data: "visitors", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },
         { data: "gross_order_qty", render: (v, t) => t === "sort" || t === "type" ? parseFloat(v) || 0 : fmtNum(v) },

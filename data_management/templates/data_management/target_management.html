@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static brand_tags %}
 
 {% block title %}Target Ingestion & Planning — Jetcommerce Dashboard{% endblock %}
 
@@ -26,67 +26,14 @@
     font-feature-settings: "tnum" 1;
   }
 
-  /* ── Header ── */
-  .tm-header {
+  /* ── Top Action Toolbar ── */
+  .tm-top-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 16px;
+    gap: 8px;
     flex-wrap: wrap;
-    margin-bottom: 22px;
-  }
-
-  .tm-breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 4px;
-  }
-  .tm-breadcrumb a {
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: color 0.15s;
-  }
-  .tm-breadcrumb a:hover {
-    color: var(--orange);
-  }
-
-  .tm-title {
-    font-size: 1.4rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: var(--text-primary);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .tm-title-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: var(--orange-dim);
-    color: var(--orange);
-    border: 1px solid var(--glass-border-h);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-  }
-
-  .tm-subtitle {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    margin-top: 5px;
-    max-width: 840px;
-    line-height: 1.45;
   }
 
   .tm-header-actions {
@@ -146,12 +93,29 @@
     color: #ffffff !important;
   }
 
-  /* ── KPI Summary Cards ── */
+  /* ── KPI Summary Cards (Asymmetric Hierarchy & Visual Elevation) ── */
   .tm-stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
     gap: 14px;
     margin-bottom: 20px;
+    align-items: stretch;
+  }
+  @media (max-width: 1200px) {
+    .tm-stats-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .tm-stat-card-hero {
+      grid-column: span 2;
+    }
+  }
+  @media (max-width: 640px) {
+    .tm-stats-grid {
+      grid-template-columns: 1fr;
+    }
+    .tm-stat-card-hero {
+      grid-column: span 1;
+    }
   }
 
   .tm-stat-card {
@@ -161,8 +125,11 @@
     padding: 16px 18px;
     position: relative;
     overflow: hidden;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
   .tm-stat-card:hover {
     border-color: var(--glass-border-h);
@@ -170,6 +137,124 @@
     box-shadow: var(--shadow-md);
   }
 
+  /* Hero Card: Total Target (Aggregate Goal) */
+  .tm-stat-card-hero {
+    background: linear-gradient(145deg, var(--card-bg), color-mix(in srgb, var(--orange) 5%, var(--card-bg)));
+    border-color: color-mix(in srgb, var(--orange) 35%, var(--glass-border));
+    box-shadow: 0 4px 18px -2px rgba(255, 107, 0, 0.10), var(--shadow-sm);
+    position: relative;
+  }
+  .tm-stat-card-hero::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--orange), var(--orange-bright), #FFB703);
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .tm-hero-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .tm-hero-kpi-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--orange);
+    padding: 3px 9px;
+    border-radius: 6px;
+    background: var(--orange-dim);
+    border: 1px solid var(--glass-border-h);
+  }
+
+  .tm-hero-period-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+  }
+
+  .tm-hero-val-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .tm-hero-prefix {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--orange);
+    letter-spacing: -0.01em;
+  }
+
+  .tm-hero-val {
+    font-size: 1.95rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text-primary);
+    line-height: 1.15;
+  }
+
+  .tm-hero-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    margin-bottom: 12px;
+  }
+
+  .tm-hero-progress-section {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .tm-hero-micro-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  /* Progress Bar Components */
+  .tm-progress-track {
+    width: 100%;
+    height: 5px;
+    background: var(--surface-muted);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+  }
+  .tm-progress-bar {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .tm-progress-bar-hero {
+    background: linear-gradient(90deg, var(--orange), var(--orange-bright));
+  }
+  .tm-progress-bar-purple {
+    background: linear-gradient(90deg, #8B5CF6, #A78BFA);
+  }
+
+  /* Secondary Cards & Icons */
   .tm-stat-top {
     display: flex;
     align-items: center;
@@ -178,7 +263,7 @@
   }
 
   .tm-stat-label {
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -195,6 +280,7 @@
     font-size: 1rem;
     background: var(--surface-muted);
     color: var(--text-muted);
+    flex-shrink: 0;
   }
   .tm-stat-icon.orange { background: var(--orange-dim); color: var(--orange); }
   .tm-stat-icon.green  { background: var(--success-bg); color: var(--success); }
@@ -206,16 +292,59 @@
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--text-primary);
-    line-height: 1.15;
+    line-height: 1.2;
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .tm-unit-badge {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--text-muted);
   }
 
   .tm-stat-desc {
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     color: var(--text-muted);
-    margin-top: 6px;
+    margin-top: 4px;
+  }
+
+  /* Pill tags in card footers */
+  .tm-card-tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.71rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-top: 10px;
+    align-self: flex-start;
+  }
+  .tm-card-tag-pill.green  { background: var(--success-bg); color: var(--success); }
+  .tm-card-tag-pill.purple { background: rgba(139, 92, 246, 0.12); color: #8B5CF6; }
+  .tm-card-tag-pill.warn   { background: var(--warn-bg); color: var(--warn); }
+
+  /* Portfolio mini chips */
+  .tm-portfolio-chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .tm-sub-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    color: var(--text-sub);
   }
 
   /* ══════════════════════════════════════════════════════════════════════
@@ -461,14 +590,19 @@
   .tm-brand-badge {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 2px 7px;
-    border-radius: 5px;
+    gap: 7px;
+    padding: 2px 9px 2px 5px;
+    border-radius: 999px;
     background: var(--surface-muted);
     border: 1px solid var(--glass-border);
     font-weight: 600;
     font-size: 0.76rem;
     color: var(--text-primary);
+    transition: all 0.15s ease;
+  }
+  .tm-brand-badge:hover {
+    border-color: var(--glass-border-h);
+    background: var(--card-bg);
   }
 
   /* ── Main Data Table Card (Monthly Aggregation) ── */
@@ -932,30 +1066,325 @@
     color: var(--warn);
     font-weight: 700;
   }
+
+  /* ══════════════════════════════════════════════════════════════════════
+     TOP-DOWN FULL CUSTOM TARGET CALCULATOR (.tm-td-*)
+     ══════════════════════════════════════════════════════════════════════ */
+  .tm-mode-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 4px;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .tm-mode-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.16s ease;
+  }
+  .tm-mode-btn:hover {
+    color: var(--text-primary);
+  }
+  .tm-mode-btn.active {
+    background: var(--card-bg);
+    color: var(--orange);
+    border-color: var(--glass-border-h);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .tm-td-section {
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .tm-td-sec-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .tm-td-sec-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+  .tm-td-step-num {
+    width: 21px;
+    height: 21px;
+    border-radius: 6px;
+    background: var(--orange);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .tm-td-sec-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tm-td-valid-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .tm-td-valid-pill.ok {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+  }
+  .tm-td-valid-pill.err {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid rgba(244, 63, 94, 0.35);
+  }
+
+  .tm-td-chip-btn {
+    padding: 3px 9px;
+    border-radius: 6px;
+    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    color: var(--text-sub);
+    font-size: 0.71rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.14s ease;
+  }
+  .tm-td-chip-btn:hover {
+    border-color: var(--glass-border-h);
+    color: var(--orange);
+  }
+
+  .tm-td-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 720px) {
+    .tm-td-grid-3 { grid-template-columns: 1fr; }
+  }
+
+  /* Platform split rows */
+  .tm-td-platform-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .tm-td-platform-row {
+    display: grid;
+    grid-template-columns: 145px 96px 1fr 145px;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 9px;
+    transition: border-color 0.15s, opacity 0.15s;
+  }
+  .tm-td-platform-row.inactive {
+    opacity: 0.55;
+  }
+  @media (max-width: 680px) {
+    .tm-td-platform-row {
+      grid-template-columns: 1fr 96px;
+    }
+    .tm-td-platform-row .tm-td-plat-bar-wrap { display: none; }
+  }
+
+  .tm-td-pct-input-wrap {
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: 7px;
+    padding: 0 7px;
+    transition: border-color 0.15s;
+  }
+  .tm-td-pct-input-wrap:focus-within {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 2px var(--orange-dim);
+  }
+  .tm-td-pct-input {
+    width: 54px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 5px 2px;
+    text-align: right;
+    outline: none;
+  }
+  .tm-td-pct-suffix {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-left: 2px;
+  }
+
+  /* Stacked Allocation Bar (BAU / DD / Payday) */
+  .tm-td-stacked-bar {
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    margin-bottom: 12px;
+  }
+  .tm-td-seg-bau    { background: linear-gradient(90deg, #0284C7, #38BDF8); transition: width 0.25s ease; }
+  .tm-td-seg-dd     { background: linear-gradient(90deg, #FF6B00, #FF9447); transition: width 0.25s ease; }
+  .tm-td-seg-payday { background: linear-gradient(90deg, #10B981, #34D399); transition: width 0.25s ease; }
+
+  /* 3 Bucket Cards */
+  .tm-td-bucket-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  @media (max-width: 720px) {
+    .tm-td-bucket-grid { grid-template-columns: 1fr; }
+  }
+  .tm-td-bucket-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 11px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .tm-td-bucket-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .tm-td-bucket-card.bau::before    { background: #0284C7; }
+  .tm-td-bucket-card.dd::before     { background: var(--orange); }
+  .tm-td-bucket-card.payday::before { background: #10B981; }
+
+  .tm-td-bucket-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .tm-td-bucket-name {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tm-td-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .tm-td-bucket-meta {
+    font-size: 0.71rem;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--glass-border);
+  }
+  .tm-td-mini-input {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--glass-border);
+    background: var(--surface-muted);
+    color: var(--text-primary);
+    outline: none;
+  }
+  .tm-td-mini-input:focus {
+    border-color: var(--orange);
+  }
+
+  .tm-td-perplat-wrap {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--glass-border);
+  }
+  .tm-td-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.76rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+  }
+  .tm-td-table th {
+    background: var(--surface-muted);
+    padding: 7px 9px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--glass-border);
+    text-align: left;
+  }
+  .tm-td-table td {
+    padding: 7px 9px;
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--text-sub);
+    vertical-align: middle;
+  }
+  .tm-td-table tr:last-child td {
+    border-bottom: none;
+  }
+  .tm-td-table tfoot td {
+    background: var(--surface-muted);
+    font-weight: 800;
+    color: var(--text-primary);
+    border-top: 1px solid var(--glass-border);
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="tm-container">
 
-  <!-- ── 1. Page Header ── -->
-  <div class="tm-header">
-    <div>
-      <div class="tm-breadcrumb">
-        <a href="{% url 'data_management_home' %}">Data Management</a>
-        <span>/</span>
-        <span style="color: var(--orange);">Target Ingest</span>
-      </div>
-      <h1 class="tm-title">
-        <span class="tm-title-icon"><i class="bi bi-bullseye"></i></span>
-        Target Data Ingestion & Planning
-      </h1>
-      <p class="tm-subtitle">
-        Kelola target penjualan bulanan per <strong>Brand</strong> dan per <strong>Platform</strong>. Tabel utama menyajikan ringkasan <strong>Agregasi Bulanan</strong>, dan kamu dapat melihat serta mengedit rincian <strong>Target Harian (Daily)</strong> melalui modal detail untuk fleksibilitas tracking run-rate.
-      </p>
-    </div>
-
-    <!-- Header Actions -->
+  <!-- ── 1. Top Action Toolbar ── -->
+  <div class="tm-top-actions">
     <div class="tm-header-actions">
       <button type="button" class="tm-btn" onclick="downloadTemplateExcel()" title="Download file template Excel resmi">
         <i class="bi bi-file-earmark-arrow-down"></i>
@@ -965,9 +1394,9 @@
         <i class="bi bi-download"></i>
         <span>Export Excel</span>
       </button>
-      <button type="button" class="tm-btn tm-btn-outline-orange" onclick="openDistributeModal()" title="Distribusi otomatis target bulanan ke seluruh hari dalam sebulan">
+      <button type="button" class="tm-btn tm-btn-outline-orange" onclick="openDistributeModal()" title="Buka Target Calculator (Top-Down Multi-Platform & Quick)">
         <i class="bi bi-calculator"></i>
-        <span>Set Target Bulanan</span>
+        <span>Target Calculator</span>
       </button>
       <button type="button" class="tm-btn tm-btn-primary" onclick="openUploadModal()" title="Upload file Excel target harian massal">
         <i class="bi bi-file-earmark-excel"></i>
@@ -976,42 +1405,79 @@
     </div>
   </div>
 
-  <!-- ── 2. KPI Summary Cards ── -->
+  <!-- ── 2. KPI Summary Cards (Asymmetric Hierarchy) ── -->
   <div class="tm-stats-grid">
-    <div class="tm-stat-card">
-      <div class="tm-stat-top">
-        <span class="tm-stat-label">Total Target Terjadwal (Agregasi)</span>
-        <div class="tm-stat-icon orange"><i class="bi bi-cash-stack"></i></div>
+    <!-- Hero Card: Total Target Terjadwal -->
+    <div class="tm-stat-card tm-stat-card-hero">
+      <div class="tm-hero-top">
+        <span class="tm-hero-kpi-pill"><i class="bi bi-bullseye"></i> AGGREGATE TARGET</span>
+        <span class="tm-hero-period-chip" id="kpiPeriodPill"><i class="bi bi-calendar3"></i> Semua Periode</span>
       </div>
-      <div class="tm-stat-value tm-mono" id="kpiTotalTarget">Rp 0</div>
-      <div class="tm-stat-desc" id="kpiTotalTargetDesc">Total target bulanan terdaftar</div>
+      <div class="tm-hero-val-wrap">
+        <span class="tm-hero-prefix">Rp</span>
+        <span class="tm-hero-val tm-mono" id="kpiTotalTarget">0</span>
+      </div>
+      <div class="tm-hero-sub tm-mono" id="kpiTotalTargetDesc">Rp 0 total target aktif</div>
+      <div class="tm-hero-progress-section">
+        <div class="tm-progress-track">
+          <div class="tm-progress-bar tm-progress-bar-hero" id="kpiTargetMeterFill" style="width: 100%;"></div>
+        </div>
+        <div class="tm-hero-micro-meta">
+          <span><i class="bi bi-speedometer2"></i> Run-Rate Pace Aktif</span>
+          <span class="tm-mono font-weight-bold" id="kpiTargetDistributedPct">100% Scheduled</span>
+        </div>
+      </div>
     </div>
 
+    <!-- Card 2: Daily Run-Rate -->
     <div class="tm-stat-card">
-      <div class="tm-stat-top">
-        <span class="tm-stat-label">Rata-Rata Target / Hari (Run-Rate)</span>
-        <div class="tm-stat-icon green"><i class="bi bi-graph-up-arrow"></i></div>
+      <div>
+        <div class="tm-stat-top">
+          <span class="tm-stat-label">Daily Run-Rate</span>
+          <div class="tm-stat-icon green"><i class="bi bi-lightning-charge-fill"></i></div>
+        </div>
+        <div class="tm-stat-value tm-mono" id="kpiDailyAvg">Rp 0</div>
+        <div class="tm-stat-desc" id="kpiDailyAvgDesc">Pace penjualan harian</div>
       </div>
-      <div class="tm-stat-value tm-mono" id="kpiDailyAvg">Rp 0</div>
-      <div class="tm-stat-desc">Kebutuhan target penjualan harian</div>
+      <div class="tm-card-tag-pill green">
+        <i class="bi bi-arrow-up-right-circle-fill"></i> Target Rata-Rata / Hari
+      </div>
     </div>
 
+    <!-- Card 3: Portfolio Scope -->
     <div class="tm-stat-card">
-      <div class="tm-stat-top">
-        <span class="tm-stat-label">Kombinasi Brand & Platform</span>
-        <div class="tm-stat-icon blue"><i class="bi bi-shop"></i></div>
+      <div>
+        <div class="tm-stat-top">
+          <span class="tm-stat-label">Portfolio Scope</span>
+          <div class="tm-stat-icon blue"><i class="bi bi-diagram-3-fill"></i></div>
+        </div>
+        <div class="tm-stat-value tm-mono">
+          <span id="kpiComboCount">0</span>
+          <span class="tm-unit-badge">Pasang</span>
+        </div>
+        <div class="tm-portfolio-chips">
+          <span class="tm-sub-chip"><i class="bi bi-tag-fill" style="color:var(--orange);"></i> <strong id="kpiUniqueBrands">0</strong> Brand</span>
+          <span class="tm-sub-chip"><i class="bi bi-shop" style="color:#0284C7;"></i> <strong id="kpiUniquePlatforms">0</strong> Platform</span>
+        </div>
       </div>
-      <div class="tm-stat-value tm-mono" id="kpiComboCount">0</div>
-      <div class="tm-stat-desc" id="kpiComboDesc">0 Brand · 0 Platform terdaftar</div>
+      <div class="tm-stat-desc" id="kpiComboDesc" style="margin-top: 8px;">Kombinasi aktif terdaftar</div>
     </div>
 
+    <!-- Card 4: Schedule Coverage -->
     <div class="tm-stat-card">
-      <div class="tm-stat-top">
-        <span class="tm-stat-label">Kelengkapan Record Harian</span>
-        <div class="tm-stat-icon purple"><i class="bi bi-calendar-check"></i></div>
+      <div>
+        <div class="tm-stat-top">
+          <span class="tm-stat-label">Schedule Coverage</span>
+          <div class="tm-stat-icon purple"><i class="bi bi-calendar2-check-fill"></i></div>
+        </div>
+        <div class="tm-stat-value tm-mono" id="kpiDayCount">0 Hari</div>
+        <div class="tm-progress-track" style="margin-top: 10px;">
+          <div class="tm-progress-bar tm-progress-bar-purple" id="kpiCoverageBar" style="width: 100%;"></div>
+        </div>
       </div>
-      <div class="tm-stat-value tm-mono" id="kpiDayCount">0</div>
-      <div class="tm-stat-desc">Target harian tersimpan di ledger</div>
+      <div class="tm-card-tag-pill purple" id="kpiCoverageStatus">
+        <i class="bi bi-shield-check"></i> Ledger Harian Siap
+      </div>
     </div>
   </div>
 
@@ -1032,12 +1498,18 @@
         </div>
         <div class="tm-dropdown-options" id="listBrandOptions">
           <div class="tm-dropdown-item active" data-value="" onclick="selectBrandFilter('', 'Semua Brand')">
-            <span>Semua Brand</span>
+            <span style="display:inline-flex; align-items:center; gap:8px;">
+              <i class="bi bi-grid-fill" style="font-size:14px; color:var(--text-muted);"></i>
+              <span>Semua Brand</span>
+            </span>
             <i class="bi bi-check-lg tm-single-check"></i>
           </div>
           {% for b in brands %}
           <div class="tm-dropdown-item" data-value="{{ b }}" onclick="selectBrandFilter('{{ b|escapejs }}', '{{ b|escapejs }}')">
-            <span>{{ b }}</span>
+            <span style="display:inline-flex; align-items:center; gap:8px;">
+              {% render_brand_logo b 18 %}
+              <span>{{ b }}</span>
+            </span>
             <i class="bi bi-check-lg tm-single-check d-none"></i>
           </div>
           {% endfor %}
@@ -1085,31 +1557,12 @@
     <div class="tm-dropdown-wrap" id="wrapMonthDropdown">
       <div class="tm-dropdown-trigger" onclick="toggleCustomDropdown('wrapMonthDropdown')" title="Filter Periode Bulan">
         <i class="bi bi-calendar3" style="color:var(--orange);"></i>
-        <span class="tm-dropdown-label" id="labelMonthDropdown">Maret 2026</span>
+        <span class="tm-dropdown-label" id="labelMonthDropdown">Bulan Ini</span>
         <i class="bi bi-chevron-down tm-dropdown-caret"></i>
       </div>
       <div class="tm-dropdown-menu">
         <div class="tm-dropdown-options" id="listMonthOptions">
-          <div class="tm-dropdown-item" data-value="" onclick="selectMonthFilter('', 'Semua Periode')">
-            <span>Semua Periode</span>
-            <i class="bi bi-check-lg tm-single-check d-none"></i>
-          </div>
-          <div class="tm-dropdown-item active" data-value="2026-03" onclick="selectMonthFilter('2026-03', 'Maret 2026')">
-            <span>Maret 2026</span>
-            <i class="bi bi-check-lg tm-single-check"></i>
-          </div>
-          <div class="tm-dropdown-item" data-value="2026-02" onclick="selectMonthFilter('2026-02', 'Februari 2026')">
-            <span>Februari 2026</span>
-            <i class="bi bi-check-lg tm-single-check d-none"></i>
-          </div>
-          <div class="tm-dropdown-item" data-value="2026-01" onclick="selectMonthFilter('2026-01', 'Januari 2026')">
-            <span>Januari 2026</span>
-            <i class="bi bi-check-lg tm-single-check d-none"></i>
-          </div>
-          <div class="tm-dropdown-item" data-value="2025-12" onclick="selectMonthFilter('2025-12', 'Desember 2025')">
-            <span>Desember 2025</span>
-            <i class="bi bi-check-lg tm-single-check d-none"></i>
-          </div>
+          <!-- Populated dynamically with current month as default -->
         </div>
       </div>
     </div>
@@ -1263,72 +1716,312 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     MODAL 2: SET / DISTRIBUSI TARGET BULANAN
+     MODAL 2: SET / DISTRIBUSI TARGET BULANAN (TOP-DOWN FULL CUSTOM & QUICK)
      ══════════════════════════════════════════════════════════════════════ -->
 <div id="distributeModal" class="tm-modal-backdrop" onclick="handleBackdropClick(event, 'distributeModal')">
-  <div class="tm-modal-dialog">
+  <div class="tm-modal-dialog lg">
     <div class="tm-modal-header">
       <h5 class="tm-modal-title">
         <i class="bi bi-calculator" style="color: var(--orange);"></i>
-        Set Target Bulanan
+        Target Calculator
       </h5>
       <button type="button" class="tm-modal-close" onclick="closeModal('distributeModal')"><i class="bi bi-x-lg"></i></button>
     </div>
 
     <form id="distributeForm" onsubmit="generateDailyFromMonthly(event)">
       <div class="tm-modal-body">
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 16px;">
-          Tentukan total target 1 bulan untuk Brand & Platform tertentu. Sistem akan otomatis membagi target ke seluruh hari di bulan tersebut.
-        </p>
 
-        <div class="tm-form-group">
-          <label class="tm-form-label" for="distBrand">Brand <span style="color:#F43F5E;">*</span></label>
-          <select id="distBrand" class="tm-custom-select" required>
-            {% for b in brands %}
-            <option value="{{ b }}">{{ b }}</option>
-            {% endfor %}
-          </select>
+        <!-- Mode Switcher -->
+        <div class="tm-mode-switch" role="tablist">
+          <button type="button" class="tm-mode-btn active" id="btnModeTopDown" onclick="switchDistMode('topdown')">
+            <i class="bi bi-sliders2"></i>
+            <span>Top-Down Full Custom (Multi-Platform)</span>
+          </button>
+          <button type="button" class="tm-mode-btn" id="btnModeQuick" onclick="switchDistMode('quick')">
+            <i class="bi bi-lightning-charge"></i>
+            <span>Quick Single Platform</span>
+          </button>
         </div>
 
-        <div class="tm-form-group">
-          <label class="tm-form-label" for="distPlatform">Platform <span style="color:#F43F5E;">*</span></label>
-          <select id="distPlatform" class="tm-custom-select" required>
-            {% for p in platforms %}
-            <option value="{{ p }}">{{ p }}</option>
-            {% endfor %}
-          </select>
+        <!-- ── STEP 1: Brand, Periode & Total Target Bulanan ── -->
+        <div class="tm-td-section">
+          <div class="tm-td-sec-head">
+            <div class="tm-td-sec-title">
+              <span class="tm-td-step-num">1</span>
+              <span id="distStep1Title">Target Bulanan Brand (Top-Down)</span>
+            </div>
+            <span class="tm-mono" style="font-size:0.75rem; font-weight:700; color:var(--orange);" id="distRupiahPreview">Rp 0</span>
+          </div>
+
+          <div class="tm-td-grid-3" style="grid-template-columns: repeat(2, 1fr);">
+            <div>
+              <label class="tm-form-label" for="distBrand">Brand <span style="color:#F43F5E;">*</span></label>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div id="distBrandIconPreview" style="display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:8px; background:var(--card-bg); border:1px solid var(--glass-border); flex-shrink:0;">
+                  <i class="bi bi-tag-fill" style="color:var(--orange);"></i>
+                </div>
+                <select id="distBrand" class="tm-custom-select" required onchange="updateDistBrandPreview(this.value)">
+                  {% for b in brands %}
+                  <option value="{{ b }}">{{ b }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="tm-form-label" for="distMonthYear">Periode Bulan <span style="color:#F43F5E;">*</span></label>
+              <select id="distMonthYear" class="tm-custom-select" required onchange="onDistMonthChange()">
+                <option value="2026-01">Januari 2026 (31 Hari)</option>
+                <option value="2026-02">Februari 2026 (28 Hari)</option>
+                <option value="2026-03">Maret 2026 (31 Hari)</option>
+                <option value="2026-04">April 2026 (30 Hari)</option>
+                <option value="2026-05">Mei 2026 (31 Hari)</option>
+                <option value="2026-06">Juni 2026 (30 Hari)</option>
+                <option value="2026-07">Juli 2026 (31 Hari)</option>
+                <option value="2026-08">Agustus 2026 (31 Hari)</option>
+                <option value="2026-09">September 2026 (30 Hari)</option>
+                <option value="2026-10">Oktober 2026 (31 Hari)</option>
+                <option value="2026-11" selected>November 2026 (30 Hari)</option>
+                <option value="2026-12">Desember 2026 (31 Hari)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="tm-form-label" for="distTotalTarget" id="distTotalTargetLabel">Total Target Bulanan Brand (Rp) <span style="color:#F43F5E;">*</span></label>
+              <input type="number" id="distTotalTarget" class="tm-form-control tm-mono" placeholder="Contoh: 1000000000" min="1000" required oninput="onDistTargetInput(this.value)">
+            </div>
+
+            <div>
+              <label class="tm-form-label" for="distStorePic">Store PIC (Brand Manager)</label>
+              <input type="text" id="distStorePic" class="tm-form-control" placeholder="Kosongkan = ikut mapping DB">
+              <div class="tm-form-help" id="distStorePicHelp" style="margin-top:2px;">Jika dikosongkan, otomatis mengikuti PIC existing di DB.</div>
+            </div>
+          </div>
         </div>
 
-        <div class="tm-form-group">
-          <label class="tm-form-label" for="distMonthYear">Periode Bulan <span style="color:#F43F5E;">*</span></label>
-          <select id="distMonthYear" class="tm-custom-select" required>
-            <option value="2026-03" selected>Maret 2026 (31 Hari)</option>
-            <option value="2026-02">Februari 2026 (28 Hari)</option>
-            <option value="2026-01">Januari 2026 (31 Hari)</option>
-            <option value="2026-04">April 2026 (30 Hari)</option>
-          </select>
+        <!-- ══════════════════════════════════════════════════════════════
+             PANEL A: TOP-DOWN FULL CUSTOM (MULTI-PLATFORM)
+             ══════════════════════════════════════════════════════════════ -->
+        <div id="distTopDownPanel">
+
+          <!-- ── STEP 2: Alokasi Porsi per Platform (%) ── -->
+          <div class="tm-td-section">
+            <div class="tm-td-sec-head">
+              <div class="tm-td-sec-title">
+                <span class="tm-td-step-num">2</span>
+                <span>Porsi per Platform (%)</span>
+              </div>
+              <div class="tm-td-sec-right">
+                <button type="button" class="tm-td-chip-btn" onclick="applyPlatformPreset('even')">Bagi Rata</button>
+                <button type="button" class="tm-td-chip-btn" onclick="applyPlatformPreset('default')">Default (45/25/20/10)</button>
+                <span class="tm-td-valid-pill ok tm-mono" id="tdPlatformTotalBadge">
+                  <i class="bi bi-check-circle-fill"></i> 100%
+                </span>
+              </div>
+            </div>
+
+            <div class="tm-td-platform-list" id="tdPlatformList">
+              <!-- Populated dynamically by renderTopDownPlatforms() -->
+            </div>
+          </div>
+
+          <!-- ── STEP 3: Alokasi Porsi BAU, Double Date (DD) & Payday (%) ── -->
+          <div class="tm-td-section">
+            <div class="tm-td-sec-head">
+              <div class="tm-td-sec-title">
+                <span class="tm-td-step-num">3</span>
+                <span>Porsi BAU, Double Date (DD) &amp; Payday (%)</span>
+              </div>
+              <div class="tm-td-sec-right">
+                <button type="button" class="tm-td-chip-btn" onclick="applyBucketPreset(55, 15, 30)">Balanced (55/15/30)</button>
+                <button type="button" class="tm-td-chip-btn" onclick="applyBucketPreset(45, 25, 30)">Heavy Campaign (45/25/30)</button>
+                <button type="button" class="tm-td-chip-btn" onclick="applyBucketPreset(50, 10, 40)">Payday Focus (50/10/40)</button>
+                <button type="button" class="tm-td-chip-btn" onclick="applyBucketPresetEven()">Rata (Even)</button>
+                <span class="tm-td-valid-pill ok tm-mono" id="tdBucketTotalBadge">
+                  <i class="bi bi-check-circle-fill"></i> 100%
+                </span>
+              </div>
+            </div>
+
+            <!-- Visual Stacked Bar -->
+            <div class="tm-td-stacked-bar" title="Proporsi BAU vs Double Date vs Payday">
+              <div class="tm-td-seg-bau" id="tdBarBau" style="width: 55%;"></div>
+              <div class="tm-td-seg-dd" id="tdBarDd" style="width: 15%;"></div>
+              <div class="tm-td-seg-payday" id="tdBarPayday" style="width: 30%;"></div>
+            </div>
+
+            <!-- 3 Bucket Allocation Cards -->
+            <div class="tm-td-bucket-grid">
+              <!-- BAU Card -->
+              <div class="tm-td-bucket-card bau">
+                <div class="tm-td-bucket-head">
+                  <span class="tm-td-bucket-name"><span class="tm-td-dot" style="background:#0284C7;"></span> BAU (Normal)</span>
+                  <div class="tm-td-pct-input-wrap">
+                    <input type="number" id="tdBauPct" class="tm-td-pct-input tm-mono" value="55" min="0" max="100" step="0.5" oninput="recalcTopDown()">
+                    <span class="tm-td-pct-suffix">%</span>
+                  </div>
+                </div>
+                <div style="font-size:0.71rem; color:var(--text-muted);">
+                  Semua hari di luar tanggal DD &amp; rentang Payday.
+                </div>
+                <div class="tm-td-bucket-meta">
+                  <span>Jumlah Hari: <strong id="tdBauDaysLabel" style="color:var(--text-primary);">23 hari</strong></span>
+                  <span>Total: <strong id="tdBauTotalRp" class="tm-mono" style="color:var(--text-primary);">Rp 0</strong></span>
+                  <span>Rata-rata: <strong id="tdBauDailyRp" class="tm-mono" style="color:#0284C7;">Rp 0 /hari</strong></span>
+                </div>
+              </div>
+
+              <!-- Double Date Card -->
+              <div class="tm-td-bucket-card dd">
+                <div class="tm-td-bucket-head">
+                  <span class="tm-td-bucket-name"><span class="tm-td-dot" style="background:var(--orange);"></span> Double Date (DD)</span>
+                  <div class="tm-td-pct-input-wrap">
+                    <input type="number" id="tdDdPct" class="tm-td-pct-input tm-mono" value="15" min="0" max="100" step="0.5" oninput="recalcTopDown()">
+                    <span class="tm-td-pct-suffix">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:0.68rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:3px;">Tanggal DD (pisah koma jika &gt;1)</label>
+                  <input type="text" id="tdDdDates" class="tm-td-mini-input tm-mono" value="3" placeholder="Contoh: 3 atau 3, 15" oninput="recalcTopDown()">
+                </div>
+                <div class="tm-td-bucket-meta">
+                  <span>Jumlah Hari: <strong id="tdDdDaysLabel" style="color:var(--text-primary);">1 hari</strong></span>
+                  <span>Total: <strong id="tdDdTotalRp" class="tm-mono" style="color:var(--text-primary);">Rp 0</strong></span>
+                  <span>Rata-rata: <strong id="tdDdDailyRp" class="tm-mono" style="color:var(--orange);">Rp 0 /hari</strong></span>
+                </div>
+              </div>
+
+              <!-- Payday Card -->
+              <div class="tm-td-bucket-card payday">
+                <div class="tm-td-bucket-head">
+                  <span class="tm-td-bucket-name"><span class="tm-td-dot" style="background:#10B981;"></span> Payday</span>
+                  <div class="tm-td-pct-input-wrap">
+                    <input type="number" id="tdPaydayPct" class="tm-td-pct-input tm-mono" value="30" min="0" max="100" step="0.5" oninput="recalcTopDown()">
+                    <span class="tm-td-pct-suffix">%</span>
+                  </div>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                  <div>
+                    <label style="font-size:0.68rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:3px;">Mulai Tgl</label>
+                    <input type="number" id="tdPaydayStart" class="tm-td-mini-input tm-mono" value="25" min="1" max="31" oninput="recalcTopDown()">
+                  </div>
+                  <div>
+                    <label style="font-size:0.68rem; font-weight:700; color:var(--text-muted); display:block; margin-bottom:3px;">Sampai Tgl</label>
+                    <input type="number" id="tdPaydayEnd" class="tm-td-mini-input tm-mono" value="31" min="1" max="31" oninput="recalcTopDown()">
+                  </div>
+                </div>
+                <div class="tm-td-bucket-meta">
+                  <span>Jumlah Hari: <strong id="tdPaydayDaysLabel" style="color:var(--text-primary);">7 hari</strong></span>
+                  <span>Total: <strong id="tdPaydayTotalRp" class="tm-mono" style="color:var(--text-primary);">Rp 0</strong></span>
+                  <span>Rata-rata: <strong id="tdPaydayDailyRp" class="tm-mono" style="color:#10B981;">Rp 0 /hari</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Advanced Options: Per-Platform Custom Split + Rounding -->
+            <div class="tm-td-perplat-wrap">
+              <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                <label style="display:inline-flex; align-items:center; gap:8px; font-size:0.76rem; font-weight:600; color:var(--text-primary); cursor:pointer; margin:0;">
+                  <input type="checkbox" id="tdPerPlatformToggle" style="accent-color:var(--orange); width:15px; height:15px;" onchange="togglePerPlatformBuckets()">
+                  <span>Custom porsi BAU / DD / Payday berbeda per Platform</span>
+                </label>
+
+                <div style="display:inline-flex; align-items:center; gap:6px; font-size:0.74rem; color:var(--text-muted);">
+                  <span>Pembulatan:</span>
+                  <select id="tdRoundingUnit" class="tm-td-mini-input" style="width:auto; padding:3px 8px;" onchange="recalcTopDown()">
+                    <option value="100000" selected>Kelipatan Rp 100.000</option>
+                    <option value="10000">Kelipatan Rp 10.000</option>
+                    <option value="1">Exact (Rp 1)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Per-Platform Override Table (Hidden by default) -->
+              <div id="tdPerPlatformBucketWrap" style="display:none; margin-top:10px; overflow-x:auto;">
+                <table class="tm-td-table">
+                  <thead>
+                    <tr>
+                      <th>Platform</th>
+                      <th style="width:105px;">BAU (%)</th>
+                      <th style="width:105px;">DD (%)</th>
+                      <th style="width:105px;">Payday (%)</th>
+                      <th style="width:90px;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tdPerPlatformBucketBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── STEP 4: Live Breakdown Preview Table ── -->
+          <div class="tm-td-section" style="margin-bottom: 0;">
+            <div class="tm-td-sec-head" style="margin-bottom: 8px;">
+              <div class="tm-td-sec-title">
+                <span class="tm-td-step-num">4</span>
+                <span>Live Preview Breakdown per Platform</span>
+              </div>
+              <span style="font-size:0.71rem; color:var(--text-muted);">Auto-balance di akhir bucket agar 100% presisi</span>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="tm-td-table">
+                <thead>
+                  <tr>
+                    <th>Platform</th>
+                    <th>Share</th>
+                    <th>Target Bulanan</th>
+                    <th>BAU / Hari</th>
+                    <th>DD / Hari</th>
+                    <th>Payday / Hari</th>
+                  </tr>
+                </thead>
+                <tbody id="tdPreviewTableBody"></tbody>
+                <tfoot id="tdPreviewTableFoot"></tfoot>
+              </table>
+            </div>
+          </div>
+
         </div>
 
-        <div class="tm-form-group">
-          <label class="tm-form-label" for="distTotalTarget">Total Target 1 Bulan (Rupiah) <span style="color:#F43F5E;">*</span></label>
-          <input type="number" id="distTotalTarget" class="tm-form-control tm-mono" placeholder="Contoh: 600000000" min="1000" required oninput="previewDistRupiah(this.value)">
-          <div class="tm-form-help" id="distRupiahPreview">Rp 0</div>
+        <!-- ══════════════════════════════════════════════════════════════
+             PANEL B: QUICK SINGLE PLATFORM
+             ══════════════════════════════════════════════════════════════ -->
+        <div id="distQuickPanel" style="display: none;">
+          <div class="tm-td-section" style="margin-bottom: 0;">
+            <div class="tm-form-group">
+              <label class="tm-form-label" for="distPlatform">Platform <span style="color:#F43F5E;">*</span></label>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div id="distPlatformIconPreview" style="display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; background:var(--card-bg); border:1px solid var(--glass-border); flex-shrink:0;">
+                  <i class="bi bi-shop" style="color:var(--orange);"></i>
+                </div>
+                <select id="distPlatform" class="tm-custom-select" onchange="updateDistPlatformPreview(this.value)">
+                  {% for p in platforms %}
+                  <option value="{{ p }}">{{ p }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="tm-form-group" style="margin-bottom: 0;">
+              <label class="tm-form-label">Metode Pembagian ke Target Harian</label>
+              <select id="distMethod" class="tm-custom-select">
+                <option value="payday_weighted">Berbobot Payday &amp; Double-Date (DD 2.6× · Payday 1.6× · Normal 1.0×)</option>
+                <option value="even">Rata Setiap Hari (Total Target ÷ Jumlah Hari)</option>
+              </select>
+              <div class="tm-form-help">Metode berbobot memberikan porsi target harian lebih besar pada tanggal 25–31 dan tanggal kembar (seperti 3.3).</div>
+            </div>
+          </div>
         </div>
 
-        <div class="tm-form-group">
-          <label class="tm-form-label">Metode Pembagian ke Target Harian</label>
-          <select id="distMethod" class="tm-custom-select">
-            <option value="payday_weighted">Berbobot Payday & Double-Date (Rekomendasi E-Commerce)</option>
-            <option value="even">Rata Setiap Hari (Total Target ÷ Jumlah Hari)</option>
-          </select>
-          <div class="tm-form-help">Metode berbobot memberikan porsi target harian lebih besar pada tanggal 25–31 dan tanggal kembar (seperti 3.3).</div>
-        </div>
       </div>
 
       <div class="tm-modal-footer">
         <button type="button" class="tm-btn" onclick="closeModal('distributeModal')">Batal</button>
-        <button type="submit" class="tm-btn tm-btn-primary">
-          <i class="bi bi-magic"></i> Generate & Simpan Target
+        <button type="button" class="tm-btn tm-btn-outline-orange" onclick="exportCalculatorToExcel()" title="Download hasil perhitungan kalkulator ke Excel (Monthly &amp; Daily)">
+          <i class="bi bi-file-earmark-spreadsheet"></i> Export to Excel
+        </button>
+        <button type="submit" class="tm-btn tm-btn-primary" id="btnSubmitDistribute">
+          <i class="bi bi-magic"></i> Generate &amp; Simpan Target
         </button>
       </div>
     </form>
@@ -1357,25 +2050,29 @@
         <div class="tm-dropzone-hint">Format yang didukung: .xlsx, .xls (Maks. 5 MB)</div>
       </div>
 
-      <!-- Format Information Box -->
-      <div style="margin-top: 14px; padding: 10px 14px; background: var(--surface-muted); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); font-size: 0.76rem; color: var(--text-muted); line-height: 1.5;">
-        <strong style="color: var(--text-primary);"><i class="bi bi-info-circle"></i> Struktur Kolom Excel yang Dibutuhkan:</strong>
-        <div style="margin-top: 5px; display: flex; gap: 8px; flex-wrap: wrap;">
-          <code class="tm-mono" style="background:var(--card-bg); padding:2px 6px; border-radius:4px; border:1px solid var(--glass-border);">Brand</code>
-          <code class="tm-mono" style="background:var(--card-bg); padding:2px 6px; border-radius:4px; border:1px solid var(--glass-border);">Platform</code>
-          <code class="tm-mono" style="background:var(--card-bg); padding:2px 6px; border-radius:4px; border:1px solid var(--glass-border);">Date (YYYY-MM-DD)</code>
-          <code class="tm-mono" style="background:var(--card-bg); padding:2px 6px; border-radius:4px; border:1px solid var(--glass-border);">Target (Rupiah Harian)</code>
-        </div>
-        <div style="margin-top: 6px;">
-          Contoh baris: <code>Senka | Shopee | 2026-03-01 | 35000000</code>
+      <!-- Format Information Box (Dual Format Support) -->
+      <div style="margin-top: 14px; padding: 11px 14px; background: var(--surface-muted); border-radius: var(--radius-sm); border: 1px solid var(--glass-border); font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
+        <strong style="color: var(--text-primary); display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+          <i class="bi bi-magic" style="color:var(--orange);"></i> Mendukung 2 Format Excel (Auto-Detect):
+        </strong>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div style="background:var(--card-bg); padding:8px 10px; border-radius:7px; border:1px solid var(--glass-border);">
+            <div style="font-weight:700; color:var(--text-primary); margin-bottom:3px;">1. Template Standar Dashboard</div>
+            <div>Kolom: <code class="tm-mono">Brand</code> · <code class="tm-mono">Platform</code> · <code class="tm-mono">Date (YYYY-MM-DD)</code> · <code class="tm-mono">Target</code></div>
+          </div>
+          <div style="background:var(--card-bg); padding:8px 10px; border-radius:7px; border:1px solid var(--glass-border);">
+            <div style="font-weight:700; color:var(--text-primary); margin-bottom:3px;">2. Template Original (Wide / Multi-Sheet)</div>
+            <div>Sheet 6 digit (<code class="tm-mono">YYYYMM</code>) dgn kolom <code class="tm-mono">品牌</code>, <code class="tm-mono">店铺</code>, <code class="tm-mono">Store PIC</code> &amp; kolom tanggal harian (otomatis di-<em>unpivot</em>).</div>
+          </div>
         </div>
       </div>
 
       <!-- Preview Section -->
       <div id="uploadPreviewSection" style="display: none; margin-top: 14px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+          <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
             <span>Preview Data Excel:</span>
+            <span id="previewFormatBadge" style="font-size:0.7rem; padding:2px 8px; border-radius:999px; background:rgba(2, 132, 199, 0.12); color:#0284C7; font-weight:700;">Auto-Detect</span>
             <span id="previewSummaryBadge" style="font-size:0.72rem; padding:2px 8px; border-radius:999px; background:var(--orange-dim); color:var(--orange); font-weight:700;">0 Baris</span>
           </div>
           <button type="button" class="tm-btn" style="font-size: 0.75rem; padding: 4px 10px;" onclick="resetUploadFile()">
@@ -1451,14 +2148,21 @@
   ];
   const ALLOWED_PLATFORMS = ['shopee', 'tokopedia', 'tiktok', 'lazada', 'blibli'];
 
-  // Global Ledger (Daily Records)
+  // Global Ledger (Daily Records from postgre_daily_target_mart)
   let targetLedger = [];
+  let brandMetaMap = {};
   let nextId = 1;
 
-  // Active state
+  function getCurrentYearMonth() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+  const DEFAULT_FILTER_MONTH = getCurrentYearMonth();
+
+  // Active state (Defaults: Semua Brand, Semua Platform, Current Month)
   let selectedFilterBrand = '';
   let selectedFilterPlatform = '';
-  let selectedFilterMonth = '2026-03';
+  let selectedFilterMonth = DEFAULT_FILTER_MONTH;
   let searchQuery = '';
 
   // Modal active group state
@@ -1468,64 +2172,97 @@
   let isModalEditMode = false;
 
   const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const API_TARGET_DATA_URL = "{% url 'api_target_data' %}";
+  const API_TARGET_SAVE_URL = "{% url 'api_target_save' %}";
 
-  /* =====================================================================
-     Seed Realistic Daily Sample Data
-     ===================================================================== */
-  function initSeedDailyData() {
-    const brandsSample = ALLOWED_BRANDS.slice(0, 4);
-    if (brandsSample.length === 0) brandsSample.push('Senka', 'Anessa', 'Mattel', 'Colgate');
-    const platforms = ['Shopee', 'Tokopedia', 'Tiktok', 'Lazada'];
-
-    // Generate for March 2026 (31 days) and Feb 2026 (28 days)
-    const months = [
-      { y: 2026, m: 3, days: 31, ym: '2026-03' },
-      { y: 2026, m: 2, days: 28, ym: '2026-02' }
-    ];
-
-    brandsSample.forEach(brand => {
-      platforms.forEach(platform => {
-        months.forEach(mObj => {
-          const baseDaily = (brand === 'Senka' ? 18000000 : (brand === 'Mattel' ? 14000000 : 9000000)) *
-                            (platform === 'Shopee' ? 1.4 : (platform === 'TikTok' ? 1.2 : 0.9));
-
-          for (let d = 1; d <= mObj.days; d++) {
-            const dateStr = `${mObj.ym}-${String(d).padStart(2, '0')}`;
-            const dayOfWeek = new Date(dateStr).getDay();
-            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-            const isPayday = d >= 25;
-            const isDoubleDate = (d === mObj.m);
-
-            let multiplier = 1.0;
-            if (isDoubleDate) multiplier = 2.8;
-            else if (isPayday) multiplier = 1.55;
-            else if (isWeekend) multiplier = 1.2;
-
-            const targetVal = Math.round((baseDaily * multiplier) / 100000) * 100000;
-
-            targetLedger.push({
-              id: nextId++,
-              brand: brand,
-              platform: platform,
-              date: dateStr,
-              year_month: mObj.ym,
-              target: targetVal,
-              status: 'Active',
-              updated_at: '2026-03-01 08:00'
-            });
-          }
-        });
-      });
-    });
+  function getCsrfToken() {
+    const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : '{{ csrf_token }}';
   }
 
-  initSeedDailyData();
+  function rebuildMonthFilterDropdown(availableMonths) {
+    const container = document.getElementById('listMonthOptions');
+    if (!container) return;
+    const allMonthsSet = new Set([
+      DEFAULT_FILTER_MONTH,
+      ...(availableMonths || []),
+      '2026-12', '2026-11', '2026-10', '2026-09', '2026-08', '2026-07',
+      '2026-06', '2026-05', '2026-04', '2026-03', '2026-02', '2026-01'
+    ]);
+    const sorted = Array.from(allMonthsSet).sort().reverse();
+
+    let html = `
+      <div class="tm-dropdown-item ${selectedFilterMonth === '' ? 'active' : ''}" data-value="" onclick="selectMonthFilter('', 'Semua Periode')">
+        <span>Semua Periode</span>
+        <i class="bi bi-check-lg tm-single-check ${selectedFilterMonth === '' ? '' : 'd-none'}"></i>
+      </div>
+    `;
+    sorted.forEach(ym => {
+      const lbl = formatMonthLabel(ym);
+      const isAct = selectedFilterMonth === ym;
+      html += `
+        <div class="tm-dropdown-item ${isAct ? 'active' : ''}" data-value="${ym}" onclick="selectMonthFilter('${ym}', '${lbl}')">
+          <span>${lbl}</span>
+          <i class="bi bi-check-lg tm-single-check ${isAct ? '' : 'd-none'}"></i>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+    const lblEl = document.getElementById('labelMonthDropdown');
+    if (lblEl) {
+      lblEl.textContent = selectedFilterMonth ? formatMonthLabel(selectedFilterMonth) : 'Semua Periode';
+    }
+  }
+
+  async function fetchTargetData(initialLoad = false) {
+    try {
+      const res = await fetch(API_TARGET_DATA_URL, {
+        headers: { 'Accept': 'application/json' },
+        credentials: 'same-origin'
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.status === 'success') {
+        targetLedger = data.records || [];
+        brandMetaMap = data.brand_meta || {};
+        if (initialLoad) {
+          selectedFilterBrand = '';
+          selectedFilterPlatform = '';
+          selectedFilterMonth = DEFAULT_FILTER_MONTH;
+          const distMonthEl = document.getElementById('distMonthYear');
+          if (distMonthEl) distMonthEl.value = DEFAULT_FILTER_MONTH;
+        }
+        rebuildMonthFilterDropdown(data.available_months || []);
+        applyFilters();
+      }
+    } catch (err) {
+      console.error('Failed to load target data from DB:', err);
+      tmToast.fire({ icon: 'error', title: 'Gagal memuat data target dari database' });
+    }
+  }
+
+  async function saveTargetRecordsToApi(records) {
+    const res = await fetch(API_TARGET_SAVE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken()
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({ records })
+    });
+    const data = await res.json();
+    if (!res.ok || data.status !== 'success') {
+      throw new Error(data.message || 'Gagal menyimpan data target ke database.');
+    }
+    return data;
+  }
 
   /* =====================================================================
      Initialization & Event Handlers
      ===================================================================== */
   document.addEventListener('DOMContentLoaded', () => {
-    applyFilters();
+    fetchTargetData(true);
 
     // Close custom dropdowns on click outside
     document.addEventListener('click', (e) => {
@@ -1558,7 +2295,12 @@
 
   function selectBrandFilter(val, label) {
     selectedFilterBrand = val;
-    document.getElementById('labelBrandDropdown').textContent = label;
+    const labelEl = document.getElementById('labelBrandDropdown');
+    if (!val) {
+      labelEl.innerHTML = 'Semua Brand';
+    } else {
+      labelEl.innerHTML = `<span style="display:inline-flex; align-items:center; gap:6px;">${renderBrandIcon(val, 18)} <span>${escapeHtml(label)}</span></span>`;
+    }
     updateDropdownActiveState('listBrandOptions', val);
     document.getElementById('wrapBrandDropdown').classList.remove('open');
     applyFilters();
@@ -1624,11 +2366,17 @@
   }
 
   function resetFilters() {
+    const defaultMonthLbl = formatMonthLabel(DEFAULT_FILTER_MONTH);
     selectBrandFilter('', 'Semua Brand');
     selectPlatformFilter('', 'Semua Platform');
-    selectMonthFilter('2026-03', 'Maret 2026');
-    clearSearch();
-    tmToast.fire({ icon: 'info', title: 'Filter di-reset ke Maret 2026' });
+    selectMonthFilter(DEFAULT_FILTER_MONTH, defaultMonthLbl);
+    const input = document.getElementById('searchInput');
+    if (input) input.value = '';
+    searchQuery = '';
+    const clearBtn = document.getElementById('searchClearBtn');
+    if (clearBtn) clearBtn.style.display = 'none';
+    applyFilters();
+    tmToast.fire({ icon: 'info', title: `Filter di-reset ke Semua Brand · Semua Platform · ${defaultMonthLbl}` });
   }
 
   /* =====================================================================
@@ -1681,17 +2429,64 @@
     renderMonthlyTable(monthlyList, grandTotalTarget);
   }
 
+  function formatMonthLabel(ym) {
+    if (!ym) return 'Semua Periode';
+    const parts = ym.split('-');
+    if (parts.length < 2) return ym;
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const idx = parseInt(parts[1], 10) - 1;
+    return (months[idx] || parts[1]) + ' ' + parts[0];
+  }
+
   function updateKPICards(grandTotalTarget, grandTotalDays, monthlyList) {
     const dailyAvg = grandTotalDays > 0 ? (grandTotalTarget / grandTotalDays) : 0;
     const uniqueBrands = new Set(monthlyList.map(m => m.brand.toLowerCase())).size;
     const uniquePlatforms = new Set(monthlyList.map(m => m.platform.toLowerCase())).size;
+    const totalCombos = monthlyList.length;
 
-    document.getElementById('kpiTotalTarget').textContent = formatCompactNumber(grandTotalTarget);
-    document.getElementById('kpiTotalTargetDesc').textContent = `${formatRupiah(grandTotalTarget)} total target aktif`;
-    document.getElementById('kpiDailyAvg').textContent = formatCompactNumber(dailyAvg);
-    document.getElementById('kpiComboCount').textContent = `${uniqueBrands} · ${uniquePlatforms}`;
-    document.getElementById('kpiComboDesc').textContent = `${uniqueBrands} Brand · ${uniquePlatforms} Platform`;
-    document.getElementById('kpiDayCount').textContent = `${grandTotalDays} Hari`;
+    // 1. Total Target Hero Card
+    const elTotal = document.getElementById('kpiTotalTarget');
+    if (elTotal) elTotal.textContent = formatCompactNumber(grandTotalTarget);
+    const elTotalDesc = document.getElementById('kpiTotalTargetDesc');
+    if (elTotalDesc) elTotalDesc.textContent = `${formatRupiah(grandTotalTarget)} total target aktif`;
+    const elPeriod = document.getElementById('kpiPeriodPill');
+    if (elPeriod) {
+      elPeriod.innerHTML = `<i class="bi bi-calendar3"></i> ${selectedFilterMonth ? formatMonthLabel(selectedFilterMonth) : 'Semua Periode'}`;
+    }
+
+    // 2. Daily Run-rate Pace
+    const elDaily = document.getElementById('kpiDailyAvg');
+    if (elDaily) elDaily.textContent = formatCompactNumber(dailyAvg);
+    const elDailyDesc = document.getElementById('kpiDailyAvgDesc');
+    if (elDailyDesc) elDailyDesc.textContent = `${formatRupiah(Math.round(dailyAvg))} / hari`;
+
+    // 3. Portfolio Scope
+    const elCombo = document.getElementById('kpiComboCount');
+    if (elCombo) elCombo.textContent = totalCombos;
+    const elBrands = document.getElementById('kpiUniqueBrands');
+    if (elBrands) elBrands.textContent = uniqueBrands;
+    const elPlatforms = document.getElementById('kpiUniquePlatforms');
+    if (elPlatforms) elPlatforms.textContent = uniquePlatforms;
+    const elComboDesc = document.getElementById('kpiComboDesc');
+    if (elComboDesc) elComboDesc.textContent = `${uniqueBrands} Brand · ${uniquePlatforms} Platform terdaftar`;
+
+    // 4. Schedule Coverage & Health
+    const elDays = document.getElementById('kpiDayCount');
+    if (elDays) elDays.textContent = `${grandTotalDays} Hari`;
+    const elCovBar = document.getElementById('kpiCoverageBar');
+    const elCovStatus = document.getElementById('kpiCoverageStatus');
+    if (elCovBar) {
+      elCovBar.style.width = grandTotalDays > 0 ? '100%' : '0%';
+    }
+    if (elCovStatus) {
+      if (grandTotalDays > 0) {
+        elCovStatus.innerHTML = `<i class="bi bi-shield-check"></i> Ledger Harian Siap (${grandTotalDays} record)`;
+        elCovStatus.className = 'tm-card-tag-pill purple';
+      } else {
+        elCovStatus.innerHTML = `<i class="bi bi-exclamation-circle"></i> Belum Ada Target`;
+        elCovStatus.className = 'tm-card-tag-pill warn';
+      }
+    }
   }
 
   function renderMonthlyTable(monthlyList, grandTotalTarget) {
@@ -1720,8 +2515,8 @@
       tr.innerHTML = `
         <td>
           <span class="tm-brand-badge">
-            <i class="bi bi-tag-fill" style="color: var(--orange); font-size: 0.7rem;"></i>
-            ${escapeHtml(m.brand)}
+            ${renderBrandIcon(m.brand, 18)}
+            <span>${escapeHtml(m.brand)}</span>
           </span>
         </td>
         <td>
@@ -1789,7 +2584,12 @@
     backupModalDailyRecords = JSON.parse(JSON.stringify(activeModalDailyRecords));
 
     // Update modal header
-    document.getElementById('modalDetailTitle').textContent = `Detail Target Harian — ${brand}`;
+    document.getElementById('modalDetailTitle').innerHTML = `
+      <span style="display:inline-flex; align-items:center; gap:8px;">
+        ${renderBrandIcon(brand, 22)}
+        <span>Detail Target Harian — ${escapeHtml(brand)}</span>
+      </span>
+    `;
     document.getElementById('modalDetailSubtitle').innerHTML = `
       <span style="display:inline-flex; align-items:center; gap:5px;">
         ${renderPlatformLogoHtml(platform, 15)} <strong>${escapeHtml(platform)}</strong>
@@ -2008,7 +2808,7 @@
     });
   }
 
-  function saveAllModalDailyTargets() {
+  async function saveAllModalDailyTargets() {
     // Validate all records have positive target values
     for (let i = 0; i < activeModalDailyRecords.length; i++) {
       const val = Number(activeModalDailyRecords[i].target);
@@ -2018,33 +2818,105 @@
       }
     }
 
-    // Sync activeModalDailyRecords back to main targetLedger
-    activeModalDailyRecords.forEach(mRec => {
-      const mainRec = targetLedger.find(r => r.id === mRec.id);
-      if (mainRec) {
-        mainRec.target = Number(mRec.target) || 0;
-        mainRec.updated_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
-      }
-    });
+    const recordsToSave = activeModalDailyRecords.map(mRec => ({
+      brand: mRec.brand,
+      platform: mRec.platform,
+      date: mRec.date,
+      target: Number(mRec.target) || 0,
+      store_pic: mRec.store_pic || '',
+      brand_group: mRec.brand_group || ''
+    }));
 
-    isModalEditMode = false;
-    closeModal('dailyDetailModal');
-    applyFilters();
-    Swal.fire({
-      icon: 'success',
-      title: 'Target Harian Tersimpan!',
-      text: `Perubahan target harian untuk ${activeModalGroup.brand} (${activeModalGroup.platform}) bulan ${activeModalGroup.month} telah diperbarui dan diagregasikan.`,
-      confirmButtonColor: '#f97316'
-    });
+    try {
+      const res = await saveTargetRecordsToApi(recordsToSave);
+      isModalEditMode = false;
+      closeModal('dailyDetailModal');
+      await fetchTargetData(false);
+      Swal.fire({
+        icon: 'success',
+        title: 'Target Harian Tersimpan ke Database!',
+        text: `${res.total_saved} record harian untuk ${activeModalGroup.brand} (${activeModalGroup.platform}) bulan ${activeModalGroup.month} telah di-update & disinkronkan ke Sales Dashboard.`,
+        confirmButtonColor: '#f97316'
+      });
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Gagal Menyimpan', text: err.message, confirmButtonColor: '#f97316' });
+    }
   }
 
   /* =====================================================================
-     SET TARGET BULANAN (AUTO-DISTRIBUTION TO DAILY)
+     SET TARGET BULANAN (TOP-DOWN FULL CUSTOM & QUICK SINGLE PLATFORM)
      ===================================================================== */
+  const TD_PLATFORMS = [
+    {% for p in platforms %}"{{ p|escapejs }}",{% endfor %}
+  ];
+  let distMode = 'topdown';
+  let tdPlatformShares = {};
+  let tdPerPlatformBuckets = {};
+
+  function initTopDownDefaults() {
+    if (Object.keys(tdPlatformShares).length === 0) {
+      applyPlatformPreset('default', true);
+    }
+  }
+
+  function switchDistMode(mode) {
+    distMode = mode;
+    document.getElementById('btnModeTopDown').classList.toggle('active', mode === 'topdown');
+    document.getElementById('btnModeQuick').classList.toggle('active', mode === 'quick');
+    document.getElementById('distTopDownPanel').style.display = mode === 'topdown' ? 'block' : 'none';
+    document.getElementById('distQuickPanel').style.display = mode === 'quick' ? 'block' : 'none';
+
+    const titleEl = document.getElementById('distStep1Title');
+    const lblEl = document.getElementById('distTotalTargetLabel');
+    if (mode === 'topdown') {
+      if (titleEl) titleEl.textContent = 'Target Bulanan Brand (Top-Down)';
+      if (lblEl) lblEl.innerHTML = 'Total Target Bulanan Brand (Rp) <span style="color:#F43F5E;">*</span>';
+      recalcTopDown();
+    } else {
+      if (titleEl) titleEl.textContent = 'Target Bulanan (Single Platform)';
+      if (lblEl) lblEl.innerHTML = 'Total Target 1 Bulan (Rp) <span style="color:#F43F5E;">*</span>';
+    }
+  }
+
   function openDistributeModal() {
-    document.getElementById('distTotalTarget').value = '';
-    document.getElementById('distRupiahPreview').textContent = 'Rp 0';
+    initTopDownDefaults();
+    const targetInput = document.getElementById('distTotalTarget');
+    if (!targetInput.value) {
+      targetInput.value = '1000000000';
+    }
+    const b = document.getElementById('distBrand')?.value;
+    const p = document.getElementById('distPlatform')?.value;
+    if (b) updateDistBrandPreview(b);
+    if (p) updateDistPlatformPreview(p);
+    onDistMonthChange(true);
+    previewDistRupiah(targetInput.value);
+    renderTopDownPlatforms();
+    recalcTopDown();
     openModal('distributeModal');
+  }
+
+  function updateDistBrandPreview(val) {
+    const el = document.getElementById('distBrandIconPreview');
+    if (el) el.innerHTML = renderBrandIcon(val, 20);
+    const picInput = document.getElementById('distStorePic');
+    const picHelp = document.getElementById('distStorePicHelp');
+    const meta = brandMetaMap[val] || {};
+    if (picInput && picHelp) {
+      const defPic = meta.default_pic || '';
+      const bg = meta.brand_group || '';
+      picInput.placeholder = defPic ? `Kosongkan = auto '${defPic}'` : 'Masukkan nama Brand Manager';
+      picHelp.textContent = `Brand Group: ${bg || '-'} · Default PIC: ${defPic || 'Belum ada di DB'}`;
+    }
+  }
+
+  function updateDistPlatformPreview(val) {
+    const el = document.getElementById('distPlatformIconPreview');
+    if (el) el.innerHTML = renderPlatformLogoHtml(val, 18);
+  }
+
+  function onDistTargetInput(val) {
+    previewDistRupiah(val);
+    if (distMode === 'topdown') recalcTopDown();
   }
 
   function previewDistRupiah(val) {
@@ -2057,30 +2929,517 @@
     previewEl.textContent = `${formatRupiah(n)} (${formatCompactNumber(n)})`;
   }
 
-  function generateDailyFromMonthly(e) {
-    e.preventDefault();
+  function onDistMonthChange(skipRecalc = false) {
+    const ym = document.getElementById('distMonthYear').value;
+    const [yStr, mStr] = ym.split('-');
+    const year = parseInt(yStr, 10);
+    const month = parseInt(mStr, 10);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const ddInput = document.getElementById('tdDdDates');
+    const pdStartInput = document.getElementById('tdPaydayStart');
+    const pdEndInput = document.getElementById('tdPaydayEnd');
+    if (ddInput) ddInput.value = String(month);
+    if (pdStartInput) {
+      pdStartInput.max = daysInMonth;
+      if (Number(pdStartInput.value) > daysInMonth) pdStartInput.value = Math.min(25, daysInMonth);
+    }
+    if (pdEndInput) {
+      pdEndInput.max = daysInMonth;
+      pdEndInput.value = String(daysInMonth);
+    }
+    if (!skipRecalc) recalcTopDown();
+  }
+
+  function applyPlatformPreset(type, silent = false) {
+    const count = TD_PLATFORMS.length;
+    if (count === 0) return;
+
+    if (type === 'even') {
+      const base = Math.floor((100 / count) * 10) / 10;
+      let sum = 0;
+      TD_PLATFORMS.forEach((p, idx) => {
+        const val = idx === count - 1 ? Number((100 - sum).toFixed(1)) : base;
+        tdPlatformShares[p] = val;
+        sum += val;
+      });
+    } else {
+      // Default e-commerce split (45 / 25 / 20 / 10 for 4 platforms, or proportional)
+      const defaults = [45, 25, 20, 10];
+      if (count === 4) {
+        TD_PLATFORMS.forEach((p, idx) => { tdPlatformShares[p] = defaults[idx]; });
+      } else {
+        applyPlatformPreset('even', true);
+      }
+    }
+    if (!silent) {
+      renderTopDownPlatforms();
+      recalcTopDown();
+    }
+  }
+
+  function renderTopDownPlatforms() {
+    const container = document.getElementById('tdPlatformList');
+    if (!container) return;
+    container.innerHTML = '';
+
+    TD_PLATFORMS.forEach((p, idx) => {
+      const share = tdPlatformShares[p] ?? 0;
+      const row = document.createElement('div');
+      row.className = `tm-td-platform-row${share <= 0 ? ' inactive' : ''}`;
+      row.id = `tdPlatRow-${idx}`;
+      row.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:0.8rem; color:var(--text-primary);">
+          ${renderPlatformLogoHtml(p, 18)}
+          <span>${escapeHtml(p)}</span>
+        </div>
+        <div class="tm-td-pct-input-wrap">
+          <input type="number" class="tm-td-pct-input tm-mono" id="tdPlatPct-${idx}" value="${share}" min="0" max="100" step="0.5"
+            oninput="onPlatformShareInput(${idx}, '${escapeHtml(p)}', this.value)">
+          <span class="tm-td-pct-suffix">%</span>
+        </div>
+        <div class="tm-td-plat-bar-wrap">
+          <div class="tm-progress-track" style="height:6px;">
+            <div class="tm-progress-bar tm-progress-bar-hero" id="tdPlatBar-${idx}" style="width:${Math.min(100, Math.max(0, share))}%;"></div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div class="tm-mono" style="font-size:0.78rem; font-weight:700; color:var(--text-primary);" id="tdPlatRp-${idx}">Rp 0</div>
+          <div style="font-size:0.68rem; color:var(--text-muted);" id="tdPlatCompact-${idx}">0</div>
+        </div>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function onPlatformShareInput(idx, platform, val) {
+    const num = Math.max(0, Number(val) || 0);
+    tdPlatformShares[platform] = num;
+    const row = document.getElementById(`tdPlatRow-${idx}`);
+    if (row) row.classList.toggle('inactive', num <= 0);
+    const bar = document.getElementById(`tdPlatBar-${idx}`);
+    if (bar) bar.style.width = `${Math.min(100, num)}%`;
+    recalcTopDown();
+  }
+
+  function applyBucketPreset(bau, dd, payday) {
+    document.getElementById('tdBauPct').value = bau;
+    document.getElementById('tdDdPct').value = dd;
+    document.getElementById('tdPaydayPct').value = payday;
+    recalcTopDown();
+  }
+
+  function applyBucketPresetEven() {
+    const ym = document.getElementById('distMonthYear').value;
+    const ms = getMonthDayStructure(ym);
+    const ddPct = Number(((ms.ddDays.length / ms.daysInMonth) * 100).toFixed(1));
+    const pdPct = Number(((ms.paydayDays.length / ms.daysInMonth) * 100).toFixed(1));
+    const bauPct = Number((100 - ddPct - pdPct).toFixed(1));
+    applyBucketPreset(bauPct, ddPct, pdPct);
+  }
+
+  function togglePerPlatformBuckets() {
+    const checked = document.getElementById('tdPerPlatformToggle').checked;
+    const wrap = document.getElementById('tdPerPlatformBucketWrap');
+    wrap.style.display = checked ? 'block' : 'none';
+    if (checked) {
+      const gBau = Number(document.getElementById('tdBauPct').value) || 0;
+      const gDd = Number(document.getElementById('tdDdPct').value) || 0;
+      const gPd = Number(document.getElementById('tdPaydayPct').value) || 0;
+      TD_PLATFORMS.forEach(p => {
+        if (!tdPerPlatformBuckets[p]) {
+          tdPerPlatformBuckets[p] = { bau: gBau, dd: gDd, payday: gPd };
+        }
+      });
+      renderPerPlatformBucketTable();
+    }
+    recalcTopDown();
+  }
+
+  function renderPerPlatformBucketTable() {
+    const tbody = document.getElementById('tdPerPlatformBucketBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    TD_PLATFORMS.forEach((p, idx) => {
+      const share = tdPlatformShares[p] || 0;
+      if (share <= 0) return;
+      const b = tdPerPlatformBuckets[p] || { bau: 55, dd: 15, payday: 30 };
+      const sum = Number((b.bau + b.dd + b.payday).toFixed(2));
+      const isOk = Math.abs(sum - 100) < 0.01;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <span style="display:inline-flex; align-items:center; gap:6px; font-weight:700; color:var(--text-primary);">
+            ${renderPlatformLogoHtml(p, 16)} ${escapeHtml(p)}
+          </span>
+        </td>
+        <td>
+          <div class="tm-td-pct-input-wrap">
+            <input type="number" class="tm-td-pct-input tm-mono" value="${b.bau}" min="0" max="100" step="0.5"
+              oninput="onPerPlatformBucketInput('${escapeHtml(p)}', 'bau', this.value, ${idx})">
+            <span class="tm-td-pct-suffix">%</span>
+          </div>
+        </td>
+        <td>
+          <div class="tm-td-pct-input-wrap">
+            <input type="number" class="tm-td-pct-input tm-mono" value="${b.dd}" min="0" max="100" step="0.5"
+              oninput="onPerPlatformBucketInput('${escapeHtml(p)}', 'dd', this.value, ${idx})">
+            <span class="tm-td-pct-suffix">%</span>
+          </div>
+        </td>
+        <td>
+          <div class="tm-td-pct-input-wrap">
+            <input type="number" class="tm-td-pct-input tm-mono" value="${b.payday}" min="0" max="100" step="0.5"
+              oninput="onPerPlatformBucketInput('${escapeHtml(p)}', 'payday', this.value, ${idx})">
+            <span class="tm-td-pct-suffix">%</span>
+          </div>
+        </td>
+        <td>
+          <span class="tm-td-valid-pill tm-mono ${isOk ? 'ok' : 'err'}" id="tdPerPlatSum-${idx}">
+            ${isOk ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-exclamation-circle-fill"></i>'} ${sum}%
+          </span>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function onPerPlatformBucketInput(platform, field, val, idx) {
+    if (!tdPerPlatformBuckets[platform]) tdPerPlatformBuckets[platform] = { bau: 55, dd: 15, payday: 30 };
+    tdPerPlatformBuckets[platform][field] = Math.max(0, Number(val) || 0);
+    const b = tdPerPlatformBuckets[platform];
+    const sum = Number((b.bau + b.dd + b.payday).toFixed(2));
+    const isOk = Math.abs(sum - 100) < 0.01;
+    const badge = document.getElementById(`tdPerPlatSum-${idx}`);
+    if (badge) {
+      badge.className = `tm-td-valid-pill tm-mono ${isOk ? 'ok' : 'err'}`;
+      badge.innerHTML = `${isOk ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-exclamation-circle-fill"></i>'} ${sum}%`;
+    }
+    recalcTopDown(true);
+  }
+
+  function getMonthDayStructure(monthYear) {
+    const [yStr, mStr] = monthYear.split('-');
+    const year = parseInt(yStr, 10);
+    const month = parseInt(mStr, 10);
+    const daysInMonth = new Date(year, month, 0).getDate();
+
+    const ddRaw = (document.getElementById('tdDdDates')?.value || '').trim();
+    const ddSet = new Set();
+    if (ddRaw) {
+      ddRaw.split(/[\s,;]+/).forEach(tok => {
+        const d = parseInt(tok, 10);
+        if (!isNaN(d) && d >= 1 && d <= daysInMonth) ddSet.add(d);
+      });
+    }
+
+    const pdStart = Math.max(1, Math.min(daysInMonth, parseInt(document.getElementById('tdPaydayStart')?.value, 10) || 25));
+    const pdEnd = Math.max(pdStart, Math.min(daysInMonth, parseInt(document.getElementById('tdPaydayEnd')?.value, 10) || daysInMonth));
+
+    const dayBuckets = [];
+    const bauDays = [];
+    const ddDays = [];
+    const paydayDays = [];
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      if (ddSet.has(d)) {
+        dayBuckets.push('dd');
+        ddDays.push(d);
+      } else if (d >= pdStart && d <= pdEnd) {
+        dayBuckets.push('payday');
+        paydayDays.push(d);
+      } else {
+        dayBuckets.push('bau');
+        bauDays.push(d);
+      }
+    }
+
+    return { year, month, daysInMonth, dayBuckets, bauDays, ddDays, paydayDays };
+  }
+
+  function distributePlatformDailyTargets(platformTarget, ms, bauPct, ddPct, paydayPct, roundingUnit) {
+    const bauBudget = Math.round(platformTarget * (bauPct / 100));
+    const ddBudget = Math.round(platformTarget * (ddPct / 100));
+    const paydayBudget = platformTarget - bauBudget - ddBudget;
+
+    const dailyTargets = new Array(ms.daysInMonth).fill(0);
+
+    function fillBucket(dayIndices, budget) {
+      if (dayIndices.length === 0) return;
+      const base = Math.round((budget / dayIndices.length) / roundingUnit) * roundingUnit;
+      let run = 0;
+      dayIndices.forEach((dayNum, i) => {
+        const val = (i === dayIndices.length - 1) ? (budget - run) : base;
+        dailyTargets[dayNum - 1] = Math.max(0, val);
+        run += dailyTargets[dayNum - 1];
+      });
+    }
+
+    fillBucket(ms.bauDays, bauBudget);
+    fillBucket(ms.ddDays, ddBudget);
+    fillBucket(ms.paydayDays, paydayBudget);
+
+    // Final exact reconciliation on the last day of the month
+    const totalSum = dailyTargets.reduce((a, b) => a + b, 0);
+    const diff = platformTarget - totalSum;
+    if (diff !== 0 && dailyTargets.length > 0) {
+      dailyTargets[dailyTargets.length - 1] += diff;
+    }
+
+    return { dailyTargets, bauBudget, ddBudget, paydayBudget };
+  }
+
+  function recalcTopDown(skipPerPlatRender = false) {
+    const totalTarget = Math.max(0, Number(document.getElementById('distTotalTarget')?.value) || 0);
+    const ym = document.getElementById('distMonthYear')?.value || '2026-03';
+    const ms = getMonthDayStructure(ym);
+    const usePerPlat = document.getElementById('tdPerPlatformToggle')?.checked || false;
+
+    // 1. Platform total validation
+    let platTotalPct = 0;
+    TD_PLATFORMS.forEach(p => { platTotalPct += (Number(tdPlatformShares[p]) || 0); });
+    platTotalPct = Number(platTotalPct.toFixed(2));
+    const platOk = Math.abs(platTotalPct - 100) < 0.01;
+
+    const platBadge = document.getElementById('tdPlatformTotalBadge');
+    if (platBadge) {
+      platBadge.className = `tm-td-valid-pill tm-mono ${platOk ? 'ok' : 'err'}`;
+      platBadge.innerHTML = `${platOk ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-exclamation-circle-fill"></i>'} ${platTotalPct}%`;
+    }
+
+    // Update each platform row Rp preview
+    const activePlatforms = TD_PLATFORMS.filter(p => (tdPlatformShares[p] || 0) > 0);
+    let allocatedPlatRp = 0;
+    const platMonthlyTargets = {};
+
+    TD_PLATFORMS.forEach((p, idx) => {
+      const share = Number(tdPlatformShares[p]) || 0;
+      let pTarget = 0;
+      if (share > 0 && totalTarget > 0) {
+        const isLastActive = activePlatforms[activePlatforms.length - 1] === p && platOk;
+        pTarget = isLastActive ? (totalTarget - allocatedPlatRp) : Math.round(totalTarget * (share / 100));
+        allocatedPlatRp += pTarget;
+      }
+      platMonthlyTargets[p] = pTarget;
+
+      const rpEl = document.getElementById(`tdPlatRp-${idx}`);
+      const cpEl = document.getElementById(`tdPlatCompact-${idx}`);
+      if (rpEl) rpEl.textContent = share > 0 ? formatRupiah(pTarget) : 'Tidak aktif';
+      if (cpEl) cpEl.textContent = share > 0 ? formatCompactNumber(pTarget) : '0%';
+    });
+
+    if (usePerPlat && !skipPerPlatRender) {
+      renderPerPlatformBucketTable();
+    }
+
+    // 2. Global Bucket validation & stacked bar
+    const gBau = Math.max(0, Number(document.getElementById('tdBauPct')?.value) || 0);
+    const gDd = Math.max(0, Number(document.getElementById('tdDdPct')?.value) || 0);
+    const gPd = Math.max(0, Number(document.getElementById('tdPaydayPct')?.value) || 0);
+    const bucketSum = Number((gBau + gDd + gPd).toFixed(2));
+    const bucketOk = Math.abs(bucketSum - 100) < 0.01;
+
+    const bucketBadge = document.getElementById('tdBucketTotalBadge');
+    if (bucketBadge) {
+      bucketBadge.className = `tm-td-valid-pill tm-mono ${bucketOk ? 'ok' : 'err'}`;
+      bucketBadge.innerHTML = `${bucketOk ? '<i class="bi bi-check-circle-fill"></i>' : '<i class="bi bi-exclamation-circle-fill"></i>'} ${bucketSum}%`;
+    }
+
+    const normDiv = bucketSum > 0 ? bucketSum : 100;
+    document.getElementById('tdBarBau').style.width = `${(gBau / normDiv) * 100}%`;
+    document.getElementById('tdBarDd').style.width = `${(gDd / normDiv) * 100}%`;
+    document.getElementById('tdBarPayday').style.width = `${(gPd / normDiv) * 100}%`;
+
+    // Update 3 bucket cards summary (based on Total Brand Target)
+    const gBauRp = Math.round(totalTarget * (gBau / 100));
+    const gDdRp = Math.round(totalTarget * (gDd / 100));
+    const gPdRp = Math.round(totalTarget * (gPd / 100));
+
+    document.getElementById('tdBauDaysLabel').textContent = `${ms.bauDays.length} hari`;
+    document.getElementById('tdBauTotalRp').textContent = formatRupiah(gBauRp);
+    document.getElementById('tdBauDailyRp').textContent = ms.bauDays.length > 0
+      ? `${formatRupiah(Math.round(gBauRp / ms.bauDays.length))} /hari` : '0 hari';
+
+    document.getElementById('tdDdDaysLabel').textContent = ms.ddDays.length > 0
+      ? `${ms.ddDays.length} hari (Tgl ${ms.ddDays.join(', ')})` : '0 hari';
+    document.getElementById('tdDdTotalRp').textContent = formatRupiah(gDdRp);
+    document.getElementById('tdDdDailyRp').textContent = ms.ddDays.length > 0
+      ? `${formatRupiah(Math.round(gDdRp / ms.ddDays.length))} /hari` : '0 hari';
+
+    document.getElementById('tdPaydayDaysLabel').textContent = ms.paydayDays.length > 0
+      ? `${ms.paydayDays.length} hari (Tgl ${ms.paydayDays[0]}–${ms.paydayDays[ms.paydayDays.length - 1]})` : '0 hari';
+    document.getElementById('tdPaydayTotalRp').textContent = formatRupiah(gPdRp);
+    document.getElementById('tdPaydayDailyRp').textContent = ms.paydayDays.length > 0
+      ? `${formatRupiah(Math.round(gPdRp / ms.paydayDays.length))} /hari` : '0 hari';
+
+    // 3. Live Breakdown Preview Table
+    const tbody = document.getElementById('tdPreviewTableBody');
+    const tfoot = document.getElementById('tdPreviewTableFoot');
+    if (!tbody || !tfoot) return;
+    tbody.innerHTML = '';
+
+    if (activePlatforms.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:14px; color:var(--text-muted);">Belum ada platform dengan porsi &gt; 0%</td></tr>`;
+      tfoot.innerHTML = '';
+      return;
+    }
+
+    let sumMonthly = 0, sumBauDaily = 0, sumDdDaily = 0, sumPdDaily = 0;
+
+    activePlatforms.forEach(p => {
+      const share = Number(tdPlatformShares[p]) || 0;
+      const pTarget = platMonthlyTargets[p] || 0;
+      const b = (usePerPlat && tdPerPlatformBuckets[p]) ? tdPerPlatformBuckets[p] : { bau: gBau, dd: gDd, payday: gPd };
+
+      const pBauRp = Math.round(pTarget * (b.bau / 100));
+      const pDdRp = Math.round(pTarget * (b.dd / 100));
+      const pPdRp = pTarget - pBauRp - pDdRp;
+
+      const bauDaily = ms.bauDays.length > 0 ? Math.round(pBauRp / ms.bauDays.length) : 0;
+      const ddDaily = ms.ddDays.length > 0 ? Math.round(pDdRp / ms.ddDays.length) : 0;
+      const pdDaily = ms.paydayDays.length > 0 ? Math.round(pPdRp / ms.paydayDays.length) : 0;
+
+      sumMonthly += pTarget;
+      sumBauDaily += bauDaily;
+      sumDdDaily += ddDaily;
+      sumPdDaily += pdDaily;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>
+          <span style="display:inline-flex; align-items:center; gap:6px; font-weight:700; color:var(--text-primary);">
+            ${renderPlatformLogoHtml(p, 15)} ${escapeHtml(p)}
+          </span>
+        </td>
+        <td class="tm-mono font-weight-bold">${share}%</td>
+        <td class="tm-mono font-weight-bold" style="color:var(--orange);">${formatRupiah(pTarget)}</td>
+        <td class="tm-mono">${ms.bauDays.length > 0 ? formatRupiah(bauDaily) : '-'}</td>
+        <td class="tm-mono" style="color:var(--orange);">${ms.ddDays.length > 0 ? formatRupiah(ddDaily) : '-'}</td>
+        <td class="tm-mono" style="color:var(--success);">${ms.paydayDays.length > 0 ? formatRupiah(pdDaily) : '-'}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tfoot.innerHTML = `
+      <tr>
+        <td>Total (${activePlatforms.length} Platform)</td>
+        <td class="tm-mono">${platTotalPct}%</td>
+        <td class="tm-mono" style="color:var(--orange);">${formatRupiah(sumMonthly)}</td>
+        <td class="tm-mono">${ms.bauDays.length > 0 ? formatRupiah(sumBauDaily) : '-'}</td>
+        <td class="tm-mono">${ms.ddDays.length > 0 ? formatRupiah(sumDdDaily) : '-'}</td>
+        <td class="tm-mono">${ms.paydayDays.length > 0 ? formatRupiah(sumPdDaily) : '-'}</td>
+      </tr>
+    `;
+  }
+
+  function buildCalculatorPayload() {
     const brand = document.getElementById('distBrand').value;
-    const platform = document.getElementById('distPlatform').value;
     const monthYear = document.getElementById('distMonthYear').value;
     const totalTarget = Number(document.getElementById('distTotalTarget').value);
-    const method = document.getElementById('distMethod').value;
+    const inputStorePic = (document.getElementById('distStorePic')?.value || '').trim();
+    const meta = brandMetaMap[brand] || {};
+    const resolvedPic = inputStorePic || meta.default_pic || '';
 
-    if (!brand || !platform || !monthYear || isNaN(totalTarget) || totalTarget <= 0) {
-      tmToast.fire({ icon: 'warning', title: 'Lengkapi isian target bulanan dengan benar' });
-      return;
+    if (!brand || !monthYear || isNaN(totalTarget) || totalTarget <= 0) {
+      return { ok: false, title: 'Data Belum Lengkap', text: 'Lengkapi isian Brand, Bulan, dan Total Target dengan benar.' };
+    }
+
+    const recordsToSave = [];
+    const monthlyRows = [];
+
+    if (distMode === 'topdown') {
+      const ms = getMonthDayStructure(monthYear);
+      const usePerPlat = document.getElementById('tdPerPlatformToggle').checked;
+      const roundingUnit = Number(document.getElementById('tdRoundingUnit').value) || 100000;
+
+      let platTotalPct = 0;
+      const activePlatforms = [];
+      TD_PLATFORMS.forEach(p => {
+        const s = Number(tdPlatformShares[p]) || 0;
+        platTotalPct += s;
+        if (s > 0) activePlatforms.push({ name: p, share: s });
+      });
+      if (Math.abs(platTotalPct - 100) >= 0.01 || activePlatforms.length === 0) {
+        return { ok: false, title: 'Porsi Platform Belum 100%', text: `Total porsi semua platform saat ini ${platTotalPct.toFixed(1)}%. Pastikan totalnya tepat 100%.` };
+      }
+
+      const gBau = Number(document.getElementById('tdBauPct').value) || 0;
+      const gDd = Number(document.getElementById('tdDdPct').value) || 0;
+      const gPd = Number(document.getElementById('tdPaydayPct').value) || 0;
+
+      if (!usePerPlat) {
+        const bSum = gBau + gDd + gPd;
+        if (Math.abs(bSum - 100) >= 0.01) {
+          return { ok: false, title: 'Porsi BAU / DD / Payday Belum 100%', text: `Total porsi BAU + DD + Payday saat ini ${bSum.toFixed(1)}%. Pastikan totalnya tepat 100%.` };
+        }
+        if ((gDd > 0 && ms.ddDays.length === 0) || (gPd > 0 && ms.paydayDays.length === 0) || (gBau > 0 && ms.bauDays.length === 0)) {
+          return { ok: false, title: 'Konflik Hari & Persentase', text: 'Ada kategori (BAU / DD / Payday) dengan porsi > 0% tetapi jumlah harinya 0. Sesuaikan tanggal atau ubah porsinya ke 0%.' };
+        }
+      } else {
+        for (const ap of activePlatforms) {
+          const b = tdPerPlatformBuckets[ap.name] || { bau: gBau, dd: gDd, payday: gPd };
+          const bSum = b.bau + b.dd + b.payday;
+          if (Math.abs(bSum - 100) >= 0.01) {
+            return { ok: false, title: `Porsi ${ap.name} Belum 100%`, text: `Total BAU + DD + Payday untuk ${ap.name} saat ini ${bSum.toFixed(1)}%. Pastikan tepat 100%.` };
+          }
+          if ((b.dd > 0 && ms.ddDays.length === 0) || (b.payday > 0 && ms.paydayDays.length === 0) || (b.bau > 0 && ms.bauDays.length === 0)) {
+            return { ok: false, title: `Konflik Hari di ${ap.name}`, text: 'Ada kategori dengan porsi > 0% tetapi jumlah harinya 0.' };
+          }
+        }
+      }
+
+      let allocatedPlatRp = 0;
+      activePlatforms.forEach((ap, idx) => {
+        const isLast = idx === activePlatforms.length - 1;
+        const pTarget = isLast ? (totalTarget - allocatedPlatRp) : Math.round(totalTarget * (ap.share / 100));
+        allocatedPlatRp += pTarget;
+
+        const b = (usePerPlat && tdPerPlatformBuckets[ap.name]) ? tdPerPlatformBuckets[ap.name] : { bau: gBau, dd: gDd, payday: gPd };
+        const { dailyTargets, bauBudget, ddBudget, paydayBudget } = distributePlatformDailyTargets(pTarget, ms, b.bau, b.dd, b.payday, roundingUnit);
+
+        monthlyRows.push({
+          'Brand': brand,
+          'Platform': ap.name,
+          'Period': monthYear,
+          'Platform Share (%)': ap.share,
+          'Monthly Target': pTarget,
+          'Daily Average': ms.daysInMonth > 0 ? Math.round(pTarget / ms.daysInMonth) : 0,
+          'BAU (%)': b.bau,
+          'BAU / Day': ms.bauDays.length > 0 ? Math.round(bauBudget / ms.bauDays.length) : 0,
+          'DD (%)': b.dd,
+          'DD / Day': ms.ddDays.length > 0 ? Math.round(ddBudget / ms.ddDays.length) : 0,
+          'Payday (%)': b.payday,
+          'Payday / Day': ms.paydayDays.length > 0 ? Math.round(paydayBudget / ms.paydayDays.length) : 0,
+          'Store PIC': resolvedPic
+        });
+
+        for (let d = 1; d <= ms.daysInMonth; d++) {
+          const dateStr = `${monthYear}-${String(d).padStart(2, '0')}`;
+          recordsToSave.push({
+            brand: brand,
+            platform: ap.name,
+            date: dateStr,
+            target: dailyTargets[d - 1],
+            store_pic: inputStorePic
+          });
+        }
+      });
+
+      return { ok: true, mode: 'topdown', brand, monthYear, totalTarget, activePlatforms, recordsToSave, monthlyRows, resolvedPic };
+    }
+
+    // ── MODE B: QUICK SINGLE PLATFORM ──
+    const platform = document.getElementById('distPlatform').value;
+    const method = document.getElementById('distMethod').value;
+    if (!platform) {
+      return { ok: false, title: 'Platform Belum Dipilih', text: 'Pilih platform terlebih dahulu.' };
     }
 
     const [yStr, mStr] = monthYear.split('-');
     const year = parseInt(yStr, 10);
     const month = parseInt(mStr, 10);
     const daysInMonth = new Date(year, month, 0).getDate();
-
-    // Remove existing records for this brand + platform + month
-    targetLedger = targetLedger.filter(r => !(
-      r.brand.toLowerCase() === brand.toLowerCase() &&
-      r.platform.toLowerCase() === platform.toLowerCase() &&
-      r.year_month === monthYear
-    ));
 
     let dailyTargets = [];
 
@@ -2094,13 +3453,12 @@
         dailyTargets.push(val);
       }
     } else {
-      // Payday (25-31) & Double Date weighted
       let weights = [];
       let totalWeight = 0;
       for (let d = 1; d <= daysInMonth; d++) {
         let w = 1.0;
-        if (d === month) w = 2.6; // e.g. 3.3 in March
-        else if (d >= 25) w = 1.6; // Payday week
+        if (d === month) w = 2.6;
+        else if (d >= 25) w = 1.6;
         weights.push(w);
         totalWeight += w;
       }
@@ -2113,32 +3471,96 @@
       }
     }
 
-    // Insert daily records
+    monthlyRows.push({
+      'Brand': brand,
+      'Platform': platform,
+      'Period': monthYear,
+      'Days Filled': daysInMonth,
+      'Monthly Target': totalTarget,
+      'Daily Average': daysInMonth > 0 ? Math.round(totalTarget / daysInMonth) : 0,
+      'Share (%)': 100,
+      'Store PIC': resolvedPic
+    });
+
     for (let d = 1; d <= daysInMonth; d++) {
       const dateStr = `${monthYear}-${String(d).padStart(2, '0')}`;
-      targetLedger.push({
-        id: nextId++,
+      recordsToSave.push({
         brand: brand,
         platform: platform,
         date: dateStr,
-        year_month: monthYear,
         target: dailyTargets[d - 1],
-        status: 'Active',
-        updated_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+        store_pic: inputStorePic
       });
     }
 
-    closeModal('distributeModal');
-    selectBrandFilter(brand, brand);
-    selectPlatformFilter(platform, platform);
-    selectMonthFilter(monthYear, monthYear);
+    return { ok: true, mode: 'quick', brand, platform, monthYear, totalTarget, recordsToSave, monthlyRows, resolvedPic };
+  }
 
-    Swal.fire({
-      icon: 'success',
-      title: 'Target Bulanan Berhasil Di-set!',
-      text: `${formatRupiah(totalTarget)} telah diagregasikan ke dalam ${daysInMonth} target harian untuk ${brand} di ${platform}.`,
-      confirmButtonColor: '#f97316'
-    });
+  function exportCalculatorToExcel() {
+    const calc = buildCalculatorPayload();
+    if (!calc.ok) {
+      Swal.fire({ icon: 'warning', title: calc.title, text: calc.text, confirmButtonColor: '#f97316' });
+      return;
+    }
+
+    const dailyExcelRows = calc.recordsToSave.map(r => ({
+      'Brand': r.brand,
+      'Platform': r.platform,
+      'Date': r.date,
+      'Target': r.target
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const wsMonthly = XLSX.utils.json_to_sheet(calc.monthlyRows);
+    const wsDaily = XLSX.utils.json_to_sheet(dailyExcelRows);
+
+    XLSX.utils.book_append_sheet(wb, wsMonthly, 'Monthly_Targets');
+    XLSX.utils.book_append_sheet(wb, wsDaily, 'Daily_Targets');
+
+    const safeBrand = calc.brand.replace(/[^a-zA-Z0-9_-]/g, '_');
+    XLSX.writeFile(wb, `Target_Calculator_${safeBrand}_${calc.monthYear}.xlsx`);
+    tmToast.fire({ icon: 'success', title: 'Hasil Target Calculator di-export (Monthly_Targets & Daily_Targets)' });
+  }
+
+  async function generateDailyFromMonthly(e) {
+    e.preventDefault();
+    const calc = buildCalculatorPayload();
+    if (!calc.ok) {
+      Swal.fire({ icon: 'warning', title: calc.title, text: calc.text, confirmButtonColor: '#f97316' });
+      return;
+    }
+
+    const btnSubmit = document.getElementById('btnSubmitDistribute');
+    try {
+      if (btnSubmit) btnSubmit.disabled = true;
+      const res = await saveTargetRecordsToApi(calc.recordsToSave);
+      closeModal('distributeModal');
+      await fetchTargetData(false);
+      selectBrandFilter(calc.brand, calc.brand);
+      if (calc.mode === 'topdown') {
+        selectPlatformFilter('', 'Semua Platform');
+        selectMonthFilter(calc.monthYear, formatMonthLabel(calc.monthYear));
+        Swal.fire({
+          icon: 'success',
+          title: 'Target Top-Down Tersimpan ke Database!',
+          html: `<strong>${formatRupiah(calc.totalTarget)}</strong> untuk <strong>${escapeHtml(calc.brand)}</strong> (${formatMonthLabel(calc.monthYear)}) berhasil disimpan ke <code>postgre_daily_target_mart</code> (${res.total_saved} record harian di ${calc.activePlatforms.length} platform) dan disinkronkan ke Sales Dashboard.`,
+          confirmButtonColor: '#f97316'
+        });
+      } else {
+        selectPlatformFilter(calc.platform, calc.platform);
+        selectMonthFilter(calc.monthYear, formatMonthLabel(calc.monthYear));
+        Swal.fire({
+          icon: 'success',
+          title: 'Target Bulanan Tersimpan ke Database!',
+          text: `${formatRupiah(calc.totalTarget)} telah disimpan ke dalam ${res.total_saved} target harian untuk ${calc.brand} di ${calc.platform} & disinkronkan ke Sales Dashboard.`,
+          confirmButtonColor: '#f97316'
+        });
+      }
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Gagal Menyimpan Target', text: err.message, confirmButtonColor: '#f97316' });
+    } finally {
+      if (btnSubmit) btnSubmit.disabled = false;
+    }
   }
 
   /* =====================================================================
@@ -2180,6 +3602,77 @@
 
   let parsedExcelRows = [];
 
+  // Exact Store Name normalization rules from data pipeline script
+  const BOSS_STORE_NAME_MAP = {
+    'makuku': 'makuku official',
+    'makuku babyboo': 'babyboo',
+    'hotwheels': 'hot wheels',
+    'popokmamaku': 'pilihan mamaku',
+    'thomas': 'thomas & friends',
+    'whiskas pedigree': 'whiskas'
+  };
+
+  function normalizeBossStoreName(rawStore) {
+    let s = String(rawStore || '').toLowerCase().trim();
+    if (BOSS_STORE_NAME_MAP[s]) s = BOSS_STORE_NAME_MAP[s];
+    return s;
+  }
+
+  function resolveCanonicalBrandName(storeOrBrand) {
+    const raw = String(storeOrBrand || '').trim();
+    if (!raw) return '';
+    const lower = raw.toLowerCase();
+    const clean = lower.replace(/[^a-z0-9]/g, '');
+    for (const ab of ALLOWED_BRANDS) {
+      if (ab.toLowerCase() === lower || ab.toLowerCase().replace(/[^a-z0-9]/g, '') === clean) {
+        return ab;
+      }
+    }
+    // Title-case fallback for display if not in ALLOWED_BRANDS list
+    return raw.replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function resolveCanonicalPlatformName(plat) {
+    const p = String(plat || '').toLowerCase().trim();
+    if (p === 'shopee') return 'Shopee';
+    if (p === 'tokopedia' || p === 'toped') return 'Tokopedia';
+    if (p === 'tiktok' || p === 'tiktok shop') return 'Tiktok';
+    if (p === 'lazada') return 'Lazada';
+    if (p === 'akulaku') return 'Akulaku';
+    if (p === 'blibli') return 'Blibli';
+    return plat ? String(plat).trim() : '';
+  }
+
+  // Timezone-safe Excel date parser (handles serial numbers, Date objects, and strings)
+  function parseExcelDateCell(cell, rawVal) {
+    if (cell && cell.t === 'n' && typeof cell.v === 'number' && cell.v > 35000 && cell.v < 65000 && XLSX.SSF && XLSX.SSF.parse_date_code) {
+      const dc = XLSX.SSF.parse_date_code(cell.v);
+      if (dc && dc.y >= 2000 && dc.m >= 1 && dc.m <= 12 && dc.d >= 1 && dc.d <= 31) {
+        return `${dc.y}-${String(dc.m).padStart(2, '0')}-${String(dc.d).padStart(2, '0')}`;
+      }
+    }
+    const v = (cell && cell.v !== undefined) ? cell.v : rawVal;
+    if (v instanceof Date && !isNaN(v.getTime())) {
+      const y = v.getFullYear();
+      const m = String(v.getMonth() + 1).padStart(2, '0');
+      const d = String(v.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+    if (typeof v === 'number' && v > 35000 && v < 65000 && XLSX.SSF && XLSX.SSF.parse_date_code) {
+      const dc = XLSX.SSF.parse_date_code(v);
+      if (dc && dc.y >= 2000 && dc.m >= 1 && dc.m <= 12 && dc.d >= 1 && dc.d <= 31) {
+        return `${dc.y}-${String(dc.m).padStart(2, '0')}-${String(dc.d).padStart(2, '0')}`;
+      }
+    }
+    const s = String(v ?? '').trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+    if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(s)) {
+      const [y, m, d] = s.split('/');
+      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return '';
+  }
+
   function processExcelFile(file) {
     if (!file.name.match(/\.(xlsx|xls)$/i)) {
       tmToast.fire({ icon: 'error', title: 'File harus berformat .xlsx atau .xls' });
@@ -2190,9 +3683,46 @@
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
+        // Use cellDates: false so numeric Excel date serials are parsed via XLSX.SSF.parse_date_code without UTC timezone shift
+        const workbook = XLSX.read(data, { type: 'array', cellDates: false, cellNF: true });
+
+        // Auto-detect Format 2 (Boss Wide Multi-Sheet Template) vs Format 1 (Standard Template)
+        const sixCharSheets = workbook.SheetNames.filter(s => String(s).trim().length === 6);
+        let bossSheets = [];
+
+        const candidateSheets = sixCharSheets.length > 0 ? sixCharSheets : workbook.SheetNames;
+        candidateSheets.forEach(sName => {
+          const ws = workbook.Sheets[sName];
+          if (!ws || !ws['!ref']) return;
+          const rows2D = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+          if (rows2D.length > 0) {
+            const headerStr = rows2D[0].map(h => String(h).trim());
+            if (headerStr.includes('店铺') || headerStr.includes('品牌')) {
+              bossSheets.push(sName);
+            }
+          }
+        });
+
+        const fmtBadge = document.getElementById('previewFormatBadge');
+
+        if (bossSheets.length > 0) {
+          if (fmtBadge) {
+            fmtBadge.textContent = `Format Original Wide (${bossSheets.length} Sheet: ${bossSheets.join(', ')})`;
+            fmtBadge.style.background = 'rgba(139, 92, 246, 0.14)';
+            fmtBadge.style.color = '#8B5CF6';
+          }
+          const meltedRows = parseBossWideWorkbook(workbook, bossSheets);
+          if (meltedRows.length === 0) {
+            tmToast.fire({ icon: 'warning', title: 'Tidak ditemukan baris target valid pada sheet' });
+            return;
+          }
+          parseAndValidateExcelRows(meltedRows, 'boss_wide');
+          return;
+        }
+
+        // Format 1: Standard Template (prefer sheet named Daily_Targets or Daily_Detail if present)
+        let targetSheetName = workbook.SheetNames.find(s => ['daily_targets', 'daily_detail'].includes(s.toLowerCase())) || workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[targetSheetName];
         const rawJson = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
 
         if (!rawJson || rawJson.length === 0) {
@@ -2200,7 +3730,12 @@
           return;
         }
 
-        parseAndValidateExcelRows(rawJson);
+        if (fmtBadge) {
+          fmtBadge.textContent = `Format Standar (${targetSheetName})`;
+          fmtBadge.style.background = 'rgba(2, 132, 199, 0.12)';
+          fmtBadge.style.color = '#0284C7';
+        }
+        parseAndValidateExcelRows(rawJson, 'standard');
       } catch (err) {
         console.error('Error parsing Excel file:', err);
         tmToast.fire({ icon: 'error', title: 'Gagal memproses file Excel' });
@@ -2209,37 +3744,132 @@
     reader.readAsArrayBuffer(file);
   }
 
-  function parseAndValidateExcelRows(rows) {
+  function parseBossWideWorkbook(workbook, sheetNames) {
+    // Replicates the exact Python script transformation:
+    // 1. Filter sheets (len == 6)
+    // 2. Clean empty '店铺' & exclude rows containing '目标差额'
+    // 3. Replace '\xa0' -> ' ', rsplit(' ', n=1) into store_name & platform
+    // 4. Lowercase + apply store_name replacements ('makuku' -> 'makuku official', 'makuku babyboo' -> 'babyboo', etc.)
+    // 5. Melt all date columns into (date, brand_group, store_name, platform, target, store_pic)
+    // 6. drop_duplicates(subset=['date', 'store_name', 'platform'], keep='last')
+    const dedupMap = new Map();
+
+    sheetNames.forEach(sheetName => {
+      const ws = workbook.Sheets[sheetName];
+      if (!ws || !ws['!ref']) return;
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      const headerRowIdx = range.s.r;
+
+      let colBrandGroup = -1;
+      let colDianpu = -1;
+      let colStorePic = -1;
+      const dateCols = []; // [{ colIdx, dateStr }]
+
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const cellAddr = XLSX.utils.encode_cell({ r: headerRowIdx, c: c });
+        const cell = ws[cellAddr];
+        if (!cell) continue;
+        const headerText = String(cell.w ?? cell.v ?? '').replace(/\u00A0/g, ' ').trim();
+
+        if (headerText === '品牌') {
+          colBrandGroup = c;
+        } else if (headerText === '店铺') {
+          colDianpu = c;
+        } else if (headerText.toLowerCase() === 'store pic') {
+          colStorePic = c;
+        } else {
+          const isoDate = parseExcelDateCell(cell, cell.v);
+          if (isoDate) {
+            dateCols.push({ colIdx: c, dateStr: isoDate });
+          }
+        }
+      }
+
+      // Fallback if '店铺' header wasn't found by exact name: use column index 1 (as in df.iloc[:, 1])
+      if (colDianpu === -1 && range.e.c >= 1) colDianpu = range.s.c + 1;
+      if (colBrandGroup === -1) colBrandGroup = range.s.c;
+
+      for (let r = headerRowIdx + 1; r <= range.e.r; r++) {
+        const dianpuCell = ws[XLSX.utils.encode_cell({ r: r, c: colDianpu })];
+        if (!dianpuCell || dianpuCell.v === undefined || dianpuCell.v === null) continue;
+
+        const dianpuRaw = String(dianpuCell.v).replace(/\u00A0/g, ' ').replace(/\s+/g, ' ').trim();
+        if (!dianpuRaw || dianpuRaw.includes('目标差额')) continue;
+
+        // rsplit(' ', n=1)
+        const lastSpaceIdx = dianpuRaw.lastIndexOf(' ');
+        if (lastSpaceIdx === -1) continue;
+
+        let storeName = dianpuRaw.substring(0, lastSpaceIdx).toLowerCase().trim();
+        let platform = dianpuRaw.substring(lastSpaceIdx + 1).toLowerCase().trim();
+        if (!storeName || !platform) continue;
+
+        storeName = normalizeBossStoreName(storeName);
+
+        const bgCell = colBrandGroup >= 0 ? ws[XLSX.utils.encode_cell({ r: r, c: colBrandGroup })] : null;
+        const picCell = colStorePic >= 0 ? ws[XLSX.utils.encode_cell({ r: r, c: colStorePic })] : null;
+        const brandGroup = bgCell && bgCell.v != null ? String(bgCell.v).trim() : '';
+        const storePic = picCell && picCell.v != null ? String(picCell.v).trim() : '';
+
+        dateCols.forEach(dc => {
+          const valCell = ws[XLSX.utils.encode_cell({ r: r, c: dc.colIdx })];
+          let rawTarget = valCell && valCell.v != null ? valCell.v : 0;
+          if (typeof rawTarget === 'string') {
+            rawTarget = Number(rawTarget.replace(/[^0-9.-]+/g, '')) || 0;
+          }
+          const targetInt = Math.round(Number(rawTarget) || 0);
+
+          const dedupKey = `${dc.dateStr}||${storeName}||${platform}`;
+          dedupMap.set(dedupKey, {
+            Brand: resolveCanonicalBrandName(storeName),
+            store_name: storeName,
+            brand_group: brandGroup,
+            Platform: resolveCanonicalPlatformName(platform),
+            Date: dc.dateStr,
+            Target: targetInt,
+            store_pic: storePic
+          });
+        });
+      }
+    });
+
+    return Array.from(dedupMap.values());
+  }
+
+  function parseAndValidateExcelRows(rows, sourceMode = 'standard') {
     parsedExcelRows = [];
     let validCount = 0;
+    const allowedPlatformsExtended = [...ALLOWED_PLATFORMS, 'akulaku'];
 
     rows.forEach((r, idx) => {
-      const brand = String(r['Brand'] || r['brand'] || '').trim();
-      const platform = String(r['Platform'] || r['platform'] || '').trim();
+      const rawBrand = String(r['Brand'] || r['brand'] || r['store_name'] || '').trim();
+      const normStore = normalizeBossStoreName(rawBrand);
+      const brand = resolveCanonicalBrandName(normStore || rawBrand);
+      const platform = resolveCanonicalPlatformName(r['Platform'] || r['platform'] || '');
       let dateVal = r['Date'] || r['date'] || r['Tanggal'] || '';
-      let targetVal = r['Target'] || r['target'] || r['Daily Target'] || 0;
+      let targetVal = r['Target'] ?? r['target'] ?? r['Daily Target'] ?? 0;
 
-      let dateStr = '';
-      if (dateVal instanceof Date) {
-        dateStr = dateVal.toISOString().substring(0, 10);
-      } else {
-        dateStr = String(dateVal).trim();
-      }
+      const dateStr = parseExcelDateCell(null, dateVal) || String(dateVal).trim();
 
       if (typeof targetVal === 'string') {
         targetVal = Number(targetVal.replace(/[^0-9.-]+/g, ''));
       }
+      targetVal = Math.round(Number(targetVal) || 0);
 
       let isValid = true;
       let reason = 'Valid';
 
+      const allowedCleanSet = new Set(ALLOWED_BRANDS.map(b => b.toLowerCase().replace(/[^a-z0-9]/g, '')));
+      const brandClean = brand.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const storeClean = (normStore || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
       if (!brand) {
         isValid = false; reason = 'Brand kosong';
-      } else if (ALLOWED_BRANDS.length > 0 && !ALLOWED_BRANDS.map(b => b.toLowerCase()).includes(brand.toLowerCase())) {
-        isValid = false; reason = `Brand '${brand}' di luar akses`;
+      } else if (!allowedCleanSet.has(brandClean) && !allowedCleanSet.has(storeClean)) {
+        isValid = false; reason = `Brand '${brand}' di luar akses akun Anda (dilewati)`;
       } else if (!platform) {
         isValid = false; reason = 'Platform kosong';
-      } else if (!ALLOWED_PLATFORMS.includes(platform.toLowerCase())) {
+      } else if (!allowedPlatformsExtended.includes(platform.toLowerCase())) {
         isValid = false; reason = `Platform '${platform}' tidak dikenali`;
       } else if (!dateStr || !dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
         isValid = false; reason = 'Format tanggal harus YYYY-MM-DD';
@@ -2252,9 +3882,12 @@
       parsedExcelRows.push({
         index: idx + 1,
         brand: brand,
+        store_name: normStore || brand.toLowerCase(),
+        brand_group: r['brand_group'] || r['Brand Group'] || '',
+        store_pic: r['store_pic'] || r['Store PIC'] || '',
         platform: platform,
         date: dateStr,
-        target: Number(targetVal) || 0,
+        target: targetVal,
         isValid: isValid,
         reason: reason
       });
@@ -2275,12 +3908,22 @@
     badge.style.color = validCount === parsedExcelRows.length ? 'var(--success)' : 'var(--warn)';
 
     tbody.innerHTML = '';
-    parsedExcelRows.slice(0, 50).forEach(r => {
+    parsedExcelRows.slice(0, 60).forEach(r => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="tm-mono">${r.index}</td>
-        <td><strong>${escapeHtml(r.brand || '-')}</strong></td>
-        <td>${escapeHtml(r.platform || '-')}</td>
+        <td>
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            ${renderBrandIcon(r.brand, 18)}
+            <strong>${escapeHtml(r.brand || '-')}</strong>
+          </span>
+        </td>
+        <td>
+          <span style="display:inline-flex; align-items:center; gap:6px;">
+            ${renderPlatformLogoHtml(r.platform, 16)}
+            <span>${escapeHtml(r.platform || '-')}</span>
+          </span>
+        </td>
         <td class="tm-mono">${r.date || '-'}</td>
         <td class="tm-mono font-weight-bold">${formatRupiah(r.target)}</td>
         <td>
@@ -2296,49 +3939,57 @@
     btnSubmit.disabled = validCount === 0;
   }
 
-  function confirmImportExcel() {
+  async function confirmImportExcel() {
     const validRows = parsedExcelRows.filter(r => r.isValid);
     if (validRows.length === 0) {
       tmToast.fire({ icon: 'warning', title: 'Tidak ada baris valid yang dapat di-import' });
       return;
     }
 
-    validRows.forEach(vr => {
-      const existing = targetLedger.find(r =>
-        r.brand.toLowerCase() === vr.brand.toLowerCase() &&
-        r.platform.toLowerCase() === vr.platform.toLowerCase() &&
-        r.date === vr.date
-      );
+    const btnSubmit = document.getElementById('btnSubmitImport');
+    const importedMonths = new Set();
+    const recordsToSave = validRows.map(vr => {
+      importedMonths.add(vr.date.substring(0, 7));
+      return {
+        brand: vr.brand,
+        store_name: vr.store_name,
+        brand_group: vr.brand_group || '',
+        store_pic: vr.store_pic || '',
+        platform: vr.platform,
+        date: vr.date,
+        target: vr.target
+      };
+    });
 
-      if (existing) {
-        existing.target = vr.target;
-        existing.updated_at = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    try {
+      if (btnSubmit) btnSubmit.disabled = true;
+      const res = await saveTargetRecordsToApi(recordsToSave);
+      closeModal('uploadModal');
+      await fetchTargetData(false);
+
+      if (selectedFilterMonth && !importedMonths.has(selectedFilterMonth) && importedMonths.size > 0) {
+        const sortedMonths = Array.from(importedMonths).sort();
+        const latestYm = sortedMonths[sortedMonths.length - 1];
+        selectMonthFilter(latestYm, formatMonthLabel(latestYm));
       } else {
-        targetLedger.unshift({
-          id: nextId++,
-          brand: vr.brand,
-          platform: vr.platform,
-          date: vr.date,
-          year_month: vr.date.substring(0, 7),
-          target: vr.target,
-          status: 'Active',
-          updated_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
-        });
+        applyFilters();
       }
-    });
 
-    closeModal('uploadModal');
-    applyFilters();
-    Swal.fire({
-      icon: 'success',
-      title: 'Import Berhasil!',
-      text: `${validRows.length} target harian berhasil dimasukkan ke sistem dan diagregasi.`,
-      confirmButtonColor: '#f97316'
-    });
+      Swal.fire({
+        icon: 'success',
+        title: 'Import Tersimpan ke Database!',
+        text: `${res.total_saved} target harian (${res.inserted_count} baru, ${res.updated_count} di-update) berhasil disimpan ke postgre_daily_target_mart & disinkronkan ke Sales Dashboard.`,
+        confirmButtonColor: '#f97316'
+      });
+    } catch (err) {
+      Swal.fire({ icon: 'error', title: 'Gagal Import Target', text: err.message, confirmButtonColor: '#f97316' });
+    } finally {
+      if (btnSubmit) btnSubmit.disabled = false;
+    }
   }
 
   /* =====================================================================
-     Download Excel Template & Export
+     Download Excel Template & 2-Sheet Export (Monthly + Daily)
      ===================================================================== */
   function downloadTemplateExcel() {
     const sampleBrand = ALLOWED_BRANDS[0] || 'Senka';
@@ -2362,10 +4013,75 @@
   }
 
   function exportMonthlyTableToExcel() {
-    const table = document.getElementById('monthlyTable');
-    const workbook = XLSX.utils.table_to_book(table, { sheet: "Monthly_Targets" });
-    XLSX.writeFile(workbook, `Target_Bulanan_Export_${new Date().toISOString().substring(0, 10)}.xlsx`);
-    tmToast.fire({ icon: 'success', title: 'Ringkasan bulanan berhasil di-export ke Excel' });
+    // Filter daily records based on current active filters
+    const matchedDaily = targetLedger.filter(r => {
+      if (selectedFilterBrand && r.brand.toLowerCase() !== selectedFilterBrand.toLowerCase()) return false;
+      if (selectedFilterPlatform && r.platform.toLowerCase() !== selectedFilterPlatform.toLowerCase()) return false;
+      if (selectedFilterMonth && !r.date.startsWith(selectedFilterMonth)) return false;
+      if (searchQuery) {
+        const text = `${r.brand} ${r.platform} ${r.date} ${r.year_month}`.toLowerCase();
+        if (!text.includes(searchQuery)) return false;
+      }
+      return true;
+    });
+
+    if (matchedDaily.length === 0) {
+      tmToast.fire({ icon: 'warning', title: 'Tidak ada data untuk di-export pada filter saat ini' });
+      return;
+    }
+
+    // 1. Build Sheet 1: Monthly_Targets (Aggregated)
+    const monthlyGroupsMap = {};
+    let grandTotal = 0;
+    matchedDaily.forEach(r => {
+      const key = `${r.brand.toLowerCase()}||${r.platform.toLowerCase()}||${r.year_month}`;
+      if (!monthlyGroupsMap[key]) {
+        monthlyGroupsMap[key] = {
+          brand: r.brand,
+          platform: r.platform,
+          month: r.year_month,
+          totalTarget: 0,
+          dayCount: 0
+        };
+      }
+      const val = Number(r.target) || 0;
+      monthlyGroupsMap[key].totalTarget += val;
+      monthlyGroupsMap[key].dayCount += 1;
+      grandTotal += val;
+    });
+
+    const monthlyRows = Object.values(monthlyGroupsMap)
+      .sort((a, b) => a.month.localeCompare(b.month) || a.brand.localeCompare(b.brand) || a.platform.localeCompare(b.platform))
+      .map(m => ({
+        'Brand': m.brand,
+        'Platform': m.platform,
+        'Period': m.month,
+        'Days Filled': m.dayCount,
+        'Monthly Target': m.totalTarget,
+        'Daily Average': m.dayCount > 0 ? Math.round(m.totalTarget / m.dayCount) : 0,
+        'Share (%)': grandTotal > 0 ? Number(((m.totalTarget / grandTotal) * 100).toFixed(2)) : 0
+      }));
+
+    // 2. Build Sheet 2: Daily_Targets (Identical columns to Download Template: Brand, Platform, Date, Target)
+    const dailyRows = [...matchedDaily]
+      .sort((a, b) => a.date.localeCompare(b.date) || a.brand.localeCompare(b.brand) || a.platform.localeCompare(b.platform))
+      .map(r => ({
+        'Brand': r.brand,
+        'Platform': r.platform,
+        'Date': r.date,
+        'Target': Number(r.target) || 0
+      }));
+
+    const wb = XLSX.utils.book_new();
+    const wsMonthly = XLSX.utils.json_to_sheet(monthlyRows);
+    const wsDaily = XLSX.utils.json_to_sheet(dailyRows);
+
+    XLSX.utils.book_append_sheet(wb, wsMonthly, 'Monthly_Targets');
+    XLSX.utils.book_append_sheet(wb, wsDaily, 'Daily_Targets');
+
+    const periodTag = selectedFilterMonth || 'All_Periods';
+    XLSX.writeFile(wb, `Target_Export_${periodTag}_${new Date().toISOString().substring(0, 10)}.xlsx`);
+    tmToast.fire({ icon: 'success', title: 'Export berhasil (2 Sheet: Monthly_Targets & Daily_Targets)' });
   }
 
   function exportSingleGroupExcel() {
@@ -2379,7 +4095,7 @@
 
     const worksheet = XLSX.utils.json_to_sheet(exportRows);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Daily_Detail');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Daily_Targets');
     XLSX.writeFile(workbook, `Target_Daily_${activeModalGroup.brand}_${activeModalGroup.platform}_${activeModalGroup.month}.xlsx`);
     tmToast.fire({ icon: 'success', title: 'Data harian bulan ini berhasil di-export' });
   }

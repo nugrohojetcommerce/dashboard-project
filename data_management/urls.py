@@ -13,4 +13,6 @@ urlpatterns = [
     path("api/categories/delete/", views.api_delete_category, name="api_delete_category"),
     path("api/template-catalog/", views.api_template_catalog, name="api_template_catalog"),
     path("api/download-template/", views.api_download_template_excel, name="api_download_template_excel"),
+    path("api/targets/", views.api_target_data, name="api_target_data"),
+    path("api/targets/save/", views.api_target_save, name="api_target_save"),
 ]

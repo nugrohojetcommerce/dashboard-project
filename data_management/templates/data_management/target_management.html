@@ -1771,18 +1771,7 @@
             <div>
               <label class="tm-form-label" for="distMonthYear">Periode Bulan <span style="color:#F43F5E;">*</span></label>
               <select id="distMonthYear" class="tm-custom-select" required onchange="onDistMonthChange()">
-                <option value="2026-01">Januari 2026 (31 Hari)</option>
-                <option value="2026-02">Februari 2026 (28 Hari)</option>
-                <option value="2026-03">Maret 2026 (31 Hari)</option>
-                <option value="2026-04">April 2026 (30 Hari)</option>
-                <option value="2026-05">Mei 2026 (31 Hari)</option>
-                <option value="2026-06">Juni 2026 (30 Hari)</option>
-                <option value="2026-07">Juli 2026 (31 Hari)</option>
-                <option value="2026-08">Agustus 2026 (31 Hari)</option>
-                <option value="2026-09">September 2026 (30 Hari)</option>
-                <option value="2026-10">Oktober 2026 (31 Hari)</option>
-                <option value="2026-11" selected>November 2026 (30 Hari)</option>
-                <option value="2026-12">Desember 2026 (31 Hari)</option>
+                <!-- Populated dynamically from DB available_months & current year -->
               </select>
             </div>
 
@@ -2146,7 +2135,9 @@
   const ALLOWED_BRANDS = [
     {% for b in brands %}"{{ b|escapejs }}",{% endfor %}
   ];
-  const ALLOWED_PLATFORMS = ['shopee', 'tokopedia', 'tiktok', 'lazada', 'blibli'];
+  const ALLOWED_PLATFORMS = [
+    {% for p in platforms %}"{{ p|lower|escapejs }}",{% endfor %}
+  ];
 
   // Global Ledger (Daily Records from postgre_daily_target_mart)
   let targetLedger = [];
@@ -2154,6 +2145,8 @@
   let nextId = 1;
 
   function getCurrentYearMonth() {
+    const serverYm = "{{ current_year_month|default:''|escapejs }}";
+    if (serverYm && /^\d{4}-\d{2}$/.test(serverYm)) return serverYm;
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   }
@@ -2181,36 +2174,54 @@
   }
 
   function rebuildMonthFilterDropdown(availableMonths) {
-    const container = document.getElementById('listMonthOptions');
-    if (!container) return;
+    const curYear = parseInt(DEFAULT_FILTER_MONTH.split('-')[0], 10) || new Date().getFullYear();
+    const dynamicYearMonths = [];
+    for (let m = 1; m <= 12; m++) {
+      dynamicYearMonths.push(`${curYear}-${String(m).padStart(2, '0')}`);
+    }
     const allMonthsSet = new Set([
       DEFAULT_FILTER_MONTH,
       ...(availableMonths || []),
-      '2026-12', '2026-11', '2026-10', '2026-09', '2026-08', '2026-07',
-      '2026-06', '2026-05', '2026-04', '2026-03', '2026-02', '2026-01'
+      ...dynamicYearMonths
     ]);
     const sorted = Array.from(allMonthsSet).sort().reverse();
 
-    let html = `
-      <div class="tm-dropdown-item ${selectedFilterMonth === '' ? 'active' : ''}" data-value="" onclick="selectMonthFilter('', 'Semua Periode')">
-        <span>Semua Periode</span>
-        <i class="bi bi-check-lg tm-single-check ${selectedFilterMonth === '' ? '' : 'd-none'}"></i>
-      </div>
-    `;
-    sorted.forEach(ym => {
-      const lbl = formatMonthLabel(ym);
-      const isAct = selectedFilterMonth === ym;
-      html += `
-        <div class="tm-dropdown-item ${isAct ? 'active' : ''}" data-value="${ym}" onclick="selectMonthFilter('${ym}', '${lbl}')">
-          <span>${lbl}</span>
-          <i class="bi bi-check-lg tm-single-check ${isAct ? '' : 'd-none'}"></i>
+    const container = document.getElementById('listMonthOptions');
+    if (container) {
+      let html = `
+        <div class="tm-dropdown-item ${selectedFilterMonth === '' ? 'active' : ''}" data-value="" onclick="selectMonthFilter('', 'Semua Periode')">
+          <span>Semua Periode</span>
+          <i class="bi bi-check-lg tm-single-check ${selectedFilterMonth === '' ? '' : 'd-none'}"></i>
         </div>
       `;
-    });
-    container.innerHTML = html;
+      sorted.forEach(ym => {
+        const lbl = formatMonthLabel(ym);
+        const isAct = selectedFilterMonth === ym;
+        html += `
+          <div class="tm-dropdown-item ${isAct ? 'active' : ''}" data-value="${ym}" onclick="selectMonthFilter('${ym}', '${lbl}')">
+            <span>${lbl}</span>
+            <i class="bi bi-check-lg tm-single-check ${isAct ? '' : 'd-none'}"></i>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
     const lblEl = document.getElementById('labelMonthDropdown');
     if (lblEl) {
       lblEl.textContent = selectedFilterMonth ? formatMonthLabel(selectedFilterMonth) : 'Semua Periode';
+    }
+
+    // Also populate #distMonthYear select in Target Calculator dynamically
+    const distSelect = document.getElementById('distMonthYear');
+    if (distSelect) {
+      const prevVal = distSelect.value || selectedFilterMonth || DEFAULT_FILTER_MONTH;
+      const ascMonths = [...sorted].reverse();
+      distSelect.innerHTML = ascMonths.map(ym => {
+        const [yStr, mStr] = ym.split('-');
+        const days = new Date(parseInt(yStr, 10), parseInt(mStr, 10), 0).getDate();
+        return `<option value="${ym}" ${ym === prevVal ? 'selected' : ''}>${formatMonthLabel(ym)} (${days} Hari)</option>`;
+      }).join('');
     }
   }
 

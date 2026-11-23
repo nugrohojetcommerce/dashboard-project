@@ -385,21 +385,53 @@ def api_download_template_excel(request: HttpRequest) -> HttpResponse:
 @login_required
 def target_management_view(request: HttpRequest) -> HttpResponse:
     """Renders the Daily & Monthly Target Data Ingestion and Planning management page."""
-    from brand_performance_v2.services import get_user_brands
+    from django.utils import timezone
+    from brand_performance_v2.services import get_user_brands, apply_brand_access_filter
     from brand_performance_v2.models import OrderMartSummary
+    from double_date.models import DailyTargetMart
 
     user_brands = get_user_brands(request.user)
+    today = timezone.localdate()
 
-    platforms = ["Shopee", "Tokopedia", "Tiktok", "Lazada"]
+    # Dynamically query distinct platforms from OrderMartSummary & DailyTargetMart for accessible brands
+    oms_qs = apply_brand_access_filter(OrderMartSummary.objects.order_by(), request.user)
+    oms_plats = set(
+        oms_qs.exclude(platform__isnull=True)
+        .exclude(platform="")
+        .values_list("platform", flat=True)
+        .distinct()
+    )
+    dtm_plats = set(
+        DailyTargetMart.objects.order_by()
+        .exclude(platform__isnull=True)
+        .exclude(platform="")
+        .exclude(platform__iexact="store")
+        .values_list("platform", flat=True)
+        .distinct()
+    )
+
+    canonical_plats_set = {_display_platform(p) for p in (oms_plats | dtm_plats) if str(p).strip()}
+    preferred_order = ["Shopee", "Tokopedia", "Tiktok", "Lazada", "Blibli", "Akulaku"]
+    platforms = [p for p in preferred_order if p in canonical_plats_set] + sorted(
+        [p for p in canonical_plats_set if p not in preferred_order]
+    )
+
+    # Dynamically collect available years from DB + current year
+    dtm_dates = DailyTargetMart.objects.order_by().exclude(date__isnull=True).values_list("date", flat=True).distinct()
+    db_years = {d.year for d in dtm_dates if d} | {today.year - 1, today.year, today.year + 1}
+    years = sorted(db_years, reverse=True)
+
+    current_year_month = f"{today.year}-{today.month:02d}"
 
     context: dict[str, Any] = {
         "brands": user_brands,
         "platforms": platforms,
-        "default_brand": user_brands[0] if user_brands else "Senka",
-        "default_platform": "Shopee",
-        "current_year": 2026,
-        "current_month": "11",
-        "years": [2026, 2025, 2024],
+        "default_brand": user_brands[0] if user_brands else "",
+        "default_platform": platforms[0] if platforms else "",
+        "current_year": today.year,
+        "current_month": f"{today.month:02d}",
+        "current_year_month": current_year_month,
+        "years": years,
         "is_superuser": getattr(request.user, "is_superuser", False),
     }
     return render(request, "data_management/target_management.html", context)
@@ -522,9 +554,24 @@ def _build_target_reference_maps(user) -> dict[str, Any]:
             brand_group_by_store.setdefault(sn, bg_up)
             brand_group_by_store.setdefault(b_low, bg_up)
 
+    # Map clean lowercase platform key -> canonical display platform name from OrderMartSummary
+    display_platform_by_key: dict[str, str] = {}
+    oms_platforms = (
+        OrderMartSummary.objects.order_by()
+        .exclude(platform__isnull=True)
+        .exclude(platform="")
+        .values_list("platform", flat=True)
+        .distinct()
+    )
+    for p in oms_platforms:
+        p_str = str(p).strip()
+        if p_str:
+            display_platform_by_key[p_str.lower()] = p_str
+
     return {
         "user_brands": user_brands,
         "display_brand_by_key": display_brand_by_key,
+        "display_platform_by_key": display_platform_by_key,
         "existing_store_map": existing_store_map,
         "brand_group_by_store": brand_group_by_store,
         "pic_by_store_plat": pic_by_store_plat,
@@ -532,19 +579,14 @@ def _build_target_reference_maps(user) -> dict[str, Any]:
     }
 
 
-def _display_platform(raw_plat: str) -> str:
-    p = str(raw_plat or "").strip().lower()
-    mapping = {
-        "shopee": "Shopee",
-        "tokopedia": "Tokopedia",
-        "toped": "Tokopedia",
-        "tiktok": "Tiktok",
-        "tiktok shop": "Tiktok",
-        "lazada": "Lazada",
-        "blibli": "Blibli",
-        "akulaku": "Akulaku",
-    }
-    return mapping.get(p, str(raw_plat or "").strip().title())
+def _display_platform(raw_plat: str, display_platform_by_key: dict[str, str] | None = None) -> str:
+    p = str(raw_plat or "").strip()
+    if not p:
+        return ""
+    p_low = p.lower()
+    if display_platform_by_key and p_low in display_platform_by_key:
+        return display_platform_by_key[p_low]
+    return p.title()
 
 
 @never_cache
@@ -555,11 +597,13 @@ def api_target_data(request: HttpRequest) -> JsonResponse:
     Returns daily target records from `postgre_daily_target_mart` along with
     existing brand_group & Store PIC mappings for the authenticated user.
     """
+    from django.utils import timezone
     from double_date.models import DailyTargetMart
 
     ref = _build_target_reference_maps(request.user)
     user_brands = ref["user_brands"]
     display_brand_by_key = ref["display_brand_by_key"]
+    display_platform_by_key = ref["display_platform_by_key"]
     existing_store_map = ref["existing_store_map"]
     brand_group_by_store = ref["brand_group_by_store"]
     pic_by_store = ref["pic_by_store"]
@@ -590,7 +634,7 @@ def api_target_data(request: HttpRequest) -> JsonResponse:
             or display_brand_by_key.get(sn_alnum)
             or sn_raw.title()
         )
-        disp_plat = _display_platform(row["platform"])
+        disp_plat = _display_platform(row["platform"], display_platform_by_key)
         d_iso = row["date"].isoformat()
         ym = d_iso[:7]
         months_set.add(ym)
@@ -613,7 +657,7 @@ def api_target_data(request: HttpRequest) -> JsonResponse:
     for b in user_brands:
         sn = _normalize_store_name_for_db(b, existing_store_map)
         plat_pics = {
-            _display_platform(pl): pic
+            _display_platform(pl, display_platform_by_key): pic
             for (s_key, pl), pic in pic_by_store_plat.items()
             if s_key == sn and pic
         }
@@ -624,13 +668,15 @@ def api_target_data(request: HttpRequest) -> JsonResponse:
             "platform_pics": plat_pics,
         }
 
+    current_ym = timezone.localdate().strftime("%Y-%m")
     sorted_months = sorted(months_set, reverse=True)
     return JsonResponse({
         "status": "success",
         "records": records,
         "brand_meta": brand_meta,
         "available_months": sorted_months,
-        "latest_month": sorted_months[0] if sorted_months else "2026-11",
+        "current_month": current_ym,
+        "latest_month": sorted_months[0] if sorted_months else current_ym,
     })
 
 

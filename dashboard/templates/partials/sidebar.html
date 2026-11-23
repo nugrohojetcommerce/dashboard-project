@@ -120,10 +120,19 @@
   }
 
   .app-sidebar .nav-link.active {
-    background: var(--orange-dim) !important;
-    border-color: var(--glass-border-h) !important;
+    background: linear-gradient(135deg, rgba(255, 107, 0, 0.16) 0%, rgba(255, 107, 0, 0.09) 100%) !important;
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    border-color: rgba(255, 107, 0, 0.42) !important;
+    box-shadow: 0 4px 14px rgba(255, 107, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.55);
     color: var(--orange) !important;
     font-weight: 600;
+  }
+
+  [data-theme="dark"] .app-sidebar .nav-link.active {
+    background: linear-gradient(135deg, rgba(255, 107, 0, 0.22) 0%, rgba(255, 107, 0, 0.12) 100%) !important;
+    border-color: rgba(255, 107, 0, 0.50) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
   .app-sidebar .nav-icon {
@@ -312,7 +321,10 @@
     <!-- Navigation Menu Items -->
     <div class="sidebar-wrapper">
         <nav class="mt-3">
-            <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">                
+            <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu">
+              <li class="nav-header text-uppercase mt-1 mb-1 px-3" style="font-size: 0.68rem; font-weight: 700; color: var(--text-faint); letter-spacing: .08em;">
+                  Brand Performance
+              </li>
               <li class="nav-item">
                   <a href="/brand_performance_v2/" class="nav-link {% if '/brand_performance_v2/' in request.path %}active{% endif %}">
                       <i class="nav-icon bi bi-lightning-charge"></i>
@@ -336,9 +348,15 @@
                   Data Management
               </li>
               <li class="nav-item">
-                  <a href="/data_management/product_mapping/" class="nav-link {% if '/data_management/' in request.path or '/product_mapping/' in request.path %}active{% endif %}">
+                  <a href="/data_management/product_mapping/" class="nav-link {% if '/data_management/product_mapping/' in request.path or request.path == '/data_management/' %}active{% endif %}">
                       <i class="nav-icon bi bi-diagram-3"></i>
                       <p>Product Mapping</p>
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a href="/data_management/target_management/" class="nav-link {% if '/target_management/' in request.path %}active{% endif %}">
+                      <i class="nav-icon bi bi-bullseye"></i>
+                      <p>Target Management</p>
                       <span class="badge rounded-pill ms-auto" style="font-size: 0.65rem; background: var(--orange-dim); color: var(--orange); border: 1px solid var(--glass-border-h);">New</span>
                   </a>
               </li>

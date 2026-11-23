@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     path("", views.product_mapping_view, name="data_management_home"),
     path("product_mapping/", views.product_mapping_view, name="product_mapping"),
+    path("target_management/", views.target_management_view, name="target_management"),
     path("api/data/", views.api_mapping_data, name="api_mapping_data"),
     path("api/save/", views.api_save_mapping, name="api_save_mapping"),
     path("api/batch/", views.api_batch_mapping, name="api_batch_mapping"),
@@ -12,4 +13,6 @@ urlpatterns = [
     path("api/categories/delete/", views.api_delete_category, name="api_delete_category"),
     path("api/template-catalog/", views.api_template_catalog, name="api_template_catalog"),
     path("api/download-template/", views.api_download_template_excel, name="api_download_template_excel"),
+    path("api/targets/", views.api_target_data, name="api_target_data"),
+    path("api/targets/save/", views.api_target_save, name="api_target_save"),
 ]

@@ -683,6 +683,193 @@
     }
   }
 
+  /* ── Unified Product Section (SKU / Product Group level toggle) ── */
+  .prod-unified {
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    border-radius: var(--bp2-radius);
+    box-shadow: var(--bp2-shadow);
+    margin-bottom: 24px;
+    min-width: 0;
+  }
+
+  .prod-unified-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px 20px;
+    flex-wrap: wrap;
+    padding: 18px 20px 14px;
+    border-radius: var(--bp2-radius) var(--bp2-radius) 0 0;
+    background: color-mix(in srgb, var(--orange) 5%, var(--bp2-surface));
+  }
+
+  .prod-unified-title .bp2-card-title {
+    font-size: 1.08rem;
+  }
+
+  .prod-unified-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px 12px;
+    flex-wrap: wrap;
+  }
+
+  .prod-level-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .76rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  #productLevelToggle button.active {
+    background: var(--orange);
+    color: #FFFFFF;
+    font-weight: 700;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--orange) 35%, transparent);
+  }
+
+  .prod-mapping-link {
+    font-size: .74rem;
+    font-weight: 600;
+    color: var(--orange);
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: var(--orange-dim);
+    border: 1px solid var(--glass-border-h);
+    transition: all .15s ease;
+  }
+
+  .prod-mapping-link:hover {
+    background: var(--orange);
+    color: #FFFFFF;
+  }
+
+  .prod-scope-note {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding: 10px 20px;
+    font-size: .76rem;
+    color: var(--text-sub);
+    background: color-mix(in srgb, var(--bp2-surface-2) 70%, var(--bp2-surface));
+    border-top: 1px solid var(--bp2-border);
+    border-bottom: 1px solid var(--bp2-border);
+  }
+
+  .prod-scope-msg {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .prod-scope-msg i {
+    color: var(--orange);
+    flex-shrink: 0;
+  }
+
+  .prod-scope-chips {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .prod-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    background: var(--bp2-surface);
+    border: 1px solid var(--bp2-border);
+    transition: all .15s ease;
+  }
+
+  .prod-chip:hover {
+    color: var(--orange);
+    border-color: var(--glass-border-h);
+  }
+
+  .prod-unmapped-warn {
+    width: 100%;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 11px;
+    border-radius: 8px;
+    font-size: .74rem;
+    background: var(--warn-bg, rgba(245, 158, 11, .10));
+    color: var(--warn, #F59E0B);
+    border: 1px solid color-mix(in srgb, var(--warn, #F59E0B) 30%, transparent);
+  }
+
+  .prod-unmapped-warn a {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+  }
+
+  .prod-unified .prod-block.bp2-card {
+    margin: 0;
+    border: 0;
+    border-top: 1px solid var(--bp2-border);
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    scroll-margin-top: 16px;
+  }
+
+  .prod-unified .prod-block.bp2-card:first-of-type {
+    border-top: 0;
+  }
+
+  .prod-unified .prod-block.bp2-card:last-child {
+    border-radius: 0 0 var(--bp2-radius) var(--bp2-radius);
+  }
+
+  .prod-level-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 6px;
+    font-size: .68rem;
+    font-weight: 700;
+    background: var(--orange-dim);
+    color: var(--orange);
+    border: 1px solid var(--glass-border-h);
+    margin-left: 2px;
+  }
+
+  .prod-level-badge.is-group {
+    background: rgba(99, 102, 241, .12);
+    color: #6366F1;
+    border-color: rgba(99, 102, 241, .35);
+  }
+
+  .prod-donut-wrap {
+    grid-template-columns: minmax(200px, 300px) minmax(0, 1fr);
+    max-width: 920px;
+  }
+
+  .prod-donut-wrap .bp2-legend {
+    max-height: 220px;
+  }
+
+  @media (max-width: 900px) {
+    .prod-donut-wrap {
+      grid-template-columns: 1fr;
+    }
+  }
+
   /* ── Tables ── */
   .table-wrapper {
     overflow-x: auto;
@@ -3466,8 +3653,7 @@
   body.bp2-confidential-active #kpiRealizationRate,
   body.bp2-confidential-active #kpiTargetAch,
   body.bp2-confidential-active #kpiHeroAch,
-  body.bp2-confidential-active #skuDonutTotal,
-  body.bp2-confidential-active #groupDonutTotal,
+  body.bp2-confidential-active #productDonutTotal,
   body.bp2-confidential-active .bp2-legend-item em,
   body.bp2-confidential-active .bp2-legend-item b {
     filter: blur(5px) !important;
@@ -4626,9 +4812,11 @@
   <!-- =====================================================================
        ROW: 3. DAILY TREND & 4. PLATFORM NMV SHARE TARGET
        ===================================================================== -->
-  <div class="grid-2-col">
+  <!-- =====================================================================
+       ROW: 3. DAILY TREND
+       ===================================================================== -->
     <!-- 3. Daily Trend Line Chart -->
-    <div class="bp2-card" style="margin-bottom:0;">
+    <div class="bp2-card">
       <div class="bp2-card-header">
         <div class="bp2-card-title-group">
           <h2 class="bp2-card-title">
@@ -4684,26 +4872,10 @@
       </div>
     </div>
 
-    <!-- 4. Platform NMV Share Target Achievement -->
-    <div class="bp2-card" style="margin-bottom:0;">
-      <div class="bp2-card-header">
-        <div class="bp2-card-title-group">
-          <h2 class="bp2-card-title">
-            <i class="bi bi-bullseye" style="color:var(--orange);"></i> Platform Target Pacing
-          </h2>
-          <p class="bp2-card-subtitle">Platform distribution share vs target benchmark</p>
-        </div>
-      </div>
-      <div class="target-container" id="targetContainer">
-        <!-- Populated via JS -->
-      </div>
-    </div>
-  </div>
-
   <!-- =====================================================================
-       ROW: 5, 6, 7. DONUT CHARTS (Platform, SKU, Dummy Product Groups)
+       ROW: 4 & 5. PLATFORM CONTRIBUTION + PLATFORM TARGET PACING
        ===================================================================== -->
-  <div class="grid-3-col">
+  <div class="grid-2-col">
     <!-- 5. Platform Share (NMV) -->
     <div class="bp2-card" style="margin-bottom:0;">
       <div class="bp2-card-header">
@@ -4725,58 +4897,83 @@
       </div>
     </div>
 
-    <!-- 6. Top SKUs (NMV Share) -->
-    <div class="bp2-card" style="margin-bottom:0;">
-      <div class="bp2-card-header">
-        <div class="bp2-card-title-group">
-          <h2 class="bp2-card-title"><i class="bi bi-award" style="color:var(--orange);"></i> Leading SKU Contribution</h2>
-        </div>
-      </div>
-      <div class="bp2-donut-wrap">
-        <div class="bp2-chart-body sm">
-          <canvas id="skuDonutCanvas"></canvas>
-          <div class="bp2-donut-center">
-            <div>
-              <small>Total Top SKUs (NMV)</small>
-              <strong class="mono" id="skuDonutTotal">—</strong>
-            </div>
-          </div>
-        </div>
-        <div class="bp2-legend" id="skuDonutLegend"></div>
-      </div>
-    </div>
-
-    <!-- 7. Product Groups -->
+    <!-- 4. Platform NMV Share Target Achievement -->
     <div class="bp2-card" style="margin-bottom:0;">
       <div class="bp2-card-header">
         <div class="bp2-card-title-group">
           <h2 class="bp2-card-title">
-            <i class="bi bi-diagram-3" style="color:var(--orange);"></i> Product Groups
+            <i class="bi bi-bullseye" style="color:var(--orange);"></i> Platform Target Pacing
           </h2>
+          <p class="bp2-card-subtitle">Platform distribution share vs target benchmark</p>
         </div>
-        <a href="/data_management/product_mapping/" style="font-size: 0.74rem; font-weight: 600; color: var(--orange); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px; background: var(--orange-dim); border: 1px solid var(--glass-border-h); transition: all 0.15s ease;" title="Buka Halaman Product Category Mapping">
-          Kelola Product Mapping &rarr;
-        </a>
       </div>
-      <div class="bp2-donut-wrap" style="position: relative;">
-        <div class="bp2-chart-body sm">
-          <canvas id="groupDonutCanvas"></canvas>
-          <div class="bp2-donut-center">
-            <div>
-              <small>Total Group</small>
-              <strong class="mono" id="groupDonutTotal">—</strong>
-            </div>
-          </div>
-        </div>
-        <div class="bp2-legend" id="groupDonutLegend"></div>
+      <div class="target-container" id="targetContainer">
+        <!-- Populated via JS -->
       </div>
     </div>
   </div>
 
   <!-- =====================================================================
-       8. PRODUCT EFFICIENCY & DISCOUNT MATRIX (4 QUADRANTS SCATTER PLOT)
+       PRODUCT ANALYTICS (UNIFIED SECTION) — one toggle: SKU level / Product Group level
+       Contains: Contribution Share, Efficiency Matrix, Price Analytics, Performance Breakdown
        ===================================================================== -->
-  <div class="bp2-card" id="scatterMatrixCard" style="position: relative;">
+  <section class="prod-unified" id="productSection">
+    <div class="prod-unified-head">
+      <div class="prod-unified-title">
+        <h2 class="bp2-card-title"><i class="bi bi-box-seam" style="color:var(--orange);"></i> Product Analytics</h2>
+        <p class="bp2-card-subtitle">Satu toggle mengatur level seluruh analisis produk di bawah ini</p>
+      </div>
+      <div class="prod-unified-controls">
+        <span class="prod-level-label"><i class="bi bi-layers"></i> Level analisis</span>
+        <div class="bp2-segment" id="productLevelToggle" role="tablist" aria-label="Level analisis produk">
+          <button type="button" class="active" data-level="sku" onclick="setProductLevel('sku')" title="Breakdown per SKU">
+            <i class="bi bi-upc-scan"></i> SKU
+          </button>
+          <button type="button" data-level="group" onclick="setProductLevel('group')" title="Breakdown per Product Group (hasil Product Mapping)">
+            <i class="bi bi-diagram-3"></i> Product Group
+          </button>
+        </div>
+        <a class="prod-mapping-link" href="/data_management/product_mapping/" title="Buka halaman Product Mapping">Kelola Product Mapping &rarr;</a>
+      </div>
+    </div>
+    <div class="prod-scope-note" id="prodScopeNote">
+      <div class="prod-scope-msg"><i class="bi bi-info-circle-fill"></i> <span id="prodScopeMsg"></span></div>
+      <div class="prod-scope-chips">
+        <a class="prod-chip" href="#prodContribBlock"><i class="bi bi-pie-chart"></i> Contribution</a>
+        <a class="prod-chip" href="#scatterMatrixCard"><i class="bi bi-grid-3x3-gap"></i> Efficiency Matrix</a>
+        <a class="prod-chip" href="#priceBlock"><i class="bi bi-tags"></i> Price Analytics</a>
+        <a class="prod-chip" href="#perfBlock"><i class="bi bi-calendar3-range"></i> Performance Breakdown</a>
+      </div>
+      <div class="prod-unmapped-warn" id="prodUnmappedWarn" style="display:none;"></div>
+    </div>
+
+    <!-- ── Block 1: Contribution Share (SKU: Top 20 SKUs | Product Group: mapped groups) ── -->
+    <div class="prod-block bp2-card" id="prodContribBlock">
+      <div class="bp2-card-header">
+        <div class="bp2-card-title-group">
+          <h2 class="bp2-card-title">
+            <i class="bi bi-pie-chart" style="color:var(--orange);"></i>
+            <span id="prodContribTitle">Leading SKU Contribution</span>
+            <span class="prod-level-badge" data-prod-level-badge>SKU</span>
+          </h2>
+          <p class="bp2-card-subtitle" id="prodContribSubtitle">Top 20 SKU berdasarkan NMV, sisanya digabung sebagai Others</p>
+        </div>
+      </div>
+      <div class="bp2-donut-wrap prod-donut-wrap">
+        <div class="bp2-chart-body sm">
+          <canvas id="productDonutCanvas"></canvas>
+          <div class="bp2-donut-center">
+            <div>
+              <small id="productDonutCenterLabel">Total Top SKUs (NMV)</small>
+              <strong class="mono" id="productDonutTotal">—</strong>
+            </div>
+          </div>
+        </div>
+        <div class="bp2-legend" id="productDonutLegend"></div>
+      </div>
+    </div>
+
+  <div class="prod-block bp2-card" id="scatterMatrixCard" style="position: relative;">
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title" id="scatterCardTitle">
@@ -4848,7 +5045,7 @@
     <!-- 4 Quadrant Summary Cards -->
     <div class="scatter-summary-cards">
       <div class="scatter-quad-card q1" id="cardQ1" onclick="filterScatterByQuadrant('Q1')"
-        title="Klik untuk highlight dan lihat daftar Top SKU Stars">
+        title="Klik untuk highlight dan lihat daftar Top produk Stars">
         <div class="quad-header">
           <span class="quad-title">Q1: Stars</span>
           <span class="quad-count-badge" id="q1Count">0 SKUs</span>
@@ -4861,7 +5058,7 @@
       </div>
 
       <div class="scatter-quad-card q2" id="cardQ2" onclick="filterScatterByQuadrant('Q2')"
-        title="Klik untuk highlight dan lihat daftar Top SKU Promo Drivers">
+        title="Klik untuk highlight dan lihat daftar Top produk Promo Drivers">
         <div class="quad-header">
           <span class="quad-title">Q2: Promo Drivers</span>
           <span class="quad-count-badge" id="q2Count">0 SKUs</span>
@@ -4874,7 +5071,7 @@
       </div>
 
       <div class="scatter-quad-card q3" id="cardQ3" onclick="filterScatterByQuadrant('Q3')"
-        title="Klik untuk highlight dan lihat daftar Top SKU Sleepers">
+        title="Klik untuk highlight dan lihat daftar Top produk Sleepers">
         <div class="quad-header">
           <span class="quad-title">Q3: Sleepers</span>
           <span class="quad-count-badge" id="q3Count">0 SKUs</span>
@@ -4887,7 +5084,7 @@
       </div>
 
       <div class="scatter-quad-card q4" id="cardQ4" onclick="filterScatterByQuadrant('Q4')"
-        title="Klik untuk highlight dan lihat daftar Top SKU Inefficient">
+        title="Klik untuk highlight dan lihat daftar Top produk Inefficient">
         <div class="quad-header">
           <span class="quad-title">Q4: Inefficient</span>
           <span class="quad-count-badge" id="q4Count">0 SKUs</span>
@@ -4964,16 +5161,14 @@
     </div>
   </div>
 
-  <!-- =====================================================================
-       9. PRODUCT PRICE ANALYTICS
-       ===================================================================== -->
-  <div class="bp2-card">
+  <div class="prod-block bp2-card" id="priceBlock">
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title">
           <i class="bi bi-tags" style="color:var(--orange);"></i> Product Price Analytics (Selected Timeframe)
+          <span class="prod-level-badge" data-prod-level-badge>SKU</span>
         </h2>
-        <p class="bp2-card-subtitle">RSP, Selling Price, Platform & Seller Discount bounds from Product Mart</p>
+        <p class="bp2-card-subtitle" id="priceBlockSubtitle">RSP, Selling Price, Platform &amp; Seller Discount bounds from Product Mart</p>
       </div>
       <div class="bp2-card-actions">
         <button type="button" class="bp2-btn"
@@ -5004,8 +5199,8 @@
       <table class="bp2-tbl" id="productPriceTable">
         <thead>
           <tr>
-            <th class="cell-truncate-sku">SKU</th>
-            <th class="cell-truncate-prod">Product Name</th>
+            <th class="cell-truncate-sku" id="thPriceCode">SKU</th>
+            <th class="cell-truncate-prod" id="thPriceName">Product Name</th>
             <th class="cell-truncate-brand">Brand</th>
             <th style="min-width: 140px;">Discount Share (Plat / Seller)</th>
             <th class="num" style="min-width: 130px;">Total Plat Disc</th>
@@ -5027,16 +5222,14 @@
     </div>
   </div>
 
-  <!-- =====================================================================
-       10. PRODUCT PERFORMANCE MONTHLY BREAKDOWN (WITH TOTAL TOGGLE)
-       ===================================================================== -->
-  <div class="bp2-card">
+  <div class="prod-block bp2-card" id="perfBlock">
     <div class="bp2-card-header">
       <div class="bp2-card-title-group">
         <h2 class="bp2-card-title">
           <i class="bi bi-calendar3-range" style="color:var(--orange);"></i> Product Performance Monthly Breakdown
+          <span class="prod-level-badge" data-prod-level-badge>SKU</span>
         </h2>
-        <p class="bp2-card-subtitle">Pivoted period metrics per SKU and product with clear color-coded period indicators
+        <p class="bp2-card-subtitle" id="perfBlockSubtitle">Pivoted period metrics per SKU and product with clear color-coded period indicators
         </p>
       </div>
       <div class="bp2-card-actions">
@@ -5105,6 +5298,7 @@
       </table>
     </div>
   </div>
+  </section>
 
   <!-- =====================================================================
        11. CANCELLATION & ORDER LEAKAGE FORENSICS
@@ -5471,8 +5665,14 @@
   // Chart instances
   let trendChartInstance = null;
   let platformDonutInstance = null;
-  let skuDonutInstance = null;
-  let groupDonutInstance = null;
+  let productDonutInstance = null;
+  // Product analytics level: 'sku' (default) | 'group' (Product Group from Product Mapping)
+  let productLevel = (() => {
+    try { return localStorage.getItem('bp2_product_level') === 'group' ? 'group' : 'sku'; } catch (e) { return 'sku'; }
+  })();
+  let rawProdMonthlyList = []; // SKU-level source of truth (monthly slices)
+  let rawProdTotalList = [];   // SKU-level source of truth (total period)
+  let rawPriceList = [];       // SKU-level source of truth (price analytics)
   let scatterChartInstance = null;
   let cachedDonutData = null;
 
@@ -6539,9 +6739,12 @@
     // 4. Platform NMV Share Target Achievement Progress Bars
     renderTargetAchievement(data.platform_targets);
 
-    // Cache product lists early so scatter plot has access
-    prodMonthlyListFull = data.product_performance?.monthly_breakdown || [];
-    prodTotalListFull = data.product_performance?.total_period || [];
+    // Cache raw SKU-level product lists; derived lists follow the active level (SKU / Product Group)
+    rawProdMonthlyList = data.product_performance?.monthly_breakdown || [];
+    rawProdTotalList = data.product_performance?.total_period || [];
+    rawPriceList = data.price_analytics || [];
+    rebuildProductLevelData();
+    updateProductLevelUI();
 
     // 5, 6, 7. Donut Charts
     renderDonutCharts(data.donut_charts);
@@ -6550,9 +6753,6 @@
     renderScatterPlotMatrix();
 
     // 9. Product Price Analytics Table
-    priceListFull = data.price_analytics || [];
-
-    console.log(data.price_analytics);
     renderPricePlatformToggle();
     filterPriceTable();
 
@@ -7256,131 +7456,286 @@
       });
     }
 
-    // 6. Top SKUs (NMV Share)
-    if (skuDonutInstance) skuDonutInstance.destroy();
-    const skuCanvas = document.getElementById('skuDonutCanvas');
-    if (skuCanvas && donutData.sku_share) {
-      const items = (donutData.sku_share || []).filter(s => s.value > 0);
-      const labels = items.map(s => s.name);
-      const values = items.map(s => s.value);
-      const SKU_PALETTE = [
-        '#6366F1', '#F59E0B', '#10B981', '#0EA5E9', '#8B5CF6',
-        '#EC4899', '#F97316', '#14B8A6', '#3B82F6', '#84CC16',
-        '#A855F7', '#E11D48', '#06B6D4', '#EAB308', '#D946EF',
-        '#22C55E', '#38BDF8', '#FB923C', '#64748B', '#0284C7'
-      ];
-      const colors = items.map((s, i) => s.name === 'Others' ? '#94A3B8' : SKU_PALETTE[i % SKU_PALETTE.length]);
-      const total = values.reduce((a, b) => a + b, 0);
+    // Product contribution donut follows the unified SKU / Product Group level
+    renderProductDonut();
+  }
 
-      const totalEl = document.getElementById('skuDonutTotal');
-      if (totalEl) totalEl.textContent = formatCurrency(total);
+  /* =====================================================================
+     UNIFIED PRODUCT SECTION — LEVEL TOGGLE (SKU  |  PRODUCT GROUP)
+     Raw data stays SKU-level; Product Group level is derived by aggregating
+     SKU rows on `product_group` (hasil Product Mapping) + brand + platform.
+     ===================================================================== */
+  const UNMAPPED_GROUP = 'Belum Terpetakan';
 
-      const legendEl = document.getElementById('skuDonutLegend');
-      if (legendEl) {
-        legendEl.innerHTML = items.map((s, i) => `
-          <div class="bp2-legend-item">
-            <i style="background:${colors[i]}"></i>
-            <span title="${escapeHtml(s.full_name || s.product_name || s.name)}">${escapeHtml(s.name)}</span>
-            <em class="mono">${formatCurrency(s.value)}</em>
-            <b class="mono">${isConfidentialActive() ? '•••%' : (s.share_pct ?? (total ? (s.value / total * 100).toFixed(1) : '0.0')) + '%'}</b>
-          </div>
-        `).join('') || '<div class="text-muted" style="padding:10px;">No SKU data</div>';
+  function prodLabels() {
+    return productLevel === 'group'
+      ? { code: 'Product Group', name: 'Cakupan SKU', unit: 'Groups', search: 'Filter by product group or brand…', scatterSearch: 'Cari product group…' }
+      : { code: 'SKU', name: 'Product Name', unit: 'SKUs', search: 'Filter by SKU or product name…', scatterSearch: 'Cari SKU atau nama produk…' };
+  }
+
+  function prodLevelBadgeHtml() {
+    const isGroup = productLevel === 'group';
+    return `<span class="prod-level-badge ${isGroup ? 'is-group' : ''}" data-prod-level-badge>${isGroup ? 'Product Group' : 'SKU'}</span>`;
+  }
+
+  function buildGroupContext() {
+    const brandsByGroup = new Map();
+    const skusByGroupBrand = new Map();
+    const touch = (r) => {
+      const g = r.product_group || UNMAPPED_GROUP;
+      const b = (r.brand || '').trim();
+      if (!brandsByGroup.has(g)) brandsByGroup.set(g, new Set());
+      brandsByGroup.get(g).add(b);
+      const k = `${g}|||${b}`;
+      if (!skusByGroupBrand.has(k)) skusByGroupBrand.set(k, new Set());
+      skusByGroupBrand.get(k).add((r.sku_code || '').trim());
+    };
+    rawProdTotalList.forEach(touch);
+    rawPriceList.forEach(touch);
+    rawProdMonthlyList.forEach(s => (s.products || []).forEach(touch));
+    return { brandsByGroup, skusByGroupBrand };
+  }
+
+  // Unique, human-readable key: group name, suffixed with brand only when the same group name exists in several brands
+  function groupLabel(ctx, g, brand) {
+    return (ctx.brandsByGroup.get(g)?.size || 0) > 1 ? `${g} — ${brand}` : g;
+  }
+
+  function groupCoverageText(ctx, g, brand) {
+    const n = ctx.skusByGroupBrand.get(`${g}|||${brand}`)?.size || 0;
+    return g === UNMAPPED_GROUP ? `${n} SKU belum dimapping` : `${n} SKU`;
+  }
+
+  function aggregatePerfRowsToGroups(rows, ctx) {
+    const map = new Map();
+    (rows || []).forEach(p => {
+      const g = p.product_group || UNMAPPED_GROUP;
+      const brand = (p.brand || '').trim();
+      const key = `${g}|||${brand}|||${p.platform || ''}`;
+      let it = map.get(key);
+      if (!it) {
+        it = {
+          ...p,
+          sku_code: groupLabel(ctx, g, brand),
+          product_name: groupCoverageText(ctx, g, brand),
+          product_group: g,
+          net_qty: 0, nmv: 0, gmv: 0, gross_orders: 0, net_orders: 0, platform_discount: 0, seller_discount: 0
+        };
+        map.set(key, it);
       }
+      it.net_qty += Number(p.net_qty) || 0;
+      it.nmv += Number(p.nmv) || 0;
+      it.gmv += Number(p.gmv) || 0;
+      it.gross_orders += Number(p.gross_orders) || 0;
+      it.net_orders += Number(p.net_orders) || 0;
+      it.platform_discount += Number(p.platform_discount) || 0;
+      it.seller_discount += Number(p.seller_discount) || 0;
+    });
+    return Array.from(map.values()).map(it => {
+      it.cr = it.gross_orders > 0 ? Math.round(((it.gross_orders - it.net_orders) / it.gross_orders) * 1000) / 10 : 0;
+      return it;
+    });
+  }
 
-      skuDonutInstance = new Chart(skuCanvas.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: values,
-            backgroundColor: colors,
-            borderWidth: 0,
-            hoverOffset: 6,
-            borderRadius: 6,
-            spacing: 5
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '72%',
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              ...getChartTooltipConfig(),
-              callbacks: {
-                title: (tooltipItems) => {
-                  const idx = tooltipItems[0].dataIndex;
-                  const item = items[idx];
-                  return item ? (item.sku_code || item.name) : '';
-                },
-                afterTitle: (tooltipItems) => {
-                  const idx = tooltipItems[0].dataIndex;
-                  const item = items[idx];
-                  return (item && item.product_name && item.product_name !== '-') ? item.product_name : '';
-                },
-                label: (c) => ` NMV: ${formatCurrency(c.raw)} (${isConfidentialActive() ? '•••%' : (total ? (c.raw / total * 100).toFixed(1) : 0) + '%'})`
-              }
+  function aggregatePriceRowsToGroups(rows, ctx) {
+    const map = new Map();
+    const num = (v) => Number(v) || 0;
+    const minPositive = (a, b) => (b > 0 ? (a > 0 ? Math.min(a, b) : b) : a);
+    (rows || []).forEach(p => {
+      const g = p.product_group || UNMAPPED_GROUP;
+      const brand = (p.brand || '').trim();
+      const key = `${g}|||${brand}|||${p.platform || ''}`;
+      let it = map.get(key);
+      if (!it) {
+        it = {
+          ...p,
+          sku_code: groupLabel(ctx, g, brand),
+          product_name: groupCoverageText(ctx, g, brand),
+          product_group: g,
+          max_rsp: 0, min_rsp: 0, max_selling_price: 0, min_selling_price: 0,
+          max_platform_discount: 0, min_platform_discount: 0, max_seller_discount: 0, min_seller_discount: 0,
+          total_platform_discount: 0, total_seller_discount: 0, total_nmv: 0
+        };
+        map.set(key, it);
+      }
+      it.max_rsp = Math.max(it.max_rsp, num(p.max_rsp));
+      it.max_selling_price = Math.max(it.max_selling_price, num(p.max_selling_price));
+      it.max_platform_discount = Math.max(it.max_platform_discount, num(p.max_platform_discount));
+      it.max_seller_discount = Math.max(it.max_seller_discount, num(p.max_seller_discount));
+      it.min_rsp = minPositive(it.min_rsp, num(p.min_rsp));
+      it.min_selling_price = minPositive(it.min_selling_price, num(p.min_selling_price));
+      it.min_platform_discount = minPositive(it.min_platform_discount, num(p.min_platform_discount));
+      it.min_seller_discount = minPositive(it.min_seller_discount, num(p.min_seller_discount));
+      it.total_platform_discount += num(p.total_platform_discount);
+      it.total_seller_discount += num(p.total_seller_discount);
+      it.total_nmv += num(p.total_nmv);
+    });
+    return Array.from(map.values());
+  }
+
+  function rebuildProductLevelData() {
+    if (productLevel === 'group') {
+      const ctx = buildGroupContext();
+      prodTotalListFull = aggregatePerfRowsToGroups(rawProdTotalList, ctx);
+      prodMonthlyListFull = rawProdMonthlyList.map(s => ({ ...s, products: aggregatePerfRowsToGroups(s.products, ctx) }));
+      priceListFull = aggregatePriceRowsToGroups(rawPriceList, ctx);
+    } else {
+      prodTotalListFull = rawProdTotalList;
+      prodMonthlyListFull = rawProdMonthlyList;
+      priceListFull = rawPriceList;
+    }
+  }
+
+  function updateProductLevelUI() {
+    const isGroup = productLevel === 'group';
+    const L = prodLabels();
+
+    document.querySelectorAll('#productLevelToggle button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.level === productLevel);
+    });
+    document.querySelectorAll('[data-prod-level-badge]').forEach(el => {
+      el.textContent = isGroup ? 'Product Group' : 'SKU';
+      el.classList.toggle('is-group', isGroup);
+    });
+
+    const setText = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+    const setPlaceholder = (id, text) => { const el = document.getElementById(id); if (el) el.placeholder = text; };
+
+    setText('prodScopeMsg', isGroup
+      ? 'Mode Product Group: semua bagian di bawah dikelompokkan per product group hasil Product Mapping. Satu baris = gabungan seluruh SKU di group tersebut.'
+      : 'Mode SKU: semua bagian di bawah ditampilkan per SKU. Pilih Product Group untuk melihat ringkasan per kelompok produk.');
+
+    setText('prodContribTitle', isGroup ? 'Product Group Contribution' : 'Leading SKU Contribution');
+    setText('prodContribSubtitle', isGroup
+      ? 'Kontribusi NMV per product group (hasil Product Mapping)'
+      : 'Top 20 SKU berdasarkan NMV, sisanya digabung sebagai Others');
+    setText('productDonutCenterLabel', isGroup ? 'Total Group (NMV)' : 'Total Top SKUs (NMV)');
+    setText('priceBlockSubtitle', isGroup
+      ? 'RSP, Selling Price, Platform & Seller Discount per product group (Min/Max = batas terendah/tertinggi antar SKU dalam group)'
+      : 'RSP, Selling Price, Platform & Seller Discount bounds from Product Mart');
+    setText('perfBlockSubtitle', isGroup
+      ? 'Pivoted period metrics per product group (akumulasi seluruh SKU dalam group) with clear color-coded period indicators'
+      : 'Pivoted period metrics per SKU and product with clear color-coded period indicators');
+    setText('thPriceCode', L.code);
+    setText('thPriceName', L.name);
+    setPlaceholder('scatterSearchInput', L.scatterSearch);
+    setPlaceholder('priceSearchInput', L.search);
+    setPlaceholder('prodSearchInput', L.search);
+
+    // Warn when some NMV is not yet mapped to a product group
+    const warn = document.getElementById('prodUnmappedWarn');
+    if (warn) {
+      let total = 0, unmapped = 0;
+      const unmappedSkus = new Set();
+      (rawProdTotalList || []).forEach(r => {
+        const n = Number(r.nmv) || 0;
+        total += n;
+        if ((r.product_group || UNMAPPED_GROUP) === UNMAPPED_GROUP) {
+          unmapped += n;
+          unmappedSkus.add((r.sku_code || '').trim());
+        }
+      });
+      if (isGroup && unmapped > 0 && total > 0) {
+        const pct = isConfidentialActive() ? '•••' : (unmapped / total * 100).toFixed(1);
+        warn.style.display = 'flex';
+        warn.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i><span>${pct}% NMV (${unmappedSkus.size} SKU) belum dimapping dan dikelompokkan sebagai &ldquo;${UNMAPPED_GROUP}&rdquo;. <a href="/data_management/product_mapping/">Lengkapi mapping</a></span>`;
+      } else {
+        warn.style.display = 'none';
+        warn.innerHTML = '';
+      }
+    }
+  }
+
+  function setProductLevel(level) {
+    if (level !== 'sku' && level !== 'group') return;
+    if (level === productLevel) return;
+    productLevel = level;
+    try { localStorage.setItem('bp2_product_level', level); } catch (e) { /* ignore */ }
+
+    // Reset scatter selection so no stale SKU / group stays highlighted
+    scatterDataCalculated = null;
+    resetScatterFilters();
+
+    rebuildProductLevelData();
+    updateProductLevelUI();
+
+    renderProductDonut();
+    renderScatterPlotMatrix();
+    renderPricePlatformToggle();
+    filterPriceTable();
+    renderProdPlatformToggle();
+    renderProductPerformanceTable();
+  }
+
+  function renderProductDonut() {
+    if (productDonutInstance) { productDonutInstance.destroy(); productDonutInstance = null; }
+    const canvas = document.getElementById('productDonutCanvas');
+    if (!canvas || !cachedDonutData) return;
+
+    const isGroup = productLevel === 'group';
+    const items = ((isGroup ? cachedDonutData.group_share : cachedDonutData.sku_share) || []).filter(s => s.value > 0);
+    const labels = items.map(s => s.name);
+    const values = items.map(s => s.value);
+    const PRODUCT_PALETTE = [
+      '#6366F1', '#F59E0B', '#10B981', '#0EA5E9', '#8B5CF6',
+      '#EC4899', '#F97316', '#14B8A6', '#3B82F6', '#84CC16',
+      '#A855F7', '#E11D48', '#06B6D4', '#EAB308', '#D946EF',
+      '#22C55E', '#38BDF8', '#FB923C', '#64748B', '#0284C7'
+    ];
+    const colors = items.map((s, i) => (s.name === 'Others' || s.name === UNMAPPED_GROUP) ? '#94A3B8' : PRODUCT_PALETTE[i % PRODUCT_PALETTE.length]);
+    const total = values.reduce((a, b) => a + b, 0);
+
+    const totalEl = document.getElementById('productDonutTotal');
+    if (totalEl) totalEl.textContent = formatCurrency(total);
+
+    const legendEl = document.getElementById('productDonutLegend');
+    if (legendEl) {
+      legendEl.innerHTML = items.map((s, i) => `
+        <div class="bp2-legend-item">
+          <i style="background:${colors[i]}"></i>
+          <span title="${escapeHtml(s.full_name || s.product_name || s.name)}">${escapeHtml(s.name)}</span>
+          <em class="mono">${formatCurrency(s.value)}</em>
+          <b class="mono">${isConfidentialActive() ? '•••%' : (s.share_pct ?? (total ? (s.value / total * 100).toFixed(1) : '0.0')) + '%'}</b>
+        </div>
+      `).join('') || `<div class="text-muted" style="padding:10px;">${isGroup ? 'No product group data' : 'No SKU data'}</div>`;
+    }
+
+    productDonutInstance = new Chart(canvas.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors,
+          borderWidth: 0,
+          hoverOffset: 6,
+          borderRadius: 6,
+          spacing: 5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '72%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            ...getChartTooltipConfig(),
+            callbacks: {
+              title: (tooltipItems) => {
+                const item = items[tooltipItems[0].dataIndex];
+                return item ? (isGroup ? item.name : (item.sku_code || item.name)) : '';
+              },
+              afterTitle: (tooltipItems) => {
+                const item = items[tooltipItems[0].dataIndex];
+                return (!isGroup && item && item.product_name && item.product_name !== '-') ? item.product_name : '';
+              },
+              label: (c) => ` NMV: ${formatCurrency(c.raw)} (${isConfidentialActive() ? '•••%' : (total ? (c.raw / total * 100).toFixed(1) : 0) + '%'})`
             }
           }
         }
-      });
-    }
-
-    // 7. Product Groups (Placeholder)
-    if (groupDonutInstance) groupDonutInstance.destroy();
-    const groupCanvas = document.getElementById('groupDonutCanvas');
-    if (groupCanvas && donutData.group_share) {
-      const items = donutData.group_share;
-      const labels = items.map(g => g.name);
-      const values = items.map(g => g.value);
-      const colors = items.map((_, i) => PALETTE[i % PALETTE.length]);
-      const total = values.reduce((a, b) => a + b, 0);
-
-      const totalEl = document.getElementById('groupDonutTotal');
-      if (totalEl) totalEl.textContent = formatCurrency(total);
-
-      const legendEl = document.getElementById('groupDonutLegend');
-      if (legendEl) {
-        legendEl.innerHTML = items.map((g, i) => `
-          <div class="bp2-legend-item">
-            <i style="background:${colors[i]}"></i>
-            <span title="${escapeHtml(g.name)}">${escapeHtml(g.name)}</span>
-            <em class="mono">${formatCurrency(g.value)}</em>
-            <b class="mono">${isConfidentialActive() ? '•••%' : (g.share_pct ?? (total ? (g.value / total * 100).toFixed(1) : '0.0')) + '%'}</b>
-          </div>
-        `).join('') || '<div class="text-muted" style="padding:10px;">No group data</div>';
       }
-
-      groupDonutInstance = new Chart(groupCanvas.getContext('2d'), {
-        type: 'doughnut',
-        data: {
-          labels: labels,
-          datasets: [{
-            data: values,
-            backgroundColor: colors,
-            borderWidth: 0,
-            hoverOffset: 6,
-            borderRadius: 6,
-            spacing: 5
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '72%',
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              ...getChartTooltipConfig(),
-              callbacks: {
-                label: (c) => ` ${c.label}: ${formatCurrency(c.raw)} (${isConfidentialActive() ? '•••%' : (total ? (c.raw / total * 100).toFixed(1) : 0) + '%'})`
-              }
-            }
-          }
-        }
-      });
-    }
+    });
   }
 
   /* =====================================================================
@@ -7957,6 +8312,7 @@
         titleEl.innerHTML = `<i class="bi bi-grid-3x3-gap" style="color:var(--orange);"></i> Product Efficiency Matrix (NMV vs Total Discount)`;
       }
     }
+    if (titleEl) titleEl.insertAdjacentHTML('beforeend', ' ' + prodLevelBadgeHtml());
     if (subEl) {
       if (currentScatterMode === 'multiplier') {
         subEl.textContent = '4-Quadrant matrix mengukur daya ungkit promo (Rupiah omzet penjualan per Rp 1 subsidi diskon)';
@@ -7996,19 +8352,19 @@
     const q4NmvVal = sumNmv(q4List);
 
     // Update summary card UI
-    document.getElementById('q1Count').textContent = isConfidentialActive() ? '••• SKUs' : `${q1List.length} SKUs`;
+    document.getElementById('q1Count').textContent = isConfidentialActive() ? ('••• ' + prodLabels().unit) : `${q1List.length} ${prodLabels().unit}`;
     document.getElementById('q1Nmv').textContent = formatCompactCurrency(q1NmvVal);
     document.getElementById('q1Share').textContent = isConfidentialActive() ? '•••%' : (totalNmv > 0 ? `${((q1NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%');
 
-    document.getElementById('q2Count').textContent = isConfidentialActive() ? '••• SKUs' : `${q2List.length} SKUs`;
+    document.getElementById('q2Count').textContent = isConfidentialActive() ? ('••• ' + prodLabels().unit) : `${q2List.length} ${prodLabels().unit}`;
     document.getElementById('q2Nmv').textContent = formatCompactCurrency(q2NmvVal);
     document.getElementById('q2Share').textContent = isConfidentialActive() ? '•••%' : (totalNmv > 0 ? `${((q2NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%');
 
-    document.getElementById('q3Count').textContent = isConfidentialActive() ? '••• SKUs' : `${q3List.length} SKUs`;
+    document.getElementById('q3Count').textContent = isConfidentialActive() ? ('••• ' + prodLabels().unit) : `${q3List.length} ${prodLabels().unit}`;
     document.getElementById('q3Nmv').textContent = formatCompactCurrency(q3NmvVal);
     document.getElementById('q3Share').textContent = isConfidentialActive() ? '•••%' : (totalNmv > 0 ? `${((q3NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%');
 
-    document.getElementById('q4Count').textContent = isConfidentialActive() ? '••• SKUs' : `${q4List.length} SKUs`;
+    document.getElementById('q4Count').textContent = isConfidentialActive() ? ('••• ' + prodLabels().unit) : `${q4List.length} ${prodLabels().unit}`;
     document.getElementById('q4Nmv').textContent = formatCompactCurrency(q4NmvVal);
     document.getElementById('q4Share').textContent = isConfidentialActive() ? '•••%' : (totalNmv > 0 ? `${((q4NmvVal / totalNmv) * 100).toFixed(1)}%` : '0%');
 
@@ -8037,7 +8393,7 @@
 
     // Update count indicator
     const platSuffix = currentScatterPlatform === 'All' ? '' : ` (${currentScatterPlatform})`;
-    document.getElementById('scatterPointCount').textContent = `Showing ${items.length} SKUs${platSuffix}`;
+    document.getElementById('scatterPointCount').textContent = `Showing ${items.length} ${prodLabels().unit}${platSuffix}`;
 
     buildScatterChart(dataObj, false);
   }
@@ -8813,7 +9169,7 @@
           selectedScatterQuadrant === 'Q3' ? 'Sleepers' : 'Inefficient';
       backBtnHtml = `
         <button type="button" class="bp2-btn sm" onclick="renderQuadrantSkuList('${selectedScatterQuadrant}')" style="font-size:.74rem; padding:5px 10px; margin-bottom:10px; width:100%; justify-content:center; gap:6px;">
-          <i class="bi bi-arrow-left"></i> Kembali ke Top SKUs ${qMetaName}
+          <i class="bi bi-arrow-left"></i> Kembali ke Top ${prodLabels().unit} ${qMetaName}
         </button>
       `;
     }
@@ -8996,7 +9352,7 @@
       }
 
       return `
-        <div class="scatter-sku-item ${isSel ? 'active' : ''}" onclick="selectScatterSkuByCode('${escapeHtml(it.sku_code)}')" title="Klik untuk melihat kartu rincian lengkap">
+        <div class="scatter-sku-item ${isSel ? 'active' : ''}" onclick="selectScatterSkuByCode(decodeURIComponent('${encodeURIComponent(it.sku_code)}'))" title="Klik untuk melihat kartu rincian lengkap">
           <div class="scatter-sku-rank">${rankNum}</div>
           <div class="scatter-sku-info">
             <div class="scatter-sku-code" style="display:inline-flex; align-items:center; gap:4px;">
@@ -9018,8 +9374,8 @@
         <div class="scatter-sku-list-header">
           <div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <h4 class="scatter-sku-list-title"><i class="bi ${quadMeta.icon}"></i> Top ${quadMeta.title} SKUs</h4>
-              <span class="scatter-detail-badge ${quadMeta.badgeClass}">${allItems.length} SKUs</span>
+              <h4 class="scatter-sku-list-title"><i class="bi ${quadMeta.icon}"></i> Top ${quadMeta.title} ${prodLabels().unit}</h4>
+              <span class="scatter-detail-badge ${quadMeta.badgeClass}">${allItems.length} ${prodLabels().unit}</span>
             </div>
             <p class="scatter-sku-list-sub">${quadMeta.desc}</p>
           </div>
@@ -9251,7 +9607,7 @@
     const tbody = document.getElementById('productPriceBody');
     tbody.innerHTML = '';
     const platSuffix = currentPricePlatform === 'All' ? '' : ` (${currentPricePlatform})`;
-    document.getElementById('priceTableCount').textContent = `Showing ${list.length} SKUs${platSuffix}`;
+    document.getElementById('priceTableCount').textContent = `Showing ${list.length} ${prodLabels().unit}${platSuffix}`;
 
     if (!list || list.length === 0) {
       tbody.innerHTML = '<tr><td colspan="14" class="text-center" style="padding:20px;">No product price data found for this platform filter.</td></tr>';
@@ -9445,8 +9801,8 @@
       if (allSlices.length === 0) {
         thead.innerHTML = `
           <tr>
-            <th class="cell-truncate-sku">SKU</th>
-            <th class="cell-truncate-prod">Product Name</th>
+            <th class="cell-truncate-sku">${prodLabels().code}</th>
+            <th class="cell-truncate-prod">${prodLabels().name}</th>
             <th class="cell-truncate-brand">Brand</th>
             <th class="num">Net Qty</th>
             <th class="num">NMV</th>
@@ -9466,8 +9822,8 @@
       if (activeSlices.length === 0) {
         thead.innerHTML = `
           <tr>
-            <th class="cell-truncate-sku">SKU</th>
-            <th class="cell-truncate-prod">Product Name</th>
+            <th class="cell-truncate-sku">${prodLabels().code}</th>
+            <th class="cell-truncate-prod">${prodLabels().name}</th>
             <th class="cell-truncate-brand">Brand</th>
           </tr>
         `;
@@ -9479,8 +9835,8 @@
       // Build 2-Tier Table Header dynamically for active slices (NO Platform column)
       let tier1Html = `
         <tr>
-          <th rowspan="2" class="cell-truncate-sku" style="vertical-align: middle;">SKU</th>
-          <th rowspan="2" class="cell-truncate-prod" style="vertical-align: middle;">Product Name</th>
+          <th rowspan="2" class="cell-truncate-sku" style="vertical-align: middle;">${prodLabels().code}</th>
+          <th rowspan="2" class="cell-truncate-prod" style="vertical-align: middle;">${prodLabels().name}</th>
           <th rowspan="2" class="cell-truncate-brand" style="vertical-align: middle;">Brand</th>
       `;
 
@@ -9668,8 +10024,8 @@
       const totalLabel = globalAnalyticsData?.product_performance?.total_period_label || 'Total Selected Period';
       thead.innerHTML = `
         <tr>
-          <th rowspan="2" class="cell-truncate-sku" style="vertical-align: middle;">SKU</th>
-          <th rowspan="2" class="cell-truncate-prod" style="vertical-align: middle;">Product Name</th>
+          <th rowspan="2" class="cell-truncate-sku" style="vertical-align: middle;">${prodLabels().code}</th>
+          <th rowspan="2" class="cell-truncate-prod" style="vertical-align: middle;">${prodLabels().name}</th>
           <th rowspan="2" class="cell-truncate-brand" style="vertical-align: middle;">Brand</th>
           <th colspan="8" class="text-center th-period-total">
             <span class="period-badge badge-total"><i class="bi bi-calendar2-range"></i> ${escapeHtml(totalLabel)}</span>
@@ -10449,8 +10805,8 @@
         if (!base) return;
 
         const row = {
-          'SKU': base.sku_code,
-          'Product Name': base.product_name,
+          [prodLabels().code]: base.sku_code,
+          [prodLabels().name]: base.product_name,
           'Brand': base.brand,
           'Platform': currentProdPlatform,
         };
@@ -10491,7 +10847,7 @@
       rowsToExport.sort((a, b) => {
         const bCmp = (a.Brand || '').localeCompare(b.Brand || '');
         if (bCmp !== 0) return bCmp;
-        return (a.SKU || '').localeCompare(b.SKU || '');
+        return (a[prodLabels().code] || '').localeCompare(b[prodLabels().code] || '');
       });
 
     } else {
@@ -10532,8 +10888,8 @@
         const no = Number(p.net_orders) || 0;
         const cr = go > 0 ? ((go - no) / go * 100) : 0;
         return {
-          'SKU': p.sku_code,
-          'Product Name': p.product_name,
+          [prodLabels().code]: p.sku_code,
+          [prodLabels().name]: p.product_name,
           'Brand': p.brand,
           'Platform': currentProdPlatform,
           'Net Qty': Number(p.net_qty) || 0,
@@ -10557,7 +10913,7 @@
     const platTag = currentProdPlatform === 'All' ? 'All_Platforms' : currentProdPlatform;
     const sheetName = currentProductMode === 'monthly' ? `Monthly_Breakdown_${platTag}` : `Total_Period_${platTag}`;
     XLSX.utils.book_append_sheet(wb, ws, sheetName.substring(0, 31));
-    XLSX.writeFile(wb, `Product_Performance_${platTag}_${currentProductMode}.xlsx`);
+    XLSX.writeFile(wb, `Product_Performance_${productLevel}_${platTag}_${currentProductMode}.xlsx`);
   }
 
   function exportFullAnalyticsExcel() {
